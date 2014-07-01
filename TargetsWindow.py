@@ -26,7 +26,7 @@ class TargetsWindow(Window):
             # rect.place(x=int(background_textboxes["Width"].get()), y=int(background_textboxes["Height"].get()))
             # r = rect.create_rectangle(0,0,target.width, target.height)
             self.flicker(target, rect)
-        self.focus()
+        #self.focus()
 
 
     def flicker(self, target, rect, b=True):

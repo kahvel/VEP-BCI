@@ -300,7 +300,7 @@ class TargetColorWindow(ColorWindow):
         self.function = self.choose
         self.target = target
         self.textbox = textbox
-        self.focus()
+        #self.focus()
 
     def choose(self):
         self.textbox.delete(0, END)
@@ -314,7 +314,7 @@ class BackgroundColorWindow(ColorWindow):
         ColorWindow.__init__(self, parent, title)
         self.function = self.choose
         self.textbox = textbox
-        self.focus()
+        #self.focus()
 
     def choose(self):
         self.textbox.delete(0, END)

@@ -2,7 +2,8 @@ __author__ = 'Anti'
 from MyWindows import ToplevelWindow
 from Tkinter import Canvas
 import numpy as np
-#import matplotlib.pyplot as plt
+from scipy import signal
+import matplotlib.pyplot as plt
 
 class FFTWindow(ToplevelWindow):
     def __init__(self):
@@ -30,8 +31,15 @@ class FFTWindow(ToplevelWindow):
                 list.append(y)
                 x += 1
             self.canvas.delete(line)
-            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(list)))*-100+400)])
+            #line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(list)))*-100+400)])
+            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(signal.detrend(list))))*-100+400)])
             self.canvas.update()
+        # lis = []
+        # e = []
+        # p = []
+        # lis2 = []
+        # e2 = []
+        # p2 = []
         while True:
             for _ in range(count):
                 y = yield self.continue_generating
@@ -40,10 +48,33 @@ class FFTWindow(ToplevelWindow):
                 list.append(y)
             del list[:count]
             self.canvas.delete(line)
-            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(list)))*-100+400)])
+            #line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(list)))*-100+400)])
+            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(signal.detrend(list))))*-100+400)])
             self.canvas.update()
-            # y = np.log10(np.abs(np.fft.rfft(list)))
-            # plt.plot(y)
+
+            #print np.fft.rfftfreq(len(list))[81]*128
+            # e.append(np.log10(np.abs(signal.detrend(np.fft.rfft(list))))[79])
+            # lis.append(np.log10(np.abs(signal.detrend(np.fft.rfft(list))))[80])
+            # p.append(np.log10(np.abs(signal.detrend(np.fft.rfft(list))))[81])
+            # e2.append(np.log10(np.abs(signal.detrend(np.fft.rfft(list))))[159])
+            # lis2.append(np.log10(np.abs(signal.detrend(np.fft.rfft(list))))[160])
+            # p2.append(np.log10(np.abs(signal.detrend(np.fft.rfft(list))))[161])
+            # if len(lis) == 10:
+            #     if sum(lis)/(sum(e)+sum(p))/2 >sum(lis2)/(sum(e2)+sum(p2))/2:
+            #         print 1
+            #     else:
+            #         print 2
+            #     lis = []
+            #     e=[]
+            #     p=[]
+            #     lis2 = []
+            #     e2=[]
+            #     p2=[]
+
+            # print np.abs(signal.detrend(np.fft.rfft(list)))
+            # freq = np.fft.rfftfreq(len(list))*128
+            # y = np.log10(signal.detrend(np.fft.rfft(list)))
+            # plt.plot(freq, y)
             # plt.show()
 
 

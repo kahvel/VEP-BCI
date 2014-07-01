@@ -70,8 +70,6 @@ class myEmotiv(Emotiv):
             tasks.put_nowait(''.join(map(chr, data[1:])))
             self.packetsReceived += 1
             return True
-        else:
-            return False
 
     def cleanUp(self):
         self._goOn = False
