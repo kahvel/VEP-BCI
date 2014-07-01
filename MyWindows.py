@@ -1,12 +1,12 @@
 __author__ = 'Anti'
 
-from Tkinter import Tk, Toplevel, Label, Entry
+import Tkinter
 
 
-class TkWindow(Tk):
+class TkWindow(Tkinter.Tk):
 
     def __init__(self, title, width, height, color="#eeeeee"):
-        Tk.__init__(self)
+        Tkinter.Tk.__init__(self)
         self.title(title)
         self.geometry(str(width)+"x"+str(height))
         self.resizable(0,0)
@@ -23,10 +23,10 @@ class TkWindow(Tk):
         #self.transient(parent)
         self.wait_window(self)
 
-class ToplevelWindow(Toplevel):
+class ToplevelWindow(Tkinter.Toplevel):
 
     def __init__(self, title, width, height, color="#eeeeee"):
-        Toplevel.__init__(self)
+        Tkinter.Toplevel.__init__(self)
         self.title(title)
         self.geometry(str(width)+"x"+str(height))
         self.resizable(0,0)
@@ -48,9 +48,24 @@ class ToplevelWindow(Toplevel):
         #self.transient(parent)
         self.wait_window(self)
 
-def newTextBox(frame, text, column, row, width=5):
-    Label(frame, text=text).grid(column=column, row=row, padx=5, pady=5)
-    textbox = Entry(frame, width=width)
-    textbox.grid(column=column+1, row=row, padx=5, pady=5)
-    return textbox
+def changeButtonColor(button, textbox):
+    try:
+        button.configure(background=textbox.get())
+    except:
+        button.configure(background="#eeeeee")
+        return False
+    return True
 
+def newColorButton(column, row, function, frame, title, textboxes, color_buttons):
+    color_buttons[title] = Tkinter.Button(frame, text=title, command=lambda:function(title))
+    color_buttons[title].grid(column=column, row=row, padx=5, pady=5)
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout",
+                    validatecommand=lambda: changeButtonColor(color_buttons[title], textboxes[title]))
+    textbox.grid(column=column+1, row=row, padx=5, pady=5)
+    textboxes[title] = textbox
+
+def newTextBox(frame, text, column, row, textboxes, width=5):
+    Tkinter.Label(frame, text=text).grid(column=column, row=row, padx=5, pady=5)
+    textbox = Tkinter.Entry(frame, width=width)
+    textbox.grid(column=column+1, row=row, padx=5, pady=5)
+    textboxes[text[:-1]] = textbox

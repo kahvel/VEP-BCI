@@ -1,14 +1,14 @@
 __author__ = 'Anti'
-from MyWindows import ToplevelWindow
-from Tkinter import Canvas
+import MyWindows
+import Tkinter
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 
-class FFTWindow(ToplevelWindow):
+class FFTWindow(MyWindows.ToplevelWindow):
     def __init__(self):
-        ToplevelWindow.__init__(self, "FFT", 512, 512)
-        self.canvas = Canvas(self, width=512, height=512)
+        MyWindows.ToplevelWindow.__init__(self, "FFT", 512, 512)
+        self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.width = 512
         self.canvas.pack()
         self.canvas.configure(xscrollincrement="1")

@@ -1,21 +1,17 @@
 __author__ = 'Anti'
-from Tkinter import *
-from MyWindows import *
-import time
+import Tkinter
+import MyWindows
 
-class Plot(ToplevelWindow):
-    def __init__(self, fft_generator):
-        ToplevelWindow.__init__(self, "Plot", 500, 500)
-        #self.focus()
+class PlotWindow(MyWindows.ToplevelWindow):
+    def __init__(self):
+        MyWindows.ToplevelWindow.__init__(self, "Plot", 500, 500)
         self.plot_0 = 100, 250
         self.plot_length_x = 300
         self.plot_length_y = 200
         self.mark_length = 5
-        self.canvas = Canvas(self, width=500, height=500)
-        self.fft_generator = fft_generator
+        self.canvas = Tkinter.Canvas(self, width=500, height=500)
         self.protocol("WM_DELETE_WINDOW", self.exit2)
         self.continue_generating = True
-
         # self.scrollbar = Scrollbar(self.window, orient=HORIZONTAL)
         # self.scrollbar.pack(side=BOTTOM, fill=X)
         # self.scrollbar.config(command=self.canvas.xview)
@@ -23,13 +19,9 @@ class Plot(ToplevelWindow):
         self.canvas.pack()
         #self.initElements()
         self.canvas.configure(xscrollincrement="1")
-        #self.focus()
 
     def exit2(self):
         self.continue_generating = False
-
-    def setGenerator(self, generator):
-        self.generator = generator
 
     # def initElements(self):
     #     self.canvas.create_line(self.plot_0, (self.plot_length_x+self.plot_0[0], self.plot_0[1]), width=2)
@@ -96,7 +88,7 @@ class Plot(ToplevelWindow):
                         break
                     list.append(x)
                     list.append(y/8192.0*start+index)
-                self.canvas.xview_scroll(2, UNITS)
+                self.canvas.xview_scroll(2, Tkinter.UNITS)
                 self.canvas.update()
             lines.append(self.canvas.create_line(prev, list))
             prev = x, list[-1]
@@ -111,7 +103,7 @@ class Plot(ToplevelWindow):
                         break
                     list.append(x)
                     list.append(y/8192.0*start+index)
-                self.canvas.xview_scroll(2, UNITS)
+                self.canvas.xview_scroll(2, Tkinter.UNITS)
                 self.canvas.update()
 
             lines.append(self.canvas.create_line(prev, list))

@@ -1,14 +1,14 @@
 from gevent.queue import Queue
 
 __author__ = 'Anti'
-from emokit.emotiv import *
+import emokit.emotiv
 import gevent
 
-class myEmotiv(Emotiv):
+class myEmotiv(emokit.emotiv.Emotiv):
     def __init__(self):
         self.devices = []
         self.serialNum = None
-        Emotiv.__init__(self)
+        emokit.emotiv.Emotiv.__init__(self)
         self.names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.fft_gen = None
         self.fft_window = None
@@ -36,7 +36,7 @@ class myEmotiv(Emotiv):
             self.do_plot = True
 
     def setupWin(self):
-        for device in hid.find_all_hid_devices():
+        for device in emokit.emotiv.hid.find_all_hid_devices():
             if device.vendor_id != 0x21A1 and device.vendor_id != 0x1234:
                 continue
             if device.product_name == 'Brain Waves':
@@ -67,7 +67,7 @@ class myEmotiv(Emotiv):
     def handler(self, data):
         assert data[0] == 0
         if self._goOn:
-            tasks.put_nowait(''.join(map(chr, data[1:])))
+            emokit.emotiv.tasks.put_nowait(''.join(map(chr, data[1:])))
             self.packetsReceived += 1
             return True
 

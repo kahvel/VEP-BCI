@@ -1,19 +1,20 @@
 __author__ = 'Anti'
 
-from AbstractWindow import *
-from Tkinter import Canvas
+import MyWindows
+import Tkinter
 
-class TargetsWindow(Window):
+class TargetsWindow(MyWindows.TkWindow):
     def __init__(self, background_textboxes, targets):
-        super(TargetsWindow, self).__init__("Targets",
-                                            int(background_textboxes["Width"].get()),
-                                            int(background_textboxes["Height"].get()),
-                                            color=background_textboxes["Color"].get())
+        MyWindows.TkWindow.__init__(self, "Targets",
+                                    int(background_textboxes["Width"].get()),
+                                    int(background_textboxes["Height"].get()),
+                                    color=background_textboxes["Color"].get())
         self.background_textboxes = background_textboxes
         self.targets = targets
-        self.canvas = Canvas(self.window,
+        self.canvas = Tkinter.Canvas(self,
                              width=int(background_textboxes["Width"].get()),
                              height=int(background_textboxes["Height"].get()))
+        self.canvas.configure(background=background_textboxes["Color"].get())
         self.canvas.place(x=0, y=0)
 
         for target in self.targets[1:]:
@@ -26,13 +27,10 @@ class TargetsWindow(Window):
             # rect.place(x=int(background_textboxes["Width"].get()), y=int(background_textboxes["Height"].get()))
             # r = rect.create_rectangle(0,0,target.width, target.height)
             self.flicker(target, rect)
-        #self.focus()
 
 
     def flicker(self, target, rect, b=True):
         self.canvas.update()
-        # rect.update()
-
         if b:
             self.canvas.itemconfig(rect, fill=target["Color2"])
             # rect.config(background=target.color2)

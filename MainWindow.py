@@ -1,22 +1,20 @@
 __author__ = 'Anti'
 
 from Tkinter import *
-from TargetsWindow import *
-from AbstractWindow import *
-from MyWindows import *
-from Target import *
-from Plot import *
-from MyEmotiv import *
-from FFTWindow import *
+import TargetsWindow
+import MyWindows
+import PlotWindow
+import MyEmotiv
+import FFTWindow
 import tkFileDialog
 
 
-class MainWindow(TkWindow):
+class MainWindow(MyWindows.TkWindow):
     def __init__(self):
-        TkWindow.__init__(self, "Main Menu", 300, 300)
+        MyWindows.TkWindow.__init__(self, "Main Menu", 310, 400)
         self.buttons = []
         self.radiobuttons = []
-        self.textboxes = {}
+        self.target_textboxes = {}
         self.background_textboxes = {}
         self.targets = []
         self.initial = {"Height": 100,
@@ -28,31 +26,13 @@ class MainWindow(TkWindow):
                     "Color2": "#ffffff"}
         self.targets.append(self.initial)
         self.targets.append(self.initial.copy())
-        self.color_buttons = {}
+        self.target_color_buttons = {}
+        self.background_color_buttons = {}
         self.plot_window = None
         self.fft_window = None
         self.initElements()
-        self.myEmotiv = myEmotiv()
+        self.myEmotiv = MyEmotiv.myEmotiv()
         self.mainloop()
-
-    def newColorButton(self, column, row, function, frame, title, textboxes):
-        textbox = self.newColorButton1(column, row, function, frame, title, textboxes)
-        self.textboxes[title] = textbox
-
-    def newColorButton1(self, column, row, function, frame, title, textboxes):
-        self.color_buttons[title] = Button(frame, text=title, command=lambda:function(title))
-        self.color_buttons[title].grid(column=column, row=row, padx=5, pady=5)
-        textbox = Entry(frame, width=7, validate="focusout", validatecommand=lambda:self.validColor(title, textboxes))
-        textbox.grid(column=column+1, row=row, padx=5, pady=5)
-        return textbox
-
-    def validColor(self, key, textboxes):
-        try:
-            self.color_buttons[key].configure(background=textboxes[key].get())
-        except:
-            self.color_buttons[key].configure(background=self.cget("bg"))
-            return False
-        return True
 
     def initElements(self):
 
@@ -60,10 +40,10 @@ class MainWindow(TkWindow):
         Label(windowtitleframe, text="Window").grid(column=0, row=0, padx=5, pady=5)
 
         self.windowframe = Frame(self)
-        self.background_textboxes["Width"] = newTextBox(self.windowframe, "Width:", 0, 0)
-        self.background_textboxes["Height"] = newTextBox(self.windowframe, "Height:", 2, 0)
-        self.background_textboxes["Color"] = self.newColorButton1(4, 0, self.backgroundColor, self.windowframe,
-                                                                   "Color", self.background_textboxes)
+        MyWindows.newTextBox(self.windowframe, "Width:", 0, 0, self.background_textboxes)
+        MyWindows.newTextBox(self.windowframe, "Height:", 2, 0, self.background_textboxes)
+        MyWindows.newColorButton(4, 0, self.backgroundColor, self.windowframe,
+                             "Color", self.background_textboxes, self.background_color_buttons)
 
         self.background_textboxes["Width"].insert(0, 800)
         self.background_textboxes["Height"].insert(0, 600)
@@ -95,21 +75,24 @@ class MainWindow(TkWindow):
 
         self.newTarget(targetframe)
         self.loadValues(0)
-        for key in self.color_buttons:
-            self.validColor(key, self.textboxes)
-        self.validColor("Color", self.background_textboxes)
+        for key in self.target_color_buttons:
+            MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
+        MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
 
         buttonframe = Frame(self)
 
-        self.buttons.append(Button(buttonframe, text="Start", command=lambda:self.run()))
         self.buttons.append(Button(buttonframe, text="Targets", command=lambda:self.targetsWindow()))
         self.buttons.append(Button(buttonframe, text="Plot", command=lambda:self.plot()))
+        self.buttons.append(Button(buttonframe, text="FFT", command=lambda:self.fft()))
+        self.buttons.append(Button(buttonframe, text="Start", command=lambda:self.run()))
         self.buttons.append(Button(buttonframe, text="Load", command=lambda:self.loadFile()))
         self.buttons.append(Button(buttonframe, text="Save", command=lambda:self.saveFile()))
         self.buttons.append(Button(buttonframe, text="Exit", command=lambda:self.exit()))
 
-        for i in range(len(self.buttons)):
+        for i in range(4):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
+        for i in range(3, len(self.buttons)):
+            self.buttons[i].grid(column=i-3, row=1, padx=5, pady=5)
 
         windowtitleframe.grid(column=0, row=0)
         self.windowframe.grid(column=0, row=1)
@@ -121,11 +104,13 @@ class MainWindow(TkWindow):
 
     def targetsWindow(self):
         self.saveValues(self.current_radio_button.get())
-        TargetsWindow(self.background_textboxes, self.targets)
+        TargetsWindow.TargetsWindow(self.background_textboxes, self.targets)
 
     def plot(self):
-        self.fft_window = FFTWindow()
-        self.plot_window = Plot(self.fft_window.generator)
+        self.plot_window = PlotWindow.PlotWindow()
+
+    def fft(self):
+        self.fft_window = FFTWindow.FFTWindow()
 
 
     def run(self):
@@ -135,7 +120,7 @@ class MainWindow(TkWindow):
 
     def loadValues(self, index):
         if index == 0:
-            for key in self.textboxes:
+            for key in self.target_textboxes:
                 valid = False
                 #value1 = None
                 #value2 = None
@@ -149,28 +134,28 @@ class MainWindow(TkWindow):
                         break
                     else:
                         valid = True
-                self.textboxes[key].delete(0, END)
+                self.target_textboxes[key].delete(0, END)
                 if valid:
-                    self.textboxes[key].insert(0, str(value1))
+                    self.target_textboxes[key].insert(0, str(value1))
 
         else:
-            for key in self.textboxes:
-                self.textboxes[key].delete(0, END)
+            for key in self.target_textboxes:
+                self.target_textboxes[key].delete(0, END)
                 #exec("self.textboxes[key].insert(0,str(self.targets[index]."+key.lower()+"))")
-                self.textboxes[key].insert(0, str(self.targets[index][key]))
-        for key in self.color_buttons:
-            self.validColor(key, self.textboxes)
+                self.target_textboxes[key].insert(0, str(self.targets[index][key]))
+        for key in self.target_color_buttons:
+            MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
 
     def saveValues(self, index):
         if index == 0:
-            for key in self.textboxes:
-                if self.textboxes[key].get() != "":
+            for key in self.target_textboxes:
+                if self.target_textboxes[key].get() != "":
                     for target in self.targets:
                         #exec("target."+key.lower()+"= self.textboxes[key].get()")
-                        target[key] = self.textboxes[key].get()
-        for key in self.textboxes:
+                        target[key] = self.target_textboxes[key].get()
+        for key in self.target_textboxes:
             #exec("self.targets[index]."+key.lower()+"= self.textboxes[key].get()")
-            self.targets[index][key] = self.textboxes[key].get()
+            self.targets[index][key] = self.target_textboxes[key].get()
 
     def radioButtonChange(self):
         self.saveValues(self.previous_radio_button)
@@ -203,18 +188,13 @@ class MainWindow(TkWindow):
                 self.targets[-1][key] = value1
 
     def newTarget(self, frame):
-        self.newTextBox(frame, "Width:", 0, 0)
-        self.newTextBox(frame, "Height:", 2, 0)
-        self.newColorButton(4, 0, self.targetColor, frame, "Color1", self.textboxes)
-        self.newColorButton(4, 1, self.targetColor, frame, "Color2", self.textboxes)
-
-        self.newTextBox(frame, "x:", 0, 1)
-        self.newTextBox(frame, "y:", 2, 1)
-        self.newTextBox(frame, "Freq:", 0, 2)
-
-    def newTextBox(self, frame, text, column, row, width=5):
-        textbox = newTextBox(frame, text, column, row, width)
-        self.textboxes[text[:-1]] = textbox
+        MyWindows.newTextBox(frame, "Width:", 0, 0, self.target_textboxes)
+        MyWindows.newTextBox(frame, "Height:", 2, 0, self.target_textboxes)
+        MyWindows.newColorButton(4, 0, self.targetColor, frame, "Color1", self.target_textboxes, self.target_color_buttons)
+        MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color2", self.target_textboxes, self.target_color_buttons)
+        MyWindows.newTextBox(frame, "x:", 0, 1, self.target_textboxes)
+        MyWindows.newTextBox(frame, "y:", 2, 1, self.target_textboxes)
+        MyWindows.newTextBox(frame, "Freq:", 0, 2, self.target_textboxes)
 
     def saveFile(self):
         self.saveValues(self.current_radio_button.get())
@@ -255,16 +235,15 @@ class MainWindow(TkWindow):
             self.loadValues(self.current_radio_button.get())
 
     def targetColor(self, title):
-        TargetColorWindow(self, self.textboxes[title], title, self.targets[self.current_radio_button.get()])
-        self.validColor(title, self.textboxes)
+        TargetColorWindow(self, self.target_textboxes[title], title, self.targets[self.current_radio_button.get()],
+                          self.target_color_buttons[title])
 
     def backgroundColor(self, title):
-        BackgroundColorWindow(self, self.background_textboxes[title], title)
-        self.validColor(title, self.background_textboxes)
+        BackgroundColorWindow(self, self.background_textboxes[title], title, self.background_color_buttons[title])
 
-class ChildWindow(ToplevelWindow):
+class ChildWindow(MyWindows.ToplevelWindow):
     def __init__(self, title, width, height, parent, column, row):
-        ToplevelWindow.__init__(self, title, width, height)
+        MyWindows.ToplevelWindow.__init__(self, title, width, height)
         parent_location = parent.geometry().split("+")
         parent_size = parent_location[0].split("x")
         self.geometry("+"+str(int(parent_location[1])+int(int(parent_size[0])/2)-width/2)+"+"
@@ -274,7 +253,7 @@ class ChildWindow(ToplevelWindow):
 
 class ColorWindow(ChildWindow):
     def __init__(self, parent, title):
-        ChildWindow.__init__(self, title, 300, 300, parent, 0, 5)
+        ChildWindow.__init__(self, title, 250, 250, parent, 0, 5)
         self.scales = []
         self.title = title
         self.canvas = Canvas(self, width=50, height=50)
@@ -295,11 +274,12 @@ class ColorWindow(ChildWindow):
         self.canvas.configure(background=self.getColor())
 
 class TargetColorWindow(ColorWindow):
-    def __init__(self, parent, textbox, title, target):
+    def __init__(self, parent, textbox, title, target, button):
         ColorWindow.__init__(self, parent, title)
         self.function = self.choose
         self.target = target
         self.textbox = textbox
+        self.button = button
         #self.focus()
 
     def choose(self):
@@ -307,18 +287,21 @@ class TargetColorWindow(ColorWindow):
         self.textbox.insert(0, self.getColor())
         #exec("self.target."+self.title.lower()+"=self.getColor()")
         self.target[self.title] = self.getColor()
+        MyWindows.changeButtonColor(self.button, self.textbox)
         self.exit()
 
 class BackgroundColorWindow(ColorWindow):
-    def __init__(self, parent, textbox, title):
+    def __init__(self, parent, textbox, title, button):
         ColorWindow.__init__(self, parent, title)
         self.function = self.choose
         self.textbox = textbox
+        self.button = button
         #self.focus()
 
     def choose(self):
         self.textbox.delete(0, END)
         self.textbox.insert(0, self.getColor())
+        MyWindows.changeButtonColor(self.button, self.textbox)
         self.exit()
 
 # class LoadSaveWindow(ChildWindow):
