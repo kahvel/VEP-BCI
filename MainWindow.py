@@ -28,19 +28,11 @@ class MainWindow(TkWindow):
                     "Color2": "#ffffff"}
         self.targets.append(self.initial)
         self.targets.append(self.initial.copy())
-        # self.file_options = {
-        # 'defaultextension': '.txt',
-        # 'filetypes': [('all files', '.*'), ('text files', '.txt')],
-        # 'initialdir': 'C:\\',
-        # 'initialfile': 'myfile.txt',
-        # 'parent': self,
-        # 'title': 'This is a title'}
         self.color_buttons = {}
-        #self.targets.append(Target())
-        #self.targets.append(Target())
         self.plot_window = None
         self.fft_window = None
         self.initElements()
+        self.myEmotiv = myEmotiv()
         self.mainloop()
 
     def newColorButton(self, column, row, function, frame, title, textboxes):
@@ -137,12 +129,9 @@ class MainWindow(TkWindow):
 
 
     def run(self):
-        emo = myEmotiv()
-        # self.plot_window.setGenerator(emo.run())
-        # self.plot_window.test3()
-        emo.setFft(self.fft_window)
-        emo.setPlot(self.plot_window)
-        emo.run()
+        self.myEmotiv.setFft(self.fft_window)
+        self.myEmotiv.setPlot(self.plot_window)
+        self.myEmotiv.run()
 
     def loadValues(self, index):
         if index == 0:
