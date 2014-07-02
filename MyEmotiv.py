@@ -9,7 +9,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.devices = []
         self.serialNum = None
         emokit.emotiv.Emotiv.__init__(self)
-        self.names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
+        self.names = []
         self.fft_gen = None
         self.fft_window = None
         self.do_fft = False
@@ -22,6 +22,15 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.average_plot_gen = None
         self.average_plot_window = None
         self.do_average_plot = False
+        self.plot_count = 0
+
+    def setPlotCount(self, checkbox_values, sensor_names):
+        self.names = []
+        self.plot_count = 0
+        for i in range(len(checkbox_values)):
+            if checkbox_values[i].get() == 1:
+                self.plot_count += 1
+                self.names.append(sensor_names[i])
 
     def setFFT(self, fft_window):
         if fft_window is not None:
@@ -33,8 +42,9 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def setPlot(self, plot_window):
         if plot_window is not None:
             self.plot_gen = []
-            for i in range(14):
-                self.plot_gen.append(plot_window.generator(i, 35))
+            height = 490/self.plot_count
+            for i in range(self.plot_count):
+                self.plot_gen.append(plot_window.generator(i, height, self.plot_count))
                 self.plot_gen[i].send(None)
             self.plot_window = plot_window
             self.do_plot = True
@@ -42,8 +52,9 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def setAveragePlot(self, average_plot_window):
         if average_plot_window is not None:
             self.average_plot_gen = []
-            for i in range(14):
-                self.average_plot_gen.append(average_plot_window.generator(i, 35))
+            height = 490/self.plot_count
+            for i in range(self.plot_count):
+                self.average_plot_gen.append(average_plot_window.generator(i, height, self.plot_count))
                 self.average_plot_gen[i].send(None)
             self.average_plot_window = average_plot_window
             self.do_average_plot = True
@@ -162,30 +173,46 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.setup()
         gevent.spawn(self.setupCrypto, self.serialNum)
         gevent.sleep(1)
+        counter = 0
         while True:
-            counter = 0
-            while True:
-                try:
-                    packet = self.packets.get(True, 1)
-                    break
-                except:
-                    # gevent.sleep(0)
-                    counter += 1
-                    print("No packet! " + str(counter))
-                    if counter == 10:
-                        print("Terminating!")
-                        self.cleanUpAll()
-                        return
-                    continue
+            try:
+                packet = self.packets.get(True, 1)
+                break
+            except:
+                # gevent.sleep(0)
+                counter += 1
+                print("No packet! " + str(counter))
+                if counter == 10:
+                    print("Terminating!")
+                    self.cleanUpAll()
+                    return
+                continue
+
+        if self.do_average_plot or self.do_plot: # average and plot same length!!!
+            print("Calculating averages")
+            averages = [0 for _ in range(self.plot_count)]
+            for j in range(1, 1025):
+                packet = self.dequeue()
+                for i in range(self.plot_count):
+                    averages[i] = (averages[i] * (j - 1) + packet.sensors[self.names[i]]["value"]) / j
+            for i in range(self.plot_count):
+                if self.do_plot:
+                    self.plot_gen[i].send(averages[i])
+                if self.do_average_plot:
+                    self.average_plot_gen[i].send(averages[i])
+            print(averages)
+
+        while True:
+            packet = self.dequeue()
             if self.do_plot:
-                for i in range(14):
+                for i in range(self.plot_count):
                     if not self.plot_gen[i].send(packet.sensors[self.names[i]]["value"]):
                         self.cleanUpPlot()
                         break
             if self.do_average_plot:
-                for i in range(14):
+                for i in range(self.plot_count):
                     if not self.average_plot_gen[i].send(packet.sensors[self.names[i]]["value"]):
-                        self.cleanUpPlot()
+                        self.cleanUpAvgPlot()
                         break
             if self.do_fft:
                 if not self.fft_gen.send(packet.O2[0]):

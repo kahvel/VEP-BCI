@@ -38,12 +38,13 @@ class PlotWindow(MyWindows.ToplevelWindow):
     #         self.canvas.create_line(self.plot_0[0], y, self.plot_0[0]+self.mark_length, y, width=2)
     #         self.canvas.create_text(self.plot_0[0]-self.mark_length, y, text='%d'% (50*i), anchor=E)
 
-    def generator(self, index, height):
+    def generator(self, index, height, plot_count):
         prev = 512, 0
         count = 10
         lines = []
         x = 512
         lines.append(self.canvas.create_line(prev, prev))
+        average = yield
         while True:
             list = []
             for i in range(count):
@@ -53,10 +54,10 @@ class PlotWindow(MyWindows.ToplevelWindow):
                     if not self.continue_generating:
                         break
                     list.append(x)
-                    list.append(y-8000)
-                    #list.append(y/8192.0*height+index*height)
-                    #list.append((y-4200)+(index)*height)
-                if index == 13:
+                    # list.append(y-8000)
+                    # list.append(y/8192.0*height*2+index*height)
+                    list.append(scaleY(y, average, index, height, plot_count))
+                if index == plot_count-1:
                     self.canvas.xview_scroll(2, Tkinter.UNITS)
                     self.canvas.update()
             lines.append(self.canvas.create_line(prev, list))
@@ -64,6 +65,11 @@ class PlotWindow(MyWindows.ToplevelWindow):
             if x > 512*2:
                 self.canvas.delete(lines[0])
                 del lines[0]
+
+
+def scaleY(y, average, index, height, plot_count):
+    return (y-average)/(2*plot_count)+index*height+height/2
+
 
 class AveragePlotWindow(MyWindows.ToplevelWindow):
     def __init__(self):
@@ -77,7 +83,7 @@ class AveragePlotWindow(MyWindows.ToplevelWindow):
     def exit2(self):
         self.continue_generating = False
 
-    def generator(self, index, height):
+    def generator(self, index, height, plot_count):
         count = 512
         average = []
         for i in range(1024):
@@ -87,14 +93,15 @@ class AveragePlotWindow(MyWindows.ToplevelWindow):
                 average.append(0)
         line = self.canvas.create_line(0, 0, 0, 0)
         j = 0
+        avg = yield
         while True:
             j += 1
             for i in range(1, count*2, 2):
                 y = yield self.continue_generating
                 if not self.continue_generating:
                     break
-                average[i] = (average[i] * (j - 1) + y - 8000) / j
+                average[i] = (average[i] * (j - 1) + scaleY(y, avg, index, height, plot_count)) / j
             self.canvas.delete(line)
             line = self.canvas.create_line(average)
-            if index == 13:
+            if index == plot_count-1:
                 self.canvas.update()

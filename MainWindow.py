@@ -12,10 +12,13 @@ import tkFileDialog
 class MainWindow(MyWindows.TkWindow):
     def __init__(self):
         MyWindows.TkWindow.__init__(self, "Main Menu", 310, 400)
+        self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.buttons = []
         self.radiobuttons = []
         self.target_textboxes = {}
         self.background_textboxes = {}
+        self.checkboxes = []
+        self.checkbox_values = []
         self.targets = []
         self.initial = {"Height": 100,
                     "Width": 100,
@@ -98,6 +101,12 @@ class MainWindow(MyWindows.TkWindow):
         for i in range(5, len(self.buttons)):
             self.buttons[i].grid(column=i-5, row=1, padx=5, pady=5)
 
+        checkboxframe = Frame(self)
+        for i in range(len(self.sensor_names)):
+            self.checkbox_values.append(IntVar())
+            self.checkboxes.append(Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i]))
+            self.checkboxes[-1].grid(column=i%7, row=i//7)
+
         windowtitleframe.grid(column=0, row=0)
         self.windowframe.grid(column=0, row=1)
         targettitleframe.grid(column=0, row=2)
@@ -105,6 +114,7 @@ class MainWindow(MyWindows.TkWindow):
         self.radiobuttonframe.grid(column=0, row=4)
         targetframe.grid(column=0, row=5)
         buttonframe.grid(column=0, row=6)
+        checkboxframe.grid(column=0, row=7)
 
     def targetsWindow(self):
         self.saveValues(self.current_radio_button.get())
@@ -123,6 +133,7 @@ class MainWindow(MyWindows.TkWindow):
         self.fft_window = FFTWindow.FFTWindow()
 
     def run(self):
+        self.myEmotiv.setPlotCount(self.checkbox_values, self.sensor_names)
         self.myEmotiv.setFFT(self.fft_window)
         self.myEmotiv.setPlot(self.plot_window)
         self.myEmotiv.setAverageFFT(self.average_fft_window)
