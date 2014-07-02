@@ -30,6 +30,8 @@ class MainWindow(MyWindows.TkWindow):
         self.background_color_buttons = {}
         self.plot_window = None
         self.fft_window = None
+        self.average_fft_window = None
+        self.average_plot_window = None
         self.initElements()
         self.myEmotiv = MyEmotiv.myEmotiv()
         self.mainloop()
@@ -83,16 +85,18 @@ class MainWindow(MyWindows.TkWindow):
 
         self.buttons.append(Button(buttonframe, text="Targets", command=lambda: self.targetsWindow()))
         self.buttons.append(Button(buttonframe, text="Plot", command=lambda: self.plot()))
+        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgPlot()))
         self.buttons.append(Button(buttonframe, text="FFT", command=lambda: self.fft()))
+        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgFft()))
         self.buttons.append(Button(buttonframe, text="Start", command=lambda: self.run()))
         self.buttons.append(Button(buttonframe, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe, text="Exit", command=lambda: self.exit()))
 
-        for i in range(4):
+        for i in range(5):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-        for i in range(3, len(self.buttons)):
-            self.buttons[i].grid(column=i-3, row=1, padx=5, pady=5)
+        for i in range(5, len(self.buttons)):
+            self.buttons[i].grid(column=i-5, row=1, padx=5, pady=5)
 
         windowtitleframe.grid(column=0, row=0)
         self.windowframe.grid(column=0, row=1)
@@ -109,16 +113,25 @@ class MainWindow(MyWindows.TkWindow):
     def plot(self):
         self.plot_window = PlotWindow.PlotWindow()
 
+    def avgFft(self):
+        self.average_fft_window = FFTWindow.AverageFFTWindow()
+
+    def avgPlot(self):
+        self.average_plot_window = PlotWindow.AveragePlotWindow()
+
     def fft(self):
         self.fft_window = FFTWindow.FFTWindow()
 
-
     def run(self):
-        self.myEmotiv.setFft(self.fft_window)
+        self.myEmotiv.setFFT(self.fft_window)
         self.myEmotiv.setPlot(self.plot_window)
+        self.myEmotiv.setAverageFFT(self.average_fft_window)
+        self.myEmotiv.setAveragePlot(self.average_plot_window)
         self.myEmotiv.run()
         self.fft_window = None
         self.plot_window = None
+        self.average_fft_window = None
+        self.average_plot_window = None
 
     def loadValues(self, index):
         if index == 0:

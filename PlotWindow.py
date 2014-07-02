@@ -2,14 +2,15 @@ __author__ = 'Anti'
 import Tkinter
 import MyWindows
 
+
 class PlotWindow(MyWindows.ToplevelWindow):
     def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "Plot", 500, 500)
-        self.plot_0 = 100, 250
-        self.plot_length_x = 300
-        self.plot_length_y = 200
-        self.mark_length = 5
-        self.canvas = Tkinter.Canvas(self, width=500, height=500)
+        MyWindows.ToplevelWindow.__init__(self, "Plot", 512, 512)
+        # self.plot_0 = 100, 250
+        # self.plot_length_x = 300
+        # self.plot_length_y = 200
+        # self.mark_length = 5
+        self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.protocol("WM_DELETE_WINDOW", self.exit2)
         self.continue_generating = True
         # self.scrollbar = Scrollbar(self.window, orient=HORIZONTAL)
@@ -37,26 +38,12 @@ class PlotWindow(MyWindows.ToplevelWindow):
     #         self.canvas.create_line(self.plot_0[0], y, self.plot_0[0]+self.mark_length, y, width=2)
     #         self.canvas.create_text(self.plot_0[0]-self.mark_length, y, text='%d'% (50*i), anchor=E)
 
-    def test7(self, index, start):
-        prev = 500, 0
+    def generator(self, index, height):
+        prev = 512, 0
         count = 10
         lines = []
-        x = 500
+        x = 512
         lines.append(self.canvas.create_line(prev, prev))
-        while x <= 500*2:
-            list = []
-            for i in range(count):
-                for _ in range(2):
-                    x += 1
-                    y = yield self.continue_generating
-                    if not self.continue_generating:
-                        break
-                    list.append(x)
-                    list.append(y/8192.0*start+index)
-
-            lines.append(self.canvas.create_line(prev, list))
-            prev = x, list[-1]
-
         while True:
             list = []
             for i in range(count):
@@ -66,70 +53,48 @@ class PlotWindow(MyWindows.ToplevelWindow):
                     if not self.continue_generating:
                         break
                     list.append(x)
-                    list.append(y/8192.0*start+index)
+                    list.append(y-8000)
+                    #list.append(y/8192.0*height+index*height)
+                    #list.append((y-4200)+(index)*height)
+                if index == 13:
+                    self.canvas.xview_scroll(2, Tkinter.UNITS)
+                    self.canvas.update()
             lines.append(self.canvas.create_line(prev, list))
             prev = x, list[-1]
-            self.canvas.delete(lines[0])
-            del lines[0]
+            if x > 512*2:
+                self.canvas.delete(lines[0])
+                del lines[0]
 
-    def test8(self, index, start):
-        prev = 500, 0
-        count = 10
-        lines = []
-        x = 500
-        lines.append(self.canvas.create_line(prev, prev))
-        while x <= 500*2:
-            list = []
-            for _ in range(count):
-                for _ in range(2):
-                    x += 1
-                    y = yield self.continue_generating
-                    if not self.continue_generating:
-                        break
-                    list.append(x)
-                    list.append(y/8192.0*start+index)
-                self.canvas.xview_scroll(2, Tkinter.UNITS)
-                self.canvas.update()
-            lines.append(self.canvas.create_line(prev, list))
-            prev = x, list[-1]
+class AveragePlotWindow(MyWindows.ToplevelWindow):
+    def __init__(self):
+        MyWindows.ToplevelWindow.__init__(self, "Average Plot", 512, 512)
+        self.canvas = Tkinter.Canvas(self, width=512, height=512)
+        self.protocol("WM_DELETE_WINDOW", self.exit2)
+        self.continue_generating = True
+        self.canvas.pack()
+        self.canvas.configure(xscrollincrement="1")
 
+    def exit2(self):
+        self.continue_generating = False
+
+    def generator(self, index, height):
+        count = 512
+        average = []
+        for i in range(1024):
+            if i % 2 == 0:
+                average.append(i/2)
+            else:
+                average.append(0)
+        line = self.canvas.create_line(0, 0, 0, 0)
+        j = 0
         while True:
-            list = []
-            for i in range(count):
-                for _ in range(2):
-                    x += 1
-                    y = yield self.continue_generating
-                    if not self.continue_generating:
-                        break
-                    list.append(x)
-                    list.append(y/8192.0*start+index)
-                self.canvas.xview_scroll(2, Tkinter.UNITS)
+            j += 1
+            for i in range(1, count*2, 2):
+                y = yield self.continue_generating
+                if not self.continue_generating:
+                    break
+                average[i] = (average[i] * (j - 1) + y - 8000) / j
+            self.canvas.delete(line)
+            line = self.canvas.create_line(average)
+            if index == 13:
                 self.canvas.update()
-
-            lines.append(self.canvas.create_line(prev, list))
-            prev = x, list[-1]
-            self.canvas.delete(lines[0])
-            del lines[0]
-        # prev = self.width, 0
-        # packet = prev[1]
-        # lines = []
-        #
-        # while prev[0]<=self.width+100:
-        #     lines.append(self.canvas.create_line(prev, prev[0]+2, packet))
-        #     #self.canvas.create_line(prev, prev[0]+2, packet)
-        #     prev = prev[0]+2, packet
-        #     packet = yield
-        #     packet -= 8200
-        #     self.canvas.update()
-        #     self.canvas.xview_scroll(1, UNITS)
-        # while True:
-        #     lines.append(self.canvas.create_line(prev, prev[0]+2, packet))
-        #     #self.canvas.create_line(prev, prev[0]+2, packet)
-        #     prev = prev[0]+2, packet
-        #     packet = yield
-        #     packet -= 8200
-        #     self.canvas.update()
-        #     self.canvas.delete(lines[0])
-        #     del lines[0]
-        #     self.canvas.xview_scroll(1, UNITS)
-

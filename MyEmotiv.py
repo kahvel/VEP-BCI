@@ -16,8 +16,14 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.plot_gen = None
         self.plot_window = None
         self.do_plot = False
+        self.average_fft_gen = None
+        self.average_fft_window = None
+        self.do_average_fft = False
+        self.average_plot_gen = None
+        self.average_plot_window = None
+        self.do_average_plot = False
 
-    def setFft(self, fft_window):
+    def setFFT(self, fft_window):
         if fft_window is not None:
             self.fft_gen = fft_window.generator()
             self.fft_gen.send(None)
@@ -27,13 +33,27 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def setPlot(self, plot_window):
         if plot_window is not None:
             self.plot_gen = []
-            for i in range(13):
-                self.plot_gen.append(plot_window.test7(i*35,35))
+            for i in range(14):
+                self.plot_gen.append(plot_window.generator(i, 35))
                 self.plot_gen[i].send(None)
-            self.plot_gen.append(plot_window.test8(13*35,35))
-            self.plot_gen[-1].send(None)
             self.plot_window = plot_window
             self.do_plot = True
+
+    def setAveragePlot(self, average_plot_window):
+        if average_plot_window is not None:
+            self.average_plot_gen = []
+            for i in range(14):
+                self.average_plot_gen.append(average_plot_window.generator(i, 35))
+                self.average_plot_gen[i].send(None)
+            self.average_plot_window = average_plot_window
+            self.do_average_plot = True
+
+    def setAverageFFT(self, average_fft_window):
+        if average_fft_window is not None:
+            self.average_fft_gen = average_fft_window.generator()
+            self.average_fft_gen.send(None)
+            self.average_fft_window = average_fft_window
+            self.do_average_fft = True
 
     def setupWin(self):
         for device in emokit.emotiv.hid.find_all_hid_devices():
@@ -79,6 +99,8 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def cleanUpAll(self):
         self.cleanUpFft()
         self.cleanUpPlot()
+        self.cleanUpAvgFFT()
+        self.cleanUpAvgPlot()
         self.cleanUp()
 
     def cleanUpPlot(self):
@@ -87,6 +109,20 @@ class myEmotiv(emokit.emotiv.Emotiv):
             self.plot_window.destroy()
             self.plot_window = None
             for gen in self.plot_gen:
+                while True:
+                    try:
+                        gen.send(1)
+                        print("Send plot")
+                    except:
+                        print("Empty")
+                        break
+
+    def cleanUpAvgPlot(self):
+        if self.average_plot_window is not None:
+            self.do_average_plot = False
+            self.average_plot_window.destroy()
+            self.average_plot_window = None
+            for gen in self.average_plot_gen:
                 while True:
                     try:
                         gen.send(1)
@@ -104,6 +140,19 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 try:
                     self.fft_gen.send(1)
                     print("Send fft")
+                except:
+                    print("Empty")
+                    break
+
+    def cleanUpAvgFFT(self):
+        if self.average_fft_window is not None:
+            self.do_average_fft = False
+            self.average_fft_window.destroy()
+            self.average_fft_window = None
+            while True:
+                try:
+                    self.average_fft_gen.send(1)
+                    print("Send avg")
                 except:
                     print("Empty")
                     break
@@ -133,10 +182,18 @@ class myEmotiv(emokit.emotiv.Emotiv):
                     if not self.plot_gen[i].send(packet.sensors[self.names[i]]["value"]):
                         self.cleanUpPlot()
                         break
+            if self.do_average_plot:
+                for i in range(14):
+                    if not self.average_plot_gen[i].send(packet.sensors[self.names[i]]["value"]):
+                        self.cleanUpPlot()
+                        break
             if self.do_fft:
-                if not self.fft_gen.send(packet.AF3[0]):
+                if not self.fft_gen.send(packet.O2[0]):
                     self.cleanUpFft()
-            if not self.do_fft and not self.do_plot:
+            if self.do_average_fft:
+                if not self.average_fft_gen.send(packet.O2[0]):
+                    self.cleanUpAvgFFT()
+            if not self.do_fft and not self.do_plot and not self.do_average_fft and not self.do_average_plot:
                 print("Nothing to do!")
                 break
         self.cleanUp()
