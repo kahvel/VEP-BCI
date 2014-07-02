@@ -73,37 +73,40 @@ class myEmotiv(emokit.emotiv.Emotiv):
 
     def cleanUp(self):
         self._goOn = False
-        if self.fft_window is not None:
-            self.fft_window.exit2()
+        self.closeDevices()
+        print("CleanUp successful!")
+
+    def cleanUpAll(self):
+        self.cleanUpFft()
+        self.cleanUpPlot()
+        self.cleanUp()
+
+    def cleanUpPlot(self):
         if self.plot_window is not None:
-            self.plot_window.exit2()
-        if self.plot_gen is not None:
+            self.do_plot = False
+            self.plot_window.destroy()
+            self.plot_window = None
             for gen in self.plot_gen:
                 while True:
                     try:
                         gen.send(1)
-                        print("Send")
+                        print("Send plot")
                     except:
                         print("Empty")
                         break
-        if self.fft_gen is not None:
+
+    def cleanUpFft(self):
+        if self.fft_window is not None:
+            self.do_fft = False
+            self.fft_window.destroy()
+            self.fft_window = None
             while True:
                 try:
                     self.fft_gen.send(1)
-                    print("Send")
+                    print("Send fft")
                 except:
                     print("Empty")
                     break
-        if self.fft_window is not None:
-            self.fft_window.destroy()
-            self.fft_window = None
-        if self.plot_window is not None:
-            self.plot_window.destroy()
-            self.plot_window = None
-        self.do_fft = False
-        self.do_plot = False
-        self.closeDevices()
-        print("CleanUp successful!")
 
     def run(self):
         self._goOn = True
@@ -117,30 +120,23 @@ class myEmotiv(emokit.emotiv.Emotiv):
                     packet = self.packets.get(True, 1)
                     break
                 except:
+                    # gevent.sleep(0)
                     counter += 1
                     print("No packet! " + str(counter))
                     if counter == 10:
                         print("Terminating!")
-                        self.cleanUp()
+                        self.cleanUpAll()
                         return
                     continue
             if self.do_plot:
                 for i in range(14):
                     if not self.plot_gen[i].send(packet.sensors[self.names[i]]["value"]):
-                        self.do_plot = False
-                        self.plot_window.destroy()
-                        #self.plot_window = None
+                        self.cleanUpPlot()
+                        break
             if self.do_fft:
                 if not self.fft_gen.send(packet.AF3[0]):
-                    self.do_fft = False
-                    self.fft_window.destroy()
-                    #self.fft_window = None
-
+                    self.cleanUpFft()
             if not self.do_fft and not self.do_plot:
-                self._goOn = False
                 print("Nothing to do!")
                 break
-            #gevent.sleep(0)
         self.cleanUp()
-
-

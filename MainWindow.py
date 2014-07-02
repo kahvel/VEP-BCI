@@ -81,13 +81,13 @@ class MainWindow(MyWindows.TkWindow):
 
         buttonframe = Frame(self)
 
-        self.buttons.append(Button(buttonframe, text="Targets", command=lambda:self.targetsWindow()))
-        self.buttons.append(Button(buttonframe, text="Plot", command=lambda:self.plot()))
-        self.buttons.append(Button(buttonframe, text="FFT", command=lambda:self.fft()))
-        self.buttons.append(Button(buttonframe, text="Start", command=lambda:self.run()))
-        self.buttons.append(Button(buttonframe, text="Load", command=lambda:self.loadFile()))
-        self.buttons.append(Button(buttonframe, text="Save", command=lambda:self.saveFile()))
-        self.buttons.append(Button(buttonframe, text="Exit", command=lambda:self.exit()))
+        self.buttons.append(Button(buttonframe, text="Targets", command=lambda: self.targetsWindow()))
+        self.buttons.append(Button(buttonframe, text="Plot", command=lambda: self.plot()))
+        self.buttons.append(Button(buttonframe, text="FFT", command=lambda: self.fft()))
+        self.buttons.append(Button(buttonframe, text="Start", command=lambda: self.run()))
+        self.buttons.append(Button(buttonframe, text="Load", command=lambda: self.loadFile()))
+        self.buttons.append(Button(buttonframe, text="Save", command=lambda: self.saveFile()))
+        self.buttons.append(Button(buttonframe, text="Exit", command=lambda: self.exit()))
 
         for i in range(4):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
@@ -117,6 +117,8 @@ class MainWindow(MyWindows.TkWindow):
         self.myEmotiv.setFft(self.fft_window)
         self.myEmotiv.setPlot(self.plot_window)
         self.myEmotiv.run()
+        self.fft_window = None
+        self.plot_window = None
 
     def loadValues(self, index):
         if index == 0:

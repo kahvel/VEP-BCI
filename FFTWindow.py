@@ -11,7 +11,7 @@ class FFTWindow(MyWindows.ToplevelWindow):
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.width = 512
         self.canvas.pack()
-        self.canvas.configure(xscrollincrement="1")
+        #self.canvas.configure(xscrollincrement="1")
         self.protocol("WM_DELETE_WINDOW", self.exit2)
         self.continue_generating = True
 
@@ -23,17 +23,6 @@ class FFTWindow(MyWindows.ToplevelWindow):
         x=0
         list = []
         line = self.canvas.create_line(0,0,0,0)
-        while x<1024:
-            for _ in range(count):
-                y = yield self.continue_generating
-                if not self.continue_generating:
-                    break
-                list.append(y)
-                x += 1
-            self.canvas.delete(line)
-            #line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(list)))*-100+400)])
-            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(signal.detrend(list))))*-100+400)])
-            self.canvas.update()
         # lis = []
         # e = []
         # p = []
@@ -46,7 +35,9 @@ class FFTWindow(MyWindows.ToplevelWindow):
                 if not self.continue_generating:
                     break
                 list.append(y)
-            del list[:count]
+                x += 1
+            if x >= 1024:
+                del list[:count]
             self.canvas.delete(line)
             #line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(list)))*-100+400)])
             line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(signal.detrend(list))))*-100+400)])
