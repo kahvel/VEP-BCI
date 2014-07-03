@@ -4,12 +4,15 @@ __author__ = 'Anti'
 import emokit.emotiv
 import gevent
 
+
 class myEmotiv(emokit.emotiv.Emotiv):
     def __init__(self):
         self.devices = []
         self.serialNum = None
         emokit.emotiv.Emotiv.__init__(self)
         self.names = []
+        self.average_names = []
+        self.fft_names = []
         self.fft_gen = None
         self.fft_window = None
         self.do_fft = False
@@ -19,10 +22,18 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.average_fft_gen = None
         self.average_fft_window = None
         self.do_average_fft = False
+        self.average_fft_gen2 = None
+        self.average_fft_window2 = None
+        self.do_average_fft2 = False
         self.average_plot_gen = None
         self.average_plot_window = None
         self.do_average_plot = False
         self.plot_count = 0
+        self.average_gen = None
+        self.average_window = None
+        self.do_average = False
+        self.average_plot_count = 0
+        self.fft_plot_count = 0
 
     def setPlotCount(self, checkbox_values, sensor_names):
         self.names = []
@@ -48,6 +59,32 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 self.plot_gen[i].send(None)
             self.plot_window = plot_window
             self.do_plot = True
+
+    def setAverage(self, average_window, checkbox_values, sensor_names):
+        self.average_names = []
+        self.average_plot_count = 0
+        for i in range(len(checkbox_values)):
+            if checkbox_values[i].get() == 1:
+                self.average_plot_count += 1
+                self.average_names.append(sensor_names[i])
+        if average_window is not None:
+            self.average_gen = average_window.generator(0, 490, self.average_plot_count)
+            self.average_gen.send(None)
+            self.average_window = average_window
+            self.do_average = True
+
+    def setAverageFFT2(self, average_window, checkbox_values, sensor_names):
+        self.fft_names = []
+        self.fft_plot_count = 0
+        for i in range(len(checkbox_values)):
+            if checkbox_values[i].get() == 1:
+                self.fft_plot_count += 1
+                self.fft_names.append(sensor_names[i])
+        if average_window is not None:
+            self.average_fft_gen2 = average_window.generator(self.fft_plot_count)
+            self.average_fft_gen2.send(None)
+            self.average_fft_window2 = average_window
+            self.do_average_fft2 = True
 
     def setAveragePlot(self, average_plot_window):
         if average_plot_window is not None:
@@ -112,7 +149,35 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.cleanUpPlot()
         self.cleanUpAvgFFT()
         self.cleanUpAvgPlot()
+        self.cleanUpAvg()
+        self.cleanUpAvgFFT2()
         self.cleanUp()
+
+    def cleanUpAvg(self):
+        if self.average_window is not None:
+            self.do_average = False
+            self.average_window.destroy()
+            self.average_window = None
+            while True:
+                try:
+                    self.average_gen.send(1)
+                    print("Send avg")
+                except:
+                    print("Empty")
+                    break
+
+    def cleanUpAvgFFT2(self):
+        if self.average_fft_window2 is not None:
+            self.do_average_fft2 = False
+            self.average_fft_window2.destroy()
+            self.average_fft_window2 = None
+            while True:
+                try:
+                    self.average_fft_gen2.send(1)
+                    print("Send avg")
+                except:
+                    print("Empty")
+                    break
 
     def cleanUpPlot(self):
         if self.plot_window is not None:
@@ -188,7 +253,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
                     return
                 continue
 
-        if self.do_average_plot or self.do_plot: # average and plot same length!!!
+        if self.do_average_plot or self.do_plot or self.do_average: # average and plot same length!!!
             print("Calculating averages")
             averages = [0 for _ in range(self.plot_count)]
             for j in range(1, 1025):
@@ -200,6 +265,8 @@ class myEmotiv(emokit.emotiv.Emotiv):
                     self.plot_gen[i].send(averages[i])
                 if self.do_average_plot:
                     self.average_plot_gen[i].send(averages[i])
+            if self.do_average:
+                self.average_gen.send(averages)
             print(averages)
 
         while True:
@@ -214,13 +281,26 @@ class myEmotiv(emokit.emotiv.Emotiv):
                     if not self.average_plot_gen[i].send(packet.sensors[self.names[i]]["value"]):
                         self.cleanUpAvgPlot()
                         break
+            if self.do_average:
+                for i in range(self.average_plot_count):
+                    if not self.average_gen.send(packet.sensors[self.average_names[i]]["value"]):
+                        self.cleanUpAvg()
+                        break
+            if self.do_average_fft2:
+                for i in range(self.fft_plot_count):
+                    if not self.average_fft_gen2.send(packet.sensors[self.fft_names[i]]["value"]):
+                        self.cleanUpAvgFFT2()
+                        break
             if self.do_fft:
                 if not self.fft_gen.send(packet.O2[0]):
                     self.cleanUpFft()
             if self.do_average_fft:
-                if not self.average_fft_gen.send(packet.O2[0]):
-                    self.cleanUpAvgFFT()
-            if not self.do_fft and not self.do_plot and not self.do_average_fft and not self.do_average_plot:
+                for i in range(self.plot_count):
+                    if not self.average_fft_gen.send(packet.O2[0]):
+                        self.cleanUpAvgFFT()
+                        break
+            if not self.do_fft and not self.do_plot and not self.do_average_fft and not self.do_average_plot \
+                    and not self.do_average and not self.do_average_fft2:
                 print("Nothing to do!")
                 break
         self.cleanUp()

@@ -11,7 +11,7 @@ import tkFileDialog
 
 class MainWindow(MyWindows.TkWindow):
     def __init__(self):
-        MyWindows.TkWindow.__init__(self, "Main Menu", 310, 400)
+        MyWindows.TkWindow.__init__(self, "Main Menu", 310, 480)
         self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.buttons = []
         self.radiobuttons = []
@@ -19,6 +19,8 @@ class MainWindow(MyWindows.TkWindow):
         self.background_textboxes = {}
         self.checkboxes = []
         self.checkbox_values = []
+        self.checkbox_values_avg = []
+        self.checkbox_values_fft = []
         self.targets = []
         self.initial = {"Height": 100,
                     "Width": 100,
@@ -35,6 +37,8 @@ class MainWindow(MyWindows.TkWindow):
         self.fft_window = None
         self.average_fft_window = None
         self.average_plot_window = None
+        self.average_window = None
+        self.average_fft_window2 = None
         self.initElements()
         self.myEmotiv = MyEmotiv.myEmotiv()
         self.mainloop()
@@ -91,21 +95,35 @@ class MainWindow(MyWindows.TkWindow):
         self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgPlot()))
         self.buttons.append(Button(buttonframe, text="FFT", command=lambda: self.fft()))
         self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgFft()))
+        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avg()))
+        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgFft2()))
         self.buttons.append(Button(buttonframe, text="Start", command=lambda: self.run()))
         self.buttons.append(Button(buttonframe, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe, text="Exit", command=lambda: self.exit()))
 
-        for i in range(5):
+        for i in range(6):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-        for i in range(5, len(self.buttons)):
-            self.buttons[i].grid(column=i-5, row=1, padx=5, pady=5)
+        for i in range(6, len(self.buttons)):
+            self.buttons[i].grid(column=i-6, row=1, padx=5, pady=5)
 
         checkboxframe = Frame(self)
         for i in range(len(self.sensor_names)):
             self.checkbox_values.append(IntVar())
             self.checkboxes.append(Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i]))
             self.checkboxes[-1].grid(column=i%7, row=i//7)
+
+        checkboxframe_avg = Frame(self)
+        for i in range(len(self.sensor_names)):
+            self.checkbox_values_avg.append(IntVar())
+            box = Checkbutton(checkboxframe_avg, text=self.sensor_names[i], variable=self.checkbox_values_avg[i])
+            box.grid(column=i%7, row=i//7)
+
+        checkboxframe_fft = Frame(self)
+        for i in range(len(self.sensor_names)):
+            self.checkbox_values_fft.append(IntVar())
+            box = Checkbutton(checkboxframe_fft, text=self.sensor_names[i], variable=self.checkbox_values_fft[i])
+            box.grid(column=i%7, row=i//7)
 
         windowtitleframe.grid(column=0, row=0)
         self.windowframe.grid(column=0, row=1)
@@ -115,6 +133,8 @@ class MainWindow(MyWindows.TkWindow):
         targetframe.grid(column=0, row=5)
         buttonframe.grid(column=0, row=6)
         checkboxframe.grid(column=0, row=7)
+        checkboxframe_avg.grid(column=0, row=8)
+        checkboxframe_fft.grid(column=0, row=9)
 
     def targetsWindow(self):
         self.saveValues(self.current_radio_button.get())
@@ -123,8 +143,14 @@ class MainWindow(MyWindows.TkWindow):
     def plot(self):
         self.plot_window = PlotWindow.PlotWindow()
 
+    def avg(self):
+        self.average_window = PlotWindow.AveragePlotWindow2()
+
     def avgFft(self):
         self.average_fft_window = FFTWindow.AverageFFTWindow()
+
+    def avgFft2(self):
+        self.average_fft_window2 = FFTWindow.AverageFFTWindow2()
 
     def avgPlot(self):
         self.average_plot_window = PlotWindow.AveragePlotWindow()
@@ -138,11 +164,15 @@ class MainWindow(MyWindows.TkWindow):
         self.myEmotiv.setPlot(self.plot_window)
         self.myEmotiv.setAverageFFT(self.average_fft_window)
         self.myEmotiv.setAveragePlot(self.average_plot_window)
+        self.myEmotiv.setAverage(self.average_window, self.checkbox_values_avg, self.sensor_names)
+        self.myEmotiv.setAverageFFT2(self.average_fft_window2, self.checkbox_values_fft, self.sensor_names)
         self.myEmotiv.run()
         self.fft_window = None
         self.plot_window = None
         self.average_fft_window = None
         self.average_plot_window = None
+        self.average_window = None
+        self.average_fft_window2 = None
 
     def loadValues(self, index):
         if index == 0:
