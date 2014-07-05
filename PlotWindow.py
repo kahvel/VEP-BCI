@@ -3,151 +3,109 @@ import Tkinter
 import MyWindows
 
 
-class PlotWindow(MyWindows.ToplevelWindow):
-    def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "Plot", 512, 512)
-        # self.plot_0 = 100, 250
-        # self.plot_length_x = 300
-        # self.plot_length_y = 200
-        # self.mark_length = 5
+def scaleY(y, average, index, plot_count):
+    return ((y-average) + index*512 + 512/2) / plot_count
+
+
+def resetAverage(average, length):
+    for i in range(length):
+        if i % 2 == 0:
+            average[i] = i/2
+        else:
+            average[i] = 0
+    print("Plot average reset")
+
+
+class AbstractPlotWindow(MyWindows.ToplevelWindow):
+    def __init__(self, title):
+        MyWindows.ToplevelWindow.__init__(self, title, 512, 512)
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.protocol("WM_DELETE_WINDOW", self.exit2)
         self.continue_generating = True
-        # self.scrollbar = Scrollbar(self.window, orient=HORIZONTAL)
-        # self.scrollbar.pack(side=BOTTOM, fill=X)
-        # self.scrollbar.config(command=self.canvas.xview)
-        # self.canvas.config(xscrollcommand=self.scrollbar.set)
         self.canvas.pack()
-        #self.initElements()
-        self.canvas.configure(xscrollincrement="1")
 
     def exit2(self):
         self.continue_generating = False
 
-    # def initElements(self):
-    #     self.canvas.create_line(self.plot_0, (self.plot_length_x+self.plot_0[0], self.plot_0[1]), width=2)
-    #     self.canvas.create_line(self.plot_0, (self.plot_0[0], self.plot_0[1]-self.plot_length_y), width=2)
-    #
-    #     for i in range(11):
-    #         x = self.plot_0[0] + (i * 30)
-    #         self.canvas.create_line(x, self.plot_0[1], x, self.plot_0[1]-self.mark_length, width=2)
-    #         self.canvas.create_text(x, self.plot_0[1]+self.mark_length, text='%d'% (10*i), anchor=N)
-    #
-    #     for i in range(6):
-    #         y = self.plot_0[1] - (i * 40)
-    #         self.canvas.create_line(self.plot_0[0], y, self.plot_0[0]+self.mark_length, y, width=2)
-    #         self.canvas.create_text(self.plot_0[0]-self.mark_length, y, text='%d'% (50*i), anchor=E)
 
-    def generator(self, index, height, plot_count):
-        prev = 512, 0
-        count = 10
+class PlotWindow(AbstractPlotWindow):
+    def __init__(self):
+        AbstractPlotWindow.__init__(self, "Plot")
+        self.canvas.configure(xscrollincrement="1")
+
+    def generator(self, index, plot_count):
         lines = []
         x = 512
-        lines.append(self.canvas.create_line(prev, prev))
         average = yield
+        prev = 512, 0
+        lines.append(self.canvas.create_line(prev, prev))
         while True:
-            list = []
-            for i in range(count):
-                for _ in range(2):
+            coordinates = []
+            for i in range(0, 10, 2):  # get 20 values before drawing new line
+                for _ in range(2):     # get 2 values before scrolling
                     x += 1
                     y = yield self.continue_generating
                     if not self.continue_generating:
-                        break
-                    list.append(x)
-                    # list.append(y-8000)
-                    # list.append(y/8192.0*height*2+index*height)
-                    list.append(scaleY(y, average, index, height, plot_count))
+                        return
+                    coordinates.append(x)
+                    coordinates.append(scaleY(y, average, index, plot_count))
                 if index == plot_count-1:
                     self.canvas.xview_scroll(2, Tkinter.UNITS)
                     self.canvas.update()
-            lines.append(self.canvas.create_line(prev, list))
-            prev = x, list[-1]
-            if x > 512*2:
+            lines.append(self.canvas.create_line(prev, coordinates))
+            prev = x, coordinates[-1]
+            if x > 1024:  # x value starts at 512
                 self.canvas.delete(lines[0])
                 del lines[0]
 
 
-def scaleY(y, average, index, height, plot_count):
-    return (y-average)/(plot_count)+index*height+height/2
-
-
-class AveragePlotWindow(MyWindows.ToplevelWindow):
+class AveragePlotWindow(AbstractPlotWindow):
     def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "Average Plot", 512, 512)
-        self.canvas = Tkinter.Canvas(self, width=512, height=512)
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
-        self.continue_generating = True
-        self.canvas.pack()
-        self.canvas.configure(xscrollincrement="1")
-
-    def exit2(self):
-        self.continue_generating = False
+        AbstractPlotWindow.__init__(self, "Average Plot")
 
     def resetAverage(self, average):
-        print("Plot average reset")
-        for i in range(1024):
-            if i % 2 == 0:
-                average.append(i/2)
-            else:
-                average.append(0)
+        resetAverage(average, 1024)
 
-    def generator(self, index, height, plot_count):
-        count = 512
-        average = []
-        self.resetAverage(average)
+    def generator(self, index, plot_count):
+        coordinates = [0 for _ in range(1024)]
+        self.resetAverage(coordinates)
         line = self.canvas.create_line(0, 0, 0, 0)
         j = 0
         avg = yield
         while True:
             j += 1
-            for i in range(1, count*2, 2):
+            for i in range(1, 1024, 2):  # get 512 values before drawing new line
                 y = yield self.continue_generating
                 if not self.continue_generating:
-                    break
-                average[i] = (average[i] * (j - 1) + scaleY(y, avg, index, height, plot_count)) / j
+                    return
+                coordinates[i] = (coordinates[i] * (j - 1) + scaleY(y, avg, index, plot_count)) / j
             self.canvas.delete(line)
-            #print(average)
-            line = self.canvas.create_line(average)
+            line = self.canvas.create_line(coordinates)
             if index == plot_count-1:
                 self.canvas.update()
 
-class AveragePlotWindow2(MyWindows.ToplevelWindow):
-    def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "Average Plot", 512, 512)
-        self.canvas = Tkinter.Canvas(self, width=512, height=512)
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
-        self.continue_generating = True
-        self.canvas.pack()
-        self.canvas.configure(xscrollincrement="1")
 
-    def exit2(self):
-        self.continue_generating = False
+class AveragePlotWindow2(AbstractPlotWindow):
+    def __init__(self):
+        AbstractPlotWindow.__init__(self, "Average Plot")
 
     def resetAverage(self, average):
-        print("Plot average reset")
-        for i in range(1024):
-            if i % 2 == 0:
-                average.append(i/2)
-            else:
-                average.append(0)
+        resetAverage(average, 1024)
 
-    def generator(self, index, height, plot_count):
-        count = 512
-        average = []
-        self.resetAverage(average)
+    def generator(self, index, plot_count):
+        coordinates = [0 for _ in range(1024)]
+        self.resetAverage(coordinates)
         line = self.canvas.create_line(0, 0, 0, 0)
         j = 0
         avg = yield
         while True:
             j += 1
-            for i in range(1, count*2, 2):
-                for l in range(plot_count):
+            for i in range(1, 1024, 2):      # get 512 values before drawing
+                for l in range(plot_count):  # get value for each channel
                     y = yield self.continue_generating
                     if not self.continue_generating:
-                        break
-                    average[i] = (average[i] * (j - 1) + scaleY(y, avg[l], index, height, 1)) / j
+                        return
+                    coordinates[i] = (coordinates[i] * (j - 1) + scaleY(y, avg[l], 0, 1)) / j
             self.canvas.delete(line)
-            #print(average)
-            line = self.canvas.create_line(average)
-            #if index == plot_count-1:
+            line = self.canvas.create_line(coordinates)
             self.canvas.update()

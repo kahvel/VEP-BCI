@@ -17,9 +17,7 @@ class MainWindow(MyWindows.TkWindow):
         self.radiobuttons = []
         self.target_textboxes = {}
         self.background_textboxes = {}
-        self.checkboxes = []
         self.checkbox_values = []
-        self.checkbox_values_avg = []
         self.checkbox_values_fft = []
         self.targets = []
         self.initial = {"Height": 100,
@@ -88,36 +86,37 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
         MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
 
-        buttonframe = Frame(self)
+        buttonframe1 = Frame(self)
+        buttonframe2 = Frame(self)
+        buttonframe3 = Frame(self)
 
-        self.buttons.append(Button(buttonframe, text="Targets", command=lambda: self.targetsWindow()))
-        self.buttons.append(Button(buttonframe, text="Plot", command=lambda: self.plot()))
-        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgPlot()))
-        self.buttons.append(Button(buttonframe, text="FFT", command=lambda: self.fft()))
-        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgFft()))
-        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avg()))
-        self.buttons.append(Button(buttonframe, text="Avg", command=lambda: self.avgFft2()))
-        self.buttons.append(Button(buttonframe, text="Start", command=lambda: self.run()))
-        self.buttons.append(Button(buttonframe, text="Load", command=lambda: self.loadFile()))
-        self.buttons.append(Button(buttonframe, text="Save", command=lambda: self.saveFile()))
-        self.buttons.append(Button(buttonframe, text="Exit", command=lambda: self.exit()))
+        self.buttons.append(Button(buttonframe1, text="Targets", command=lambda: self.targetsWindow()))
+        self.buttons.append(Button(buttonframe1, text="Start", command=lambda: self.run()))
+        self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
+        self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
+        self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
 
-        for i in range(6):
+        self.buttons.append(Button(buttonframe2, text="Plot", command=lambda: self.plot()))
+        self.buttons.append(Button(buttonframe2, text="AvgP", command=lambda: self.avgPlot()))
+        self.buttons.append(Button(buttonframe2, text="AvgP2", command=lambda: self.avg()))
+
+        self.buttons.append(Button(buttonframe3, text="FFT", command=lambda: self.fft()))
+        self.buttons.append(Button(buttonframe3, text="AvgF", command=lambda: self.avgFft()))
+        self.buttons.append(Button(buttonframe3, text="AvgF2", command=lambda: self.avgFft2()))
+
+        for i in range(5):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-        for i in range(6, len(self.buttons)):
-            self.buttons[i].grid(column=i-6, row=1, padx=5, pady=5)
+        for i in range(5, 8):
+            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
+        for i in range(8, 11):
+            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
 
         checkboxframe = Frame(self)
         for i in range(len(self.sensor_names)):
             self.checkbox_values.append(IntVar())
-            self.checkboxes.append(Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i]))
-            self.checkboxes[-1].grid(column=i%7, row=i//7)
-
-        checkboxframe_avg = Frame(self)
-        for i in range(len(self.sensor_names)):
-            self.checkbox_values_avg.append(IntVar())
-            box = Checkbutton(checkboxframe_avg, text=self.sensor_names[i], variable=self.checkbox_values_avg[i])
+            box = Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i])
             box.grid(column=i%7, row=i//7)
+
 
         checkboxframe_fft = Frame(self)
         for i in range(len(self.sensor_names)):
@@ -131,10 +130,11 @@ class MainWindow(MyWindows.TkWindow):
         targetbuttonframe.grid(column=0, row=3)
         self.radiobuttonframe.grid(column=0, row=4)
         targetframe.grid(column=0, row=5)
-        buttonframe.grid(column=0, row=6)
+        buttonframe2.grid(column=0, row=6)
         checkboxframe.grid(column=0, row=7)
-        checkboxframe_avg.grid(column=0, row=8)
+        buttonframe3.grid(column=0, row=8)
         checkboxframe_fft.grid(column=0, row=9)
+        buttonframe1.grid(column=0, row=10)
 
     def targetsWindow(self):
         self.saveValues(self.current_radio_button.get())
@@ -159,12 +159,11 @@ class MainWindow(MyWindows.TkWindow):
         self.fft_window = FFTWindow.FFTWindow()
 
     def run(self):
-        self.myEmotiv.setPlotCount(self.checkbox_values, self.sensor_names)
-        self.myEmotiv.setFFT(self.fft_window)
-        self.myEmotiv.setPlot(self.plot_window)
-        self.myEmotiv.setAverageFFT(self.average_fft_window)
-        self.myEmotiv.setAveragePlot(self.average_plot_window)
-        self.myEmotiv.setAverage(self.average_window, self.checkbox_values_avg, self.sensor_names)
+        self.myEmotiv.setFFT(self.fft_window, self.checkbox_values_fft, self.sensor_names)
+        self.myEmotiv.setPlot(self.plot_window, self.checkbox_values, self.sensor_names)
+        self.myEmotiv.setAverageFFT(self.average_fft_window, self.checkbox_values_fft, self.sensor_names)
+        self.myEmotiv.setAveragePlot(self.average_plot_window,self.checkbox_values, self.sensor_names)
+        self.myEmotiv.setAverage(self.average_window, self.checkbox_values, self.sensor_names)
         self.myEmotiv.setAverageFFT2(self.average_fft_window2, self.checkbox_values_fft, self.sensor_names)
         self.myEmotiv.run()
         self.fft_window = None
@@ -359,65 +358,3 @@ class BackgroundColorWindow(ColorWindow):
         self.textbox.insert(0, self.getColor())
         MyWindows.changeButtonColor(self.button, self.textbox)
         self.exit()
-
-# class LoadSaveWindow(ChildWindow):
-#     def __init__(self, title, parent, targets, column, row):
-#         ChildWindow.__init__(self, title, 160, 100, parent, column, row)
-#
-#         self.targets = targets
-#         #self.text = title
-#         self.textbox = None
-#         self.file_name = None
-#         self.initElements()
-#
-#     def initElements(self):
-#         self.textbox = newTextBox(self, "File name", 0, 0, 10)
-#
-# class LoadWindow(LoadSaveWindow):
-#     def __init__(self, targets, parent, background_textboxes):
-#         LoadSaveWindow.__init__(self, "Load", parent, targets, 0, 1)
-#         self.function = self.load
-#         self.background_textboxes = background_textboxes
-#         self.focus()
-#
-#     def load(self):
-#         self.file_name = self.textbox.get() # is it valid?
-#         file = open(self.file_name, "r")
-#         j = 0
-#         line = file.readline()
-#         values = line.split()
-#         k = 0
-#         for key in sorted(self.background_textboxes):
-#             self.background_textboxes[key].delete(0, END)
-#             self.background_textboxes[key].insert(0, values[k])
-#             k += 1
-#         for line in file:
-#             values = line.split()
-#             target = self.targets[j]
-#             i = 0
-#             for key in sorted(target.__dict__):
-#                 exec("target."+key+"=values[i]")
-#                 i += 1
-#             j += 1
-#         self.exit()
-#
-#
-# class SaveWindow(LoadSaveWindow):
-#     def __init__(self, targets, parent, background_textboxes):
-#         LoadSaveWindow.__init__(self, "Save", parent, targets, 0, 1)
-#         self.function = self.save
-#         self.background_textboxes = background_textboxes
-#         self.focus()
-#
-#     def save(self):
-#         self.file_name = self.textbox.get() # is it valid?
-#         file = open(self.file_name, "w")
-#         for key in sorted(self.background_textboxes):
-#             file.write(self.background_textboxes[key].get()+" ")
-#         file.write("\n")
-#         for target in self.targets:
-#             for key in sorted(target.__dict__):
-#                 exec("file.write(str(target."+key+")+' ')")
-#             file.write("\n")
-#         file.close()
-#         self.exit()

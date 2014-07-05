@@ -6,9 +6,13 @@ from scipy import signal
 import matplotlib.pyplot as plt
 
 
-class FFTWindow(MyWindows.ToplevelWindow):
-    def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "FFT", 512, 512)
+def scaleY(y, index, plot_count):
+    return ((y*-30+50) + index*512 + 512/2) / plot_count
+
+
+class AbstractFFTWindow(MyWindows.ToplevelWindow):
+    def __init__(self, title):
+        MyWindows.ToplevelWindow.__init__(self, title, 512, 512)
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.width = 512
         self.canvas.pack()
@@ -18,7 +22,12 @@ class FFTWindow(MyWindows.ToplevelWindow):
     def exit2(self):
         self.continue_generating = False
 
-    def generator(self):
+
+class FFTWindow(AbstractFFTWindow):
+    def __init__(self):
+        AbstractFFTWindow.__init__(self, "FFT")
+
+    def generator(self, index, plot_count):
         count = 16
         x = 0
         coordinates = []
@@ -27,57 +36,42 @@ class FFTWindow(MyWindows.ToplevelWindow):
             for _ in range(count):
                 y = yield self.continue_generating
                 if not self.continue_generating:
-                    break
+                    return
                 coordinates.append(y)
                 x += 1
             if x > 1024:
                 del coordinates[:count]
             self.canvas.delete(line)
-            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(signal.detrend(coordinates))))*-50+400)])
+            line = self.canvas.create_line([i for i in enumerate(scaleY(np.log10(np.abs(np.fft.rfft(signal.detrend(coordinates)))),index,plot_count))])
             self.canvas.update()
 
 
-class AverageFFTWindow(MyWindows.ToplevelWindow):
+class AverageFFTWindow(AbstractFFTWindow):
     def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "Average FFT", 512, 512)
-        self.canvas = Tkinter.Canvas(self, width=512, height=512)
-        self.width = 512
-        self.canvas.pack()
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
-        self.continue_generating = True
+        AbstractFFTWindow.__init__(self, "Average FFT")
 
-    def exit2(self):
-        self.continue_generating = False
-
-    def generator(self): # Vale pidi!
+    def generator(self, index, plot_count): # Vale pidi!
         count = 1024
         average = [0 for _ in range(count)]
-        line = self.canvas.create_line(0,0,0,0)
+        line = self.canvas.create_line(0, 0, 0, 0)
         j = 0
         while True:
             j += 1
             for i in range(count):
                 y = yield self.continue_generating
                 if not self.continue_generating:
-                    break
+                    return
                 average[i] = (average[i] * (j - 1) + y) / j
             self.canvas.delete(line)
-            line = self.canvas.create_line([i for i in enumerate(np.log10(np.abs(np.fft.rfft(average)))*-50+400)])
+            line = self.canvas.create_line([i for i in enumerate(scaleY(np.log10(np.abs(np.fft.rfft(average))),index,plot_count))])
             self.canvas.update()
 
-class AverageFFTWindow2(MyWindows.ToplevelWindow):
+
+class AverageFFTWindow2(AbstractFFTWindow):
     def __init__(self):
-        MyWindows.ToplevelWindow.__init__(self, "Average FFT", 512, 512)
-        self.canvas = Tkinter.Canvas(self, width=512, height=512)
-        self.width = 512
-        self.canvas.pack()
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
-        self.continue_generating = True
+        AbstractFFTWindow.__init__(self, "Average FFT")
 
-    def exit2(self):
-        self.continue_generating = False
-
-    def generator(self, plot_count):
+    def generator(self, index, plot_count):  # Average not adding up
         count = 1024
         coordinates = []
         for _ in range(plot_count):
@@ -88,9 +82,9 @@ class AverageFFTWindow2(MyWindows.ToplevelWindow):
             # j += 1
             for k in range(count):
                 for i in range(plot_count):
-                    y = yield self.continue_generating
+                    y = yield self.continue_generating  # Stopiteration exception!
                     if not self.continue_generating:
-                        break
+                        return
                     coordinates[i][k] = y
             ffts = []
             # print(coordinates)
@@ -105,7 +99,7 @@ class AverageFFTWindow2(MyWindows.ToplevelWindow):
                 sum = 0
                 for i in range(plot_count):
                     sum += ffts[i][k]
-                final_average.append(sum/plot_count*-50+400)
+                final_average.append(scaleY(sum, index, plot_count))
             self.canvas.delete(line)
             line = self.canvas.create_line([i for i in enumerate(final_average)])
             self.canvas.update()
