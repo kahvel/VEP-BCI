@@ -11,15 +11,6 @@ class AbstractPlot:
         self.sensor_names = []
         self.plot_count = 0
 
-    def setup(self, window):
-        if window is not None:
-            self.generator = []
-            for i in range(self.plot_count):
-                self.generator.append(window.generator(i, self.plot_count))
-                self.generator[i].send(None)
-            self.window = window
-            self.do = True
-
     def cleanUp(self):
         if self.window is not None:
             self.do = False
@@ -41,6 +32,14 @@ class AbstractPlot:
                     self.cleanUp()
                     break
 
+    def setSensorNames(self, checkbox_values, sensor_names):
+        self.plot_count = 0
+        self.sensor_names = []
+        for i in range(len(checkbox_values)):
+            if checkbox_values[i].get() == 1:
+                self.plot_count += 1
+                self.sensor_names.append(sensor_names[i])
+
 
 class Plot(AbstractPlot):
     def __init__(self):
@@ -56,36 +55,37 @@ class Plot(AbstractPlot):
                 self.generator[i].send(averages[i])
             print(averages)
 
-    def setSensorNames(self, checkbox_values, sensor_names):
-        self.plot_count = 0
-        self.sensor_names = []
-        for i in range(len(checkbox_values)):
-            if checkbox_values[i].get() == 1:
-                self.plot_count += 1
-                self.sensor_names.append(sensor_names[i])
+    def setup(self, window):
+        if window is not None:
+            self.generator = []
+            for i in range(self.plot_count):
+                self.generator.append(window.generator(i, self.plot_count))
+                self.generator[i].send(None)
+            self.window = window
+            self.do = True
+
 
 class AveragePlot(AbstractPlot):
     def __init__(self):
         AbstractPlot.__init__(self)
-        self.actual_plot_count = 0
-
-    def setSensorNames(self, checkbox_values, sensor_names):
-        self.plot_count = 1
-        self.actual_plot_count = 0
-        self.sensor_names = []
-        for i in range(len(checkbox_values)):
-            if checkbox_values[i].get() == 1:
-                self.actual_plot_count += 1
-                self.sensor_names.append(sensor_names[i])
 
     def calculateAverage(self, packets):
         if self.do:
-            averages = [0 for _ in range(self.actual_plot_count)]
+            averages = [0 for _ in range(self.plot_count)]
             for j in range(1, len(packets)+1):
-                for i in range(self.actual_plot_count):
+                for i in range(self.plot_count):
                     averages[i] = (averages[i] * (j - 1) + packets[j-1].sensors[self.sensor_names[i]]["value"]) / j
             self.generator[0].send(averages)
             print(averages)
+
+    def setup(self, window):
+        if window is not None:
+            self.generator = []
+            self.generator.append(window.generator(self.plot_count))
+            self.generator[0].send(None)
+            self.window = window
+            self.do = True
+
 
 class myEmotiv(emokit.emotiv.Emotiv):
     def __init__(self):

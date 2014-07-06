@@ -50,20 +50,25 @@ class AverageFFTWindow(AbstractFFTWindow):
     def __init__(self):
         AbstractFFTWindow.__init__(self, "Average FFT")
 
-    def generator(self, index, plot_count): # Vale pidi!
-        count = 1024
-        average = [0 for _ in range(count)]
+    def generator(self, index, plot_count):
+        coordinates = [0 for _ in range(1024)]
+        average = [0 for _ in range(513)]
         line = self.canvas.create_line(0, 0, 0, 0)
         j = 0
         while True:
             j += 1
-            for i in range(count):
+            for i in range(1024):
                 y = yield self.continue_generating
                 if not self.continue_generating:
                     return
-                average[i] = (average[i] * (j - 1) + y) / j
+                coordinates[i] = y
+            fft = np.log10(np.abs(np.fft.rfft(signal.detrend(coordinates))))
+            scaled_average = []
+            for i in range(len(fft)):
+                average[i] = (average[i] * (j - 1) + fft[i]) / j
+                scaled_average.append(scaleY(average[i], index, plot_count))
             self.canvas.delete(line)
-            line = self.canvas.create_line([i for i in enumerate(scaleY(np.log10(np.abs(np.fft.rfft(average))),index,plot_count))])
+            line = self.canvas.create_line([i for i in enumerate(scaled_average)])
             self.canvas.update()
 
 
@@ -71,18 +76,18 @@ class AverageFFTWindow2(AbstractFFTWindow):
     def __init__(self):
         AbstractFFTWindow.__init__(self, "Average FFT")
 
-    def generator(self, index, plot_count):  # Average not adding up
-        count = 1024
+    def generator(self, plot_count):
         coordinates = []
         for _ in range(plot_count):
             coordinates.append([0 for _ in range(1024)])
+        average = [0 for _ in range(513)]
         line = self.canvas.create_line(0, 0, 0, 0)
-        # j = 0
+        j = 0
         while True:
-            # j += 1
-            for k in range(count):
+            j += 1
+            for k in range(1024):
                 for i in range(plot_count):
-                    y = yield self.continue_generating  # Stopiteration exception!
+                    y = yield self.continue_generating  # Stopiteration exception
                     if not self.continue_generating:
                         return
                     coordinates[i][k] = y
@@ -93,13 +98,14 @@ class AverageFFTWindow2(AbstractFFTWindow):
             # plt.plot(x, y)
             # plt.show()
             for i in range(plot_count):
-                ffts.append(np.log10(np.abs(np.fft.rfft(coordinates[i]))))
-            final_average = []
-            for k in range(512):
+                ffts.append(np.log10(np.abs(np.fft.rfft(signal.detrend(coordinates[i])))))
+            scaled_average = []
+            for k in range(len(ffts[0])):
                 sum = 0
                 for i in range(plot_count):
                     sum += ffts[i][k]
-                final_average.append(scaleY(sum, index, plot_count))
+                average[k] = (average[k] * (j - 1) + sum/plot_count) / j
+                scaled_average.append(scaleY(average[k], 0, 1))
             self.canvas.delete(line)
-            line = self.canvas.create_line([i for i in enumerate(final_average)])
+            line = self.canvas.create_line([i for i in enumerate(scaled_average)])
             self.canvas.update()

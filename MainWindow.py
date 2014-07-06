@@ -11,7 +11,7 @@ import tkFileDialog
 
 class MainWindow(MyWindows.TkWindow):
     def __init__(self):
-        MyWindows.TkWindow.__init__(self, "Main Menu", 310, 480)
+        MyWindows.TkWindow.__init__(self, "Main Menu", 310, 500)
         self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.buttons = []
         self.radiobuttons = []
@@ -26,7 +26,7 @@ class MainWindow(MyWindows.TkWindow):
                     "y": 10,
                     "Freq": 10,
                     "Color1": "#000000",
-                    "Color2": "#ffffff"}
+                    "Color2": "#777777"}
         self.targets.append(self.initial)
         self.targets.append(self.initial.copy())
         self.target_color_buttons = {}
@@ -51,10 +51,12 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.newTextBox(self.windowframe, "Height:", 2, 0, self.background_textboxes)
         MyWindows.newColorButton(4, 0, self.backgroundColor, self.windowframe,
                              "Color", self.background_textboxes, self.background_color_buttons)
+        MyWindows.newTextBox(self.windowframe, "Freq:", 0, 1, self.background_textboxes)
 
         self.background_textboxes["Width"].insert(0, 800)
         self.background_textboxes["Height"].insert(0, 600)
-        self.background_textboxes["Color"].insert(0, "#eeeeee")
+        self.background_textboxes["Color"].insert(0, "#777777")
+        self.background_textboxes["Freq"].insert(0, 60)
 
         targettitleframe = Frame(self)
         self.radiobuttonframe = Frame(self)

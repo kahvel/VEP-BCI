@@ -7,8 +7,8 @@ def scaleY(y, average, index, plot_count):
     return ((y-average) + index*512 + 512/2) / plot_count
 
 
-def resetAverage(average, length):
-    for i in range(length):
+def resetAverage(average):
+    for i in range(len(average)):
         if i % 2 == 0:
             average[i] = i/2
         else:
@@ -64,7 +64,7 @@ class AveragePlotWindow(AbstractPlotWindow):
         AbstractPlotWindow.__init__(self, "Average Plot")
 
     def resetAverage(self, average):
-        resetAverage(average, 1024)
+        resetAverage(average)
 
     def generator(self, index, plot_count):
         coordinates = [0 for _ in range(1024)]
@@ -90,9 +90,9 @@ class AveragePlotWindow2(AbstractPlotWindow):
         AbstractPlotWindow.__init__(self, "Average Plot")
 
     def resetAverage(self, average):
-        resetAverage(average, 1024)
+        resetAverage(average)
 
-    def generator(self, index, plot_count):
+    def generator(self, plot_count):
         coordinates = [0 for _ in range(1024)]
         self.resetAverage(coordinates)
         line = self.canvas.create_line(0, 0, 0, 0)
