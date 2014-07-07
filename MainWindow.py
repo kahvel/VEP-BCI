@@ -7,6 +7,10 @@ import PlotWindow
 import MyEmotiv
 import FFTWindow
 import tkFileDialog
+import multiprocessing
+import threading
+import pp
+import Main
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -38,7 +42,7 @@ class MainWindow(MyWindows.TkWindow):
         self.average_window = None
         self.average_fft_window2 = None
         self.initElements()
-        self.myEmotiv = MyEmotiv.myEmotiv()
+        # self.myEmotiv = MyEmotiv.myEmotiv()
         self.mainloop()
 
     def initElements(self):
@@ -70,7 +74,7 @@ class MainWindow(MyWindows.TkWindow):
 
         Button(targetbuttonframe, text="Add", command=lambda:self.addTarget()).grid(column=1, row=0, padx=5, pady=5)
         Button(targetbuttonframe, text="Remove", command=lambda:self.removeTarget()).grid(column=2, row=0, padx=5, pady=5)
-
+        Button(targetbuttonframe, text="Show", command=lambda: self.targetsWindow()).grid(column=3, row=0, padx=5, pady=5)
 
         self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text="All", variable=self.current_radio_button,
                                              value=0, command=lambda:self.radioButtonChange()))
@@ -89,42 +93,14 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
 
         buttonframe1 = Frame(self)
-        buttonframe2 = Frame(self)
-        buttonframe3 = Frame(self)
 
-        self.buttons.append(Button(buttonframe1, text="Targets", command=lambda: self.targetsWindow()))
-        self.buttons.append(Button(buttonframe1, text="Start", command=lambda: self.run()))
+        self.buttons.append(Button(buttonframe1, text="Plots", command=lambda: self.run()))
         self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
 
-        self.buttons.append(Button(buttonframe2, text="Plot", command=lambda: self.plot()))
-        self.buttons.append(Button(buttonframe2, text="AvgP", command=lambda: self.avgPlot()))
-        self.buttons.append(Button(buttonframe2, text="AvgP2", command=lambda: self.avg()))
-
-        self.buttons.append(Button(buttonframe3, text="FFT", command=lambda: self.fft()))
-        self.buttons.append(Button(buttonframe3, text="AvgF", command=lambda: self.avgFft()))
-        self.buttons.append(Button(buttonframe3, text="AvgF2", command=lambda: self.avgFft2()))
-
-        for i in range(5):
+        for i in range(4):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-        for i in range(5, 8):
-            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-        for i in range(8, 11):
-            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-
-        checkboxframe = Frame(self)
-        for i in range(len(self.sensor_names)):
-            self.checkbox_values.append(IntVar())
-            box = Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i])
-            box.grid(column=i%7, row=i//7)
-
-
-        checkboxframe_fft = Frame(self)
-        for i in range(len(self.sensor_names)):
-            self.checkbox_values_fft.append(IntVar())
-            box = Checkbutton(checkboxframe_fft, text=self.sensor_names[i], variable=self.checkbox_values_fft[i])
-            box.grid(column=i%7, row=i//7)
 
         windowtitleframe.grid(column=0, row=0)
         self.windowframe.grid(column=0, row=1)
@@ -132,48 +108,21 @@ class MainWindow(MyWindows.TkWindow):
         targetbuttonframe.grid(column=0, row=3)
         self.radiobuttonframe.grid(column=0, row=4)
         targetframe.grid(column=0, row=5)
-        buttonframe2.grid(column=0, row=6)
-        checkboxframe.grid(column=0, row=7)
-        buttonframe3.grid(column=0, row=8)
-        checkboxframe_fft.grid(column=0, row=9)
-        buttonframe1.grid(column=0, row=10)
+        buttonframe1.grid(column=0, row=6)
 
     def targetsWindow(self):
+        main_conn, psy_conn = multiprocessing.Pipe()
         self.saveValues(self.current_radio_button.get())
-        TargetsWindow.TargetsWindow(self.background_textboxes, self.targets)
-
-    def plot(self):
-        self.plot_window = PlotWindow.PlotWindow()
-
-    def avg(self):
-        self.average_window = PlotWindow.AveragePlotWindow2()
-
-    def avgFft(self):
-        self.average_fft_window = FFTWindow.AverageFFTWindow()
-
-    def avgFft2(self):
-        self.average_fft_window2 = FFTWindow.AverageFFTWindow2()
-
-    def avgPlot(self):
-        self.average_plot_window = PlotWindow.AveragePlotWindow()
-
-    def fft(self):
-        self.fft_window = FFTWindow.FFTWindow()
+        bk = {}
+        for key in self.background_textboxes:
+            bk[key] = self.background_textboxes[key].get()
+        p = multiprocessing.Process(target=Main.runPsychopy, args=(psy_conn, bk, self.targets))
+        p.start()
 
     def run(self):
-        self.myEmotiv.setFFT(self.fft_window, self.checkbox_values_fft, self.sensor_names)
-        self.myEmotiv.setPlot(self.plot_window, self.checkbox_values, self.sensor_names)
-        self.myEmotiv.setAverageFFT(self.average_fft_window, self.checkbox_values_fft, self.sensor_names)
-        self.myEmotiv.setAveragePlot(self.average_plot_window,self.checkbox_values, self.sensor_names)
-        self.myEmotiv.setAverage(self.average_window, self.checkbox_values, self.sensor_names)
-        self.myEmotiv.setAverageFFT2(self.average_fft_window2, self.checkbox_values_fft, self.sensor_names)
-        self.myEmotiv.run()
-        self.fft_window = None
-        self.plot_window = None
-        self.average_fft_window = None
-        self.average_plot_window = None
-        self.average_window = None
-        self.average_fft_window2 = None
+        main_conn, emo_conn = multiprocessing.Pipe()
+        p = multiprocessing.Process(target=Main.runPlotControl, args=(emo_conn, self.sensor_names))
+        p.start()
 
     def loadValues(self, index):
         if index == 0:

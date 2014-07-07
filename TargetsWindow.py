@@ -8,8 +8,10 @@ class Target:
                                 pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=target["Color1"])
         self.freq = float(target["Freq"])
         self.sequence = "01"
-        self.freq_on = int(int(monitor_frequency)/self.freq//2)
-        self.freq_off = int(int(monitor_frequency)/self.freq/2.0+0.5)
+        monitor_frequency = int(monitor_frequency)
+        self.freq_on = int(monitor_frequency/self.freq//2)
+        self.freq_off = int(monitor_frequency/self.freq/2.0+0.5)
+        print "Frequency is " + str(float(monitor_frequency)/(self.freq_off+self.freq_on))
 
     def generator(self):
         while True:
@@ -23,21 +25,27 @@ class Target:
 
 
 class TargetsWindow:
-    def __init__(self, background_textboxes, targets):
-        self.window = visual.Window([int(background_textboxes["Width"].get()),
-                                     int(background_textboxes["Height"].get())],
-                                    units="pix", color=background_textboxes["Color"].get())
-        self.monitor_frequency = background_textboxes["Freq"].get()
-        #self.window._refreshThreshold = 1/60
+    def __init__(self, main_connection):
         logging.console.setLevel(logging.WARNING)
         self.generators = []
+        self.window = None
+        self.monitor_frequency = None
+        # clock = core.Clock()
+        #self.window._refreshThreshold = 1/60
+        #self.window.setRecordFrameIntervals(True)
+        #self.run()
+
+    def setWindow(self, background_data):
+        self.window = visual.Window([int(background_data["Width"]),
+                                     int(background_data["Height"])],
+                                    units="pix", color=background_data["Color"])
+        self.monitor_frequency = background_data["Freq"]
+
+    def setTargets(self, targets):
         for target in targets[1:]:
             rect = Target(target, self.window, self.monitor_frequency)
             self.generators.append(rect.generator())
             self.generators[-1].send(None)
-        clock = core.Clock()
-        #self.window.setRecordFrameIntervals(True)
-        self.run()
 
     def run(self):
         while True:
@@ -48,6 +56,5 @@ class TargetsWindow:
                 break
             event.clearEvents()
         self.window.close()
-        #core.quit()
 
 

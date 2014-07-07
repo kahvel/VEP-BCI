@@ -16,8 +16,13 @@ class AbstractFFTWindow(MyWindows.ToplevelWindow):
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.width = 512
         self.canvas.pack()
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
         self.continue_generating = True
+
+    def addGenCleanup(self):
+        self.protocol("WM_DELETE_WINDOW", self.exit2)
+
+    def removeGenCleanup(self):
+        self.protocol("WM_DELETE_WINDOW", self.exit)
 
     def exit2(self):
         self.continue_generating = False

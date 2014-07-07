@@ -20,9 +20,14 @@ class AbstractPlotWindow(MyWindows.ToplevelWindow):
     def __init__(self, title):
         MyWindows.ToplevelWindow.__init__(self, title, 512, 512)
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
         self.continue_generating = True
         self.canvas.pack()
+
+    def addGenCleanup(self):
+        self.protocol("WM_DELETE_WINDOW", self.exit2)
+
+    def removeGenCleanup(self):
+        self.protocol("WM_DELETE_WINDOW", self.exit)
 
     def exit2(self):
         self.continue_generating = False
@@ -41,7 +46,7 @@ class PlotWindow(AbstractPlotWindow):
         lines.append(self.canvas.create_line(prev, prev))
         while True:
             coordinates = []
-            for i in range(0, 10, 2):  # get 20 values before drawing new line
+            for i in range(0, 10, 2):  # get 10 values before drawing new line
                 for _ in range(2):     # get 2 values before scrolling
                     x += 1
                     y = yield self.continue_generating
