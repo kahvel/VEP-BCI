@@ -71,6 +71,17 @@ class myEmotiv(emokit.emotiv.Emotiv):
                     return
                 continue
         while True:
-            packet = self.dequeue()
-            self.connection.send(packet)
+            try:
+                packet = self.packets.get(True, 1)
+                # print packet
+                self.connection.send(packet)
+            except:
+                ""
+            if self.connection.poll():
+                message = self.connection.recv()
+                if message == "Stop":
+                    break
+            # packet = self.dequeue()
+            # print packet
+            # self.connection.send(packet)
         self.cleanUp()

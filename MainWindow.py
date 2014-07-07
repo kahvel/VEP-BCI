@@ -1,15 +1,9 @@
 __author__ = 'Anti'
 
 from Tkinter import *
-import TargetsWindow
 import MyWindows
-import PlotWindow
-import MyEmotiv
-import FFTWindow
 import tkFileDialog
 import multiprocessing
-import threading
-import pp
 import Main
 
 
@@ -74,7 +68,6 @@ class MainWindow(MyWindows.TkWindow):
 
         Button(targetbuttonframe, text="Add", command=lambda:self.addTarget()).grid(column=1, row=0, padx=5, pady=5)
         Button(targetbuttonframe, text="Remove", command=lambda:self.removeTarget()).grid(column=2, row=0, padx=5, pady=5)
-        Button(targetbuttonframe, text="Show", command=lambda: self.targetsWindow()).grid(column=3, row=0, padx=5, pady=5)
 
         self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text="All", variable=self.current_radio_button,
                                              value=0, command=lambda:self.radioButtonChange()))
@@ -94,12 +87,13 @@ class MainWindow(MyWindows.TkWindow):
 
         buttonframe1 = Frame(self)
 
+        self.buttons.append(Button(buttonframe1, text="Targets", command=lambda: self.targetsWindow()))
         self.buttons.append(Button(buttonframe1, text="Plots", command=lambda: self.run()))
         self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
 
-        for i in range(4):
+        for i in range(5):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
 
         windowtitleframe.grid(column=0, row=0)
