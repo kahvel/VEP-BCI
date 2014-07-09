@@ -3,29 +3,27 @@ __author__ = 'Anti'
 import Tkinter
 
 
-class TkWindow(Tkinter.Tk):
+class AbstractWindow(object):
+    def __init__(self, title, width, height, color="#eeeeee"):
+        self.title(title)
+        self.geometry(str(width)+"x"+str(height))
+        self.resizable(0, 0)
+        self.configure(background=color)
 
+    def exit(self):
+        self.destroy()
+
+
+class TkWindow(AbstractWindow, Tkinter.Tk):
     def __init__(self, title, width, height, color="#eeeeee"):
         Tkinter.Tk.__init__(self)
-        self.title(title)
-        self.geometry(str(width)+"x"+str(height))
-        self.resizable(0,0)
-        self.configure(background=color)
+        AbstractWindow.__init__(self, title, width, height, color)
 
-    def exit(self):
-        self.destroy()
 
-class ToplevelWindow(Tkinter.Toplevel):
-
+class ToplevelWindow(AbstractWindow, Tkinter.Toplevel):
     def __init__(self, title, width, height, color="#eeeeee"):
         Tkinter.Toplevel.__init__(self)
-        self.title(title)
-        self.geometry(str(width)+"x"+str(height))
-        self.resizable(0,0)
-        self.configure(background=color)
-
-    def exit(self):
-        self.destroy()
+        AbstractWindow.__init__(self, title, width, height, color)
 
 
 def changeButtonColor(button, textbox):

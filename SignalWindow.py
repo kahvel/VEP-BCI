@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 import Tkinter
 import MyWindows
+import Queue
 
 
 def scaleY(y, average, index, plot_count):
@@ -22,6 +23,7 @@ class AbstractSignalWindow(MyWindows.ToplevelWindow):
         self.continue_generating = True
         self.canvas.pack()
         self.plot_count = 0
+        self.channel_count = 0
         self.sensor_names = []
         self.generators = []
         self.averages = []
@@ -36,11 +38,59 @@ class AbstractSignalWindow(MyWindows.ToplevelWindow):
     #     self.continue_generating = False
 
     def calculateAverage(self, packets):
-        self.averages = [0 for _ in range(self.plot_count)]
+        self.averages = [0 for _ in range(self.channel_count)]
         for j in range(1, len(packets)+1):
-            for i in range(self.plot_count):
+            for i in range(self.channel_count):
                 self.averages[i] = (self.averages[i] * (j - 1) + packets[j-1].sensors[self.sensor_names[i]]["value"]) / j
         print(self.averages)
+
+    def setup(self, checkbox_values, sensor_names):
+        self.channel_count = 0
+        self.sensor_names = []
+        self.generators = []
+        # self.addGenCleanup()
+        for i in range(len(checkbox_values)):
+            if checkbox_values[i].get() == 1:
+                self.sensor_names.append(sensor_names[i])
+                self.channel_count += 1
+        self.setPlotCount()
+        for i in range(self.plot_count):
+            self.generators.append(self.generator(i))
+            self.generators[i].send(None)
+
+    def scale(self, coordinates, index, packet_count):
+        result = []
+        for i in range(packet_count-len(coordinates), packet_count):
+            result.append(i)
+            result.append(scaleY(coordinates.popleft(), self.getChannelAverage(index), index, self.plot_count))
+        return result
+
+    def generator(self, index):
+        average_generator = self.gen()
+        try:
+            lines = []
+            packet_count = 0
+            delete = False
+            average_generator.send(None)
+            while True:
+                y = yield
+                avg = average_generator.send(y)
+                if packet_count % 8 == 0 and packet_count != 0:
+                    scaled_avg = self.scale(avg, index, packet_count)
+                    lines.append(self.canvas.create_line(scaled_avg))
+                    average_generator.next()
+                    if packet_count == 512:
+                        packet_count = 0
+                        delete = True
+                    if delete:
+                        self.canvas.delete(lines[0])
+                        del lines[0]
+                    if index == self.plot_count-1:
+                        self.canvas.update()
+                packet_count += 1
+        finally:
+            print "closing average generator"
+            average_generator.close()
 
 
 class SignalWindow(AbstractSignalWindow):
@@ -48,132 +98,100 @@ class SignalWindow(AbstractSignalWindow):
         AbstractSignalWindow.__init__(self, "Plot")
         self.canvas.configure(xscrollincrement="1")
 
-    def setup(self, checkbox_values, sensor_names):
-        self.plot_count = 0
-        self.sensor_names = []
-        # self.addGenCleanup()
-        for i in range(len(checkbox_values)):
-            if checkbox_values[i].get() == 1:
-                self.sensor_names.append(sensor_names[i])
-                self.generators.append(self.generator(self.plot_count))
-                self.generators[self.plot_count].send(None)
-                self.plot_count += 1
+    def setPlotCount(self):
+        self.plot_count = self.channel_count
+
+    def getChannelAverage(self, index):
+        return self.averages[index]
 
     def sendPacket(self, packet):
-        for i in range(self.plot_count):
+        for i in range(self.channel_count):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
 
-    def generator(self, index):
-        lines = []
-        x = 512
-        prev = 512, 0
-        lines.append(self.canvas.create_line(prev, prev))
+    def gen(self):
+        average = [0 for _ in range(8)]
+        prev = [0]
+        yield
         while True:
-            coordinates = []
-            for i in range(0, 10, 2):  # get 10 values before drawing new line
-                for _ in range(2):     # get 2 values before scrolling
-                    x += 1
-                    y = yield self.continue_generating
-                    if not self.continue_generating:
-                        return
-                    coordinates.append(x)
-                    coordinates.append(scaleY(y, self.averages[index], index, self.plot_count))
-                if index == self.plot_count-1:
-                    self.canvas.xview_scroll(2, Tkinter.UNITS)
-                    self.canvas.update()
-            lines.append(self.canvas.create_line(prev, coordinates))
-            prev = x, coordinates[-1]
-            if x > 1024:  # x value starts at 512
-                self.canvas.delete(lines[0])
-                del lines[0]
+            for i in range(8):
+                y = yield
+                average[i] = y
+            yield Queue.deque(prev+average)
+            prev = [average[-1]]
+
+    # def generator(self, index):
+    #     prev = 0, 0
+    #     lines = [self.canvas.create_line(prev, prev)]
+    #     packet_count = 0
+    #     coordinates = []
+    #     while True:
+    #         y = yield self.continue_generating
+    #         if not self.continue_generating:
+    #             return
+    #         coordinates.append(packet_count)
+    #         coordinates.append(scaleY(y, self.averages[index], index, self.plot_count))
+    #         if packet_count % 10 == 0:
+    #             lines.append(self.canvas.create_line(prev, coordinates))
+    #             prev = packet_count, coordinates[-1]
+    #             coordinates = []
+    #             if packet_count > 512:
+    #                 self.canvas.delete(lines[0])
+    #                 del lines[0]
+    #         if index == self.plot_count-1:
+    #             if packet_count % 2 == 0:
+    #                 if packet_count > 512:
+    #                     self.canvas.xview_scroll(2, Tkinter.UNITS)
+    #                 self.canvas.update()
+    #         packet_count += 1
 
 
-class AverageSignalWindow(AbstractSignalWindow):
+class AbstractAverageSignal(AbstractSignalWindow):
+    def __init__(self, title):
+        AbstractSignalWindow.__init__(self, title)
+
+    def gen(self):
+        average = [0 for _ in range(512)]
+        k = 0
+        prev = [0]
+        yield
+        while True:
+            k += 1
+            for i in range(64):
+                for j in range(8):
+                    y = yield
+                    average[i*8+j] = (average[i*8+j] * (k - 1) + y) / k
+                yield Queue.deque(prev+average[i*8:i*8+8])
+                prev = [average[i*8+8-1]]
+
+
+class AverageSignalWindow(AbstractAverageSignal):
     def __init__(self):
-        AbstractSignalWindow.__init__(self, "Average Plot")
+        AbstractAverageSignal.__init__(self, "Average Plot")
 
-    def resetAverage(self, average):
-        resetAverage(average)
+    def getChannelAverage(self, index):
+        return self.averages[index]
 
-    def setup(self, checkbox_values, sensor_names):
-        self.plot_count = 0
-        self.sensor_names = []
-        # self.addGenCleanup()
-        for i in range(len(checkbox_values)):
-            if checkbox_values[i].get() == 1:
-                self.sensor_names.append(sensor_names[i])
-                self.generators.append(self.generator(self.plot_count))
-                self.generators[self.plot_count].send(None)
-                self.plot_count += 1
+    def setPlotCount(self):
+        self.plot_count = self.channel_count
 
     def sendPacket(self, packet):
-        for i in range(self.plot_count):
+        for i in range(self.channel_count):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
 
-    def generator(self, index):
-        coordinates = [0 for _ in range(1024)]
-        self.resetAverage(coordinates)
-        line = self.canvas.create_line(0, 0, 0, 0)
-        j = 0
-        while True:
-            j += 1
-            for i in range(1, 1024, 2):  # get 512 values before drawing new line
-                y = yield self.continue_generating
-                if not self.continue_generating:
-                    return
-                if y == "Reset":
-                    j = 0
-                    self.resetAverage(coordinates)
-                    break
-                coordinates[i] = (coordinates[i] * (j - 1) + scaleY(y, self.averages[index], index, self.plot_count)) / j
-            self.canvas.delete(line)
-            line = self.canvas.create_line(coordinates)
-            if index == self.plot_count-1:
-                self.canvas.update()
 
-
-class AverageSignalWindow2(AbstractSignalWindow):
+class AverageSignalWindow2(AbstractAverageSignal):
     def __init__(self):
-        AbstractSignalWindow.__init__(self, "Average Plot")
+        AbstractAverageSignal.__init__(self, "Average Plot")
+        #self.average = sum(self.averages)/len(self.averages)
 
-    def resetAverage(self, average):
-        resetAverage(average)
+    def getChannelAverage(self, index):
+        return sum(self.averages)/len(self.averages)
 
-    def setup(self, checkbox_values, sensor_names):
-        self.plot_count = 0
-        self.sensor_names = []
-        # self.addGenCleanup()
-        for i in range(len(checkbox_values)):
-            if checkbox_values[i].get() == 1:
-                self.sensor_names.append(sensor_names[i])
-                self.plot_count += 1
-        self.generators.append(self.generator())
-        self.generators[0].send(None)
+    def setPlotCount(self):
+        self.plot_count = 1
 
     def sendPacket(self, packet):
-        for i in range(self.plot_count):
-            self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
-
-    def generator(self, index=0):
-        coordinates = [0 for _ in range(1024)]
-        self.resetAverage(coordinates)
-        line = self.canvas.create_line(0, 0, 0, 0)
-        j = 0
-        while True:
-            j += 1
-            for i in range(1, 1024, 2):      # get 512 values before drawing
-                for l in range(self.plot_count):  # get value for each channel
-                    y = yield self.continue_generating
-                    if not self.continue_generating:
-                        return
-                    if y == "Reset":
-                        j = 0
-                        self.resetAverage(coordinates)
-                        break
-                    coordinates[i] = (coordinates[i] * (j - 1) + scaleY(y, self.averages[l], index, 1)) / j
-                else:
-                    continue
-                break
-            self.canvas.delete(line)
-            line = self.canvas.create_line(coordinates)
-            self.canvas.update()
+        sum = 0
+        for i in range(self.channel_count):
+            sum += packet.sensors[self.sensor_names[i]]["value"]
+        self.generators[0].send(sum/self.channel_count)

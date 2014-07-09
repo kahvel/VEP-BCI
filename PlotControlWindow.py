@@ -15,6 +15,7 @@ class Window(MyWindows.TkWindow):
         self.sensor_names = sensor_names
 
         self.plot_windows = {}
+        self.garbage = []
 
         self.buttons = []
         self.checkbox_values = []
@@ -24,10 +25,10 @@ class Window(MyWindows.TkWindow):
         buttonframe2 = Tkinter.Frame(self)
         buttonframe3 = Tkinter.Frame(self)
         self.buttons.append(Tkinter.Button(buttonframe1, text="Start", command=lambda: self.start()))
-        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.plot_windows["AvgSignal"])))
-        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.plot_windows["AvgMulSignal"])))
-        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.plot_windows["AvgFFt"])))
-        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.plot_windows["AvgMulFFT"])))
+        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.plot_windows["AvgSignal"], self.checkbox_values)))
+        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.plot_windows["AvgMulSignal"], self.checkbox_values)))
+        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.plot_windows["AvgFFt"], self.checkbox_values_fft)))
+        self.buttons.append(Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.plot_windows["AvgMulFFT"], self.checkbox_values_fft)))
 
         self.buttons.append(Tkinter.Button(buttonframe2, text="Signal", command=lambda: self.plot()))
         self.buttons.append(Tkinter.Button(buttonframe2, text="Avg signal", command=lambda: self.avgPlot()))
@@ -65,13 +66,18 @@ class Window(MyWindows.TkWindow):
 
         self.mainloop()
 
-    def reset(self, window):
-        for i in range(len(window.generators)):
-            window.generators[i].send("Reset")
+    def reset(self, window, checkbox_values):
+        # window.continue_generating = False
+        window.canvas.delete("all")
+        self.garbage.extend(window.generators)
+        window.setup(checkbox_values, self.sensor_names)
+        # window.continue_generating = True
 
     def stop(self):
         self.buttons[0].configure(text="Start", command=lambda: self.start())
         self.emo_conn.send("Stop")
+        for key in self.plot_windows:
+            self.plot_windows[key].continue_generating = False
 
     def start(self):
         self.buttons[0].configure(text="Stop", command=lambda: self.stop())
@@ -97,7 +103,8 @@ class Window(MyWindows.TkWindow):
                 self.update()
             packet = self.emo_conn.recv()
             for key in self.plot_windows:
-                self.plot_windows[key].sendPacket(packet)
+                if self.plot_windows[key].continue_generating:
+                    self.plot_windows[key].sendPacket(packet)
             stop = True
             for key in self.plot_windows:
                 if self.plot_windows[key].continue_generating:
@@ -106,6 +113,10 @@ class Window(MyWindows.TkWindow):
             if stop:
                 print("Nothing to do!")
                 break
+
+        for generator in self.garbage:
+            generator.close()
+        self.garbage = []
 
     def plot(self):
         self.plot_windows["Signal"] = SignalWindow.SignalWindow()
