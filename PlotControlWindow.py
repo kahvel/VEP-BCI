@@ -6,7 +6,6 @@ import multiprocessing
 import SignalPlot
 import FFTPlot
 import Main
-import PlotWindow
 
 
 class Window(MyWindows.TkWindow):
@@ -88,7 +87,7 @@ class Window(MyWindows.TkWindow):
 
         packets = []
         for key in self.plot_windows:
-            if isinstance(self.plot_windows[key], PlotWindow.Signal):
+            if isinstance(self.plot_windows[key], SignalPlot.Signal):
                 self.plot_windows[key].setup(self.checkbox_values, self.sensor_names)
                 if len(packets) == 0:
                     print("Calculating averages")
@@ -120,19 +119,19 @@ class Window(MyWindows.TkWindow):
         self.garbage = []
 
     def plot(self):
-        self.plot_windows["Signal"] = PlotWindow.MultipleRegularSignalPlotWindow()#SignalWindow.SignalWindow()
+        self.plot_windows["Signal"] = SignalPlot.MultipleRegularSignalPlotWindow()#SignalWindow.SignalWindow()
 
     def avg(self):
-        self.plot_windows["AvgMulSignal"] = PlotWindow.SingleAverageSignalPlotWindow()#SignalWindow.AverageSignalWindow2()
+        self.plot_windows["AvgMulSignal"] = SignalPlot.SingleAverageSignalPlotWindow()#SignalWindow.AverageSignalWindow2()
 
     def avgFft(self):
-        self.plot_windows["AvgFFt"] = PlotWindow.MultipleAverageFFTPlotWindow()#FFTWindow.AverageFFTWindow()
+        self.plot_windows["AvgFFt"] = FFTPlot.MultipleAverageFFTPlotWindow()#FFTWindow.AverageFFTWindow()
 
     def avgFft2(self):
-        self.plot_windows["AvgMulFFT"] = PlotWindow.SingleAverageFFTPlotWindow()#.AverageFFTWindow2()
+        self.plot_windows["AvgMulFFT"] = FFTPlot.SingleAverageFFTPlotWindow()#.AverageFFTWindow2()
 
     def avgPlot(self):
-        self.plot_windows["AvgSignal"] = PlotWindow.MultipleAverageSignalPlotWindow()#SignalWindow.AverageSignalWindow()
+        self.plot_windows["AvgSignal"] = SignalPlot.MultipleAverageSignalPlotWindow()#SignalWindow.AverageSignalWindow()
 
     def fft(self):
-        self.plot_windows["FFT"] = PlotWindow.MultipleRegularFFTPlotWindow()#FFTWindow.FFTWindow()
+        self.plot_windows["FFT"] = FFTPlot.MultipleRegularFFTPlotWindow()#FFTWindow.FFTWindow()
