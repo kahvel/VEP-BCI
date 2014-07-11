@@ -3,9 +3,10 @@ __author__ = 'Anti'
 import MyWindows
 import Tkinter
 import multiprocessing
-import SignalWindow
-import FFTWindow
+import SignalPlot
+import FFTPlot
 import Main
+import PlotWindow
 
 
 class Window(MyWindows.TkWindow):
@@ -87,7 +88,7 @@ class Window(MyWindows.TkWindow):
 
         packets = []
         for key in self.plot_windows:
-            if isinstance(self.plot_windows[key], SignalWindow.AbstractSignalWindow):
+            if isinstance(self.plot_windows[key], PlotWindow.Signal):
                 self.plot_windows[key].setup(self.checkbox_values, self.sensor_names)
                 if len(packets) == 0:
                     print("Calculating averages")
@@ -119,19 +120,19 @@ class Window(MyWindows.TkWindow):
         self.garbage = []
 
     def plot(self):
-        self.plot_windows["Signal"] = SignalWindow.SignalWindow()
+        self.plot_windows["Signal"] = PlotWindow.MultipleRegularSignalPlotWindow()#SignalWindow.SignalWindow()
 
     def avg(self):
-        self.plot_windows["AvgMulSignal"] = SignalWindow.AverageSignalWindow2()
+        self.plot_windows["AvgMulSignal"] = PlotWindow.SingleAverageSignalPlotWindow()#SignalWindow.AverageSignalWindow2()
 
     def avgFft(self):
-        self.plot_windows["AvgFFt"] = FFTWindow.AverageFFTWindow()
+        self.plot_windows["AvgFFt"] = PlotWindow.MultipleAverageFFTPlotWindow()#FFTWindow.AverageFFTWindow()
 
     def avgFft2(self):
-        self.plot_windows["AvgMulFFT"] = FFTWindow.AverageFFTWindow2()
+        self.plot_windows["AvgMulFFT"] = PlotWindow.SingleAverageFFTPlotWindow()#.AverageFFTWindow2()
 
     def avgPlot(self):
-        self.plot_windows["AvgSignal"] = SignalWindow.AverageSignalWindow()
+        self.plot_windows["AvgSignal"] = PlotWindow.MultipleAverageSignalPlotWindow()#SignalWindow.AverageSignalWindow()
 
     def fft(self):
-        self.plot_windows["FFT"] = FFTWindow.FFTWindow()
+        self.plot_windows["FFT"] = PlotWindow.MultipleRegularFFTPlotWindow()#FFTWindow.FFTWindow()
