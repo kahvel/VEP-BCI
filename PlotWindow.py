@@ -13,6 +13,16 @@ class PlotWindow(MyWindows.ToplevelWindow):
         self.channel_count = 0
         self.sensor_names = []
         self.generators = []
+        self.plot_windows = {}
+
+    def setExitProtocol(self, plot_windows):
+        self.protocol("WM_DELETE_WINDOW", self.exit2)
+        self.plot_windows = plot_windows
+
+    def exit2(self):
+        print type(self).__name__
+        self.plot_windows[type(self).__name__] = None
+        self.destroy()
 
     # def addGenCleanup(self):
     #     self.protocol("WM_DELETE_WINDOW", self.exit2)

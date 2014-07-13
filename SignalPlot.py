@@ -29,7 +29,7 @@ class Signal(object):
         return ((y-average) + index*512 + 512/2) / plot_count
 
 
-class MultipleSignal(object):
+class Multiple(object):
     def getChannelAverage(self, index):
         return self.averages[index]
 
@@ -38,7 +38,7 @@ class MultipleSignal(object):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
 
 
-class SingleSignal(object):
+class Single(object):
     def getChannelAverage(self, index):
         return sum(self.averages)/len(self.averages)
 
@@ -49,7 +49,7 @@ class SingleSignal(object):
         self.generators[0].send(sum/self.channel_count)
 
 
-class AverageSignal(object):
+class Average(object):
     def gen(self):
         average = [0 for _ in range(512)]
         k = 0
@@ -65,7 +65,7 @@ class AverageSignal(object):
                 prev = [average[i*8+8-1]]
 
 
-class RegularSignal(object):
+class Regular(object):
     def gen(self):
         average = [0 for _ in range(8)]
         prev = [0]
@@ -78,33 +78,33 @@ class RegularSignal(object):
             prev = [average[-1]]
 
 
-class MultipleRegularSignalPlotWindow(Signal, RegularSignal, MultipleSignal, PlotWindow.MultiplePlotWindow):
+class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "Multiple regular signal plot")
         Signal.__init__(self)
-        RegularSignal.__init__(self)
-        MultipleSignal.__init__(self)
+        Regular.__init__(self)
+        Multiple.__init__(self)
 
 
-class SingleRegularSignalPlotWindow(Signal, RegularSignal, SingleSignal, PlotWindow.SinglePlotWindow):
+class SingleRegular(Signal, Regular, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
         PlotWindow.SinglePlotWindow.__init__(self, "Single regular signal plot")
         Signal.__init__(self)
-        RegularSignal.__init__(self)
-        SingleSignal.__init__(self)
+        Regular.__init__(self)
+        Single.__init__(self)
 
 
-class MultipleAverageSignalPlotWindow(Signal, AverageSignal, MultipleSignal, PlotWindow.MultiplePlotWindow):
+class MultipleAverage(Signal, Average, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "Multiple average signal plot")
         Signal.__init__(self)
-        AverageSignal.__init__(self)
-        MultipleSignal.__init__(self)
+        Average.__init__(self)
+        Multiple.__init__(self)
 
 
-class SingleAverageSignalPlotWindow(Signal, AverageSignal, SingleSignal, PlotWindow.SinglePlotWindow):
+class SingleAverage(Signal, Average, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
         PlotWindow.SinglePlotWindow.__init__(self, "Single average signal plot")
         Signal.__init__(self)
-        AverageSignal.__init__(self)
-        SingleSignal.__init__(self)
+        Average.__init__(self)
+        Single.__init__(self)

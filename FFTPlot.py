@@ -17,32 +17,32 @@ class FFT(object):
         return ((y*-30+50) + index*512 + 512/2) / plot_count
 
 
-class MultipleFFT(object):
+class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
 
 
-class SingleFFT(object):
+class Single(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
             self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
 
 
-class RegularFFT(object):
+class Regular(object):
     pass
 
 
-class AverageFFT(object):
+class Average(object):
     pass
 
 
-class MultipleRegularFFTPlotWindow(FFT, RegularFFT, MultipleFFT, PlotWindow.MultiplePlotWindow):
+class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "Multiple regular FFT plot")
         FFT.__init__(self)
-        RegularFFT.__init__(self)
-        MultipleFFT.__init__(self)
+        Regular.__init__(self)
+        Multiple.__init__(self)
 
     def getGenerator(self, i):
         return self.generator(i, 32, lambda x: True)
@@ -58,12 +58,12 @@ class MultipleRegularFFTPlotWindow(FFT, RegularFFT, MultipleFFT, PlotWindow.Mult
                 yield np.log10(np.abs(np.fft.rfft(signal.detrend(average))))
 
 
-class MultipleAverageFFTPlotWindow(FFT, AverageFFT, MultipleFFT, PlotWindow.MultiplePlotWindow):
+class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "Multiple average FFT plot")
         FFT.__init__(self)
-        AverageFFT.__init__(self)
-        MultipleFFT.__init__(self)
+        Average.__init__(self)
+        Multiple.__init__(self)
 
     def getGenerator(self, i):
         return self.generator(i, 1024, lambda x: True)
@@ -84,12 +84,12 @@ class MultipleAverageFFTPlotWindow(FFT, AverageFFT, MultipleFFT, PlotWindow.Mult
             yield np.log10(average)
 
 
-class SingleAverageFFTPlotWindow(FFT, AverageFFT, SingleFFT, PlotWindow.SinglePlotWindow):
+class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
         PlotWindow.SinglePlotWindow.__init__(self, "Single average FFT plot")
         FFT.__init__(self)
-        AverageFFT.__init__(self)
-        SingleFFT.__init__(self)
+        Average.__init__(self)
+        Single.__init__(self)
 
     def getGenerator(self, i):
         return self.generator(i, 1024*self.channel_count, lambda x: True)
