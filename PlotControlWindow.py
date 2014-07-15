@@ -17,9 +17,9 @@ class Window(MyWindows.TkWindow):
         self.signal_plot_windows = {}
         self.fft_plot_windows = {}
         self.plot_names = ["MultipleRegular", "MultipleAverage", "SingleAverage"]
-        # for key in self.plot_names:
-        #     self.signal_plot_windows[key] = None
-        #     self.fft_plot_windows[key] = None
+        for key in self.plot_names:
+            self.signal_plot_windows[key] = None
+            self.fft_plot_windows[key] = None
         self.garbage = []
 
         self.other_buttons = {}
@@ -35,10 +35,10 @@ class Window(MyWindows.TkWindow):
         buttonframe2 = Tkinter.Frame(self)
         buttonframe3 = Tkinter.Frame(self)
         self.other_buttons["Start"] = Tkinter.Button(buttonframe0, text="Start", command=lambda: self.start())
-        self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.signal_plot_windows["MultipleAverage"], self.checkbox_values))
-        self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.signal_plot_windows["SingleAverage"], self.checkbox_values))
-        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.fft_plot_windows["MultipleAverage"], self.checkbox_values_fft))
-        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows["SingleAverage"], self.checkbox_values_fft))
+        self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.signal_plot_windows, "MultipleAverage", self.checkbox_values))
+        self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.signal_plot_windows, "SingleAverage", self.checkbox_values))
+        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.fft_plot_windows, "MultipleAverage", self.checkbox_values_fft))
+        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows, "SingleAverage", self.checkbox_values_fft))
 
         self.signal_buttons["MultipleRegular"] = Tkinter.Button(buttonframe2, text="Signal", command=lambda: self.setSignalPlot("MultipleRegular"))
         self.signal_buttons["MultipleAverage"] = Tkinter.Button(buttonframe2, text="Avg signal", command=lambda: self.setSignalPlot("MultipleAverage"))
@@ -77,20 +77,34 @@ class Window(MyWindows.TkWindow):
 
         self.mainloop()
 
-    def reset(self, window, checkbox_values):
-        # window.continue_generating = False
-        window.canvas.delete("all")
-        self.garbage.extend(window.generators)
-        window.setup(checkbox_values, self.sensor_names)
-        # window.continue_generating = True
+    def closeWindow(self, windows, key):
+        windows[key].continue_generating = False
+        self.garbage.extend(windows[key].generators)
+        windows[key].destroy()
+        windows[key] = None
+
+    def reset(self, windows, key, checkbox_values):
+        window = windows[key]
+        if window is not None:
+            window.canvas.delete("all")
+            self.garbage.extend(window.generators)
+            window.continue_generating = True
+            window.setup(checkbox_values, self.sensor_names)
 
     def stop(self):
         self.other_buttons["Start"].configure(text="Start", command=lambda: self.start())
         self.emo_conn.send("Stop")
         for key in self.signal_plot_windows:
-            self.signal_plot_windows[key].continue_generating = False
+            if self.signal_plot_windows[key] is not None:
+                self.signal_plot_windows[key].continue_generating = False
         for key in self.fft_plot_windows:
-            self.fft_plot_windows[key].continue_generating = False
+            if self.fft_plot_windows[key] is not None:
+                self.fft_plot_windows[key].continue_generating = False
+
+    def recvPacket(self):
+        while not self.emo_conn.poll(0.1):
+            self.update()
+        return self.emo_conn.recv()
 
     def start(self):
         self.other_buttons["Start"].configure(text="Stop", command=lambda: self.stop())
@@ -100,39 +114,45 @@ class Window(MyWindows.TkWindow):
 
         packets = []
         for key in self.fft_plot_windows:
-            # if self.fft_plot_windows[key] is not None:
-            self.fft_plot_windows[key].setup(self.checkbox_values_fft, self.sensor_names)
+            if self.fft_plot_windows[key] is not None:
+                self.reset(self.fft_plot_windows, key, self.checkbox_values_fft)
         for key in self.signal_plot_windows:
-            # if self.fft_plot_windows[key] is not None:
-            self.signal_plot_windows[key].setup(self.checkbox_values, self.sensor_names)
-            if len(packets) == 0:
-                print("Calculating averages")
-                for _ in range(512):
-                    packet = self.emo_conn.recv()
-                    packets.append(packet)
-            self.signal_plot_windows[key].calculateAverage(packets)
+            if self.signal_plot_windows[key] is not None:
+                self.reset(self.signal_plot_windows, key, self.checkbox_values)
+                if len(packets) == 0:
+                    print("Calculating averages")
+                    for _ in range(512):
+                        packet = self.recvPacket()
+                        packets.append(packet)
+                self.signal_plot_windows[key].calculateAverage(packets)
 
         while True:
-            while not self.emo_conn.poll(0.1):
-                self.update()
-            packet = self.emo_conn.recv()
+            packet = self.recvPacket()
             for key in self.signal_plot_windows:
-                if self.signal_plot_windows[key].continue_generating:
-                    self.signal_plot_windows[key].sendPacket(packet)
+                if self.signal_plot_windows[key] is not None:
+                    if self.signal_plot_windows[key].continue_generating:
+                        self.signal_plot_windows[key].sendPacket(packet)
             for key in self.fft_plot_windows:
-                if self.fft_plot_windows[key].continue_generating:
-                    self.fft_plot_windows[key].sendPacket(packet)
+                if self.fft_plot_windows[key] is not None:
+                    if self.fft_plot_windows[key].continue_generating:
+                        self.fft_plot_windows[key].sendPacket(packet)
             stop = True
             for key in self.signal_plot_windows:
-                if self.signal_plot_windows[key].continue_generating:
-                    stop = False
-                    break
+                if self.signal_plot_windows[key] is not None:
+                    if self.signal_plot_windows[key].continue_generating:
+                        stop = False
+                        break
             for key in self.fft_plot_windows:
-                if self.fft_plot_windows[key].continue_generating:
-                    stop = False
-                    break
+                if self.fft_plot_windows[key] is not None:
+                    if self.fft_plot_windows[key].continue_generating:
+                        stop = False
+                        break
             if stop:
                 print("Nothing to do!")
+                self.other_buttons["Start"].configure(text="Start", command=lambda: self.start())
+                self.emo_conn.send("Stop")
+                if self.emo_conn.poll():
+                    self.emo_conn.recv()
                 break
 
         for generator in self.garbage:
@@ -141,8 +161,8 @@ class Window(MyWindows.TkWindow):
 
     def setSignalPlot(self, key):
         self.signal_plot_windows[key] = getattr(SignalPlot, key)()
-        self.signal_plot_windows[key].setExitProtocol(self.signal_plot_windows)
+        self.signal_plot_windows[key].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(self.signal_plot_windows, key))
 
     def setFFTPlot(self, key):
         self.fft_plot_windows[key] = getattr(FFTPlot, key)()
-        self.fft_plot_windows[key].setExitProtocol(self.fft_plot_windows)
+        self.fft_plot_windows[key].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(self.fft_plot_windows, key))

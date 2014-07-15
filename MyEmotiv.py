@@ -84,4 +84,5 @@ class myEmotiv(emokit.emotiv.Emotiv):
             # packet = self.dequeue()
             # print packet
             # self.connection.send(packet)
+        self.connection.close()
         self.cleanUp()

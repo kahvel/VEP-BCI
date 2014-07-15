@@ -15,24 +15,6 @@ class PlotWindow(MyWindows.ToplevelWindow):
         self.generators = []
         self.plot_windows = {}
 
-    def setExitProtocol(self, plot_windows):
-        self.protocol("WM_DELETE_WINDOW", self.exit2)
-        self.plot_windows = plot_windows
-
-    def exit2(self):
-        print type(self).__name__
-        self.plot_windows[type(self).__name__] = None
-        self.destroy()
-
-    # def addGenCleanup(self):
-    #     self.protocol("WM_DELETE_WINDOW", self.exit2)
-    #
-    # def removeGenCleanup(self):
-    #     self.protocol("WM_DELETE_WINDOW", self.exit)
-    #
-    # def exit2(self):
-    #     self.continue_generating = False
-
     def setup(self, checkbox_values, sensor_names):
         self.channel_count = 0
         self.sensor_names = []
@@ -41,6 +23,10 @@ class PlotWindow(MyWindows.ToplevelWindow):
             if checkbox_values[i].get() == 1:
                 self.sensor_names.append(sensor_names[i])
                 self.channel_count += 1
+        if self.channel_count == 0:
+            self.continue_generating = False
+            print "Choose channels"
+            return
         self.setPlotCount()
         for i in range(self.plot_count):
             self.generators.append(self.getGenerator(i))
