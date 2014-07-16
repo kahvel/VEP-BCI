@@ -52,8 +52,8 @@ class PlotWindow(MyWindows.ToplevelWindow):
                     if delete:
                         self.canvas.delete(lines[0])
                         del lines[0]
-                    if index == self.plot_count-1:
-                        self.canvas.update()
+                    # if index == self.plot_count-1:
+                    #     self.canvas.update()
                 packet_count += 1
         finally:
             print "closing average generator"

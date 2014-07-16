@@ -5,17 +5,17 @@ if __name__ == "__main__":
     MainWindow.MainWindow()
 
 
-def runPlotControl(main_conn, emo_conn, sensor_names):
+def runPlotControl(plot_to_main, plot_to_emo, sensor_names):
     import PlotControlWindow
-    PlotControlWindow.Window(main_conn, emo_conn, sensor_names)
+    PlotControlWindow.Window(plot_to_main, plot_to_emo, sensor_names)
 
 def runEmotiv(main_conn):
     import MyEmotiv
     MyEmotiv.myEmotiv(main_conn)
 
-def runPsychopy(connection, background_data, targets_data):
+def runPsychopy(psy_to_main, background_data, targets_data):
     import TargetsWindow
-    win = TargetsWindow.TargetsWindow(connection)
+    win = TargetsWindow.TargetsWindow(psy_to_main)
     win.setWindow(background_data)
     win.setTargets(targets_data)
     win.run()
