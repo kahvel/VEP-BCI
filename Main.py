@@ -2,16 +2,16 @@ __author__ = 'Anti'
 
 if __name__ == "__main__":
     import MainWindow
-    mainWindow = MainWindow.MainWindow()
+    MainWindow.MainWindow()
 
-def runPlotControl(connection, sensor_names):
+
+def runPlotControl(main_conn, emo_conn, sensor_names):
     import PlotControlWindow
-    PlotControlWindow.Window(connection, sensor_names)
+    PlotControlWindow.Window(main_conn, emo_conn, sensor_names)
 
-def runEmotiv(connection):
+def runEmotiv(main_conn):
     import MyEmotiv
-    emo = MyEmotiv.myEmotiv(connection)
-    emo.run()
+    MyEmotiv.myEmotiv(main_conn)
 
 def runPsychopy(connection, background_data, targets_data):
     import TargetsWindow

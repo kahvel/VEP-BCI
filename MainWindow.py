@@ -4,6 +4,7 @@ from Tkinter import *
 import MyWindows
 import tkFileDialog
 import multiprocessing
+from multiprocessing import reduction
 import Main
 
 
@@ -36,7 +37,9 @@ class MainWindow(MyWindows.TkWindow):
         self.average_window = None
         self.average_fft_window2 = None
         self.initElements()
-        # self.myEmotiv = MyEmotiv.myEmotiv()
+        self.emo_connection, main_conn = multiprocessing.Pipe()
+        p = multiprocessing.Process(target=Main.runEmotiv, args=(main_conn,))
+        p.start()
         self.mainloop()
 
     def initElements(self):
@@ -87,13 +90,14 @@ class MainWindow(MyWindows.TkWindow):
 
         buttonframe1 = Frame(self)
 
+        self.buttons.append(Button(buttonframe1, text="Start", command=lambda: self.start()))
         self.buttons.append(Button(buttonframe1, text="Targets", command=lambda: self.targetsWindow()))
-        self.buttons.append(Button(buttonframe1, text="Plots", command=lambda: self.run()))
+        self.buttons.append(Button(buttonframe1, text="Plots", command=lambda: self.plotWindow()))
         self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
 
-        for i in range(5):
+        for i in range(len(self.buttons)):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
 
         windowtitleframe.grid(column=0, row=0)
@@ -104,19 +108,27 @@ class MainWindow(MyWindows.TkWindow):
         targetframe.grid(column=0, row=5)
         buttonframe1.grid(column=0, row=6)
 
+    def start(self):
+        self.emo_connection.send("Start")
+
+    def newProcess(self, func, args):
+        self.main_to_plot, plot_to_main = multiprocessing.Pipe()
+        emo_to_plot, plot_to_emo = multiprocessing.Pipe()
+        p = multiprocessing.Process(target=func, args=(plot_to_main, plot_to_emo, args))
+        p.start()
+        self.emo_connection.send("New pipe")
+        reduced = reduction.reduce_connection(emo_to_plot)
+        self.emo_connection.send(reduced)
+
     def targetsWindow(self):
-        main_conn, psy_conn = multiprocessing.Pipe()
         self.saveValues(self.current_radio_button.get())
         bk = {}
         for key in self.background_textboxes:
             bk[key] = self.background_textboxes[key].get()
-        p = multiprocessing.Process(target=Main.runPsychopy, args=(psy_conn, bk, self.targets))
-        p.start()
+        self.newProcess(Main.runPsychopy, bk, self.targets)
 
-    def run(self):
-        main_conn, emo_conn = multiprocessing.Pipe()
-        p = multiprocessing.Process(target=Main.runPlotControl, args=(emo_conn, self.sensor_names))
-        p.start()
+    def plotWindow(self):
+        self.newProcess(Main.runPlotControl, self.sensor_names)
 
     def loadValues(self, index):
         if index == 0:

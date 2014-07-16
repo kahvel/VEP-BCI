@@ -9,9 +9,10 @@ import Main
 
 
 class Window(MyWindows.TkWindow):
-    def __init__(self, connection, sensor_names):
+    def __init__(self, main_conn, emo_conn, sensor_names):
         MyWindows.TkWindow.__init__(self, "Plot control", 310, 300)
-        self.main_conn = connection
+        self.main_conn = main_conn
+        self.emo_conn = emo_conn
         self.sensor_names = sensor_names
 
         self.signal_plot_windows = {}
@@ -108,9 +109,6 @@ class Window(MyWindows.TkWindow):
 
     def start(self):
         self.other_buttons["Start"].configure(text="Stop", command=lambda: self.stop())
-        plot_conn, self.emo_conn = multiprocessing.Pipe()
-        p = multiprocessing.Process(target=Main.runEmotiv, args=(plot_conn,))
-        p.start()
 
         packets = []
         for key in self.fft_plot_windows:
