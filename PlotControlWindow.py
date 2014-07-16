@@ -17,7 +17,7 @@ class Window(MyWindows.TkWindow):
 
         self.signal_plot_windows = {}
         self.fft_plot_windows = {}
-        self.plot_names = ["MultipleRegular", "MultipleAverage", "SingleAverage"]
+        self.plot_names = ["MultipleRegular", "SingleRegular", "MultipleAverage", "SingleAverage"]
         for key in self.plot_names:
             self.signal_plot_windows[key] = None
             self.fft_plot_windows[key] = None
@@ -42,16 +42,18 @@ class Window(MyWindows.TkWindow):
         self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows, "SingleAverage", self.checkbox_values_fft))
 
         self.signal_buttons["MultipleRegular"] = Tkinter.Button(buttonframe2, text="Signal", command=lambda: self.setSignalPlot("MultipleRegular"))
+        self.signal_buttons["SingleRegular"] = Tkinter.Button(buttonframe2, text="Mul signals", command=lambda: self.setSignalPlot("SingleRegular"))
         self.signal_buttons["MultipleAverage"] = Tkinter.Button(buttonframe2, text="Avg signal", command=lambda: self.setSignalPlot("MultipleAverage"))
         self.signal_buttons["SingleAverage"] = Tkinter.Button(buttonframe2, text="Avg mul signals", command=lambda: self.setSignalPlot("SingleAverage"))
 
         self.fft_buttons["MultipleRegular"] = Tkinter.Button(buttonframe3, text="FFT", command=lambda: self.setFFTPlot("MultipleRegular"))
+        self.fft_buttons["SingleRegular"] = Tkinter.Button(buttonframe3, text="Mul FFT", command=lambda: self.setFFTPlot("SingleRegular"))
         self.fft_buttons["MultipleAverage"] = Tkinter.Button(buttonframe3, text="Avg FFT", command=lambda: self.setFFTPlot("MultipleAverage"))
         self.fft_buttons["SingleAverage"] = Tkinter.Button(buttonframe3, text="Avg mul FFT", command=lambda: self.setFFTPlot("SingleAverage"))
 
-        for i in range(1, len(self.plot_names)):
-            self.signal_reset_buttons[self.plot_names[i]].grid(column=(i-1) % 2, row=(i-1)//2, padx=5, pady=5)
-            self.fft_reset_buttons[self.plot_names[i]].grid(column=(i-1) % 2, row=(i-1)//2+1, padx=5, pady=5)
+        for i in range(2, len(self.plot_names)):
+            self.signal_reset_buttons[self.plot_names[i]].grid(column=(i-1) % 2, row=(i-2)//2, padx=5, pady=5)
+            self.fft_reset_buttons[self.plot_names[i]].grid(column=(i-1) % 2, row=(i-2)//2+1, padx=5, pady=5)
         for i in range(len(self.plot_names)):
             self.signal_buttons[self.plot_names[i]].grid(column=i, row=0, padx=5, pady=5)
             self.fft_buttons[self.plot_names[i]].grid(column=i, row=0, padx=5, pady=5)

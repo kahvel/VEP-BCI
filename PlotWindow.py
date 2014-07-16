@@ -25,27 +25,27 @@ class PlotWindow(MyWindows.ToplevelWindow):
                 self.channel_count += 1
         if self.channel_count == 0:
             self.continue_generating = False
-            print "Choose channels"
+            print "No channels chosen"
             return
         self.setPlotCount()
         for i in range(self.plot_count):
             self.generators.append(self.getGenerator(i))
             self.generators[i].send(None)
 
-    def generator(self, index, update_after, start_deleting):
-        average_generator = self.gen()
+    def plot_generator(self, index, update_after, start_deleting):
+        coordinates_generator = self.coordinates_generator()
         try:
             lines = [self.canvas.create_line(0, 0, 0, 0)]
             packet_count = 0
             delete = False
-            average_generator.send(None)
+            coordinates_generator.send(None)
             while True:
                 y = yield
-                avg = average_generator.send(y)
+                avg = coordinates_generator.send(y)
                 if packet_count % update_after == 0 and packet_count != 0:
                     scaled_avg = self.scale(avg, index, packet_count)
                     lines.append(self.canvas.create_line(scaled_avg))
-                    average_generator.next()
+                    coordinates_generator.next()
                     if start_deleting(packet_count):
                         packet_count = 0
                         delete = True
@@ -56,8 +56,8 @@ class PlotWindow(MyWindows.ToplevelWindow):
                     #     self.canvas.update()
                 packet_count += 1
         finally:
-            print "closing average generator"
-            average_generator.close()
+            print "Closing generator"
+            coordinates_generator.close()
 
 
 class MultiplePlotWindow(PlotWindow):

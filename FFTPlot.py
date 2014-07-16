@@ -45,9 +45,9 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         Multiple.__init__(self)
 
     def getGenerator(self, i):
-        return self.generator(i, 32, lambda x: True)
+        return self.plot_generator(i, 32, lambda x: True)
 
-    def gen(self):
+    def coordinates_generator(self):
         average = [0 for _ in range(1024)]
         yield
         while True:
@@ -66,9 +66,9 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
         Multiple.__init__(self)
 
     def getGenerator(self, i):
-        return self.generator(i, 1024, lambda x: True)
+        return self.plot_generator(i, 1024, lambda x: True)
 
-    def gen(self):
+    def coordinates_generator(self):
         average = [0 for _ in range(513)]
         coordinates = [0 for _ in range(1024)]
         k = 0
@@ -92,9 +92,9 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
         Single.__init__(self)
 
     def getGenerator(self, i):
-        return self.generator(i, 1024*self.channel_count, lambda x: True)
+        return self.plot_generator(i, 1024*self.channel_count, lambda x: True)
 
-    def gen(self):
+    def coordinates_generator(self):
         average = [0 for _ in range(513)]
         coordinates = []
         for _ in range(self.channel_count):
@@ -115,4 +115,36 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
                 for j in range(self.channel_count):
                     sum += ffts[j][i]
                 average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
+            yield np.log10(average)
+
+
+class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
+    def __init__(self):
+        PlotWindow.SinglePlotWindow.__init__(self, "Single average FFT plot")
+        FFT.__init__(self)
+        Regular.__init__(self)
+        Single.__init__(self)
+
+    def getGenerator(self, i):
+        return self.plot_generator(i, 1024*self.channel_count, lambda x: True)
+
+    def coordinates_generator(self):
+        average = [0 for _ in range(513)]
+        coordinates = []
+        for _ in range(self.channel_count):
+            coordinates.append([0 for _ in range(1024)])
+        yield
+        while True:
+            for i in range(1024):
+                for j in range(self.channel_count):
+                    y = yield
+                    coordinates[j][i] = y
+            ffts = []
+            for i in range(self.channel_count):
+                ffts.append(np.abs(np.fft.rfft(signal.detrend(coordinates[i]))))
+            for i in range(len(ffts[0])):
+                sum = 0
+                for j in range(self.channel_count):
+                    sum += ffts[j][i]
+                average[i] = sum/self.channel_count
             yield np.log10(average)

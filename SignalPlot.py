@@ -16,7 +16,7 @@ class Signal(object):
         print(self.averages)
 
     def getGenerator(self, i):
-        return self.generator(i, 8, lambda packet_count: operator.eq(packet_count, 512))
+        return self.plot_generator(i, 8, lambda packet_count: operator.eq(packet_count, 512))
 
     def scale(self, coordinates, index, packet_count):
         result = []
@@ -50,7 +50,7 @@ class Single(object):
 
 
 class Average(object):
-    def gen(self):
+    def coordinates_generator(self):
         average = [0 for _ in range(512)]
         k = 0
         prev = [0]
@@ -66,7 +66,7 @@ class Average(object):
 
 
 class Regular(object):
-    def gen(self):
+    def coordinates_generator(self):
         average = [0 for _ in range(8)]
         prev = [0]
         yield

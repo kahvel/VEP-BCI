@@ -19,3 +19,7 @@ def runPsychopy(psy_to_main, background_data, targets_data):
     win.setWindow(background_data)
     win.setTargets(targets_data)
     win.run()
+
+def runPSIdentification(ps_to_main, ps_to_emo, asd):
+    import PSIdentification
+    PSIdentification.PSIdentification(ps_to_main, ps_to_emo)

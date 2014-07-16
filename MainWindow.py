@@ -39,8 +39,8 @@ class MainWindow(MyWindows.TkWindow):
         self.initElements()
         self.main_to_plot = []
         self.main_to_emo, emo_to_main = multiprocessing.Pipe()
-        p = multiprocessing.Process(target=Main.runEmotiv, args=(emo_to_main,))
-        p.start()
+        multiprocessing.Process(target=Main.runEmotiv, args=(emo_to_main,)).start()
+        self.main_to_ps = self.newProcess(Main.runPSIdentification, None)
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -123,6 +123,7 @@ class MainWindow(MyWindows.TkWindow):
                 del self.main_to_plot[i]
             else:
                 self.main_to_plot[i].send("Start")
+        self.main_to_ps.send("Start")
         self.main_to_emo.send("Start")
 
     def stop(self):
@@ -133,6 +134,7 @@ class MainWindow(MyWindows.TkWindow):
                 del self.main_to_plot[i]
             else:
                 self.main_to_plot[i].send("Stop")
+        self.main_to_ps.send("Stop")
         self.main_to_emo.send("Stop")
 
     def newProcess(self, func, args):
