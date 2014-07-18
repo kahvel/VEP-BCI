@@ -7,11 +7,11 @@ class PSIdentification(object):
     def __init__(self, ps_to_main, ps_to_emo):
         self.ps_to_emo = ps_to_emo
         self.ps_to_main = ps_to_main
-        self.packet_count = 640
-        self.freq_points = [10]
+        self.packet_count = 128
+        self.freq_points = []
         self.freq_indexes = []
-        self.channel_count = 2
-        self.sensor_names = ["O1", "O2"]
+        self.channel_count = 4
+        self.sensor_names = ["P7", "O1", "O2", "P8"]
         self.myMainloop()
 
     def myMainloop(self):
@@ -21,6 +21,8 @@ class PSIdentification(object):
             message = self.ps_to_main.recv()
             if message == "Start":
                 print "Starting PS"
+                self.freq_points = self.ps_to_main.recv()
+                self.freq_indexes = []
                 message = self.run()
             if message == "Stop":
                 print "PS stopped"
@@ -36,23 +38,33 @@ class PSIdentification(object):
             if self.ps_to_emo.poll(0.1):
                 return self.ps_to_emo.recv()
 
-    # def sendPacket(self, packet):
-    #     for i in range(self.channel_count):
-    #         self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
-
     def run(self):
         coordinate_generator = self.gen(self.packet_count)
         coordinate_generator.send(None)
         for freq in self.freq_points:
             self.freq_indexes.append(freq*self.packet_count/128)
+        # print self.freq_points
+        # print self.freq_indexes
+        # print (np.fft.rfftfreq(256)*128)
         while True:
             for i in range(self.packet_count):
                 packet = self.recvPacket()
                 if isinstance(packet, basestring):
+                    coordinate_generator.close()
                     return packet
                 for i in range(self.channel_count):
                     coordinates = coordinate_generator.send(packet.sensors[self.sensor_names[i]]["value"])
-            print coordinates[self.freq_indexes[0]]*2/(coordinates[self.freq_indexes[0]-1]+coordinates[self.freq_indexes[0]+1])
+            max = 0
+            max_index = -1
+            for i in range(len(self.freq_indexes)):
+                ratio = coordinates[self.freq_indexes[i]]*2/(coordinates[self.freq_indexes[i]-1]+coordinates[self.freq_indexes[i]+1])
+                if ratio > max:
+                    max = ratio
+                    max_index = i
+                # print ratio,
+            if max < 1:
+                print "Ratio < 1",
+            print self.freq_points[max_index]
             coordinate_generator.next()
 
     def gen(self, packet_count):

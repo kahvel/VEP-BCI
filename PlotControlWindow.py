@@ -95,14 +95,6 @@ class Window(MyWindows.TkWindow):
                 self.garbage = []
             if message == "Stop":
                 print "Plot stopped"
-            # if message == "Closed":
-            #     print "Plot windows closed"
-            #     # self.plot_to_emo.send("Stop")
-            #     while True:
-            #         message = self.recvPacket(self.plot_to_emo)
-            #         if isinstance(message, basestring):
-            #             print message
-            #             break
             if message == "Exit":
                 print "Exiting plot"
                 break
@@ -126,14 +118,6 @@ class Window(MyWindows.TkWindow):
             self.garbage.extend(window.generators)
             window.continue_generating = True
             window.setup(checkbox_values, self.sensor_names)
-
-    def stop(self):
-        for key in self.signal_plot_windows:
-            if self.signal_plot_windows[key] is not None:
-                self.signal_plot_windows[key].continue_generating = False
-        for key in self.fft_plot_windows:
-            if self.fft_plot_windows[key] is not None:
-                self.fft_plot_windows[key].continue_generating = False
 
     def recvPacket(self, connection):
         while True:
@@ -175,19 +159,6 @@ class Window(MyWindows.TkWindow):
                 if self.fft_plot_windows[key] is not None:
                     if self.fft_plot_windows[key].continue_generating:
                         self.fft_plot_windows[key].sendPacket(packet)
-            # stop = True
-            # for key in self.signal_plot_windows:
-            #     if self.signal_plot_windows[key] is not None:
-            #         if self.signal_plot_windows[key].continue_generating:
-            #             stop = False
-            #             break
-            # for key in self.fft_plot_windows:
-            #     if self.fft_plot_windows[key] is not None:
-            #         if self.fft_plot_windows[key].continue_generating:
-            #             stop = False
-            #             break
-            # if stop:
-            #     return "Closed"
 
     def setSignalPlot(self, key):
         self.signal_plot_windows[key] = getattr(SignalPlot, key)()

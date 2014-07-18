@@ -6,6 +6,8 @@ class Target:
     def __init__(self, target, window, monitor_frequency):
         self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
                                 pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=target["Color1"])
+        self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
+        # fixation.setAutoDraw(True)
         self.freq = float(target["Freq"])
         self.sequence = "01"
         monitor_frequency = int(monitor_frequency)
@@ -20,6 +22,7 @@ class Target:
                     yield
                     if c == "1":
                         self.rect.draw()
+                        self.fixation.draw()
                 for _ in range(self.freq_off):
                     yield
 
@@ -56,5 +59,3 @@ class TargetsWindow:
                 break
             event.clearEvents()
         self.window.close()
-
-
