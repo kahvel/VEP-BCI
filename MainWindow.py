@@ -39,9 +39,10 @@ class MainWindow(MyWindows.TkWindow):
         self.average_fft_window2 = None
         self.initElements()
         self.main_to_plot = []
+        self.main_to_psychopy = []
         self.main_to_emo, emo_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runEmotiv, args=(emo_to_main,)).start()
-        self.main_to_ps = self.newProcess(Main.runPSIdentification, None)
+        self.main_to_ps = self.newProcess(Main.runPSIdentification, "New pipe")
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -87,12 +88,17 @@ class MainWindow(MyWindows.TkWindow):
 
         buttonframe1 = Frame(self)
         self.buttons.append(Button(buttonframe1, text="Start", command=lambda: self.start()))
-        self.buttons.append(Button(buttonframe1, text="Targets", command=lambda: self.targetsWindow()))
-        self.buttons.append(Button(buttonframe1, text="Plots", command=lambda: self.plotWindow()))
         self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
-        for i in range(len(self.buttons)):
+        for i in range(4):
+            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
+
+        buttonframe2 = Frame(self)
+        self.buttons.append(Button(buttonframe2, text="Targets", command=lambda: self.targetsWindow()))
+        self.buttons.append(Button(buttonframe2, text="Plots", command=lambda: self.plotWindow()))
+        self.buttons.append(Button(buttonframe2, text="PS", command=lambda: self.psIdentification()))
+        for i in range(4, len(self.buttons)):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
 
         windowtitleframe.grid(column=0, row=0)
@@ -101,7 +107,8 @@ class MainWindow(MyWindows.TkWindow):
         targetbuttonframe.grid(column=0, row=3)
         self.radiobuttonframe.grid(column=0, row=4)
         targetframe.grid(column=0, row=5)
-        buttonframe1.grid(column=0, row=6)
+        buttonframe2.grid(column=0, row=6)
+        buttonframe1.grid(column=0, row=7)
 
     def exit(self):
         print "Exiting main window"
@@ -109,38 +116,43 @@ class MainWindow(MyWindows.TkWindow):
         self.main_to_emo.send("Exit")
         self.destroy()
 
+    def psIdentification(self):
+        pass
+
     def start(self):
+        self.saveValues(self.current_radio_button.get())
         self.buttons[0].configure(text="Stop", command=lambda: self.stop())
-        for i in range(len(self.main_to_plot)-1, -1, -1):
-            if self.main_to_plot[i].poll():
-                self.main_to_plot[i].close()
-                del self.main_to_plot[i]
-            else:
-                self.main_to_plot[i].send("Start")
-        self.main_to_ps.send("Start")
+        self.sendMessage(self.main_to_plot, "Start", "plot")
+        self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
         freq = []
         for i in range(1, len(self.targets)):
             freq.append(float(self.targets[i]["Freq"]))
+        self.main_to_ps.send("Start")
         self.main_to_ps.send(freq)
         self.main_to_emo.send("Start")
 
+    def sendMessage(self, connections, message, name):
+        for i in range(len(connections)-1, -1, -1):
+            if connections[i].poll():
+                print "Main to " + name + " closed"
+                connections[i].close()
+                del connections[i]
+            else:
+                 connections[i].send(message)
+
     def stop(self):
         self.buttons[0].configure(text="Start", command=lambda: self.start())
-        for i in range(len(self.main_to_plot)-1, -1, -1):
-            if self.main_to_plot[i].poll():
-                self.main_to_plot[i].close()
-                del self.main_to_plot[i]
-            else:
-                self.main_to_plot[i].send("Stop")
+        self.sendMessage(self.main_to_plot, "Stop", "plot")
+        self.sendMessage(self.main_to_psychopy, "Stop", "psychopy")
         self.main_to_ps.send("Stop")
         self.main_to_emo.send("Stop")
 
-    def newProcess(self, func, args):
+    def newProcess(self, func, message, *args):
         main_to_new, new_to_main = multiprocessing.Pipe()
         emo_to_new, new_to_emo = multiprocessing.Pipe()
         p = multiprocessing.Process(target=func, args=(new_to_main, new_to_emo, args))
         p.start()
-        self.main_to_emo.send("New pipe")
+        self.main_to_emo.send(message)
         reduced = reduction.reduce_connection(emo_to_new)
         self.main_to_emo.send(reduced)
         return main_to_new
@@ -150,12 +162,10 @@ class MainWindow(MyWindows.TkWindow):
         bk = {}
         for key in self.background_textboxes:
             bk[key] = self.background_textboxes[key].get()
-        main_to_psy, psy_to_main = multiprocessing.Pipe()
-        p = multiprocessing.Process(target=Main.runPsychopy, args=(psy_to_main, bk, self.targets))
-        p.start()
+        self.main_to_psychopy.append(self.newProcess(Main.runPsychopy, "Psychopy", bk, self.targets))
 
     def plotWindow(self):
-        self.main_to_plot.append(self.newProcess(Main.runPlotControl, self.sensor_names))
+        self.main_to_plot.append(self.newProcess(Main.runPlotControl, "New pipe", self.sensor_names))
 
     def loadValues(self, index):
         if index == 0:
@@ -181,6 +191,7 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
 
     def saveValues(self, index):
+        MyWindows.validateFreq(self.target_textboxes["Freq"])
         if index == 0:
             for key in self.target_textboxes:
                 if self.target_textboxes[key].get() != "":

@@ -64,5 +64,4 @@ def validateFreq(textbox):
     freq_off = int(60/freq/2.0+0.5)
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, float(60)/(freq_off+freq_on))
-    print float(60)/(freq_off+freq_on)
     return True

@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 import numpy as np
 from scipy import signal
+import sklearn.cross_decomposition
 
 
 class PSIdentification(object):
@@ -10,8 +11,8 @@ class PSIdentification(object):
         self.packet_count = 128
         self.freq_points = []
         self.freq_indexes = []
-        self.channel_count = 4
-        self.sensor_names = ["P7", "O1", "O2", "P8"]
+        self.channel_count = 2
+        self.sensor_names = ["O1", "O2"]
         self.myMainloop()
 
     def myMainloop(self):

@@ -7,6 +7,7 @@ from multiprocessing import reduction
 class myEmotiv(emokit.emotiv.Emotiv):
     def __init__(self, emo_to_main):
         self.emo_to_main = emo_to_main
+        self.emo_to_psychopy = []
         self.connections = []
         self.devices = []
         self.serialNum = None
@@ -22,6 +23,10 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 print "Adding pipe"
                 connection = reduction.rebuild_pipe_connection(*self.emo_to_main.recv()[1])
                 self.connections.append(connection)
+            elif message == "Psychopy":
+                print "Adding pipe"
+                connection = reduction.rebuild_pipe_connection(*self.emo_to_main.recv()[1])
+                self.emo_to_psychopy.append(connection)
             if message == "Start":
                 print "Starting emotiv"
                 message = self.run()
@@ -71,8 +76,16 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def cleanUp(self):
         self._goOn = False
         self.closeDevices()
-        # self.connections = []
         print("Emotiv cleanup successful")
+
+    def sendMessage(self, connections, message, name):
+        for i in range(len(connections)-1, -1, -1):
+            if connections[i].poll():
+                print "Main to " + name + " closed"
+                connections[i].close()
+                del connections[i]
+            else:
+                 connections[i].send(message)
 
     def run(self):
         self._goOn = True
@@ -92,14 +105,13 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 print("No packet " + str(counter))
                 if counter == 10:
                     return "Stop"
+        self.sendMessage(self.emo_to_psychopy, "Start", "Pscyhopy")
         while True:
             try:
                 packet = self.packets.get(True, 1)
-                # if isinstance(packet, basestring):
-                #     return packet
                 for i in range(len(self.connections)-1, -1, -1):
                     if self.connections[i].poll():
-                        print "Connection closed"
+                        print "Emo to plot closed"
                         self.connections[i].close()
                         del self.connections[i]
                     else:
