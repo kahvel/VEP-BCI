@@ -40,9 +40,9 @@ class MainWindow(MyWindows.TkWindow):
         self.initElements()
         self.main_to_plot = []
         self.main_to_psychopy = []
+        self.main_to_ps = []
         self.main_to_emo, emo_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runEmotiv, args=(emo_to_main,)).start()
-        self.main_to_ps = self.newProcess(Main.runPSIdentification, "New pipe")
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -112,12 +112,12 @@ class MainWindow(MyWindows.TkWindow):
 
     def exit(self):
         print "Exiting main window"
-        self.main_to_ps.send("Exit")
+        self.sendMessage(self.main_to_ps, "Exit", "PS")
         self.main_to_emo.send("Exit")
         self.destroy()
 
     def psIdentification(self):
-        pass
+        self.main_to_ps.append(self.newProcess(Main.runPSIdentification, "New pipe", self.sensor_names))
 
     def start(self):
         self.saveValues(self.current_radio_button.get())
@@ -127,8 +127,8 @@ class MainWindow(MyWindows.TkWindow):
         freq = []
         for i in range(1, len(self.targets)):
             freq.append(float(self.targets[i]["Freq"]))
-        self.main_to_ps.send("Start")
-        self.main_to_ps.send(freq)
+        self.sendMessage(self.main_to_ps, "Start", "Ps")
+        self.sendMessage(self.main_to_ps, freq, "Ps")
         self.main_to_emo.send("Start")
 
     def sendMessage(self, connections, message, name):
@@ -144,7 +144,7 @@ class MainWindow(MyWindows.TkWindow):
         self.buttons[0].configure(text="Start", command=lambda: self.start())
         self.sendMessage(self.main_to_plot, "Stop", "plot")
         self.sendMessage(self.main_to_psychopy, "Stop", "psychopy")
-        self.main_to_ps.send("Stop")
+        self.sendMessage(self.main_to_ps, "Stop", "PS")
         self.main_to_emo.send("Stop")
 
     def newProcess(self, func, message, *args):
