@@ -8,18 +8,33 @@ import ScrolledText
 
 class Abstract(MyWindows.ToplevelWindow):
     def __init__(self, title):
-        MyWindows.ToplevelWindow.__init__(self, title, 200, 200)
+        MyWindows.ToplevelWindow.__init__(self, title, 350, 200)
         self.channel_count = 0
         self.sensor_names = []
         self.generators = []
         self.continue_generating = True
         self.freq_points = []
         self.freq_indexes = []
-        self.packet_count = 128
-        # self.canvas = Tkinter.Canvas(self, width=200, height=200)
-        # self.canvas.pack()
+        self.packet_count = 1024
+        self.window_function = 1
         self.canvas = ScrolledText.ScrolledText(self, width=200, height=200)
         self.canvas.pack()
+
+    def setWindow(self, window_var, options_textboxes):
+        length = self.packet_count
+        window_var = window_var.get()
+        if window_var == "hanning":
+            self.window_function = np.hanning(length)
+        elif window_var == "hamming":
+            self.window_function = np.hamming(length)
+        elif window_var == "blackman":
+            self.window_function = np.blackman(length)
+        elif window_var == "kaiser":
+            self.window_function = np.kaiser(length, float(options_textboxes["Beta"].get()))
+        elif window_var == "bartlett":
+            self.window_function = np.bartlett(length)
+        elif window_var == "None":
+            self.window_function = 1
 
     def setup(self, checkbox_values, sensor_names, freq_points):
         self.freq_indexes = []
@@ -42,7 +57,7 @@ class Abstract(MyWindows.ToplevelWindow):
             self.generators[i].send(None)
 
     def generator(self, index, update_after, start_deleting):
-        coordinates_generator = self.coordinate_generator(128)
+        coordinates_generator = self.coordinate_generator(self.packet_count)
         try:
             packet_count = 0
             for freq in self.freq_points:
@@ -61,12 +76,16 @@ class Abstract(MyWindows.ToplevelWindow):
                         if ratio > max:
                             max = ratio
                             max_index = i
-                        # print ratio,
-                    if max < 1:
-                        print "Ratio < 1",
-                    # print self.freq_points[max_index]
-                    # self.canvas.create_text(10, 10+10*index, text=self.freq_points[max_index])
-                    self.canvas.insert(Tkinter.INSERT, str(self.freq_points[max_index])+" ")
+                    self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
+                    max = 0
+                    max_index = -1
+                    for i in range(len(self.freq_indexes)):
+                        ratio = coordinates[self.freq_indexes[i]/2]*2/(coordinates[self.freq_indexes[i]/2-1]+coordinates[self.freq_indexes[i]/2+1])
+                        if ratio > max:
+                            max = ratio
+                            max_index = i
+                    self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"\n")
+                    self.canvas.yview(Tkinter.END)
                     coordinates_generator.next()
                 packet_count += 1
         finally:
@@ -82,7 +101,7 @@ class PS2(Abstract):
         self.plot_count = self.channel_count
 
     def getGenerator(self, i):
-        return self.generator(i, 128, lambda x: True)
+        return self.generator(i, self.packet_count, lambda x: True)
 
     def sendPacket(self, packet):
         for i in range(self.channel_count):
@@ -95,7 +114,7 @@ class PS2(Abstract):
             for i in range(packet_count):
                 y = yield
                 average[i] = y
-            yield np.log10(np.abs(np.fft.rfft(scipy.signal.detrend(average))))
+            yield np.log10(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(average))))
 
 
 class PS(Abstract):
@@ -106,7 +125,7 @@ class PS(Abstract):
         self.plot_count = 1
 
     def getGenerator(self, i):
-        return self.generator(i, 128*self.channel_count, lambda x: True)
+        return self.generator(i, self.packet_count*self.channel_count, lambda x: True)
 
     def sendPacket(self, packet):
         for i in range(self.channel_count):
@@ -125,7 +144,7 @@ class PS(Abstract):
                     coordinates[j][i] = y
             ffts = []
             for i in range(self.channel_count):
-                ffts.append(np.abs(np.fft.rfft(scipy.signal.detrend(coordinates[i]))))
+                ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
             for i in range(len(ffts[0])):
                 sum = 0
                 for j in range(self.channel_count):

@@ -59,9 +59,10 @@ def newFreqTextBox(frame, text, column, row, textboxes, width=5):
 
 
 def validateFreq(textbox):
-    freq = float(textbox.get())
-    freq_on = int(60/freq//2)
-    freq_off = int(60/freq/2.0+0.5)
-    textbox.delete(0, Tkinter.END)
-    textbox.insert(0, float(60)/(freq_off+freq_on))
+    if textbox.get() != "":
+        freq = float(textbox.get())
+        freq_on = int(60/freq//2)
+        freq_off = int(60/freq/2.0+0.5)
+        textbox.delete(0, Tkinter.END)
+        textbox.insert(0, float(60)/(freq_off+freq_on))
     return True

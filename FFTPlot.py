@@ -6,6 +6,9 @@ from scipy import signal
 
 
 class FFT(object):
+    def __init__(self):
+        self.window_function = 1
+
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(len(coordinates)):
@@ -15,6 +18,22 @@ class FFT(object):
 
     def scaleY(self, y, index, plot_count):
         return ((y*-30+50) + index*512 + 512/2) / plot_count
+
+    def setWindow(self, window_var, options_textboxes):
+        length = 1024
+        window_var = window_var.get()
+        if window_var == "hanning":
+            self.window_function = np.hanning(length)
+        elif window_var == "hamming":
+            self.window_function = np.hamming(length)
+        elif window_var == "blackman":
+            self.window_function = np.blackman(length)
+        elif window_var == "kaiser":
+            self.window_function = np.kaiser(length, float(options_textboxes["Beta"].get()))
+        elif window_var == "bartlett":
+            self.window_function = np.bartlett(length)
+        elif window_var == "None":
+            self.window_function = 1
 
 
 class Multiple(object):
@@ -78,7 +97,7 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
             for i in range(1024):
                 y = yield
                 coordinates[i] = y
-            fft = np.abs(np.fft.rfft(signal.detrend(coordinates)))
+            fft = np.abs(np.fft.rfft(self.window_function*signal.detrend(coordinates)))
             for i in range(len(fft)):
                 average[i] = (average[i] * (k - 1) + fft[i]) / k
             yield np.log10(average)
@@ -109,7 +128,7 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
                     coordinates[j][i] = y
             ffts = []
             for i in range(self.channel_count):
-                ffts.append(np.abs(np.fft.rfft(signal.detrend(coordinates[i]))))
+                ffts.append(np.abs(np.fft.rfft(self.window_function*signal.detrend(coordinates[i]))))
             for i in range(len(ffts[0])):
                 sum = 0
                 for j in range(self.channel_count):

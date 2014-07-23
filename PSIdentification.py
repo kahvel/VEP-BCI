@@ -25,14 +25,26 @@ class PSIdentification(MyWindows.TkWindow):
             box = Tkinter.Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i])
             box.grid(column=i % 7, row=i//7)
 
+        self.options_textboxes = {}
+        self.options_frame = Tkinter.Frame(self)
+        # MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
+        # MyWindows.newTextBox(self.options_frame, "Length:", 2, 0, self.options_textboxes)
+        self.window_var = Tkinter.StringVar()
+        self.window_var.set("None")
+        window_box = Tkinter.OptionMenu(self.options_frame, self.window_var, "None", "hanning", "hamming", "blackman",
+                                        "kaiser", "bartlett")
+        window_box.grid(column=0, row=1, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(self.options_frame, "Beta:", 2, 1, self.options_textboxes)
+
         buttonframe = Tkinter.Frame(self)
         self.buttons["PS"] = Tkinter.Button(buttonframe, text="PS", command=lambda: self.set("PS"))
         self.buttons["PS2"] = Tkinter.Button(buttonframe, text="PS2", command=lambda: self.set("PS2"))
         for i in range(len(self.button_names)):
             self.buttons[self.button_names[i]].grid(column=i % 4, row=i//4, padx=5, pady=5)
 
-        checkboxframe.grid(column=0, row=0)
-        buttonframe.grid(column=0, row=1)
+        checkboxframe.pack()
+        buttonframe.pack()
+        self.options_frame.pack()
         self.exitFlag = False
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.myMainloop()
@@ -81,7 +93,7 @@ class PSIdentification(MyWindows.TkWindow):
         window = windows[key]
         if window is not None:
             # window.canvas.delete("all")
-            window.canvas.insert(Tkinter.INSERT, "Starting ")
+            window.canvas.insert(Tkinter.END, "Starting\n")
             self.garbage.extend(window.generators)
             window.continue_generating = True
             window.setup(checkbox_values, self.sensor_names, self.freq_points)
@@ -90,6 +102,7 @@ class PSIdentification(MyWindows.TkWindow):
         for key in self.windows:
             if self.windows[key] is not None:
                 self.reset(self.windows, key, self.checkbox_values)
+                self.windows[key].setWindow(self.window_var, self.options_textboxes)
 
         while True:
             packet = self.recvPacket(self.ps_to_emo)

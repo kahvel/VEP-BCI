@@ -31,7 +31,6 @@ class Window(MyWindows.TkWindow):
         self.checkbox_values = []
         self.checkbox_values_fft = []
 
-        buttonframe0 = Tkinter.Frame(self)
         buttonframe1 = Tkinter.Frame(self)
         buttonframe2 = Tkinter.Frame(self)
         buttonframe3 = Tkinter.Frame(self)
@@ -72,16 +71,31 @@ class Window(MyWindows.TkWindow):
             box = Tkinter.Checkbutton(checkboxframe_fft, text=self.sensor_names[i], variable=self.checkbox_values_fft[i])
             box.grid(column=i % 7, row=i//7)
 
+        self.options_textboxes = {}
+        self.options_frame = Tkinter.Frame(self)
+        MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "Length:", 2, 0, self.options_textboxes)
+        self.window_var = Tkinter.StringVar()
+        self.window_var.set("None")
+        window_box = Tkinter.OptionMenu(self.options_frame, self.window_var, "None", "hanning", "hamming", "blackman",
+                                        "kaiser", "bartlett")
+        window_box.grid(column=0, row=1, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(self.options_frame, "Beta:", 2, 1, self.options_textboxes)
+
         buttonframe2.pack()
         checkboxframe.pack()
         buttonframe3.pack()
         checkboxframe_fft.pack()
+        self.options_frame.pack()
         buttonframe1.pack()
-        buttonframe0.pack()
+
 
         self.exitFlag = False
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.myMainloop()
+
+    # def windowChange(self, val):
+    #     if val == "kaiser":
 
     def exit(self):
         self.exitFlag = True
@@ -117,6 +131,9 @@ class Window(MyWindows.TkWindow):
         window = windows[key]
         if window is not None:
             window.canvas.delete("all")
+            for i in range(0, 512, 40):  # scale for fft
+                window.canvas.create_line(i, 0, i, 512, fill="red")
+                window.canvas.create_text(i, 10, text=i/8)
             self.garbage.extend(window.generators)
             window.continue_generating = True
             window.setup(checkbox_values, self.sensor_names)
@@ -136,6 +153,7 @@ class Window(MyWindows.TkWindow):
         packets = []
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
+                self.fft_plot_windows[key].setWindow(self.window_var, self.options_textboxes)
                 self.reset(self.fft_plot_windows, key, self.checkbox_values_fft)
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
