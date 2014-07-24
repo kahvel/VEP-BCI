@@ -60,7 +60,7 @@ class Abstract(MyWindows.ToplevelWindow):
             self.generators[i].send(None)
 
     def generator(self, index, update_after, start_deleting):
-        coordinates_generator = self.coordinate_generator(self.length)
+        coordinates_generator = self.coordinates_generator()
         try:
             packet_count = 0
             for freq in self.freq_points:
@@ -70,7 +70,7 @@ class Abstract(MyWindows.ToplevelWindow):
             while True:
                 y = yield
                 coordinates = coordinates_generator.send(y)
-                if packet_count % update_after == 0 and packet_count != 0:
+                if coordinates is not None:
                     if start_deleting(packet_count):
                         packet_count = 0
                     max = 0
@@ -149,6 +149,10 @@ class PS2(Abstract):
     def coordinates_generator(self):
         coordinates = [0 for _ in range(self.length)]
         yield
+        for i in range(self.length):
+            y = yield
+            coordinates[i] = y
+        yield np.log10(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates))))
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):
@@ -177,17 +181,27 @@ class PS(Abstract):
         for _ in range(self.channel_count):
             coordinates.append([0 for _ in range(self.length)])
         k = 0
-        reset_average = True
         yield
+        for i in range(self.length):
+            for j in range(self.channel_count):
+                y = yield
+                coordinates[j][i] = y
+        k += 1
+        ffts = []
+        for i in range(self.channel_count):
+            ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
+        for i in range(len(ffts[0])):
+            sum = 0
+            for j in range(self.channel_count):
+                sum += ffts[j][i]
+            average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
+        yield np.log10(average)
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):
                     for channel in range(self.channel_count):
                         y = yield
                         coordinates[channel][i*self.step+j] = y
-                if reset_average:
-                    k = 0
-                    average = [0 for _ in range(self.length//2+1)]
                 k += 1
                 ffts = []
                 for i in range(self.channel_count):
@@ -198,4 +212,3 @@ class PS(Abstract):
                         sum += ffts[j][i]
                     average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
                 yield np.log10(average)
-            reset_average = False
