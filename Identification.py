@@ -15,24 +15,27 @@ class Abstract(MyWindows.ToplevelWindow):
         self.continue_generating = True
         self.freq_points = []
         self.freq_indexes = []
-        self.packet_count = 512
+        self.length = 512
+        self.step = 32
         self.window_function = 1
+        self.headset_freq = 128
         self.canvas = ScrolledText.ScrolledText(self, width=200, height=200)
         self.canvas.pack()
 
     def setOptions(self, window_var, options_textboxes):
-        self.packet_count = int(options_textboxes["Length"].get())
+        self.length = int(options_textboxes["Length"].get())
+        self.step = int(options_textboxes["Step"].get())
         window_var = window_var.get()
         if window_var == "hanning":
-            self.window_function = np.hanning(self.packet_count)
+            self.window_function = np.hanning(self.length)
         elif window_var == "hamming":
-            self.window_function = np.hamming(self.packet_count)
+            self.window_function = np.hamming(self.length)
         elif window_var == "blackman":
-            self.window_function = np.blackman(self.packet_count)
+            self.window_function = np.blackman(self.length)
         elif window_var == "kaiser":
-            self.window_function = np.kaiser(self.packet_count, float(options_textboxes["Beta"].get()))
+            self.window_function = np.kaiser(self.length, float(options_textboxes["Beta"].get()))
         elif window_var == "bartlett":
-            self.window_function = np.bartlett(self.packet_count)
+            self.window_function = np.bartlett(self.length)
         elif window_var == "None":
             self.window_function = 1
 
@@ -57,12 +60,12 @@ class Abstract(MyWindows.ToplevelWindow):
             self.generators[i].send(None)
 
     def generator(self, index, update_after, start_deleting):
-        coordinates_generator = self.coordinate_generator(self.packet_count)
+        coordinates_generator = self.coordinate_generator(self.length)
         try:
             packet_count = 0
             for freq in self.freq_points:
-                self.freq_indexes.append(freq*self.packet_count/128)
-                print np.fft.rfftfreq(self.packet_count)[self.freq_indexes[-1]]*128
+                self.freq_indexes.append(freq*self.length/self.headset_freq)
+                print np.fft.rfftfreq(self.length)[self.freq_indexes[-1]]*self.headset_freq
             coordinates_generator.send(None)
             while True:
                 y = yield
@@ -137,20 +140,21 @@ class PS2(Abstract):
         self.plot_count = self.channel_count
 
     def getGenerator(self, i):
-        return self.generator(i, self.packet_count, lambda x: True)
+        return self.generator(i, self.length, lambda x: True)
 
     def sendPacket(self, packet):
         for i in range(self.channel_count):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
 
-    def coordinate_generator(self, packet_count):
-        average = [0 for _ in range(packet_count)]
+    def coordinates_generator(self):
+        coordinates = [0 for _ in range(self.length)]
         yield
         while True:
-            for i in range(packet_count):
-                y = yield
-                average[i] = y
-            yield np.log10(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(average))))
+            for i in range(self.length/self.step):
+                for j in range(self.step):
+                    y = yield
+                    coordinates[i*self.step+j] = y
+                yield np.log10(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates))))
 
 
 class PS(Abstract):
@@ -161,29 +165,37 @@ class PS(Abstract):
         self.plot_count = 1
 
     def getGenerator(self, i):
-        return self.generator(i, self.packet_count*self.channel_count, lambda x: True)
+        return self.generator(i, self.length*self.channel_count, lambda x: True)
 
     def sendPacket(self, packet):
         for i in range(self.channel_count):
             self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
 
-    def coordinate_generator(self, packet_count):
-        average = [0 for _ in range(packet_count/2+1)]
+    def coordinates_generator(self):
+        average = [0 for _ in range(self.length//2+1)]
         coordinates = []
         for _ in range(self.channel_count):
-            coordinates.append([0 for _ in range(packet_count)])
+            coordinates.append([0 for _ in range(self.length)])
+        k = 0
+        reset_average = True
         yield
         while True:
-            for i in range(packet_count):
-                for j in range(self.channel_count):
-                    y = yield
-                    coordinates[j][i] = y
-            ffts = []
-            for i in range(self.channel_count):
-                ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
-            for i in range(len(ffts[0])):
-                sum = 0
-                for j in range(self.channel_count):
-                    sum += ffts[j][i]
-                average[i] = sum/self.channel_count
-            yield np.log10(average)
+            for i in range(self.length/self.step):
+                for j in range(self.step):
+                    for channel in range(self.channel_count):
+                        y = yield
+                        coordinates[channel][i*self.step+j] = y
+                if reset_average:
+                    k = 0
+                    average = [0 for _ in range(self.length//2+1)]
+                k += 1
+                ffts = []
+                for i in range(self.channel_count):
+                    ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
+                for i in range(len(ffts[0])):
+                    sum = 0
+                    for j in range(self.channel_count):
+                        sum += ffts[j][i]
+                    average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
+                yield np.log10(average)
+            reset_average = False

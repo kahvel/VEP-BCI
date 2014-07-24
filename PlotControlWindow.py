@@ -2,10 +2,8 @@ __author__ = 'Anti'
 
 import MyWindows
 import Tkinter
-import multiprocessing
 import SignalPlot
 import FFTPlot
-import Main
 
 
 class Window(MyWindows.TkWindow):
@@ -159,6 +157,7 @@ class Window(MyWindows.TkWindow):
                     self.fft_plot_windows[key].canvas.create_text(i, 10, text=i/8)
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
+                self.signal_plot_windows[key].setOptions(self.options_textboxes)
                 self.reset(self.signal_plot_windows, key, self.checkbox_values)
                 if len(packets) == 0:
                     print("Calculating averages")

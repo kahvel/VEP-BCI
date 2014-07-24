@@ -32,7 +32,7 @@ class PlotWindow(MyWindows.ToplevelWindow):
             self.generators.append(self.getGenerator(i))
             self.generators[i].send(None)
 
-    def plot_generator(self, index, update_after, start_deleting):
+    def plot_generator(self, index, start_deleting):
         coordinates_generator = self.coordinates_generator()
         try:
             lines = [self.canvas.create_line(0, 0, 0, 0)]

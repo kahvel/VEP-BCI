@@ -9,6 +9,9 @@ import numpy as np
 class Signal(object):
     def __init__(self):
         self.averages = []
+        self.length = 512
+        self.step = 8
+        self.window_length = 512
 
     def calculateAverage(self, packets):
         self.averages = [0 for _ in range(self.channel_count)]
@@ -18,17 +21,21 @@ class Signal(object):
         print(self.averages)
 
     def getGenerator(self, i):
-        return self.plot_generator(i, 8, lambda packet_count: operator.eq(packet_count, 512))
+        return self.plot_generator(i, lambda packet_count: operator.eq(packet_count, self.length))
 
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(packet_count-len(coordinates), packet_count):
-            result.append(i)
+            result.append(i*self.window_length/self.length)
             result.append(self.scaleY(coordinates.popleft(), self.getChannelAverage(index), index, self.plot_count))
         return result
 
     def scaleY(self, y, average, index, plot_count):
-        return ((y-average) + index*512 + 512/2) / plot_count
+        return ((y-average) + index*self.window_length + self.window_length/2) / plot_count
+
+    def setOptions(self, options_textboxes):
+        self.length = int(options_textboxes["Length"].get())
+        self.step = int(options_textboxes["Step"].get())
 
 
 class Multiple(object):
@@ -53,27 +60,27 @@ class Single(object):
 
 class Average(object):
     def coordinates_generator(self):
-        average = [0 for _ in range(512)]
+        average = [0 for _ in range(self.length)]
         k = 0
         prev = [0]
         yield
         while True:
             k += 1
-            for i in range(64):
-                for j in range(8):
+            for i in range(self.length/self.step):
+                for j in range(self.step):
                     y = yield
-                    average[i*8+j] = (average[i*8+j] * (k - 1) + y) / k
-                yield Queue.deque(prev+average[i*8:i*8+8])
-                prev = [average[i*8+8-1]]
+                    average[i*self.step+j] = (average[i*self.step+j] * (k - 1) + y) / k
+                yield Queue.deque(prev+average[i*self.step:i*self.step+self.step])
+                prev = [average[i*self.step+self.step-1]]
 
 
 class Regular(object):
     def coordinates_generator(self):
-        average = [0 for _ in range(8)]
+        average = [0 for _ in range(self.step)]
         prev = [0]
         yield
         while True:
-            for i in range(8):
+            for i in range(self.step):
                 y = yield
                 average[i] = y
             yield Queue.deque(prev+average)

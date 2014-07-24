@@ -1,6 +1,4 @@
 __author__ = 'Anti'
-import numpy as np
-from scipy import signal
 import MyWindows
 import Tkinter
 import Identification
@@ -11,7 +9,6 @@ class PSIdentification(MyWindows.TkWindow):
         MyWindows.TkWindow.__init__(self, "Power spectrum identification", 320, 320)
         self.ps_to_emo = ps_to_emo
         self.ps_to_main = ps_to_main
-        self.packet_count = 128
         self.sensor_names = sensor_names
 
         self.buttons = {}
@@ -27,7 +24,7 @@ class PSIdentification(MyWindows.TkWindow):
 
         self.options_textboxes = {}
         self.options_frame = Tkinter.Frame(self)
-        # MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
         MyWindows.newTextBox(self.options_frame, "Length:", 2, 0, self.options_textboxes)
         self.window_var = Tkinter.StringVar()
         self.window_var.set("None")
@@ -36,6 +33,7 @@ class PSIdentification(MyWindows.TkWindow):
         window_box.grid(column=0, row=1, padx=5, pady=5, columnspan=2)
         MyWindows.newTextBox(self.options_frame, "Beta:", 2, 1, self.options_textboxes)
         self.options_textboxes["Length"].insert(0, 512)
+        self.options_textboxes["Step"].insert(0, 512)
 
         buttonframe = Tkinter.Frame(self)
         self.buttons["PS"] = Tkinter.Button(buttonframe, text="PS", command=lambda: self.set("PS"))
