@@ -8,31 +8,31 @@ import ScrolledText
 
 class Abstract(MyWindows.ToplevelWindow):
     def __init__(self, title):
-        MyWindows.ToplevelWindow.__init__(self, title, 350, 200)
+        MyWindows.ToplevelWindow.__init__(self, title, 525, 200)
         self.channel_count = 0
         self.sensor_names = []
         self.generators = []
         self.continue_generating = True
         self.freq_points = []
         self.freq_indexes = []
-        self.packet_count = 1024
+        self.packet_count = 512
         self.window_function = 1
         self.canvas = ScrolledText.ScrolledText(self, width=200, height=200)
         self.canvas.pack()
 
-    def setWindow(self, window_var, options_textboxes):
-        length = self.packet_count
+    def setOptions(self, window_var, options_textboxes):
+        self.packet_count = int(options_textboxes["Length"].get())
         window_var = window_var.get()
         if window_var == "hanning":
-            self.window_function = np.hanning(length)
+            self.window_function = np.hanning(self.packet_count)
         elif window_var == "hamming":
-            self.window_function = np.hamming(length)
+            self.window_function = np.hamming(self.packet_count)
         elif window_var == "blackman":
-            self.window_function = np.blackman(length)
+            self.window_function = np.blackman(self.packet_count)
         elif window_var == "kaiser":
-            self.window_function = np.kaiser(length, float(options_textboxes["Beta"].get()))
+            self.window_function = np.kaiser(self.packet_count, float(options_textboxes["Beta"].get()))
         elif window_var == "bartlett":
-            self.window_function = np.bartlett(length)
+            self.window_function = np.bartlett(self.packet_count)
         elif window_var == "None":
             self.window_function = 1
 
@@ -62,6 +62,7 @@ class Abstract(MyWindows.ToplevelWindow):
             packet_count = 0
             for freq in self.freq_points:
                 self.freq_indexes.append(freq*self.packet_count/128)
+                print np.fft.rfftfreq(self.packet_count)[self.freq_indexes[-1]]*128
             coordinates_generator.send(None)
             while True:
                 y = yield
@@ -72,7 +73,17 @@ class Abstract(MyWindows.ToplevelWindow):
                     max = 0
                     max_index = -1
                     for i in range(len(self.freq_indexes)):
-                        ratio = coordinates[self.freq_indexes[i]]*2/(coordinates[self.freq_indexes[i]-1]+coordinates[self.freq_indexes[i]+1])
+                        ratio = coordinates[self.freq_indexes[i]-1]#*2/(coordinates[self.freq_indexes[i]-2]+coordinates[self.freq_indexes[i]])
+                        ratio2 = coordinates[self.freq_indexes[i]/2-1]#*2/(coordinates[self.freq_indexes[i]/2-2]+coordinates[self.freq_indexes[i]/2])
+                        ratio3 = coordinates[self.freq_indexes[i]/4-1]
+                        if ratio> max:
+                            max = ratio
+                            max_index = i
+                    self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
+                    max = 0
+                    max_index = -1
+                    for i in range(len(self.freq_indexes)):
+                        ratio = coordinates[self.freq_indexes[i]/2-1]#*2/(coordinates[self.freq_indexes[i]/2-2]+coordinates[self.freq_indexes[i]/2])
                         if ratio > max:
                             max = ratio
                             max_index = i
@@ -80,11 +91,36 @@ class Abstract(MyWindows.ToplevelWindow):
                     max = 0
                     max_index = -1
                     for i in range(len(self.freq_indexes)):
-                        ratio = coordinates[self.freq_indexes[i]/2]*2/(coordinates[self.freq_indexes[i]/2-1]+coordinates[self.freq_indexes[i]/2+1])
+                        ratio = coordinates[self.freq_indexes[i]/4-1]#*2/(coordinates[self.freq_indexes[i]/4-2]+coordinates[self.freq_indexes[i]/4])
                         if ratio > max:
                             max = ratio
                             max_index = i
                     self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"\n")
+                    max = 0
+                    max_index = -1
+                    for i in range(len(self.freq_indexes)):
+                        ratio = coordinates[self.freq_indexes[i]-1]*2/(coordinates[self.freq_indexes[i]-2]+coordinates[self.freq_indexes[i]])
+                        # ratio2 = coordinates[self.freq_indexes[i]/2-1]*2/(coordinates[self.freq_indexes[i]/2-2]+coordinates[self.freq_indexes[i]/2])
+                        if ratio> max:
+                            max = ratio
+                            max_index = i
+                    self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
+                    max = 0
+                    max_index = -1
+                    for i in range(len(self.freq_indexes)):
+                        ratio = coordinates[self.freq_indexes[i]/2-1]*2/(coordinates[self.freq_indexes[i]/2-2]+coordinates[self.freq_indexes[i]/2])
+                        if ratio > max:
+                            max = ratio
+                            max_index = i
+                    self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
+                    max = 0
+                    max_index = -1
+                    for i in range(len(self.freq_indexes)):
+                        ratio = coordinates[self.freq_indexes[i]/4-1]*2/(coordinates[self.freq_indexes[i]/4-2]+coordinates[self.freq_indexes[i]/4])
+                        if ratio > max:
+                            max = ratio
+                            max_index = i
+                    self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"\n\n")
                     self.canvas.yview(Tkinter.END)
                     coordinates_generator.next()
                 packet_count += 1

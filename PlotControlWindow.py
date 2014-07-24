@@ -81,6 +81,8 @@ class Window(MyWindows.TkWindow):
                                         "kaiser", "bartlett")
         window_box.grid(column=0, row=1, padx=5, pady=5, columnspan=2)
         MyWindows.newTextBox(self.options_frame, "Beta:", 2, 1, self.options_textboxes)
+        self.options_textboxes["Length"].insert(0, 512)
+        self.options_textboxes["Step"].insert(0, 8)
 
         buttonframe2.pack()
         checkboxframe.pack()
@@ -131,9 +133,6 @@ class Window(MyWindows.TkWindow):
         window = windows[key]
         if window is not None:
             window.canvas.delete("all")
-            for i in range(0, 512, 40):  # scale for fft
-                window.canvas.create_line(i, 0, i, 512, fill="red")
-                window.canvas.create_text(i, 10, text=i/8)
             self.garbage.extend(window.generators)
             window.continue_generating = True
             window.setup(checkbox_values, self.sensor_names)
@@ -153,8 +152,11 @@ class Window(MyWindows.TkWindow):
         packets = []
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
-                self.fft_plot_windows[key].setWindow(self.window_var, self.options_textboxes)
+                self.fft_plot_windows[key].setOptions(self.window_var, self.options_textboxes)
                 self.reset(self.fft_plot_windows, key, self.checkbox_values_fft)
+                for i in range(0, 512, 40):  # scale for fft
+                    self.fft_plot_windows[key].canvas.create_line(i, 0, i, 512, fill="red")
+                    self.fft_plot_windows[key].canvas.create_text(i, 10, text=i/8)
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
                 self.reset(self.signal_plot_windows, key, self.checkbox_values)

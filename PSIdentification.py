@@ -28,13 +28,14 @@ class PSIdentification(MyWindows.TkWindow):
         self.options_textboxes = {}
         self.options_frame = Tkinter.Frame(self)
         # MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
-        # MyWindows.newTextBox(self.options_frame, "Length:", 2, 0, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "Length:", 2, 0, self.options_textboxes)
         self.window_var = Tkinter.StringVar()
         self.window_var.set("None")
         window_box = Tkinter.OptionMenu(self.options_frame, self.window_var, "None", "hanning", "hamming", "blackman",
                                         "kaiser", "bartlett")
         window_box.grid(column=0, row=1, padx=5, pady=5, columnspan=2)
         MyWindows.newTextBox(self.options_frame, "Beta:", 2, 1, self.options_textboxes)
+        self.options_textboxes["Length"].insert(0, 512)
 
         buttonframe = Tkinter.Frame(self)
         self.buttons["PS"] = Tkinter.Button(buttonframe, text="PS", command=lambda: self.set("PS"))
@@ -101,8 +102,8 @@ class PSIdentification(MyWindows.TkWindow):
     def start(self):
         for key in self.windows:
             if self.windows[key] is not None:
+                self.windows[key].setOptions(self.window_var, self.options_textboxes)
                 self.reset(self.windows, key, self.checkbox_values)
-                self.windows[key].setWindow(self.window_var, self.options_textboxes)
 
         while True:
             packet = self.recvPacket(self.ps_to_emo)

@@ -13,7 +13,7 @@ class Target:
         monitor_frequency = int(monitor_frequency)
         self.freq_on = int(monitor_frequency/self.freq//2)
         self.freq_off = int(monitor_frequency/self.freq/2.0+0.5)
-        print "Frequency is " + str(float(monitor_frequency)/(self.freq_off+self.freq_on))
+        print "Frequency: " + str(float(monitor_frequency)/(self.freq_off+self.freq_on)), self.freq_on, self.freq_off
 
     def generator(self):
         while True:

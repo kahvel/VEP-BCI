@@ -42,7 +42,7 @@ class PlotWindow(MyWindows.ToplevelWindow):
             while True:
                 y = yield
                 avg = coordinates_generator.send(y)
-                if packet_count % update_after == 0 and packet_count != 0:
+                if avg is not None:
                     scaled_avg = self.scale(avg, index, packet_count)
                     lines.append(self.canvas.create_line(scaled_avg))
                     coordinates_generator.next()

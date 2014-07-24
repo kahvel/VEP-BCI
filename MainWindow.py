@@ -25,7 +25,7 @@ class MainWindow(MyWindows.TkWindow):
                                "x": 0,
                                "y": 0,
                                "Freq": 10.0,
-                               "Color1": "#000000",
+                               "Color1": "#ffffff",
                                "Color2": "#777777"}
         self.targets.append(self.initial_target)
         self.targets.append(self.initial_target.copy())
@@ -59,7 +59,7 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.newTextBox(self.windowframe, "Freq:", 0, 1, self.background_textboxes)
         self.background_textboxes["Width"].insert(0, 800)
         self.background_textboxes["Height"].insert(0, 600)
-        self.background_textboxes["Color"].insert(0, "#777777")
+        self.background_textboxes["Color"].insert(0, "#000000")
         self.background_textboxes["Freq"].insert(0, 60)
 
         targettitleframe = Frame(self)
