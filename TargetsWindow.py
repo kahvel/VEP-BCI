@@ -4,10 +4,12 @@ from psychopy import visual, core, logging, event
 
 class Target:
     def __init__(self, target, window, monitor_frequency):
+        self.color = target["Color1"]
         self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
-                                pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=target["Color1"])
+                                pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=self.color)
         # self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
         # self.fixation.setAutoDraw(True)
+        self.detection_color = "#00ff00"
         self.freq = float(target["Freq"])
         self.sequence = "01"
         monitor_frequency = int(monitor_frequency)
@@ -16,27 +18,39 @@ class Target:
         print "Frequency: " + str(float(monitor_frequency)/(self.freq_off+self.freq_on)), self.freq_on, self.freq_off
 
     def generator(self):
+        detected = False
         while True:
             for c in self.sequence:
-                for _ in range(self.freq_on):
-                    yield
-                    if c == "1":
+                if c == "1":
+                    for _ in range(self.freq_on):
+                        freq = yield
+                        if freq == self.freq:
+                            print "detected"
+                            detected = True
+                        if detected:
+                            self.rect.fillColor = self.detection_color
                         self.rect.draw()
                         # self.fixation.draw()
-                for _ in range(self.freq_off):
-                    yield
+                detected = False
+                self.rect.fillColor = self.color
+                if c == "0":
+                    for _ in range(self.freq_off):
+                        freq = yield
+                        if freq == self.freq:
+                            print "detected"
+                            detected = True
 
 
 class TargetsWindow:
-    def __init__(self, targets_to_main, targets_to_emo, background_data, targets_data):
+    def __init__(self, targets_to_main, targets_to_emo, background_data, targets_to_detection):
         logging.console.setLevel(logging.WARNING)
         self.targets_to_main = targets_to_main
         self.targets_to_emo = targets_to_emo
+        self.targets_to_detection = targets_to_detection
         self.generators = []
         self.window = None
         self.monitor_frequency = None
         self.setWindow(background_data)
-        self.setTargets(targets_data)
         self.MyMainloop()
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
@@ -59,13 +73,13 @@ class TargetsWindow:
             message = self.recvPacket(self.targets_to_main)
             if message == "Start":
                 print "Starting targets"
+                self.setTargets(self.targets_to_main.recv())
                 message = self.run()
             if message == "Stop":
                 print "Targets stopped"
             if message == "Exit":
                 print "Exiting targets"
                 break
-
         self.targets_to_emo.send("Close")
         self.targets_to_emo.close()
         self.targets_to_main.send("Close")
@@ -79,6 +93,7 @@ class TargetsWindow:
         self.monitor_frequency = background_data["Freq"]
 
     def setTargets(self, targets):
+        self.generators = []
         for target in targets[1:]:
             rect = Target(target, self.window, self.monitor_frequency)
             self.generators.append(rect.generator())
@@ -91,8 +106,12 @@ class TargetsWindow:
         while True:
             if self.targets_to_main.poll():
                 return self.targets_to_main.recv()
+            freq = None
+            if self.targets_to_detection.poll():
+                freq = self.targets_to_detection.recv()
+                print "Targets " + str(freq)
             for generator in self.generators:
-                generator.send(None)
+                generator.send(freq)
             self.window.flip()
             if len(event.getKeys()) > 0:
                 return "Exit"

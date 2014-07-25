@@ -5,11 +5,12 @@ import Identification
 
 
 class PSIdentification(MyWindows.TkWindow):
-    def __init__(self, ps_to_main, ps_to_emo, sensor_names):
+    def __init__(self, ps_to_main, ps_to_emo, sensor_names, detection_to_targets):
         MyWindows.TkWindow.__init__(self, "Power spectrum identification", 320, 320)
         self.ps_to_emo = ps_to_emo
         self.ps_to_main = ps_to_main
         self.sensor_names = sensor_names
+        self.detection_to_targets = detection_to_targets
 
         self.buttons = {}
         self.windows = {}
@@ -110,6 +111,9 @@ class PSIdentification(MyWindows.TkWindow):
             for key in self.windows:
                 if self.windows[key] is not None:
                     if self.windows[key].continue_generating:
-                        self.windows[key].sendPacket(packet)
+                        e = self.windows[key].sendPacket(packet)
+                        if e is not None:
+                            print "Detection " + str(e)
+                            self.detection_to_targets.send(e)
 
 

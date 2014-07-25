@@ -40,8 +40,9 @@ class MainWindow(MyWindows.TkWindow):
         self.initElements()
         self.main_to_plot = []
         self.main_to_psychopy = []
-        self.main_to_ps = []
+        self.main_to_detection = []
         self.main_to_emo, emo_to_main = multiprocessing.Pipe()
+        self.detection_to_psychopy, self.psychopy_to_detection = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runEmotiv, args=(emo_to_main,)).start()
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
@@ -112,23 +113,27 @@ class MainWindow(MyWindows.TkWindow):
 
     def exit(self):
         print "Exiting main window"
-        self.sendMessage(self.main_to_ps, "Exit", "PS")
+        self.sendMessage(self.main_to_detection, "Exit", "PS")
+        self.sendMessage(self.main_to_psychopy, "Exit", "psychopy")
+        self.sendMessage(self.main_to_plot, "Exit", "plot")
         self.main_to_emo.send("Exit")
         self.destroy()
 
     def psIdentification(self):
-        self.main_to_ps.append(self.newProcess(Main.runPSIdentification, "New pipe", self.sensor_names))
+        self.main_to_detection.append(self.newProcess(Main.runPSIdentification, "New pipe", self.sensor_names, self.detection_to_psychopy))
 
     def start(self):
         self.saveValues(self.current_radio_button.get())
         self.buttons[0].configure(text="Stop", command=lambda: self.stop())
         self.sendMessage(self.main_to_plot, "Start", "plot")
+        self.saveValues(self.current_radio_button.get())
         self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
+        self.sendMessage(self.main_to_psychopy, self.targets, "psychopy")
         freq = []
         for i in range(1, len(self.targets)):
             freq.append(float(self.targets[i]["Freq"]))
-        self.sendMessage(self.main_to_ps, "Start", "Ps")
-        self.sendMessage(self.main_to_ps, freq, "Ps")
+        self.sendMessage(self.main_to_detection, "Start", "Ps")
+        self.sendMessage(self.main_to_detection, freq, "Ps")
         self.main_to_emo.send("Start")
 
     def sendMessage(self, connections, message, name):
@@ -144,7 +149,7 @@ class MainWindow(MyWindows.TkWindow):
         self.buttons[0].configure(text="Start", command=lambda: self.start())
         self.sendMessage(self.main_to_plot, "Stop", "plot")
         self.sendMessage(self.main_to_psychopy, "Stop", "psychopy")
-        self.sendMessage(self.main_to_ps, "Stop", "PS")
+        self.sendMessage(self.main_to_detection, "Stop", "PS")
         self.main_to_emo.send("Stop")
 
     def newProcess(self, func, message, *args):
@@ -162,7 +167,7 @@ class MainWindow(MyWindows.TkWindow):
         bk = {}
         for key in self.background_textboxes:
             bk[key] = self.background_textboxes[key].get()
-        self.main_to_psychopy.append(self.newProcess(Main.runPsychopy, "Psychopy", bk, self.targets))
+        self.main_to_psychopy.append(self.newProcess(Main.runPsychopy, "Psychopy", bk, self.psychopy_to_detection))
 
     def plotWindow(self):
         self.main_to_plot.append(self.newProcess(Main.runPlotControl, "New pipe", self.sensor_names))

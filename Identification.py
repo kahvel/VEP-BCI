@@ -61,6 +61,7 @@ class Abstract(MyWindows.ToplevelWindow):
 
     def generator(self, index, update_after, start_deleting):
         coordinates_generator = self.coordinates_generator()
+        detected_freq = None
         try:
             packet_count = 0
             for freq in self.freq_points:
@@ -68,7 +69,8 @@ class Abstract(MyWindows.ToplevelWindow):
                 print np.fft.rfftfreq(self.length)[self.freq_indexes[-1]]*self.headset_freq
             coordinates_generator.send(None)
             while True:
-                y = yield
+                y = yield detected_freq
+                detected_freq = None
                 coordinates = coordinates_generator.send(y)
                 if coordinates is not None:
                     if start_deleting(packet_count):
@@ -82,6 +84,7 @@ class Abstract(MyWindows.ToplevelWindow):
                         if ratio> max:
                             max = ratio
                             max_index = i
+                    detected_freq = self.freq_points[max_index]
                     self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
                     max = 0
                     max_index = -1
@@ -143,8 +146,10 @@ class PS2(Abstract):
         return self.generator(i, self.length, lambda x: True)
 
     def sendPacket(self, packet):
-        for i in range(self.channel_count):
+        ret = self.generators[0].send(packet.sensors[self.sensor_names[0]]["value"])
+        for i in range(1, self.channel_count):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
+        return ret
 
     def coordinates_generator(self):
         coordinates = [0 for _ in range(self.length)]
@@ -172,8 +177,10 @@ class PS(Abstract):
         return self.generator(i, self.length*self.channel_count, lambda x: True)
 
     def sendPacket(self, packet):
-        for i in range(self.channel_count):
+        ret = self.generators[0].send(packet.sensors[self.sensor_names[0]]["value"])
+        for i in range(1, self.channel_count):
             self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
+        return ret
 
     def coordinates_generator(self):
         average = [0 for _ in range(self.length//2+1)]

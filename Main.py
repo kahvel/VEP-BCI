@@ -19,4 +19,4 @@ def runPsychopy(psy_to_main, psy_to_emo, args):
 
 def runPSIdentification(ps_to_main, ps_to_emo, args):
     import PSIdentification
-    PSIdentification.PSIdentification(ps_to_main, ps_to_emo, args[0])
+    PSIdentification.PSIdentification(ps_to_main, ps_to_emo, args[0], args[1])
