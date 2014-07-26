@@ -113,7 +113,6 @@ class PSIdentification(MyWindows.TkWindow):
                     if self.windows[key].continue_generating:
                         e = self.windows[key].sendPacket(packet)
                         if e is not None:
-                            print "Detection " + str(e)
                             self.detection_to_targets.send(e)
 
 

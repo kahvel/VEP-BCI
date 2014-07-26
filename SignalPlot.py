@@ -9,16 +9,28 @@ import numpy as np
 class Signal(object):
     def __init__(self):
         self.averages = []
-        self.length = 512
-        self.step = 8
-        self.window_length = 512
+        self.min = []
+        self.max = []
 
     def calculateAverage(self, packets):
-        self.averages = [0 for _ in range(self.channel_count)]
-        for j in range(1, len(packets)+1):
-            for i in range(self.channel_count):
-                self.averages[i] = (self.averages[i] * (j - 1) + packets[j-1].sensors[self.sensor_names[i]]["value"]) / j
-        print(self.averages)
+        self.min = []
+        self.max = []
+        self.averages = []
+        asd = []
+        for i in range(self.channel_count):
+            asd.append([])
+            for j in range(len(packets)):
+                asd[i].append(packets[j].sensors[self.sensor_names[i]]["value"])
+        for i in range(self.channel_count):
+            self.averages.append(sum(asd[i])/len(asd[i]))
+            self.min.append(min(asd[i])-self.averages[i])
+            self.max.append(max(asd[i])-self.averages[i])
+        print self.averages, self.min, self.max
+        # self.averages = [0 for _ in range(self.channel_count)]
+        # for j in range(1, len(packets)+1):
+        #     for i in range(self.channel_count):
+        #         self.averages[i] = (self.averages[i] * (j - 1) + packets[j-1].sensors[self.sensor_names[i]]["value"]*self.window_function[j-1]) / j
+        # print(self.averages)
 
     def getGenerator(self, i):
         return self.plot_generator(i, lambda packet_count: operator.eq(packet_count, self.length))
@@ -27,15 +39,14 @@ class Signal(object):
         result = []
         for i in range(packet_count-len(coordinates), packet_count):
             result.append(i*self.window_length/self.length)
-            result.append(self.scaleY(coordinates.popleft(), self.getChannelAverage(index), index, self.plot_count))
+            result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count))
         return result
 
-    def scaleY(self, y, average, index, plot_count):
-        return ((y-average) + index*self.window_length + self.window_length/2) / plot_count
-
-    def setOptions(self, options_textboxes):
-        self.length = int(options_textboxes["Length"].get())
-        self.step = int(options_textboxes["Step"].get())
+    def scaleY(self, y,  index, plot_count):
+        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+        return ((((y - self.min[index]) * (-100 - 100)) / (self.max[index] - self.min[index])) + 100
+                + index*self.window_height + self.window_height/2) / plot_count
+        # return ((y-average) + index*self.window_height + self.window_height/2) / plot_count
 
 
 class Multiple(object):
@@ -44,7 +55,7 @@ class Multiple(object):
 
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
+            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
 
 
 class Single(object):
@@ -52,10 +63,10 @@ class Single(object):
         return sum(self.averages)/len(self.averages)
 
     def sendPacket(self, packet):
-        sum = 0
+        summ = 0
         for i in range(self.channel_count):
-            sum += packet.sensors[self.sensor_names[i]]["value"]
-        self.generators[0].send(sum/self.channel_count)
+            summ += packet.sensors[self.sensor_names[i]]["value"]
+        self.generators[0].send(summ/self.channel_count-sum(self.averages)/len(self.averages))
 
 
 class Average(object):
@@ -63,6 +74,7 @@ class Average(object):
         average = [0 for _ in range(self.length)]
         k = 0
         prev = [0]
+        prev_window = [0]
         yield
         while True:
             k += 1
@@ -70,7 +82,8 @@ class Average(object):
                 for j in range(self.step):
                     y = yield
                     average[i*self.step+j] = (average[i*self.step+j] * (k - 1) + y) / k
-                yield Queue.deque(prev+average[i*self.step:i*self.step+self.step])
+                yield Queue.deque(np.insert(self.window_function[i*self.step:i*self.step+self.step], 0, prev_window)*(prev+average[i*self.step:i*self.step+self.step]))
+                prev_window = self.window_function[i*self.step:i*self.step+self.step][-1]
                 prev = [average[i*self.step+self.step-1]]
 
 
@@ -78,13 +91,16 @@ class Regular(object):
     def coordinates_generator(self):
         average = [0 for _ in range(self.step)]
         prev = [0]
+        prev_window = [0]
         yield
         while True:
-            for i in range(self.step):
-                y = yield
-                average[i] = y
-            yield Queue.deque(prev+average)
-            prev = [average[-1]]
+            for j in range(self.length/self.step):
+                for i in range(self.step):
+                    y = yield
+                    average[i] = y
+                yield Queue.deque(np.insert(self.window_function[j*self.step:j*self.step+self.step], 0, prev_window)*(prev+average))
+                prev_window = self.window_function[j*self.step:j*self.step+self.step][-1]
+                prev = [average[-1]]
 
 
 class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):

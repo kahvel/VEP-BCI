@@ -6,12 +6,6 @@ import scipy.signal
 
 
 class FFT(object):
-    def __init__(self):
-        self.window_function = 1
-        self.length = 512
-        self.step = 32
-        self.window_length = 512
-
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(len(coordinates)):
@@ -20,24 +14,7 @@ class FFT(object):
         return result
 
     def scaleY(self, y, index, plot_count):
-        return ((y*-30+50) + index*self.window_length + self.window_length/2) / plot_count
-
-    def setOptions(self, window_var, options_textboxes):
-        self.length = int(options_textboxes["Length"].get())
-        self.step = int(options_textboxes["Step"].get())
-        window_var = window_var.get()
-        if window_var == "hanning":
-            self.window_function = np.hanning(self.length)
-        elif window_var == "hamming":
-            self.window_function = np.hamming(self.length)
-        elif window_var == "blackman":
-            self.window_function = np.blackman(self.length)
-        elif window_var == "kaiser":
-            self.window_function = np.kaiser(self.length, float(options_textboxes["Beta"].get()))
-        elif window_var == "bartlett":
-            self.window_function = np.bartlett(self.length)
-        elif window_var == "None":
-            self.window_function = 1
+        return ((y*-30+50) + index*self.window_height + self.window_height/2) / plot_count
 
 
 class Multiple(object):
@@ -78,7 +55,8 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
                 for j in range(self.step):
                     y = yield
                     coordinates[i*self.step+j] = y
-                yield np.log10(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates))))
+                fft = np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates)))
+                yield fft/sum(fft)*100
 
 
 class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
@@ -161,7 +139,7 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
         Single.__init__(self)
 
     def getGenerator(self, i):
-        return self.plot_generator(i, self.length*self.channel_count, lambda x: True)
+        return self.plot_generator(i, lambda x: True)
 
     def coordinates_generator(self):
         average = [0 for _ in range(self.length//2+1)]

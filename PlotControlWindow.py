@@ -27,7 +27,6 @@ class Window(MyWindows.TkWindow):
         self.signal_buttons = {}
         self.signal_reset_buttons = {}
         self.checkbox_values = []
-        self.checkbox_values_fft = []
 
         buttonframe1 = Tkinter.Frame(self)
         buttonframe2 = Tkinter.Frame(self)
@@ -35,8 +34,8 @@ class Window(MyWindows.TkWindow):
 
         self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.signal_plot_windows, "MultipleAverage", self.checkbox_values))
         self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.signal_plot_windows, "SingleAverage", self.checkbox_values))
-        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.fft_plot_windows, "MultipleAverage", self.checkbox_values_fft))
-        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows, "SingleAverage", self.checkbox_values_fft))
+        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.fft_plot_windows, "MultipleAverage", self.checkbox_values))
+        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows, "SingleAverage", self.checkbox_values))
 
         self.signal_buttons["MultipleRegular"] = Tkinter.Button(buttonframe2, text="Signal", command=lambda: self.setSignalPlot("MultipleRegular"))
         self.signal_buttons["SingleRegular"] = Tkinter.Button(buttonframe2, text="Mul signal", command=lambda: self.setSignalPlot("SingleRegular"))
@@ -63,12 +62,6 @@ class Window(MyWindows.TkWindow):
             box = Tkinter.Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i])
             box.grid(column=i % 7, row=i//7)
 
-        checkboxframe_fft = Tkinter.Frame(self)
-        for i in range(len(self.sensor_names)):
-            self.checkbox_values_fft.append(Tkinter.IntVar())
-            box = Tkinter.Checkbutton(checkboxframe_fft, text=self.sensor_names[i], variable=self.checkbox_values_fft[i])
-            box.grid(column=i % 7, row=i//7)
-
         self.options_textboxes = {}
         self.options_frame = Tkinter.Frame(self)
         MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
@@ -85,7 +78,6 @@ class Window(MyWindows.TkWindow):
         buttonframe2.pack()
         checkboxframe.pack()
         buttonframe3.pack()
-        checkboxframe_fft.pack()
         self.options_frame.pack()
         buttonframe1.pack()
 
@@ -151,13 +143,13 @@ class Window(MyWindows.TkWindow):
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
                 self.fft_plot_windows[key].setOptions(self.window_var, self.options_textboxes)
-                self.reset(self.fft_plot_windows, key, self.checkbox_values_fft)
+                self.reset(self.fft_plot_windows, key, self.checkbox_values)
                 for i in range(0, 512, 40):  # scale for fft
                     self.fft_plot_windows[key].canvas.create_line(i, 0, i, 512, fill="red")
                     self.fft_plot_windows[key].canvas.create_text(i, 10, text=i/8)
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
-                self.signal_plot_windows[key].setOptions(self.options_textboxes)
+                self.signal_plot_windows[key].setOptions(self.window_var, self.options_textboxes)
                 self.reset(self.signal_plot_windows, key, self.checkbox_values)
                 if len(packets) == 0:
                     print("Calculating averages")

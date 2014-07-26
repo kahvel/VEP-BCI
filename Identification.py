@@ -65,7 +65,7 @@ class Abstract(MyWindows.ToplevelWindow):
         try:
             packet_count = 0
             for freq in self.freq_points:
-                self.freq_indexes.append(freq*self.length/self.headset_freq)
+                self.freq_indexes.append(int(freq*self.length/self.headset_freq))
                 print np.fft.rfftfreq(self.length)[self.freq_indexes[-1]]*self.headset_freq
             coordinates_generator.send(None)
             while True:
@@ -85,6 +85,9 @@ class Abstract(MyWindows.ToplevelWindow):
                             max = ratio
                             max_index = i
                     detected_freq = self.freq_points[max_index]
+                    print coordinates[self.freq_indexes[i]-3], coordinates[self.freq_indexes[i]-2], \
+                        coordinates[self.freq_indexes[i]-1], coordinates[self.freq_indexes[i]],\
+                        coordinates[self.freq_indexes[i]+1], coordinates[self.freq_indexes[i]+2]
                     self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
                     max = 0
                     max_index = -1
@@ -198,11 +201,14 @@ class PS(Abstract):
         for i in range(self.channel_count):
             ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
         for i in range(len(ffts[0])):
-            sum = 0
+            summ = 0
             for j in range(self.channel_count):
-                sum += ffts[j][i]
-            average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
-        yield np.log10(average)
+                summ += ffts[j][i]
+            if sum(average) != 0:
+                average[i] = (average[i] * (k - 1) + summ/self.channel_count) / k / sum(average)
+            else:
+                average[i] = (average[i] * (k - 1) + summ/self.channel_count) / k
+        yield average
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):
@@ -214,8 +220,8 @@ class PS(Abstract):
                 for i in range(self.channel_count):
                     ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
                 for i in range(len(ffts[0])):
-                    sum = 0
+                    summ = 0
                     for j in range(self.channel_count):
-                        sum += ffts[j][i]
-                    average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
-                yield np.log10(average)
+                        summ += ffts[j][i]
+                    average[i] = (average[i] * (k - 1) + summ/self.channel_count) / k / sum(average)
+                yield average

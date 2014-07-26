@@ -25,7 +25,6 @@ class Target:
                     for _ in range(self.freq_on):
                         freq = yield
                         if freq == self.freq:
-                            print "detected"
                             detected = True
                         if detected:
                             self.rect.fillColor = self.detection_color
@@ -37,7 +36,6 @@ class Target:
                     for _ in range(self.freq_off):
                         freq = yield
                         if freq == self.freq:
-                            print "detected"
                             detected = True
 
 
@@ -109,7 +107,6 @@ class TargetsWindow:
             freq = None
             if self.targets_to_detection.poll():
                 freq = self.targets_to_detection.recv()
-                print "Targets " + str(freq)
             for generator in self.generators:
                 generator.send(freq)
             self.window.flip()
