@@ -6,6 +6,9 @@ import scipy.signal
 
 
 class FFT(object):
+    def __init__(self):
+        self.start_deleting = lambda x: True
+
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(len(coordinates)):
@@ -44,9 +47,6 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         Regular.__init__(self)
         Multiple.__init__(self)
 
-    def getGenerator(self, i):
-        return self.plot_generator(i, lambda x: True)
-
     def coordinates_generator(self):
         coordinates = [0 for _ in range(self.length)]
         yield
@@ -65,9 +65,6 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
         FFT.__init__(self)
         Average.__init__(self)
         Multiple.__init__(self)
-
-    def getGenerator(self, i):
-        return self.plot_generator(i, lambda x: True)
 
     def coordinates_generator(self):
         average = [0 for _ in range(self.length//2+1)]
@@ -97,9 +94,6 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
         FFT.__init__(self)
         Average.__init__(self)
         Single.__init__(self)
-
-    def getGenerator(self, i):
-        return self.plot_generator(i, lambda x: True)
 
     def coordinates_generator(self):
         average = [0 for _ in range(self.length//2+1)]
@@ -137,9 +131,6 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
         FFT.__init__(self)
         Regular.__init__(self)
         Single.__init__(self)
-
-    def getGenerator(self, i):
-        return self.plot_generator(i, lambda x: True)
 
     def coordinates_generator(self):
         average = [0 for _ in range(self.length//2+1)]
