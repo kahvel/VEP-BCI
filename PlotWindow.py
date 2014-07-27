@@ -24,8 +24,9 @@ class PlotWindow(MyWindows.ToplevelWindow):
         self.filter = False
         self.filter_coefficients = []
         self.prev_filter = []
+        self.normalise = False
 
-    def setOptions(self, window_var, options_textboxes, filter_var):
+    def setOptions(self, window_var, options_textboxes, filter_var, norm_var):
         window_var = window_var.get()
         if window_var == "hanning":
             self.window_function = np.hanning(self.length)
@@ -42,8 +43,7 @@ class PlotWindow(MyWindows.ToplevelWindow):
         self.filter = False
         self.filter_coefficients = []
         self.prev_filter = []
-        filter_var = filter_var.get()
-        if filter_var == 1:
+        if filter_var.get() == 1:
             self.filter = True
             low = options_textboxes["Low"].get()
             high = options_textboxes["High"].get()
@@ -61,6 +61,9 @@ class PlotWindow(MyWindows.ToplevelWindow):
             else:
                 print "Insert high and/or low value"
                 self.filter = False
+        self.normalise = False
+        if norm_var.get() == 1:
+            self.normalise = True
 
     def setup(self, checkbox_values, sensor_names, options_textboxes):
         self.channel_count = 0

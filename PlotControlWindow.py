@@ -8,7 +8,7 @@ import FFTPlot
 
 class Window(MyWindows.TkWindow):
     def __init__(self, plot_to_main, plot_to_emo, sensor_names):
-        MyWindows.TkWindow.__init__(self, "Plot control", 320, 330)
+        MyWindows.TkWindow.__init__(self, "Plot control", 320, 370)
         self.plot_to_main = plot_to_main
         self.plot_to_emo = plot_to_emo
         self.sensor_names = sensor_names
@@ -64,29 +64,31 @@ class Window(MyWindows.TkWindow):
 
         self.options_textboxes = {}
         self.options_frame = Tkinter.Frame(self)
-        MyWindows.newTextBox(self.options_frame, "Step:", 0, 0, self.options_textboxes)
-        MyWindows.newTextBox(self.options_frame, "Length:", 2, 0, self.options_textboxes)
+        self.norm_var = Tkinter.IntVar()
+        norm_checkbox = Tkinter.Checkbutton(self.options_frame, text="Normalise FFT", variable=self.norm_var)
+        norm_checkbox.grid(column=0, row=0, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(self.options_frame, "Step:", 0, 1, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "Length:", 2, 1, self.options_textboxes)
         self.window_var = Tkinter.StringVar()
         self.window_var.set("None")
         window_box = Tkinter.OptionMenu(self.options_frame, self.window_var, "None", "hanning", "hamming", "blackman",
                                         "kaiser", "bartlett")
-        window_box.grid(column=0, row=3, padx=5, pady=5, columnspan=2)
-        MyWindows.newTextBox(self.options_frame, "Beta:", 2, 3, self.options_textboxes)
+        window_box.grid(column=0, row=4, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(self.options_frame, "Beta:", 2, 4, self.options_textboxes)
         self.options_textboxes["Length"].insert(0, 512)
         self.options_textboxes["Step"].insert(0, 8)
         self.filter_var = Tkinter.IntVar()
         filter_checkbox = Tkinter.Checkbutton(self.options_frame, text="Filter", variable=self.filter_var)
-        filter_checkbox.grid(column=0, row=1, padx=5, pady=5)
-        MyWindows.newTextBox(self.options_frame, "Low:", 0, 2, self.options_textboxes)
-        MyWindows.newTextBox(self.options_frame, "High:", 2, 2, self.options_textboxes)
-        MyWindows.newTextBox(self.options_frame, "Taps:", 4, 2, self.options_textboxes)
+        filter_checkbox.grid(column=0, row=2, padx=5, pady=5)
+        MyWindows.newTextBox(self.options_frame, "Low:", 0, 3, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "High:", 2, 3, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "Taps:", 4, 3, self.options_textboxes)
 
         buttonframe2.pack()
         checkboxframe.pack()
         buttonframe3.pack()
         self.options_frame.pack()
         buttonframe1.pack()
-
 
         self.exitFlag = False
         self.protocol("WM_DELETE_WINDOW", self.exit)
@@ -158,7 +160,7 @@ class Window(MyWindows.TkWindow):
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
                 self.reset(self.fft_plot_windows, key, self.checkbox_values)
-                self.fft_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var)
+                self.fft_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var, self.norm_var)
                 for i in range(0, 512, 40):  # scale for fft
                     self.fft_plot_windows[key].canvas.create_line(i, 0, i, 512, fill="red")
                     self.fft_plot_windows[key].canvas.create_text(i, 10, text=i/8)
@@ -166,7 +168,7 @@ class Window(MyWindows.TkWindow):
             if self.signal_plot_windows[key] is not None:
                 self.reset(self.signal_plot_windows, key, self.checkbox_values)
                 self.signal_plot_windows[key].calculateAverage(packets)
-                self.signal_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var)
+                self.signal_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var, self.norm_var)
 
         while True:
             packet = self.recvPacket(self.plot_to_emo)

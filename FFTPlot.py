@@ -47,7 +47,7 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         Regular.__init__(self)
         Multiple.__init__(self)
 
-    def coordinates_generator(self):
+    def coordinates_generator(self, index):
         coordinates = [0 for _ in range(self.length)]
         yield
         while True:
@@ -56,7 +56,10 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
                     y = yield
                     coordinates[i*self.step+j] = y
                 fft = np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates)))
-                yield fft/sum(fft)*100
+                if self.normalise:
+                    yield fft/sum(fft)*100
+                else:
+                    yield np.log10(fft)
 
 
 class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
@@ -66,7 +69,7 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
         Average.__init__(self)
         Multiple.__init__(self)
 
-    def coordinates_generator(self):
+    def coordinates_generator(self, index):
         average = [0 for _ in range(self.length//2+1)]
         coordinates = [0 for _ in range(self.length)]
         k = 0
@@ -84,7 +87,10 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
                 fft = np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates)))
                 for i in range(len(fft)):
                     average[i] = (average[i] * (k - 1) + fft[i]) / k
-                yield np.log10(average)
+                if self.normalise:
+                    yield average/sum(average)*100
+                else:
+                    yield np.log10(average)
             reset_average = False
 
 
@@ -95,7 +101,7 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
         Average.__init__(self)
         Single.__init__(self)
 
-    def coordinates_generator(self):
+    def coordinates_generator(self, index):
         average = [0 for _ in range(self.length//2+1)]
         coordinates = []
         for _ in range(self.channel_count):
@@ -117,11 +123,14 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
                 for i in range(self.channel_count):
                     ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
                 for i in range(len(ffts[0])):
-                    sum = 0
+                    summ = 0
                     for j in range(self.channel_count):
-                        sum += ffts[j][i]
-                    average[i] = (average[i] * (k - 1) + sum/self.channel_count) / k
-                yield np.log10(average)
+                        summ += ffts[j][i]
+                    average[i] = (average[i] * (k - 1) + summ/self.channel_count) / k
+                if self.normalise:
+                    yield average/sum(average)*100
+                else:
+                    yield np.log10(average)
             reset_average = False
 
 
@@ -132,7 +141,7 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
         Regular.__init__(self)
         Single.__init__(self)
 
-    def coordinates_generator(self):
+    def coordinates_generator(self, index):
         average = [0 for _ in range(self.length//2+1)]
         coordinates = []
         for _ in range(self.channel_count):
@@ -151,9 +160,12 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
                 for i in range(self.channel_count):
                     ffts.append(np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates[i]))))
                 for i in range(len(ffts[0])):
-                    sum = 0
+                    summ = 0
                     for j in range(self.channel_count):
-                        sum += ffts[j][i]
-                    average[i] = sum/self.channel_count
-                yield np.log10(average)
+                        summ += ffts[j][i]
+                    average[i] = summ/self.channel_count
+                if self.normalise:
+                    yield average/sum(average)*100
+                else:
+                    yield np.log10(average)
             reset_average = False
