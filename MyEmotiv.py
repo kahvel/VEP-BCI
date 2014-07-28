@@ -118,6 +118,6 @@ class myEmotiv(emokit.emotiv.Emotiv):
                         self.connections[i].send(packet)
                 # print packet
             except Exception, e:
-                print e
+                print "No packet"
             if self.emo_to_main.poll():
                 return self.emo_to_main.recv()

@@ -19,17 +19,23 @@ class FFT(object):
     def scaleY(self, y, index, plot_count):
         return ((y*-30+50) + index*self.window_height + self.window_height/2) / plot_count
 
+    def normaliseSpectrum(self, fft):
+        if self.normalise:
+            return fft/sum(fft)*100
+        else:
+            return np.log10(fft)
+
 
 class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"])
+            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
 
 
 class Single(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
+            self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
 
 
 class Regular(object):
@@ -47,19 +53,34 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         Regular.__init__(self)
         Multiple.__init__(self)
 
+    def scaleasd(self, coordinates, index):
+        result = []
+        for i in range(len(coordinates)):
+            result.append(i)
+            result.append(self.scaleY(coordinates[i],  index, self.plot_count))
+        return result
+
+    def scaleY(self, y,  index, plot_count):
+        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+        return ((((y - self.min[index]) * (-100 - 100)) / (self.max[index] - self.min[index])) + 100
+                + index*self.window_height + self.window_height/2) / plot_count
+
     def coordinates_generator(self, index):
-        coordinates = [0 for _ in range(self.length)]
+        # coordinates = [0 for _ in range(self.length)]
         yield
+        coordinates = self.initial_packets[index]
+        prev_filter = self.filterInitState(index)
         while True:
             for i in range(self.length/self.step):
+                del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
-                    coordinates[i*self.step+j] = y
-                fft = np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates)))
-                if self.normalise:
-                    yield fft/sum(fft)*100
-                else:
-                    yield np.log10(fft)
+                    coordinates.append(y)
+                detrended_signal = scipy.signal.detrend(coordinates)
+                filtered_signal, prev_filter = self.filterSignal(detrended_signal, prev_filter)
+                windowed_signal = self.windowSignal(filtered_signal, self.window_function)
+                amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
+                yield self.normaliseSpectrum(amplitude_spectrum)
 
 
 class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
@@ -87,10 +108,7 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
                 fft = np.abs(np.fft.rfft(self.window_function*scipy.signal.detrend(coordinates)))
                 for i in range(len(fft)):
                     average[i] = (average[i] * (k - 1) + fft[i]) / k
-                if self.normalise:
-                    yield average/sum(average)*100
-                else:
-                    yield np.log10(average)
+                yield self.normaliseSpectrum(average)
             reset_average = False
 
 
@@ -127,10 +145,7 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
                     for j in range(self.channel_count):
                         summ += ffts[j][i]
                     average[i] = (average[i] * (k - 1) + summ/self.channel_count) / k
-                if self.normalise:
-                    yield average/sum(average)*100
-                else:
-                    yield np.log10(average)
+                yield self.normaliseSpectrum(average)
             reset_average = False
 
 
@@ -164,8 +179,5 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
                     for j in range(self.channel_count):
                         summ += ffts[j][i]
                     average[i] = summ/self.channel_count
-                if self.normalise:
-                    yield average/sum(average)*100
-                else:
-                    yield np.log10(average)
+                yield self.normaliseSpectrum(average)
             reset_average = False

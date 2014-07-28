@@ -25,21 +25,65 @@ class PlotWindow(MyWindows.ToplevelWindow):
         self.filter_coefficients = []
         self.prev_filter = []
         self.normalise = False
+        self.averages = []
+        self.min = []
+        self.max = []
+        self.initial_packets = []
+        self.window = False
+
+    def windowSignal(self, signal, window):
+        if self.window:
+            return signal*window
+        else:
+            return signal
+
+    def filterSignal(self, signal, prev_filter):
+        if self.filter:
+            return scipy.signal.lfilter(self.filter_coefficients, 1.0, scipy.signal.detrend(signal), zi=prev_filter)
+        else:
+            return signal, None
+
+    def filterInitState(self, index):
+        if self.filter:
+            return scipy.signal.lfiltic(1.0, self.filter_coefficients, [0])
+            # return scipy.signal.lfiltic(1.0, self.filter_coefficients, self.initial_packets[index])
+        else:
+            return None
+
+    def getNeutralSignal(self, packets):
+        self.min = []
+        self.max = []
+        self.averages = []
+        self.initial_packets = []
+        for i in range(self.channel_count):
+            self.initial_packets.append([])
+            for j in range(len(packets)):
+                self.initial_packets[i].append(packets[j].sensors[self.sensor_names[i]]["value"])
+        for i in range(self.channel_count):
+            self.averages.append(sum(self.initial_packets[i])/len(self.initial_packets[i]))
+            self.min.append(min(self.initial_packets[i])-self.averages[i])
+            self.max.append(max(self.initial_packets[i])-self.averages[i])
+        for i in range(len(self.initial_packets)):
+            for j in range(len(self.initial_packets[i])):
+                self.initial_packets[i][j] -= self.averages[i]
+        print self.averages, self.min, self.max, self.initial_packets
 
     def setOptions(self, window_var, options_textboxes, filter_var, norm_var):
         window_var = window_var.get()
-        if window_var == "hanning":
-            self.window_function = np.hanning(self.length)
-        elif window_var == "hamming":
-            self.window_function = np.hamming(self.length)
-        elif window_var == "blackman":
-            self.window_function = np.blackman(self.length)
-        elif window_var == "kaiser":
-            self.window_function = np.kaiser(self.length, float(options_textboxes["Beta"].get()))
-        elif window_var == "bartlett":
-            self.window_function = np.bartlett(self.length)
-        elif window_var == "None":
-            self.window_function = np.array([1 for _ in range(self.length)])
+        if window_var == "None":
+            self.window = False
+        else:
+            self.window = True
+            if window_var == "hanning":
+                self.window_function = np.hanning(self.length)
+            elif window_var == "hamming":
+                self.window_function = np.hamming(self.length)
+            elif window_var == "blackman":
+                self.window_function = np.blackman(self.length)
+            elif window_var == "kaiser":
+                self.window_function = np.kaiser(self.length, float(options_textboxes["Beta"].get()))
+            elif window_var == "bartlett":
+                self.window_function = np.bartlett(self.length)
         self.filter = False
         self.filter_coefficients = []
         self.prev_filter = []
@@ -51,7 +95,7 @@ class PlotWindow(MyWindows.ToplevelWindow):
             if high != "" and low != "":
                 low = float(low)
                 high = float(high)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, [low/64.0, high/64.0], pass_zero=False)
+                self.filter_coefficients = scipy.signal.firwin(time_phase, [low/64.0, high/64.0], pass_zero=False, window="hanning")
             elif low != "":
                 low = float(low)
                 self.filter_coefficients = scipy.signal.firwin(time_phase, low/64.0)

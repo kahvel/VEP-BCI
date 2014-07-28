@@ -160,6 +160,7 @@ class Window(MyWindows.TkWindow):
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
                 self.reset(self.fft_plot_windows, key, self.checkbox_values)
+                self.fft_plot_windows[key].getNeutralSignal(packets)
                 self.fft_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var, self.norm_var)
                 for i in range(0, 512, 40):  # scale for fft
                     self.fft_plot_windows[key].canvas.create_line(i, 0, i, 512, fill="red")
@@ -167,7 +168,7 @@ class Window(MyWindows.TkWindow):
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
                 self.reset(self.signal_plot_windows, key, self.checkbox_values)
-                self.signal_plot_windows[key].calculateAverage(packets)
+                self.signal_plot_windows[key].getNeutralSignal(packets)
                 self.signal_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var, self.norm_var)
 
         while True:
