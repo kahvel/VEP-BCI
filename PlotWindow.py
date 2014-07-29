@@ -23,13 +23,13 @@ class PlotWindow(MyWindows.ToplevelWindow):
         self.window_function = None
         self.filter = False
         self.filter_coefficients = []
-        self.prev_filter = []
         self.normalise = False
         self.averages = []
-        self.min = []
-        self.max = []
+        self.min_packet = []
+        self.max_packet = []
         self.initial_packets = []
         self.window = False
+        self.prev_filter = None
 
     def windowSignal(self, signal, window):
         if self.window:
@@ -37,11 +37,15 @@ class PlotWindow(MyWindows.ToplevelWindow):
         else:
             return signal
 
-    def filterSignal(self, signal, prev_filter):
+    def filterSignal(self, signal):
         if self.filter:
-            return scipy.signal.lfilter(self.filter_coefficients, 1.0, scipy.signal.detrend(signal), zi=prev_filter)
+            if self.prev_filter is None:
+                return scipy.signal.lfilter(self.filter_coefficients, 1.0, signal)
+            else:
+                result, self.prev_filter = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.prev_filter)
+                return result
         else:
-            return signal, None
+            return signal
 
     def filterInitState(self, index):
         if self.filter:
@@ -50,26 +54,8 @@ class PlotWindow(MyWindows.ToplevelWindow):
         else:
             return None
 
-    def getNeutralSignal(self, packets):
-        self.min = []
-        self.max = []
-        self.averages = []
-        self.initial_packets = []
-        for i in range(self.channel_count):
-            self.initial_packets.append([])
-            for j in range(len(packets)):
-                self.initial_packets[i].append(packets[j].sensors[self.sensor_names[i]]["value"])
-        for i in range(self.channel_count):
-            self.averages.append(sum(self.initial_packets[i])/len(self.initial_packets[i]))
-            self.min.append(min(self.initial_packets[i])-self.averages[i])
-            self.max.append(max(self.initial_packets[i])-self.averages[i])
-        for i in range(len(self.initial_packets)):
-            for j in range(len(self.initial_packets[i])):
-                self.initial_packets[i][j] -= self.averages[i]
-        print self.averages, self.min, self.max, self.initial_packets
-
-    def setOptions(self, window_var, options_textboxes, filter_var, norm_var):
-        window_var = window_var.get()
+    def setOptions(self, options_textboxes, variables):
+        window_var = variables["Window"].get()
         if window_var == "None":
             self.window = False
         else:
@@ -86,8 +72,7 @@ class PlotWindow(MyWindows.ToplevelWindow):
                 self.window_function = np.bartlett(self.length)
         self.filter = False
         self.filter_coefficients = []
-        self.prev_filter = []
-        if filter_var.get() == 1:
+        if variables["Filter"].get() == 1:
             self.filter = True
             low = options_textboxes["Low"].get()
             high = options_textboxes["High"].get()
@@ -106,24 +91,17 @@ class PlotWindow(MyWindows.ToplevelWindow):
                 print "Insert high and/or low value"
                 self.filter = False
         self.normalise = False
-        if norm_var.get() == 1:
+        if variables["Norm"].get() == 1:
             self.normalise = True
 
-    def setup(self, checkbox_values, sensor_names, options_textboxes):
-        self.channel_count = 0
-        self.sensor_names = []
-        self.generators = []
+    def setup(self, options_textboxes, variables, sensor_names):
         self.length = int(options_textboxes["Length"].get())
         self.step = int(options_textboxes["Step"].get())
-        for i in range(len(checkbox_values)):
-            if checkbox_values[i].get() == 1:
-                self.sensor_names.append(sensor_names[i])
-                self.channel_count += 1
-        if self.channel_count == 0:
-            self.continue_generating = False
-            print "No channels chosen"
-            return
+        self.setOptions(options_textboxes, variables)
+        self.sensor_names = sensor_names
+        self.channel_count = len(sensor_names)
         self.setPlotCount()
+        self.generators = []
         for i in range(self.plot_count):
             self.generators.append(self.plot_generator(i, self.start_deleting))
             self.generators[i].send(None)

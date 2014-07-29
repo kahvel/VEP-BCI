@@ -11,7 +11,8 @@ class Window(MyWindows.TkWindow):
         MyWindows.TkWindow.__init__(self, "Plot control", 320, 370)
         self.plot_to_main = plot_to_main
         self.plot_to_emo = plot_to_emo
-        self.sensor_names = sensor_names
+        self.all_sensor_names = sensor_names
+        self.chosen_sensor_names = []
 
         self.signal_plot_windows = {}
         self.fft_plot_windows = {}
@@ -32,10 +33,10 @@ class Window(MyWindows.TkWindow):
         buttonframe2 = Tkinter.Frame(self)
         buttonframe3 = Tkinter.Frame(self)
 
-        self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.signal_plot_windows, "MultipleAverage", self.checkbox_values))
-        self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.signal_plot_windows, "SingleAverage", self.checkbox_values))
-        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.fft_plot_windows, "MultipleAverage", self.checkbox_values))
-        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows, "SingleAverage", self.checkbox_values))
+        self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg signal", command=lambda: self.reset(self.signal_plot_windows, "MultipleAverage", self.chosen_sensor_names))
+        self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul signal", command=lambda: self.reset(self.signal_plot_windows, "SingleAverage", self.chosen_sensor_names))
+        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg FFT", command=lambda: self.reset(self.fft_plot_windows, "MultipleAverage", self.chosen_sensor_names))
+        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(buttonframe1, text="Reset avg mul FFT", command=lambda: self.reset(self.fft_plot_windows, "SingleAverage", self.chosen_sensor_names))
 
         self.signal_buttons["MultipleRegular"] = Tkinter.Button(buttonframe2, text="Signal", command=lambda: self.setSignalPlot("MultipleRegular"))
         self.signal_buttons["SingleRegular"] = Tkinter.Button(buttonframe2, text="Mul signal", command=lambda: self.setSignalPlot("SingleRegular"))
@@ -57,28 +58,29 @@ class Window(MyWindows.TkWindow):
             self.fft_buttons[self.plot_names[i]].grid(column=i % 4, row=i//4, padx=5, pady=5)
 
         checkboxframe = Tkinter.Frame(self)
-        for i in range(len(self.sensor_names)):
+        for i in range(len(self.all_sensor_names)):
             self.checkbox_values.append(Tkinter.IntVar())
-            box = Tkinter.Checkbutton(checkboxframe, text=self.sensor_names[i], variable=self.checkbox_values[i])
+            box = Tkinter.Checkbutton(checkboxframe, text=self.all_sensor_names[i], variable=self.checkbox_values[i])
             box.grid(column=i % 7, row=i//7)
 
         self.options_textboxes = {}
+        self.variables = {}
         self.options_frame = Tkinter.Frame(self)
-        self.norm_var = Tkinter.IntVar()
-        norm_checkbox = Tkinter.Checkbutton(self.options_frame, text="Normalise FFT", variable=self.norm_var)
+        self.variables["Norm"] = Tkinter.IntVar()
+        norm_checkbox = Tkinter.Checkbutton(self.options_frame, text="Normalise FFT", variable=self.variables["Norm"])
         norm_checkbox.grid(column=0, row=0, padx=5, pady=5, columnspan=2)
         MyWindows.newTextBox(self.options_frame, "Step:", 0, 1, self.options_textboxes)
         MyWindows.newTextBox(self.options_frame, "Length:", 2, 1, self.options_textboxes)
-        self.window_var = Tkinter.StringVar()
-        self.window_var.set("None")
-        window_box = Tkinter.OptionMenu(self.options_frame, self.window_var, "None", "hanning", "hamming", "blackman",
+        self.variables["Window"] = Tkinter.StringVar()
+        self.variables["Window"].set("None")
+        window_box = Tkinter.OptionMenu(self.options_frame, self.variables["Window"], "None", "hanning", "hamming", "blackman",
                                         "kaiser", "bartlett")
         window_box.grid(column=0, row=4, padx=5, pady=5, columnspan=2)
         MyWindows.newTextBox(self.options_frame, "Beta:", 2, 4, self.options_textboxes)
         self.options_textboxes["Length"].insert(0, 512)
         self.options_textboxes["Step"].insert(0, 8)
-        self.filter_var = Tkinter.IntVar()
-        filter_checkbox = Tkinter.Checkbutton(self.options_frame, text="Filter", variable=self.filter_var)
+        self.variables["Filter"] = Tkinter.IntVar()
+        filter_checkbox = Tkinter.Checkbutton(self.options_frame, text="Filter", variable=self.variables["Filter"])
         filter_checkbox.grid(column=0, row=2, padx=5, pady=5)
         MyWindows.newTextBox(self.options_frame, "Low:", 0, 3, self.options_textboxes)
         MyWindows.newTextBox(self.options_frame, "High:", 2, 3, self.options_textboxes)
@@ -127,16 +129,13 @@ class Window(MyWindows.TkWindow):
         windows[key].destroy()
         windows[key] = None
 
-    def reset(self, windows, key, checkbox_values):
+    def reset(self, windows, key, sensor_names):
         window = windows[key]
         if window is not None:
             window.canvas.delete("all")
             self.garbage.extend(window.generators)
             window.continue_generating = True
-            window.setup(checkbox_values, self.sensor_names, self.options_textboxes)
-
-    def setupPlotWindow(self):
-        pass
+            window.setup(self.options_textboxes, self.variables, sensor_names)
 
     def recvPacket(self, connection):
         while True:
@@ -150,26 +149,46 @@ class Window(MyWindows.TkWindow):
                 return connection.recv()
 
     def start(self):
-        packets = []
-        print("Calculating averages")
-        for _ in range(512):
+        channel_count = 0
+        self.chosen_sensor_names = []
+        for i in range(len(self.checkbox_values)):
+            if self.checkbox_values[i].get() == 1:
+                self.chosen_sensor_names.append(self.all_sensor_names[i])
+                channel_count += 1
+        if channel_count == 0:
+            print "No channels chosen"
+            return "Stop"
+
+        min_packet = []
+        max_packet = []
+        averages = []
+        initial_packets = [[] for _ in range(channel_count)]
+        for _ in range(int(self.options_textboxes["Length"].get())):
             packet = self.recvPacket(self.plot_to_emo)
             if isinstance(packet, basestring):
                 return packet
-            packets.append(packet)
+            for j in range(channel_count):
+                initial_packets[j].append(packet.sensors[self.chosen_sensor_names[j]]["value"])
+        for i in range(channel_count):
+            averages.append(sum(initial_packets[i])/len(initial_packets[i]))
+            min_packet.append(min(initial_packets[i])-averages[i])
+            max_packet.append(max(initial_packets[i])-averages[i])
+        for i in range(channel_count):
+            for j in range(len(initial_packets[i])):
+                initial_packets[i][j] -= averages[i]
+        print averages, min_packet, max_packet, initial_packets
+
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
-                self.reset(self.fft_plot_windows, key, self.checkbox_values)
-                self.fft_plot_windows[key].getNeutralSignal(packets)
-                self.fft_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var, self.norm_var)
+                self.reset(self.fft_plot_windows, key, self.chosen_sensor_names)
+                self.fft_plot_windows[key].setInitSignal(min_packet, max_packet, averages, initial_packets)
                 for i in range(0, 512, 40):  # scale for fft
                     self.fft_plot_windows[key].canvas.create_line(i, 0, i, 512, fill="red")
                     self.fft_plot_windows[key].canvas.create_text(i, 10, text=i/8)
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
-                self.reset(self.signal_plot_windows, key, self.checkbox_values)
-                self.signal_plot_windows[key].getNeutralSignal(packets)
-                self.signal_plot_windows[key].setOptions(self.window_var, self.options_textboxes, self.filter_var, self.norm_var)
+                self.reset(self.signal_plot_windows, key, self.chosen_sensor_names)
+                self.signal_plot_windows[key].setInitSignal(min_packet, max_packet, averages, initial_packets)
 
         while True:
             packet = self.recvPacket(self.plot_to_emo)

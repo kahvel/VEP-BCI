@@ -4,7 +4,6 @@ import operator
 import PlotWindow
 # import sklearn.cross_decomposition
 import numpy as np
-import scipy.signal
 
 
 class Signal(object):
@@ -20,7 +19,7 @@ class Signal(object):
 
     def scaleY(self, y,  index, plot_count):
         # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        return ((((y - self.min[index]) * (-100 - 100)) / (self.max[index] - self.min[index])) + 100
+        return ((((y - self.min_packet[index]) * (-100 - 100)) / (self.max_packet[index] - self.min_packet[index])) + 100
                 + index*self.window_height + self.window_height/2) / plot_count
 
     def addPrevious(self, signal, previous):
@@ -34,6 +33,13 @@ class Signal(object):
             return array[i*self.step:i*self.step+self.step]
         else:
             return None
+
+    def setInitSignal(self, min_packet, max_packet, averages, initial_packets):
+        self.min_packet = min_packet
+        self.max_packet = max_packet
+        self.averages = averages
+        self.initial_packets = initial_packets[:]
+
 
 class Multiple(object):
     def getChannelAverage(self, index):
@@ -60,9 +66,8 @@ class Average(object):
         average = [0 for _ in range(self.length)]
         k = 0
         prev = 0
-        prev_window = [0]
         yield
-        prev_filter = self.filterInitState(index)
+        self.prev_filter = self.filterInitState(index)
         while True:
             k += 1
             for i in range(self.length/self.step):
@@ -70,48 +75,31 @@ class Average(object):
                     y = yield
                     average[i*self.step+j] = (average[i*self.step+j] * (k - 1) + y) / k
                 signal_segment = average[i*self.step:i*self.step+self.step]
-                filtered_signal, prev_filter = self.filterSignal(signal_segment, prev_filter)
+                filtered_signal = self.filterSignal(signal_segment)
                 window_segment = self.getSegment(self.window_function, i)
                 windowed_signal = self.windowSignal(filtered_signal, window_segment)
                 extended_signal = self.addPrevious(windowed_signal, prev)
                 yield Queue.deque(extended_signal)
                 prev = extended_signal[-1]
-                # if self.filter:
-                #     result, prev_filter = scipy.signal.lfilter(self.filter_coefficients, 1.0, average[i*self.step:i*self.step+self.step], zi=prev_filter)
-                #     yield Queue.deque()
-                #     prev = [result[-1]]
-                # else:
-                #     yield Queue.deque(np.insert(self.window_function[i*self.step:i*self.step+self.step], 0, prev_window)*(prev+average[i*self.step:i*self.step+self.step]))
-                #     prev_window = self.window_function[i*self.step:i*self.step+self.step][-1]
-                #     prev = [average[i*self.step+self.step-1]]
 
 
 class Regular(object):
     def coordinates_generator(self, index):
         average = [0 for _ in range(self.step)]
         prev = 0
-        prev_window = [0]
         yield
-        prev_filter = self.filterInitState(index)
+        self.prev_filter = self.filterInitState(index)
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):
                     y = yield
                     average[j] = y
-                filtered_signal, prev_filter = self.filterSignal(average, prev_filter)
+                filtered_signal = self.filterSignal(average)
                 window_segment = self.getSegment(self.window_function, i)
                 windowed_signal = self.windowSignal(filtered_signal, window_segment)
                 extended_signal = self.addPrevious(windowed_signal, prev)
                 yield Queue.deque(extended_signal)
                 prev = extended_signal[-1]
-                # if self.filter:
-                #     result, prev_filter = scipy.signal.lfilter(self.filter_coefficients, 1.0, average, zi=prev_filter)
-                #     yield Queue.deque(np.insert(result, 0, prev))
-                #     prev = [result[-1]]
-                # else:
-                #     yield Queue.deque(np.insert(self.window_function[i*self.step:i*self.step+self.step], 0, prev_window)*(prev+average))
-                #     prev_window = self.window_function[i*self.step:i*self.step+self.step][-1]
-                #     prev = [average[-1]]
 
 
 class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):
@@ -190,7 +178,7 @@ class SingleAverage(Signal, Average, Single, PlotWindow.SinglePlotWindow):
 #
 #     def sendPacket(self, packet):
 #         for i in range(self.channel_count):
-#             self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"])
+#             self.generators[0].send(packet.sensors[self.all_sensor_names[i]]["value"])
 #
 #     def getGenerator(self, i):
 #         return self.plot_generator(i, self.channel_count*512, lambda packet_count: operator.eq(packet_count, 512))
