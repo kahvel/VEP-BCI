@@ -47,17 +47,11 @@ class PlotWindow(MyWindows.ToplevelWindow):
         else:
             return signal
 
-    def filterInitState(self, index):
-        if self.filter:
-            return scipy.signal.lfiltic(1.0, self.filter_coefficients, [0])
-            # return scipy.signal.lfiltic(1.0, self.filter_coefficients, self.initial_packets[index])
-        else:
-            return None
-
-    def setOptions(self, options_textboxes, variables):
+    def setWindow(self, options_textboxes, variables):
         window_var = variables["Window"].get()
         if window_var == "None":
             self.window = False
+            self.window_function = None
         else:
             self.window = True
             if window_var == "hanning":
@@ -67,32 +61,41 @@ class PlotWindow(MyWindows.ToplevelWindow):
             elif window_var == "blackman":
                 self.window_function = np.blackman(self.length)
             elif window_var == "kaiser":
-                self.window_function = np.kaiser(self.length, float(options_textboxes["Beta"].get()))
+                self.window_function = np.kaiser(self.length, float(options_textboxes["Arg"].get()))
             elif window_var == "bartlett":
                 self.window_function = np.bartlett(self.length)
+
+    def setFilter(self, options_textboxes, variables):
         self.filter = False
         self.filter_coefficients = []
         if variables["Filter"].get() == 1:
             self.filter = True
-            low = options_textboxes["Low"].get()
-            high = options_textboxes["High"].get()
+            to_value = options_textboxes["To"].get()
+            from_value = options_textboxes["From"].get()
             time_phase = int(options_textboxes["Taps"].get())
-            if high != "" and low != "":
-                low = float(low)
-                high = float(high)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, [low/64.0, high/64.0], pass_zero=False, window="hanning")
-            elif low != "":
-                low = float(low)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, low/64.0)
-            elif high != "":
-                high = float(high)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, high/64.0, pass_zero=False)
+            if from_value != "" and to_value != "":
+                to_value = float(to_value)
+                from_value = float(from_value)
+                self.filter_coefficients = scipy.signal.firwin(time_phase, [to_value/64.0, from_value/64.0], pass_zero=False)
+            elif to_value != "":
+                to_value = float(to_value)
+                self.filter_coefficients = scipy.signal.firwin(time_phase, to_value/64.0)
+            elif from_value != "":
+                from_value = float(from_value)
+                self.filter_coefficients = scipy.signal.firwin(time_phase, from_value/64.0, pass_zero=False)
             else:
-                print "Insert high and/or low value"
+                print "Insert from and/or to value"
                 self.filter = False
+
+    def setNormalisation(self, variables):
         self.normalise = False
         if variables["Norm"].get() == 1:
             self.normalise = True
+
+    def setOptions(self, options_textboxes, variables):
+        self.setWindow(options_textboxes, variables)
+        self.setFilter(options_textboxes, variables)
+        self.setNormalisation(variables)
 
     def setup(self, options_textboxes, variables, sensor_names):
         self.length = int(options_textboxes["Length"].get())

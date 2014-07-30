@@ -75,14 +75,14 @@ class Window(MyWindows.TkWindow):
         window_box = Tkinter.OptionMenu(self.options_frame, self.variables["Window"], "None", "hanning", "hamming", "blackman",
                                         "kaiser", "bartlett")
         window_box.grid(column=0, row=4, padx=5, pady=5, columnspan=2)
-        MyWindows.newTextBox(self.options_frame, "Beta:", 2, 4, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "Arg:", 2, 4, self.options_textboxes)
         self.options_textboxes["Length"].insert(0, 512)
         self.options_textboxes["Step"].insert(0, 8)
         self.variables["Filter"] = Tkinter.IntVar()
         filter_checkbox = Tkinter.Checkbutton(self.options_frame, text="Filter", variable=self.variables["Filter"])
         filter_checkbox.grid(column=0, row=2, padx=5, pady=5)
-        MyWindows.newTextBox(self.options_frame, "Low:", 0, 3, self.options_textboxes)
-        MyWindows.newTextBox(self.options_frame, "High:", 2, 3, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "From:", 0, 3, self.options_textboxes)
+        MyWindows.newTextBox(self.options_frame, "To:", 2, 3, self.options_textboxes)
         MyWindows.newTextBox(self.options_frame, "Taps:", 4, 3, self.options_textboxes)
 
         buttonframe2.pack()
@@ -150,47 +150,60 @@ class Window(MyWindows.TkWindow):
             if connection.poll(0.1):
                 return connection.recv()
 
-    def start(self):
-        channel_count = 0
+    def setSensorNames(self):
         self.chosen_sensor_names = []
         for i in range(len(self.checkbox_values)):
             if self.checkbox_values[i].get() == 1:
                 self.chosen_sensor_names.append(self.all_sensor_names[i])
-                channel_count += 1
-        if channel_count == 0:
+        if len(self.chosen_sensor_names) == 0:
             print "No channels chosen"
 
+    def getSensorValues(self, channel_count, packets):
+        result = [[] for _ in range(channel_count)]
+        for i in range(channel_count):
+            for packet in packets:
+                result[i].append(packet.sensors[self.chosen_sensor_names[i]]["value"])
+        return result
+
+    def getMinMaxAvg(self, channel_count, init_signal):
         min_packet = []
         max_packet = []
         averages = []
-        initial_packets = [[] for _ in range(channel_count)]
-        for _ in range(int(self.options_textboxes["Length"].get())):
-            packet = self.recvPacket(self.plot_to_emo)
-            if isinstance(packet, basestring):
-                return packet
-            for j in range(channel_count):
-                initial_packets[j].append(packet.sensors[self.chosen_sensor_names[j]]["value"])
         for i in range(channel_count):
-            averages.append(sum(initial_packets[i])/len(initial_packets[i]))
-            min_packet.append(min(initial_packets[i])-averages[i])
-            max_packet.append(max(initial_packets[i])-averages[i])
-        for i in range(channel_count):
-            for j in range(len(initial_packets[i])):
-                initial_packets[i][j] -= averages[i]
-        print averages, min_packet, max_packet, initial_packets
+            averages.append(sum(init_signal[i])/len(init_signal[i]))
+            min_packet.append(min(init_signal[i])-averages[i])
+            max_packet.append(max(init_signal[i])-averages[i])
+        print averages, min_packet, max_packet, init_signal
+        return min_packet, max_packet, averages
 
+    def subtractaverages(self, channel_count, signal, averages):
+        for i in range(channel_count):
+            for j in range(len(signal[i])):
+                signal[i][j] -= averages[i]
+
+    def getInitialSignal(self, prev_packets, init_packets):
+        channel_count = len(self.chosen_sensor_names)
+        prev_signal = self.getSensorValues(channel_count, prev_packets)
+        init_signal = self.getSensorValues(channel_count, init_packets)
+        min_packet, max_packet, averages = self.getMinMaxAvg(channel_count, init_signal)
+        self.subtractaverages(channel_count, init_signal, averages)
+        self.subtractaverages(channel_count, prev_signal, averages)
+        return min_packet, max_packet, averages, init_signal, prev_signal
+
+    def setupPlotWindows(self, min_packet, max_packet, averages, init_signal, prev_signal):
         for key in self.fft_plot_windows:
             if self.fft_plot_windows[key] is not None:
                 self.reset(self.fft_plot_windows, key, self.chosen_sensor_names)
-                self.fft_plot_windows[key].setInitSignal(min_packet, max_packet, averages, initial_packets)
+                self.fft_plot_windows[key].setInitSignal(min_packet, max_packet, averages, init_signal, prev_signal)
                 for i in range(0, 512, 40):  # scale for fft
                     self.fft_plot_windows[key].canvas.create_line(i, 0, i, 512, fill="red")
                     self.fft_plot_windows[key].canvas.create_text(i, 10, text=i/8)
         for key in self.signal_plot_windows:
             if self.signal_plot_windows[key] is not None:
                 self.reset(self.signal_plot_windows, key, self.chosen_sensor_names)
-                self.signal_plot_windows[key].setInitSignal(min_packet, max_packet, averages, initial_packets)
+                self.signal_plot_windows[key].setInitSignal(min_packet, max_packet, averages, init_signal)
 
+    def startPacketSending(self):
         while True:
             packet = self.recvPacket(self.plot_to_emo)
             if isinstance(packet, basestring):
@@ -203,6 +216,27 @@ class Window(MyWindows.TkWindow):
                 if self.fft_plot_windows[key] is not None:
                     if self.fft_plot_windows[key].continue_generating:
                         self.fft_plot_windows[key].sendPacket(packet)
+
+    def getPackets(self, length, array):
+        for _ in range(length):
+            packet = self.recvPacket(self.plot_to_emo)
+            if isinstance(packet, basestring):
+                return packet
+            array.append(packet)
+
+    def start(self):
+        init_packets = []
+        prev_packets = []
+        message = self.getPackets(100, prev_packets)
+        if message is not None:
+            return message
+        message = self.getPackets(int(self.options_textboxes["Length"].get()), init_packets)
+        if message is not None:
+            return message
+        self.setSensorNames()
+        min_packet, max_packet, averages, init_signal, prev_signal = self.getInitialSignal(prev_packets, init_packets)
+        self.setupPlotWindows(min_packet, max_packet, averages, init_signal, prev_signal)
+        self.startPacketSending()
 
     def setSignalPlot(self, key):
         self.signal_plot_windows[key] = getattr(SignalPlot, key)()

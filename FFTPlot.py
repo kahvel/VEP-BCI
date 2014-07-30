@@ -27,30 +27,45 @@ class FFT(object):
         else:
             return np.log10(fft)
 
-    def filterPrevState(self, filtered_signal):  # We calculate prev filter state from signal[:self.step], because
-                                                 # we save other values for next FFT (and also for next filtering)
+    def filterPrevState(self, prev_coordinates):
         if self.filter:
-            return scipy.signal.lfiltic(1.0, self.filter_coefficients, filtered_signal[:self.step])
+            return scipy.signal.lfiltic(1.0, self.filter_coefficients, prev_coordinates)
         else:
             return None
 
-    def setInitSignal(self, min_packet, max_packet, averages, initial_packets):
+    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates, prev_coordinates):
         self.averages = averages
-        self.initial_packets = initial_packets[:]
+        self.init_coordinates = init_coordinates[:]
+        self.prev_coordinates = prev_coordinates[:]
         self.min_packet = []
         self.max_packet = []
-        for packets in initial_packets:
-            spectrum = self.normaliseSpectrum(self.signalPipeline(packets))[1:]
+        self.signal_min_packet = min_packet
+        self.signal_max_packet = max_packet
+        for i in range(len(init_coordinates)):
+            spectrum = self.normaliseSpectrum(self.signalPipeline(init_coordinates[i], prev_coordinates[i]))[1:]
             self.min_packet.append(min(spectrum))
             self.max_packet.append(max(spectrum))
 
-    def signalPipeline(self, coordinates):
+    def scaleSignal(self, coordinates, index, packet_count):
+        result = []
+        for i in range(len(coordinates)):
+            result.append(i*self.window_length/len(coordinates))
+            result.append(self.scaleSignalY(coordinates[i], index, self.plot_count))
+        return result
+
+    def scaleSignalY(self, y,  index, plot_count):
+        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+        return ((((y - self.signal_min_packet[index]) * (-100 - 100)) / (self.signal_max_packet[index] - self.signal_min_packet[index])) + 100
+                + index*self.window_height + self.window_height/2) / plot_count
+
+    def signalPipeline(self, coordinates, prev_coordinates):
         detrended_signal = scipy.signal.detrend(coordinates)
+        self.prev_filter = self.filterPrevState(prev_coordinates)
         filtered_signal = self.filterSignal(detrended_signal)
-        self.prev_filter = self.filterPrevState(filtered_signal)
         windowed_signal = self.windowSignal(filtered_signal, self.window_function)
+        # self.canvas.delete(self.line)
+        # self.line = self.canvas.create_line(self.scaleSignal(windowed_signal, 0, 1), fill="Red")
         amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
-        # normalised_spectrum = self.normaliseSpectrum(amplitude_spectrum)
         return amplitude_spectrum
 
 
@@ -77,21 +92,24 @@ class Average(object):
 class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "Multiple regular FFT plot")
+        self.line = self.canvas.create_line(0,0,0,0)
         FFT.__init__(self)
         Regular.__init__(self)
         Multiple.__init__(self)
 
     def coordinates_generator(self, index):
         yield
-        coordinates = self.initial_packets[index][:]
-        self.prev_filter = self.filterInitState(index)
+        coordinates = self.init_coordinates[index]
+        prev_coordinates = self.prev_coordinates[index]
         while True:
             for i in range(self.length/self.step):
+                self.prev_coordinates.extend(coordinates[:self.step])
+                del self.prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
                     coordinates.append(y)
-                spectrum = self.signalPipeline(coordinates)
+                spectrum = self.signalPipeline(coordinates, prev_coordinates)
                 yield self.normaliseSpectrum(spectrum)
 
 
@@ -106,16 +124,18 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
         average = [0 for _ in range(self.length//2+1)]
         k = 0
         yield
-        coordinates = self.initial_packets[index][:]
-        self.prev_filter = self.filterInitState(index)
+        coordinates = self.init_coordinates[index]
+        prev_coordinates = self.prev_coordinates[index]
         while True:
             for _ in range(self.length/self.step):
+                self.prev_coordinates.extend(coordinates[:self.step])
+                del self.prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
                     coordinates.append(y)
                 k += 1
-                amplitude_spectrum = self.signalPipeline(coordinates)
+                amplitude_spectrum = self.signalPipeline(coordinates, prev_coordinates)
                 for i in range(len(amplitude_spectrum)):
                     average[i] = (average[i] * (k - 1) + amplitude_spectrum[i]) / k
                 yield self.normaliseSpectrum(average)
@@ -132,7 +152,8 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
         average = [0 for _ in range(self.length//2+1)]
         k = 0
         yield
-        coordinates = [self.initial_packets[i][:] for i in range(self.channel_count)]
+        coordinates = [self.init_coordinates[i] for i in range(self.channel_count)]
+        prev_coordinates = [self.prev_coordinates[i] for i in range(self.channel_count)]
         while True:
             for _ in range(self.length/self.step):
                 for j in range(self.step):
@@ -143,7 +164,7 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
                 k += 1
                 ffts = []
                 for i in range(self.channel_count):
-                    ffts.append(self.signalPipeline(coordinates[i]))
+                    ffts.append(self.signalPipeline(coordinates[i], prev_coordinates[i]))
                 for i in range(len(ffts[0])):
                     summ = 0
                     for j in range(self.channel_count):
@@ -162,7 +183,8 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
     def coordinates_generator(self, index):
         average = [0 for _ in range(self.length//2+1)]
         yield
-        coordinates = [self.initial_packets[i][:] for i in range(self.channel_count)]
+        coordinates = [self.init_coordinates[i] for i in range(self.channel_count)]
+        prev_coordinates = [self.prev_coordinates[i] for i in range(self.channel_count)]
         while True:
             for _ in range(self.length/self.step):
                 for j in range(self.step):
@@ -172,7 +194,7 @@ class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
                         coordinates[channel].append(y)
                 ffts = []
                 for i in range(self.channel_count):
-                    ffts.append(self.signalPipeline(coordinates[i]))
+                    ffts.append(self.signalPipeline(coordinates[i], prev_coordinates[i]))
                 for i in range(len(ffts[0])):
                     summ = 0
                     for j in range(self.channel_count):

@@ -4,6 +4,7 @@ import operator
 import PlotWindow
 # import sklearn.cross_decomposition
 import numpy as np
+import scipy.signal
 
 
 class Signal(object):
@@ -29,7 +30,7 @@ class Signal(object):
             return np.insert(signal, 0, previous)
 
     def getSegment(self, array, i):
-        if self.window:
+        if array is not None:
             return array[i*self.step:i*self.step+self.step]
         else:
             return None
@@ -39,6 +40,19 @@ class Signal(object):
         self.max_packet = max_packet
         self.averages = averages
         self.initial_packets = initial_packets[:]
+
+    def filterInitState(self, index):
+        if self.filter:
+            return scipy.signal.lfiltic(1.0, self.filter_coefficients, self.initial_packets[index])
+        else:
+            return None
+
+    def signalPipeline(self, signal, i, prev_coordinate):
+        filtered_signal = self.filterSignal(signal)
+        window_segment = self.getSegment(self.window_function, i)
+        windowed_signal = self.windowSignal(filtered_signal, window_segment)
+        extended_signal = self.addPrevious(windowed_signal, prev_coordinate)
+        return extended_signal
 
 
 class Multiple(object):
@@ -65,7 +79,7 @@ class Average(object):
     def coordinates_generator(self, index):
         average = [0 for _ in range(self.length)]
         k = 0
-        prev = 0
+        prev_coordinate = 0
         yield
         self.prev_filter = self.filterInitState(index)
         while True:
@@ -74,19 +88,16 @@ class Average(object):
                 for j in range(self.step):
                     y = yield
                     average[i*self.step+j] = (average[i*self.step+j] * (k - 1) + y) / k
-                signal_segment = average[i*self.step:i*self.step+self.step]
-                filtered_signal = self.filterSignal(signal_segment)
-                window_segment = self.getSegment(self.window_function, i)
-                windowed_signal = self.windowSignal(filtered_signal, window_segment)
-                extended_signal = self.addPrevious(windowed_signal, prev)
-                yield Queue.deque(extended_signal)
-                prev = extended_signal[-1]
+                signal_segment = self.getSegment(average, i)
+                result = self.signalPipeline(signal_segment, i, prev_coordinate)
+                yield Queue.deque(result)
+                prev_coordinate = result[-1]
 
 
 class Regular(object):
     def coordinates_generator(self, index):
         average = [0 for _ in range(self.step)]
-        prev = 0
+        prev_coordinate = 0
         yield
         self.prev_filter = self.filterInitState(index)
         while True:
@@ -94,12 +105,9 @@ class Regular(object):
                 for j in range(self.step):
                     y = yield
                     average[j] = y
-                filtered_signal = self.filterSignal(average)
-                window_segment = self.getSegment(self.window_function, i)
-                windowed_signal = self.windowSignal(filtered_signal, window_segment)
-                extended_signal = self.addPrevious(windowed_signal, prev)
-                yield Queue.deque(extended_signal)
-                prev = extended_signal[-1]
+                result = self.signalPipeline(average, i, prev_coordinate)
+                yield Queue.deque(result)
+                prev_coordinate = result[-1]
 
 
 class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):
