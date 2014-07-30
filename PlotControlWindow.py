@@ -108,9 +108,11 @@ class Window(MyWindows.TkWindow):
             if message == "Start":
                 print "Starting plot"
                 message = self.start()
-                for generator in self.garbage:
-                    generator.close()
-                self.garbage = []
+                # for generator in self.garbage:
+                #     generator.close()
+                # self.garbage = []
+                while self.plot_to_emo.poll():
+                    print self.plot_to_emo.recv()
             if message == "Stop":
                 print "Plot stopped"
             if message == "Exit":
@@ -123,9 +125,14 @@ class Window(MyWindows.TkWindow):
         self.plot_to_main.close()
         self.destroy()
 
+    def closeGenerators(self, generators):
+        for generator in generators:
+            generator.close()
+
     def closeWindow(self, windows, key):
         windows[key].continue_generating = False
-        self.garbage.extend(windows[key].generators)
+        # self.garbage.extend(windows[key].generators)
+        self.closeGenerators(windows[key].generators)
         windows[key].destroy()
         windows[key] = None
 
@@ -133,7 +140,8 @@ class Window(MyWindows.TkWindow):
         window = windows[key]
         if window is not None:
             window.canvas.delete("all")
-            self.garbage.extend(window.generators)
+            # self.garbage.extend(window.generators)
+            self.closeGenerators(window.generators)
             window.continue_generating = True
             window.setup(self.options_textboxes, self.variables, sensor_names)
 

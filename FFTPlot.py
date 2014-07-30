@@ -36,7 +36,7 @@ class FFT(object):
 
     def setInitSignal(self, min_packet, max_packet, averages, initial_packets):
         self.averages = averages
-        self.initial_packets = initial_packets
+        self.initial_packets = initial_packets[:]
         self.min_packet = []
         self.max_packet = []
         for packets in initial_packets:
@@ -102,6 +102,7 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
+                    # print y
                     coordinates.append(y)
                 spectrum = self.signalPipeline(coordinates)
                 yield self.normaliseSpectrum(spectrum)

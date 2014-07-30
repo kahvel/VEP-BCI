@@ -2,6 +2,8 @@ __author__ = 'Anti'
 import emokit.emotiv
 import gevent
 from multiprocessing import reduction
+from Crypto.Cipher import AES
+from Crypto import Random
 
 
 class myEmotiv(emokit.emotiv.Emotiv):
@@ -12,6 +14,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.devices = []
         self.serialNum = None
         emokit.emotiv.Emotiv.__init__(self)
+        self.cipher = None
         self.myMainloop()
 
     def myMainloop(self):
@@ -68,10 +71,10 @@ class myEmotiv(emokit.emotiv.Emotiv):
 
     def handler(self, data):
         assert data[0] == 0
-        if self._goOn:
-            emokit.emotiv.tasks.put_nowait(''.join(map(chr, data[1:])))
-            self.packetsReceived += 1
-            return True
+        # if self._goOn:
+        self.packets.put_nowait(''.join(map(chr, data[1:])))
+        self.packetsReceived += 1
+        return True
 
     def cleanUp(self):
         self._goOn = False
@@ -87,18 +90,66 @@ class myEmotiv(emokit.emotiv.Emotiv):
             else:
                  connections[i].send(message)
 
+    def setupCrypto(self, sn):
+        type = 0 # feature[5]
+        type &= 0xF
+        type = 0
+        # I believe type == True is for the Dev headset, I'm not using that. That's the point of this library in the first place I thought.
+        k = ['\0'] * 16
+        k[0] = sn[-1]
+        k[1] = '\0'
+        k[2] = sn[-2]
+        if type:
+            k[3] = 'H'
+            k[4] = sn[-1]
+            k[5] = '\0'
+            k[6] = sn[-2]
+            k[7] = 'T'
+            k[8] = sn[-3]
+            k[9] = '\x10'
+            k[10] = sn[-4]
+            k[11] = 'B'
+        else:
+            k[3] = 'T'
+            k[4] = sn[-3]
+            k[5] = '\x10'
+            k[6] = sn[-4]
+            k[7] = 'B'
+            k[8] = sn[-1]
+            k[9] = '\0'
+            k[10] = sn[-2]
+            k[11] = 'H'
+        k[12] = sn[-3]
+        k[13] = '\0'
+        k[14] = sn[-4]
+        k[15] = 'P'
+        # It doesn't make sense to have more than one greenlet handling this as data needs to be in order anyhow. I guess you could assign an ID or something
+        # to each packet but that seems like a waste also or is it? The ID might be useful if your using multiple headsets or usb sticks.
+        key = ''.join(k)
+        iv = Random.new().read(AES.block_size)
+        self.cipher = AES.new(key, AES.MODE_ECB, iv)
+
     def run(self):
         self._goOn = True
         self.setup()
-        gevent.spawn(self.setupCrypto, self.serialNum)
-        gevent.sleep(1)
+        self.setupCrypto(self.serialNum)
         counter = 0
+
+        # Clean up possible previous packets from the queue
         while True:
             try:
-                self.packets.get(True, 1)
+                self.packets.get(False)
+                print "Clean"
+            except:
+                print "exeption"
+                break
+
+        # Make sure we get packets
+        while True:
+            try:
+                task = self.packets.get(True, 1)
                 break
             except:
-                # gevent.sleep(0)
                 if self.emo_to_main.poll():
                     return self.emo_to_main.recv()
                 counter += 1
@@ -106,9 +157,13 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 if counter == 10:
                     return "Stop"
         self.sendMessage(self.emo_to_psychopy, "Start", "Pscyhopy")
+
+        # Mainloop
         while True:
             try:
-                packet = self.packets.get(True, 1)
+                data = self.cipher.decrypt(task[:16]) + self.cipher.decrypt(task[16:])
+                packet = emokit.emotiv.EmotivPacket(data, self.sensors)
+                task = self.packets.get(True, 0.007)
                 for i in range(len(self.connections)-1, -1, -1):
                     if self.connections[i].poll():
                         print "Emo to plot closed"
@@ -116,7 +171,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
                         del self.connections[i]
                     else:
                         self.connections[i].send(packet)
-                # print packet
+                print "Emotiv " + str(packet)
             except Exception, e:
                 print "No packet"
             if self.emo_to_main.poll():
