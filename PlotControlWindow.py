@@ -20,7 +20,6 @@ class Window(MyWindows.TkWindow):
         for key in self.plot_names:
             self.signal_plot_windows[key] = None
             self.fft_plot_windows[key] = None
-        self.garbage = []
 
         self.other_buttons = {}
         self.fft_buttons = {}
@@ -108,9 +107,6 @@ class Window(MyWindows.TkWindow):
             if message == "Start":
                 print "Starting plot"
                 message = self.start()
-                # for generator in self.garbage:
-                #     generator.close()
-                # self.garbage = []
                 while self.plot_to_emo.poll():
                     print self.plot_to_emo.recv()
             if message == "Stop":
@@ -131,7 +127,6 @@ class Window(MyWindows.TkWindow):
 
     def closeWindow(self, windows, key):
         windows[key].continue_generating = False
-        # self.garbage.extend(windows[key].generators)
         self.closeGenerators(windows[key].generators)
         windows[key].destroy()
         windows[key] = None
@@ -140,7 +135,6 @@ class Window(MyWindows.TkWindow):
         window = windows[key]
         if window is not None:
             window.canvas.delete("all")
-            # self.garbage.extend(window.generators)
             self.closeGenerators(window.generators)
             window.continue_generating = True
             window.setup(self.options_textboxes, self.variables, sensor_names)
@@ -165,7 +159,6 @@ class Window(MyWindows.TkWindow):
                 channel_count += 1
         if channel_count == 0:
             print "No channels chosen"
-            return "Stop"
 
         min_packet = []
         max_packet = []

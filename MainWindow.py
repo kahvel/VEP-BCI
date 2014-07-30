@@ -27,7 +27,7 @@ class MainWindow(MyWindows.TkWindow):
                                "Freq": 10.0,
                                "Color1": "#ffffff",
                                "Color2": "#777777"}
-        self.targets.append(self.initial_target)
+        self.targets.append(self.initial_target.copy())
         self.targets.append(self.initial_target.copy())
         self.target_color_buttons = {}
         self.background_color_buttons = {}
@@ -98,7 +98,7 @@ class MainWindow(MyWindows.TkWindow):
         buttonframe2 = Frame(self)
         self.buttons.append(Button(buttonframe2, text="Targets", command=lambda: self.targetsWindow()))
         self.buttons.append(Button(buttonframe2, text="Plots", command=lambda: self.plotWindow()))
-        self.buttons.append(Button(buttonframe2, text="PS", command=lambda: self.psIdentification()))
+        self.buttons.append(Button(buttonframe2, text="Extraction", command=lambda: self.extraction()))
         for i in range(4, len(self.buttons)):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
 
@@ -119,7 +119,7 @@ class MainWindow(MyWindows.TkWindow):
         self.main_to_emo.send("Exit")
         self.destroy()
 
-    def psIdentification(self):
+    def extraction(self):
         self.main_to_detection.append(self.newProcess(Main.runPSIdentification, "New pipe", self.sensor_names, self.detection_to_psychopy))
 
     def start(self):

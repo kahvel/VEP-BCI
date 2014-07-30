@@ -71,9 +71,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
 
     def handler(self, data):
         assert data[0] == 0
-        # if self._goOn:
         self.packets.put_nowait(''.join(map(chr, data[1:])))
-        self.packetsReceived += 1
         return True
 
     def cleanUp(self):
@@ -130,21 +128,17 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.cipher = AES.new(key, AES.MODE_ECB, iv)
 
     def run(self):
-        self._goOn = True
-        self.setup()
-        self.setupCrypto(self.serialNum)
-        counter = 0
-
         # Clean up possible previous packets from the queue
         while True:
             try:
                 self.packets.get(False)
-                print "Clean"
             except:
-                print "exeption"
                 break
 
         # Make sure we get packets
+        self.setup()
+        self.setupCrypto(self.serialNum)
+        counter = 0
         while True:
             try:
                 task = self.packets.get(True, 1)
@@ -156,14 +150,14 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 print("No packet " + str(counter))
                 if counter == 10:
                     return "Stop"
-        self.sendMessage(self.emo_to_psychopy, "Start", "Pscyhopy")
 
         # Mainloop
+        self.sendMessage(self.emo_to_psychopy, "Start", "Pscyhopy")
         while True:
             try:
                 data = self.cipher.decrypt(task[:16]) + self.cipher.decrypt(task[16:])
                 packet = emokit.emotiv.EmotivPacket(data, self.sensors)
-                task = self.packets.get(True, 0.007)
+                task = self.packets.get(True, 0.01)
                 for i in range(len(self.connections)-1, -1, -1):
                     if self.connections[i].poll():
                         print "Emo to plot closed"
@@ -171,8 +165,10 @@ class myEmotiv(emokit.emotiv.Emotiv):
                         del self.connections[i]
                     else:
                         self.connections[i].send(packet)
-                print "Emotiv " + str(packet)
+                # print "Emotiv " + str(packet)
+                if self.packets.qsize() > 150:
+                    print self.packets.qsize(), "packets in queue. Slow down!"
             except Exception, e:
-                print "No packet"
+                print "No packet", e
             if self.emo_to_main.poll():
                 return self.emo_to_main.recv()

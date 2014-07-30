@@ -18,5 +18,5 @@ def runPsychopy(psy_to_main, psy_to_emo, args):
     TargetsWindow.TargetsWindow(psy_to_main, psy_to_emo, args[0], args[1])
 
 def runPSIdentification(ps_to_main, ps_to_emo, args):
-    import PSIdentification
-    PSIdentification.PSIdentification(ps_to_main, ps_to_emo, args[0], args[1])
+    import ExtractionControlWindow
+    ExtractionControlWindow.Window(ps_to_main, ps_to_emo, args[0], args[1])

@@ -23,7 +23,7 @@ class FFT(object):
 
     def normaliseSpectrum(self, fft):
         if self.normalise:
-            return np.log10(fft/sum(fft))
+            return fft/sum(fft)
         else:
             return np.log10(fft)
 
@@ -81,18 +81,6 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         Regular.__init__(self)
         Multiple.__init__(self)
 
-    # def scaleasd(self, coordinates, index):
-    #     result = []
-    #     for i in range(len(coordinates)):
-    #         result.append(i)
-    #         result.append(self.scaleY(coordinates[i],  index, self.plot_count))
-    #     return result
-    #
-    # def scaleY(self, y,  index, plot_count):
-    #     # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-    #     return ((((y - self.min[index]) * (-100 - 100)) / (self.max[index] - self.min[index])) + 100
-    #             + index*self.window_height + self.window_height/2) / plot_count
-
     def coordinates_generator(self, index):
         yield
         coordinates = self.initial_packets[index][:]
@@ -102,7 +90,6 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
-                    # print y
                     coordinates.append(y)
                 spectrum = self.signalPipeline(coordinates)
                 yield self.normaliseSpectrum(spectrum)
