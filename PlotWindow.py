@@ -72,17 +72,17 @@ class PlotWindow(MyWindows.ToplevelWindow):
             self.filter = True
             to_value = options_textboxes["To"].get()
             from_value = options_textboxes["From"].get()
-            time_phase = int(options_textboxes["Taps"].get())
+            num_taps = int(options_textboxes["Taps"].get())
             if from_value != "" and to_value != "":
                 to_value = float(to_value)
                 from_value = float(from_value)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, [to_value/64.0, from_value/64.0], pass_zero=False)
+                self.filter_coefficients = scipy.signal.firwin(num_taps, [to_value/64.0, from_value/64.0], pass_zero=False)
             elif to_value != "":
                 to_value = float(to_value)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, to_value/64.0)
+                self.filter_coefficients = scipy.signal.firwin(num_taps, to_value/64.0)
             elif from_value != "":
                 from_value = float(from_value)
-                self.filter_coefficients = scipy.signal.firwin(time_phase, from_value/64.0, pass_zero=False)
+                self.filter_coefficients = scipy.signal.firwin(num_taps, from_value/64.0, pass_zero=False)
             else:
                 print "Insert from and/or to value"
                 self.filter = False

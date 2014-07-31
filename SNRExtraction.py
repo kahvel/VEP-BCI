@@ -27,7 +27,7 @@ class Abstract(MyWindows.ToplevelWindow):
         self.start_deleting = lambda x: True
         self.initial_packets = []
 
-    def setInitSignal(self, min_packet, max_packet, averages, initial_packets):
+    def setInitSignal(self, min_packet, max_packet, averages, initial_packets, prev_packets):
         self.initial_packets = initial_packets
 
     def signalPipeline(self, coordinates):
@@ -176,9 +176,9 @@ class Abstract(MyWindows.ToplevelWindow):
                             max = ratio
                             max_index = i
                     detected_freq = self.freq_points[max_index]
-                    print coordinates[self.freq_indexes[i]-3], coordinates[self.freq_indexes[i]-2], \
-                        coordinates[self.freq_indexes[i]-1], coordinates[self.freq_indexes[i]],\
-                        coordinates[self.freq_indexes[i]+1], coordinates[self.freq_indexes[i]+2]
+                    # print coordinates[self.freq_indexes[i]-3], coordinates[self.freq_indexes[i]-2], \
+                    #     coordinates[self.freq_indexes[i]-1], coordinates[self.freq_indexes[i]],\
+                    #     coordinates[self.freq_indexes[i]+1], coordinates[self.freq_indexes[i]+2]
                     self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
                     max = 0
                     max_index = -1
@@ -204,9 +204,9 @@ class Abstract(MyWindows.ToplevelWindow):
             coordinates_generator.close()
 
 
-class SNR2(Abstract):
+class SNR(Abstract):
     def __init__(self):
-        Abstract.__init__(self, "SNR2")
+        Abstract.__init__(self, "SNR")
 
     def setPlotCount(self):
         self.plot_count = self.channel_count
@@ -231,9 +231,9 @@ class SNR2(Abstract):
                 yield self.normaliseSpectrum(spectrum)
 
 
-class SNR(Abstract):
+class SumSNR(Abstract):
     def __init__(self):
-        Abstract.__init__(self, "SNR")
+        Abstract.__init__(self, "Sum SNR")
 
     def setPlotCount(self):
         self.plot_count = 1

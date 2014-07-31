@@ -34,29 +34,32 @@ class FFT(object):
             return None
 
     def setInitSignal(self, min_packet, max_packet, averages, init_coordinates, prev_coordinates):
+        for i in range(0, 512, 40):  # scale
+            self.canvas.create_line(i, 0, i, 512, fill="red")
+            self.canvas.create_text(i, 10, text=i/8)
         self.averages = averages
         self.init_coordinates = init_coordinates[:]
         self.prev_coordinates = prev_coordinates[:]
         self.min_packet = []
         self.max_packet = []
-        self.signal_min_packet = min_packet
-        self.signal_max_packet = max_packet
+        # self.signal_min_packet = min_packet
+        # self.signal_max_packet = max_packet
         for i in range(len(init_coordinates)):
             spectrum = self.normaliseSpectrum(self.signalPipeline(init_coordinates[i], prev_coordinates[i]))[1:]
             self.min_packet.append(min(spectrum))
             self.max_packet.append(max(spectrum))
 
-    def scaleSignal(self, coordinates, index, packet_count):
-        result = []
-        for i in range(len(coordinates)):
-            result.append(i*self.window_length/len(coordinates))
-            result.append(self.scaleSignalY(coordinates[i], index, self.plot_count))
-        return result
-
-    def scaleSignalY(self, y,  index, plot_count):
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        return ((((y - self.signal_min_packet[index]) * (-100 - 100)) / (self.signal_max_packet[index] - self.signal_min_packet[index])) + 100
-                + index*self.window_height + self.window_height/2) / plot_count
+    # def scaleSignal(self, coordinates, index, packet_count):
+    #     result = []
+    #     for i in range(len(coordinates)):
+    #         result.append(i*self.window_length/len(coordinates))
+    #         result.append(self.scaleSignalY(coordinates[i], index, self.plot_count))
+    #     return result
+    #
+    # def scaleSignalY(self, y,  index, plot_count):
+    #     # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+    #     return ((((y - self.signal_min_packet[index]) * (-100 - 100)) / (self.signal_max_packet[index] - self.signal_min_packet[index])) + 100
+    #             + index*self.window_height + self.window_height/2) / plot_count
 
     def signalPipeline(self, coordinates, prev_coordinates):
         detrended_signal = scipy.signal.detrend(coordinates)
@@ -91,7 +94,7 @@ class Average(object):
 
 class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self, "Multiple regular FFT plot")
+        PlotWindow.MultiplePlotWindow.__init__(self, "FFTs")
         self.line = self.canvas.create_line(0,0,0,0)
         FFT.__init__(self)
         Regular.__init__(self)
@@ -103,7 +106,7 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         prev_coordinates = self.prev_coordinates[index]
         while True:
             for i in range(self.length/self.step):
-                self.prev_coordinates.extend(coordinates[:self.step])
+                prev_coordinates.extend(coordinates[:self.step])
                 del self.prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
@@ -115,7 +118,7 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
 
 class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self, "Multiple average FFT plot")
+        PlotWindow.MultiplePlotWindow.__init__(self, "Average FFTs")
         FFT.__init__(self)
         Average.__init__(self)
         Multiple.__init__(self)
@@ -128,7 +131,7 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
         prev_coordinates = self.prev_coordinates[index]
         while True:
             for _ in range(self.length/self.step):
-                self.prev_coordinates.extend(coordinates[:self.step])
+                prev_coordinates.extend(coordinates[:self.step])
                 del self.prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
@@ -143,7 +146,7 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
 
 class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self, "Single average FFT plot")
+        PlotWindow.SinglePlotWindow.__init__(self, "Sum of average FFTs")
         FFT.__init__(self)
         Average.__init__(self)
         Single.__init__(self)
@@ -175,7 +178,7 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
 
 class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self, "Single average FFT plot")
+        PlotWindow.SinglePlotWindow.__init__(self, "Sum of FFTs")
         FFT.__init__(self)
         Regular.__init__(self)
         Single.__init__(self)

@@ -35,7 +35,7 @@ class Signal(object):
         else:
             return None
 
-    def setInitSignal(self, min_packet, max_packet, averages, initial_packets):
+    def setInitSignal(self, min_packet, max_packet, averages, initial_packets, prev_packets):
         self.min_packet = min_packet
         self.max_packet = max_packet
         self.averages = averages
@@ -112,7 +112,7 @@ class Regular(object):
 
 class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self, "Multiple regular signal plot")
+        PlotWindow.MultiplePlotWindow.__init__(self, "Signals")
         Signal.__init__(self)
         Regular.__init__(self)
         Multiple.__init__(self)
@@ -120,7 +120,7 @@ class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):
 
 class SingleRegular(Signal, Regular, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self, "Single regular signal plot")
+        PlotWindow.SinglePlotWindow.__init__(self, "Sum of signals")
         Signal.__init__(self)
         Regular.__init__(self)
         Single.__init__(self)
@@ -128,7 +128,7 @@ class SingleRegular(Signal, Regular, Single, PlotWindow.SinglePlotWindow):
 
 class MultipleAverage(Signal, Average, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self, "Multiple average signal plot")
+        PlotWindow.MultiplePlotWindow.__init__(self, "Average signals")
         Signal.__init__(self)
         Average.__init__(self)
         Multiple.__init__(self)
@@ -136,7 +136,7 @@ class MultipleAverage(Signal, Average, Multiple, PlotWindow.MultiplePlotWindow):
 
 class SingleAverage(Signal, Average, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self, "Single average signal plot")
+        PlotWindow.SinglePlotWindow.__init__(self, "Sum of average signals")
         Signal.__init__(self)
         Average.__init__(self)
         Single.__init__(self)
