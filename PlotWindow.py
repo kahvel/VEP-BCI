@@ -1,113 +1,19 @@
 __author__ = 'Anti'
 import Tkinter
-import MyWindows
-import numpy as np
-import scipy.signal
+import ControllableWindow
 
 
-class PlotWindow(MyWindows.ToplevelWindow):
+class PlotWindow(ControllableWindow.ControllableWindow):
     def __init__(self, title):
-        MyWindows.ToplevelWindow.__init__(self, title, 512, 512)
+        ControllableWindow.ControllableWindow.__init__(self, title, 512, 512)
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
-        self.continue_generating = True
         self.canvas.pack()
-        self.plot_count = 0
-        self.channel_count = 0
-        self.sensor_names = []
-        self.generators = []
-        self.plot_windows = {}
-        self.length = None
-        self.step = None
-        self.window_length = 512
-        self.window_height = 512
-        self.window_function = None
-        self.filter = False
-        self.filter_coefficients = []
-        self.normalise = False
-        self.averages = []
         self.min_packet = []
         self.max_packet = []
-        self.initial_packets = []
-        self.window = False
-        self.prev_filter = None
 
-    def windowSignal(self, signal, window):
-        if self.window:
-            return signal*window
-        else:
-            return signal
-
-    def filterSignal(self, signal):
-        if self.filter:
-            if self.prev_filter is None:
-                return scipy.signal.lfilter(self.filter_coefficients, 1.0, signal)
-            else:
-                result, self.prev_filter = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.prev_filter)
-                return result
-        else:
-            return signal
-
-    def setWindow(self, options_textboxes, variables):
-        window_var = variables["Window"].get()
-        if window_var == "None":
-            self.window = False
-            self.window_function = None
-        else:
-            self.window = True
-            if window_var == "hanning":
-                self.window_function = np.hanning(self.length)
-            elif window_var == "hamming":
-                self.window_function = np.hamming(self.length)
-            elif window_var == "blackman":
-                self.window_function = np.blackman(self.length)
-            elif window_var == "kaiser":
-                self.window_function = np.kaiser(self.length, float(options_textboxes["Arg"].get()))
-            elif window_var == "bartlett":
-                self.window_function = np.bartlett(self.length)
-
-    def setFilter(self, options_textboxes, variables):
-        self.filter = False
-        self.filter_coefficients = []
-        if variables["Filter"].get() == 1:
-            self.filter = True
-            to_value = options_textboxes["To"].get()
-            from_value = options_textboxes["From"].get()
-            num_taps = int(options_textboxes["Taps"].get())
-            if from_value != "" and to_value != "":
-                to_value = float(to_value)
-                from_value = float(from_value)
-                self.filter_coefficients = scipy.signal.firwin(num_taps, [to_value/64.0, from_value/64.0], pass_zero=False)
-            elif to_value != "":
-                to_value = float(to_value)
-                self.filter_coefficients = scipy.signal.firwin(num_taps, to_value/64.0)
-            elif from_value != "":
-                from_value = float(from_value)
-                self.filter_coefficients = scipy.signal.firwin(num_taps, from_value/64.0, pass_zero=False)
-            else:
-                print "Insert from and/or to value"
-                self.filter = False
-
-    def setNormalisation(self, variables):
-        self.normalise = False
-        if variables["Norm"].get() == 1:
-            self.normalise = True
-
-    def setOptions(self, options_textboxes, variables):
-        self.setWindow(options_textboxes, variables)
-        self.setFilter(options_textboxes, variables)
-        self.setNormalisation(variables)
-
-    def setup(self, options_textboxes, variables, sensor_names):
-        self.length = int(options_textboxes["Length"].get())
-        self.step = int(options_textboxes["Step"].get())
-        self.setOptions(options_textboxes, variables)
-        self.sensor_names = sensor_names
-        self.channel_count = len(sensor_names)
-        self.setPlotCount()
-        self.generators = []
-        for i in range(self.plot_count):
-            self.generators.append(self.plot_generator(i, self.start_deleting))
-            self.generators[i].send(None)
+    def scaleY(self, y,  index, plot_count, new_max=-100, new_min=100):
+        return ((((y - self.min_packet[index]) * (new_max - new_min)) / (self.max_packet[index] - self.min_packet[index])) + new_min
+                + index*self.window_height + self.window_height/2) / plot_count
 
     def plot_generator(self, index, start_deleting):
         coordinates_generator = self.coordinates_generator(index)

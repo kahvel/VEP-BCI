@@ -1,75 +1,36 @@
 __author__ = 'Anti'
 import PlotWindow
-import numpy as np
-import scipy.signal
+import FFT
+import copy
 # import matplotlib.pyplot as plt
 
 
-class FFT(object):
+class FFTPlot(FFT.FFT):
     def __init__(self):
-        self.start_deleting = lambda x: True
+        FFT.FFT.__init__(self)
 
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(len(coordinates)):
-            result.append(i*self.window_length/len(coordinates))
+            result.append(i*self.window_width/len(coordinates))
             result.append(self.scaleY(coordinates[i], index, self.plot_count))
         return result
-
-    def scaleY(self, y,  index, plot_count):
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        return ((((y - self.min_packet[index]) * (-100 - 100)) / (self.max_packet[index] - self.min_packet[index])) + 100
-                + index*self.window_height + self.window_height/2) / plot_count
-
-    def normaliseSpectrum(self, fft):
-        if self.normalise:
-            return fft/sum(fft)
-        else:
-            return np.log10(fft)
-
-    def filterPrevState(self, prev_coordinates):
-        if self.filter:
-            return scipy.signal.lfiltic(1.0, self.filter_coefficients, prev_coordinates)
-        else:
-            return None
 
     def setInitSignal(self, min_packet, max_packet, averages, init_coordinates, prev_coordinates):
         for i in range(0, 512, 40):  # scale
             self.canvas.create_line(i, 0, i, 512, fill="red")
             self.canvas.create_text(i, 10, text=i/8)
         self.averages = averages
-        self.init_coordinates = init_coordinates[:]
-        self.prev_coordinates = prev_coordinates[:]
+        self.init_coordinates = copy.deepcopy(init_coordinates)
+        self.prev_coordinates = copy.deepcopy(prev_coordinates)
         self.min_packet = []
         self.max_packet = []
-        # self.signal_min_packet = min_packet
-        # self.signal_max_packet = max_packet
+        self.minp = min_packet
+        self.maxp = max_packet
         for i in range(len(init_coordinates)):
             spectrum = self.normaliseSpectrum(self.signalPipeline(init_coordinates[i], prev_coordinates[i]))[1:]
             self.min_packet.append(min(spectrum))
             self.max_packet.append(max(spectrum))
-
-    # def scaleSignal(self, coordinates, index, packet_count):
-    #     result = []
-    #     for i in range(len(coordinates)):
-    #         result.append(i*self.window_length/len(coordinates))
-    #         result.append(self.scaleSignalY(coordinates[i], index, self.plot_count))
-    #     return result
-    #
-    # def scaleSignalY(self, y,  index, plot_count):
-    #     # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-    #     return ((((y - self.signal_min_packet[index]) * (-100 - 100)) / (self.signal_max_packet[index] - self.signal_min_packet[index])) + 100
-    #             + index*self.window_height + self.window_height/2) / plot_count
-
-    def signalPipeline(self, coordinates, prev_coordinates):
-        detrended_signal = scipy.signal.detrend(coordinates)
-        self.prev_filter = self.filterPrevState(prev_coordinates)
-        filtered_signal = self.filterSignal(detrended_signal)
-        windowed_signal = self.windowSignal(filtered_signal, self.window_function)
-        # self.canvas.delete(self.line)
-        # self.line = self.canvas.create_line(self.scaleSignal(windowed_signal, 0, 1), fill="Red")
-        amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
-        return amplitude_spectrum
 
 
 class Multiple(object):
@@ -92,11 +53,11 @@ class Average(object):
     pass
 
 
-class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
+class MultipleRegular(FFTPlot, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "FFTs")
         self.line = self.canvas.create_line(0,0,0,0)
-        FFT.__init__(self)
+        FFTPlot.__init__(self)
         Regular.__init__(self)
         Multiple.__init__(self)
 
@@ -107,7 +68,7 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
         while True:
             for i in range(self.length/self.step):
                 prev_coordinates.extend(coordinates[:self.step])
-                del self.prev_coordinates[:self.step]
+                del prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
@@ -116,10 +77,10 @@ class MultipleRegular(FFT, Regular, Multiple, PlotWindow.MultiplePlotWindow):
                 yield self.normaliseSpectrum(spectrum)
 
 
-class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
+class MultipleAverage(FFTPlot, Average, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "Average FFTs")
-        FFT.__init__(self)
+        FFTPlot.__init__(self)
         Average.__init__(self)
         Multiple.__init__(self)
 
@@ -132,7 +93,7 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
         while True:
             for _ in range(self.length/self.step):
                 prev_coordinates.extend(coordinates[:self.step])
-                del self.prev_coordinates[:self.step]
+                del prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
@@ -144,10 +105,10 @@ class MultipleAverage(FFT, Average, Multiple, PlotWindow.MultiplePlotWindow):
                 yield self.normaliseSpectrum(average)
 
 
-class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
+class SingleAverage(FFTPlot, Average, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
         PlotWindow.SinglePlotWindow.__init__(self, "Sum of average FFTs")
-        FFT.__init__(self)
+        FFTPlot.__init__(self)
         Average.__init__(self)
         Single.__init__(self)
 
@@ -176,10 +137,10 @@ class SingleAverage(FFT, Average, Single, PlotWindow.SinglePlotWindow):
                 yield self.normaliseSpectrum(average)
 
 
-class SingleRegular(FFT, Regular, Single, PlotWindow.SinglePlotWindow):
+class SingleRegular(FFTPlot, Regular, Single, PlotWindow.SinglePlotWindow):
     def __init__(self):
         PlotWindow.SinglePlotWindow.__init__(self, "Sum of FFTs")
-        FFT.__init__(self)
+        FFTPlot.__init__(self)
         Regular.__init__(self)
         Single.__init__(self)
 

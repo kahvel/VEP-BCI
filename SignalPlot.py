@@ -5,6 +5,7 @@ import PlotWindow
 # import sklearn.cross_decomposition
 import numpy as np
 import scipy.signal
+import copy
 
 
 class Signal(object):
@@ -14,14 +15,9 @@ class Signal(object):
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(packet_count-len(coordinates), packet_count):
-            result.append(i*self.window_length/self.length)
+            result.append(i*self.window_width/self.length)
             result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count))
         return result
-
-    def scaleY(self, y,  index, plot_count):
-        # NewValue = (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
-        return ((((y - self.min_packet[index]) * (-100 - 100)) / (self.max_packet[index] - self.min_packet[index])) + 100
-                + index*self.window_height + self.window_height/2) / plot_count
 
     def addPrevious(self, signal, previous):
         if isinstance(signal, list):
@@ -35,17 +31,17 @@ class Signal(object):
         else:
             return None
 
-    def setInitSignal(self, min_packet, max_packet, averages, initial_packets, prev_packets):
+    def filterInitState(self, coordinates):
+        if self.filter:
+            return scipy.signal.lfiltic(1.0, self.filter_coefficients, coordinates)
+        else:
+            return None
+
+    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates, prev_coordinates):
         self.min_packet = min_packet
         self.max_packet = max_packet
         self.averages = averages
-        self.initial_packets = initial_packets[:]
-
-    def filterInitState(self, index):
-        if self.filter:
-            return scipy.signal.lfiltic(1.0, self.filter_coefficients, self.initial_packets[index])
-        else:
-            return None
+        self.init_coordinates = copy.deepcopy(init_coordinates)
 
     def signalPipeline(self, signal, i, prev_coordinate):
         filtered_signal = self.filterSignal(signal)
@@ -56,18 +52,12 @@ class Signal(object):
 
 
 class Multiple(object):
-    def getChannelAverage(self, index):
-        return self.averages[index]
-
     def sendPacket(self, packet):
         for i in range(self.channel_count):
             self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
 
 
 class Single(object):
-    def getChannelAverage(self, index):
-        return sum(self.averages)/len(self.averages)
-
     def sendPacket(self, packet):
         summ = 0
         for i in range(self.channel_count):
@@ -81,7 +71,7 @@ class Average(object):
         k = 0
         prev_coordinate = 0
         yield
-        self.prev_filter = self.filterInitState(index)
+        self.filter_prev_state = self.filterInitState(self.init_coordinates[index])
         while True:
             k += 1
             for i in range(self.length/self.step):
@@ -99,7 +89,7 @@ class Regular(object):
         average = [0 for _ in range(self.step)]
         prev_coordinate = 0
         yield
-        self.prev_filter = self.filterInitState(index)
+        self.filter_prev_state = self.filterInitState(self.init_coordinates[index])
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):
