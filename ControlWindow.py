@@ -1,8 +1,6 @@
 __author__ = 'Anti'
 import MyWindows
 import Tkinter
-import SignalPlot
-import FFTPlot
 
 
 class ControlWindow(MyWindows.TkWindow):
@@ -123,7 +121,7 @@ class ControlWindow(MyWindows.TkWindow):
         max_packet = []
         averages = []
         for i in range(channel_count):
-            averages.append(sum(init_signal[i])/len(init_signal[i]))
+            averages.append(float(sum(init_signal[i]))/len(init_signal[i]))
             min_packet.append(min(init_signal[i])-averages[i])
             max_packet.append(max(init_signal[i])-averages[i])
         print averages, min_packet, max_packet, init_signal
@@ -132,7 +130,7 @@ class ControlWindow(MyWindows.TkWindow):
     def subtractaverages(self, channel_count, signal, averages):
         for i in range(channel_count):
             for j in range(len(signal[i])):
-                signal[i][j] -= averages[i]
+                signal[i][j] = float(signal[i][j] - averages[i])
 
     def getInitialSignal(self, prev_packets, init_packets):
         channel_count = len(self.chosen_sensor_names)

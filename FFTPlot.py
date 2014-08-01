@@ -36,13 +36,13 @@ class FFTPlot(FFT.FFT):
 class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
+            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
 
 
 class Single(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
+            self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
 
 
 class Regular(object):
@@ -92,8 +92,6 @@ class MultipleAverage(FFTPlot, Average, Multiple, PlotWindow.MultiplePlotWindow)
         prev_coordinates = self.prev_coordinates[index]
         while True:
             for _ in range(self.length/self.step):
-                prev_coordinates.extend(coordinates[:self.step])
-                del prev_coordinates[:self.step]
                 del coordinates[:self.step]
                 for j in range(self.step):
                     y = yield
@@ -122,6 +120,8 @@ class SingleAverage(FFTPlot, Average, Single, PlotWindow.SinglePlotWindow):
             for _ in range(self.length/self.step):
                 for j in range(self.step):
                     for channel in range(self.channel_count):
+                        prev_coordinates[channel].extend(coordinates[channel][0])
+                        del prev_coordinates[channel][0]
                         y = yield
                         del coordinates[channel][0]
                         coordinates[channel].append(y)
@@ -153,6 +153,8 @@ class SingleRegular(FFTPlot, Regular, Single, PlotWindow.SinglePlotWindow):
             for _ in range(self.length/self.step):
                 for j in range(self.step):
                     for channel in range(self.channel_count):
+                        prev_coordinates[channel].extend(coordinates[channel][0])
+                        del prev_coordinates[channel][0]
                         y = yield
                         del coordinates[channel][0]
                         coordinates[channel].append(y)

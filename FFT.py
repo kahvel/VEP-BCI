@@ -7,18 +7,23 @@ class FFT(object):
     def __init__(self):
         self.start_deleting = lambda x: True
         self.prev_coordinates = []
+        self.filter_prev_state = []
+
+    def filterSignal(self, signal):
+        if self.filter:
+            if self.filter_prev_state is None:
+                return scipy.signal.lfilter(self.filter_coefficients, 1.0, signal)
+            else:
+                result, self.filter_prev_state = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.filter_prev_state)
+                return result
+        else:
+            return signal
 
     def normaliseSpectrum(self, fft):
         if self.normalise:
             return fft/sum(fft)
         else:
             return np.log10(fft)
-
-    def filterPrevState(self, prev_coordinates):
-        if self.filter:
-            return scipy.signal.lfiltic(1.0, self.filter_coefficients, prev_coordinates)
-        else:
-            return None
 
     def scaleYa(self, y,  index, plot_count, new_max=-100, new_min=100):
         return ((((y - self.minp[index]) * (new_max - new_min)) / (self.maxp[index] - self.minp[index])) + new_min

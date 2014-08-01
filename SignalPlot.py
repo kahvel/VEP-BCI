@@ -31,12 +31,6 @@ class Signal(object):
         else:
             return None
 
-    def filterInitState(self, coordinates):
-        if self.filter:
-            return scipy.signal.lfiltic(1.0, self.filter_coefficients, coordinates)
-        else:
-            return None
-
     def setInitSignal(self, min_packet, max_packet, averages, init_coordinates, prev_coordinates):
         self.min_packet = min_packet
         self.max_packet = max_packet
@@ -54,7 +48,7 @@ class Signal(object):
 class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
+            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
 
 
 class Single(object):
@@ -62,7 +56,7 @@ class Single(object):
         summ = 0
         for i in range(self.channel_count):
             summ += packet.sensors[self.sensor_names[i]]["value"]
-        self.generators[0].send(summ/self.channel_count-sum(self.averages)/len(self.averages))
+        self.generators[0].send(float(summ)/self.channel_count-float(sum(self.averages))/len(self.averages))
 
 
 class Average(object):
@@ -71,7 +65,7 @@ class Average(object):
         k = 0
         prev_coordinate = 0
         yield
-        self.filter_prev_state = self.filterInitState(self.init_coordinates[index])
+        self.filter_prev_state = self.filterPrevState(self.init_coordinates[index])
         while True:
             k += 1
             for i in range(self.length/self.step):
@@ -89,7 +83,7 @@ class Regular(object):
         average = [0 for _ in range(self.step)]
         prev_coordinate = 0
         yield
-        self.filter_prev_state = self.filterInitState(self.init_coordinates[index])
+        self.filter_prev_state = self.filterPrevState(self.init_coordinates[index])
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):

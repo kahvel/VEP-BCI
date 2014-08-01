@@ -106,7 +106,7 @@ class SNR(Abstract):
     def sendPacket(self, packet):
         ret = self.generators[0].send(packet.sensors[self.sensor_names[0]]["value"]-self.averages[0])
         for i in range(1, self.channel_count):
-            self.generators[i].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
+            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
         return ret
 
     def coordinates_generator(self, index):
@@ -135,7 +135,7 @@ class SumSNR(Abstract):
     def sendPacket(self, packet):
         ret = self.generators[0].send(packet.sensors[self.sensor_names[0]]["value"]-self.averages[0])
         for i in range(1, self.channel_count):
-            self.generators[0].send(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i])
+            self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
         return ret
 
     def coordinates_generator(self, index):

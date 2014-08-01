@@ -42,6 +42,12 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         else:
             return signal
 
+    def filterPrevState(self, prev_coordinates):
+        if self.filter:
+            return scipy.signal.lfiltic(1.0, self.filter_coefficients, prev_coordinates)
+        else:
+            return None
+
     def setWindow(self, options_textboxes, variables):
         window_var = variables["Window"].get()
         if window_var == "None":
