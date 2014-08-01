@@ -26,19 +26,15 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.filter_coefficients = []
         self.filter_prev_state = None
 
+    def getSegment(self, array, i):
+        if array is not None:
+            return array[i*self.step:i*self.step+self.step]
+        else:
+            return None
+
     def windowSignal(self, signal, window):
         if self.window:
             return signal*window
-        else:
-            return signal
-
-    def filterSignal(self, signal):
-        if self.filter:
-            if self.filter_prev_state is None:
-                return scipy.signal.lfilter(self.filter_coefficients, 1.0, signal)
-            else:
-                result, self.filter_prev_state = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.filter_prev_state)
-                return result
         else:
             return signal
 

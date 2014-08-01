@@ -25,13 +25,14 @@ class Signal(object):
         else:
             return np.insert(signal, 0, previous)
 
-    def getSegment(self, array, i):
-        if array is not None:
-            return array[i*self.step:i*self.step+self.step]
+    def filterSignal(self, signal):
+        if self.filter:
+            result, self.filter_prev_state = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.filter_prev_state)
+            return result
         else:
-            return None
+            return signal
 
-    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates, prev_coordinates):
+    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates):
         self.min_packet = min_packet
         self.max_packet = max_packet
         self.averages = averages
