@@ -95,7 +95,7 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.setFilter(options_textboxes, variables)
         self.setNormalisation(variables)
 
-    def setup(self, options_textboxes, variables, sensor_names):
+    def setup(self, options_textboxes, variables, sensor_names, freq_points=None):
         self.length = int(options_textboxes["Length"].get())
         self.step = int(options_textboxes["Step"].get())
         self.setOptions(options_textboxes, variables)
@@ -104,5 +104,5 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.setPlotCount()
         self.generators = []
         for i in range(self.plot_count):
-            self.generators.append(self.plot_generator(i, self.start_deleting))
+            self.generators.append(self.generator(i, self.start_deleting))
             self.generators[i].send(None)

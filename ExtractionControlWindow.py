@@ -1,5 +1,4 @@
 __author__ = 'Anti'
-import MyWindows
 import Tkinter
 import SNRExtraction
 import ControlWindow

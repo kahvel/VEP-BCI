@@ -20,6 +20,10 @@ class Abstract(ControllableWindow.ControllableWindow, FFT.FFT):
         self.init_coordinates = init_coordinates
         self.averages = averages
 
+    def setup(self, options_textboxes, variables, sensor_names, freq_points=None):
+        self.freq_points = freq_points
+        ControllableWindow.ControllableWindow.setup(self, options_textboxes, variables, sensor_names)
+
     def generator(self, index, start_deleting):
         coordinates_generator = self.coordinates_generator(index)
         detected_freq = None

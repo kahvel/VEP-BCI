@@ -15,7 +15,7 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         return ((((y - self.min_packet[index]) * (new_max - new_min)) / (self.max_packet[index] - self.min_packet[index])) + new_min
                 + index*self.window_height + self.window_height/2) / plot_count
 
-    def plot_generator(self, index, start_deleting):
+    def generator(self, index, start_deleting):
         coordinates_generator = self.coordinates_generator(index)
         try:
             lines = [self.canvas.create_line(0, 0, 0, 0)]
