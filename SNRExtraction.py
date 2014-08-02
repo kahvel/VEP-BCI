@@ -16,10 +16,6 @@ class Abstract(ControllableWindow.ControllableWindow, FFT.FFT):
         self.freq_points = []
         self.freq_indexes = []
 
-    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates):
-        self.init_coordinates = init_coordinates
-        self.averages = averages
-
     def setup(self, options_textboxes, variables, sensor_names, freq_points=None):
         self.freq_points = freq_points
         ControllableWindow.ControllableWindow.setup(self, options_textboxes, variables, sensor_names)
@@ -108,21 +104,35 @@ class SNR(Abstract):
         self.plot_count = self.channel_count
 
     def sendPacket(self, packet):
-        ret = self.generators[0].send(float(packet.sensors[self.sensor_names[0]]["value"]-self.averages[0]))
-        for i in range(1, self.channel_count):
-            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
+        ret = None
+        for i in range(self.channel_count):
+            if ret is None:
+                ret = self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
+            else:
+                self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
         return ret
 
     def coordinates_generator(self, index):
-        yield
-        coordinates = self.init_coordinates[index]
-        self.filter_prev_state = self.filterPrevState([0])
+        coordinates = []
+        filter_prev_state = self.filterPrevState([0])
+        for i in range(self.length/self.step):
+            segment = []
+            for j in range(self.step):
+                y = yield
+                segment.append(y)
+            result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
+            coordinates.extend(result)
+        spectrum = self.signalPipeline(coordinates)
+        yield self.normaliseSpectrum(spectrum)
         while True:
             for i in range(self.length/self.step):
-                del coordinates[:self.step]
+                segment = []
                 for j in range(self.step):
                     y = yield
-                    coordinates.append(y)
+                    segment.append(y)
+                result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
+                coordinates.extend(result)
+                del coordinates[:self.step]
                 spectrum = self.signalPipeline(coordinates)
                 yield self.normaliseSpectrum(spectrum)
 
@@ -135,23 +145,47 @@ class SumSNR(Abstract):
         self.plot_count = 1
 
     def sendPacket(self, packet):
-        ret = self.generators[0].send(float(packet.sensors[self.sensor_names[0]]["value"]-self.averages[0]))
-        for i in range(1, self.channel_count):
-            self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
+        ret = None
+        for i in range(self.channel_count):
+            if ret is None:
+                ret = self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]))
+            else:
+                self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]))
         return ret
 
     def coordinates_generator(self, index):
-        average = [0 for _ in range(self.length//2+1)]
-        yield
-        coordinates = [self.init_coordinates[i] for i in range(self.channel_count)]
-        self.filter_prev_state = self.filterPrevState([0])
+        average = []
+        coordinates = [[] for _ in range(self.channel_count)]
+        filter_prev_state = [self.filterPrevState([0]) for _ in range(self.channel_count)]
+        for _ in range(self.length/self.step):
+            segment = [[] for _ in range(self.channel_count)]
+            for j in range(self.step):
+                for channel in range(self.channel_count):
+                    y = yield
+                    segment[channel].append(y)
+            for i in range(self.channel_count):
+                result, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
+                coordinates[i].extend(result)
+        ffts = []
+        for i in range(self.channel_count):
+            ffts.append(self.signalPipeline(coordinates[i]))
+        for i in range(len(ffts[0])):
+            summ = 0
+            for j in range(self.channel_count):
+                summ += ffts[j][i]
+            average.append(summ/self.channel_count)
+        yield self.normaliseSpectrum(average)
         while True:
             for _ in range(self.length/self.step):
+                segment = [[] for _ in range(self.channel_count)]
                 for j in range(self.step):
                     for channel in range(self.channel_count):
                         y = yield
-                        del coordinates[channel][0]
-                        coordinates[channel].append(y)
+                        segment[channel].append(y)
+                for i in range(self.channel_count):
+                    result, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
+                    coordinates[i].extend(result)
+                    del coordinates[i][:self.step]
                 ffts = []
                 for i in range(self.channel_count):
                     ffts.append(self.signalPipeline(coordinates[i]))
