@@ -1,7 +1,6 @@
 __author__ = 'Anti'
 import PlotWindow
 import FFT
-import copy
 # import matplotlib.pyplot as plt
 
 
@@ -15,28 +14,6 @@ class FFTPlot(FFT.FFT):
             result.append(i*self.window_width/len(coordinates))
             result.append(self.scaleY(coordinates[i], index, self.plot_count, 3.3, 0.2))
         return result
-
-    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates):
-        for i in range(0, 512, 40):  # scale
-            self.canvas.create_line(i, 0, i, 512, fill="red")
-            self.canvas.create_text(i, 10, text=i/8)
-        self.averages = averages
-        self.init_coordinates = copy.deepcopy(init_coordinates)
-        self.min_packet = []
-        self.max_packet = []
-        self.minp = min_packet
-        self.maxp = max_packet
-        import numpy as np
-        for i in range(len(self.init_coordinates)):
-            detrended_signal = self.detrendSignal(self.init_coordinates[i])
-            filtered_signal = self.filterSignal(detrended_signal)
-            windowed_signal = self.windowSignal(filtered_signal, self.window_function)
-            spectrum = np.abs(np.fft.rfft(windowed_signal))
-            spectrum = self.normaliseSpectrum(spectrum)
-            self.canvas.delete(self.line)
-            self.line = self.canvas.create_line(self.scalea(windowed_signal, 0, 0), fill="Red")
-            self.min_packet.append(min(spectrum))
-            self.max_packet.append(max(spectrum))
 
 
 class Multiple(object):
@@ -68,7 +45,6 @@ class MultipleRegular(FFTPlot, Regular, Multiple, PlotWindow.MultiplePlotWindow)
         Multiple.__init__(self)
 
     def coordinates_generator(self, index):
-        yield
         coordinates = []
         self.filter_prev_state = self.filterPrevState([0])
         for i in range(self.length/self.step):
@@ -78,17 +54,16 @@ class MultipleRegular(FFTPlot, Regular, Multiple, PlotWindow.MultiplePlotWindow)
                 segment.append(y)
             coordinates.extend(self.segmentPipeline(segment))
         spectrum = self.signalPipeline(coordinates)
-        yield self.normaliseSpectrum(spectrum)[1:]
+        yield self.normaliseSpectrum(spectrum)
         while True:
             for i in range(self.length/self.step):
                 segment = []
                 for j in range(self.step):
                     y = yield
                     segment.append(y)
-
-                del coordinates[:self.step]
                 coordinates.extend(self.segmentPipeline(segment))
-                spectrum = self.signalPipeline(coordinates)[1:]
+                del coordinates[:self.step]
+                spectrum = self.signalPipeline(coordinates)
                 yield self.normaliseSpectrum(spectrum)
 
 
@@ -100,19 +75,27 @@ class MultipleAverage(FFTPlot, Average, Multiple, PlotWindow.MultiplePlotWindow)
         Multiple.__init__(self)
 
     def coordinates_generator(self, index):
-        average = [0 for _ in range(self.length//2+1)]
-        k = 0
-        yield
-        coordinates = self.init_coordinates[index]
+        k = 1
+        coordinates = []
         self.filter_prev_state = self.filterPrevState([0])
+        for _ in range(self.length/self.step):
+            segment = []
+            for j in range(self.step):
+                y = yield
+                segment.append(y)
+            coordinates.extend(self.segmentPipeline(segment))
+        average = self.signalPipeline(coordinates)
+        yield self.normaliseSpectrum(average)
         while True:
             for _ in range(self.length/self.step):
-                del coordinates[:self.step]
+                segment = []
                 for j in range(self.step):
                     y = yield
-                    coordinates.append(y)
-                k += 1
+                    segment.append(y)
+                coordinates.extend(self.segmentPipeline(segment))
+                del coordinates[:self.step]
                 amplitude_spectrum = self.signalPipeline(coordinates)
+                k += 1
                 for i in range(len(amplitude_spectrum)):
                     average[i] = (average[i] * (k - 1) + amplitude_spectrum[i]) / k
                 yield self.normaliseSpectrum(average)
@@ -126,18 +109,37 @@ class SingleAverage(FFTPlot, Average, Single, PlotWindow.SinglePlotWindow):
         Single.__init__(self)
 
     def coordinates_generator(self, index):
-        average = [0 for _ in range(self.length//2+1)]
-        k = 0
-        yield
-        coordinates = [self.init_coordinates[i] for i in range(self.channel_count)]
-        self.filter_prev_state = self.filterPrevState([0])
+        average = []
+        k = 1
+        coordinates = [[] for _ in range(self.channel_count)]
+        self.filter_prev_state = [self.filterPrevState([0]) for _ in range(self.channel_count)]
+        for _ in range(self.length/self.step):
+            segment = [[] for _ in range(self.channel_count)]
+            for j in range(self.step):
+                for channel in range(self.channel_count):
+                    y = yield
+                    segment[channel].append(y)
+            for i in range(self.channel_count):
+                coordinates[i].extend(self.segmentPipeline(segment[i]))
+        ffts = []
+        for i in range(self.channel_count):
+            ffts.append(self.signalPipeline(coordinates[i]))
+        for i in range(len(ffts[0])):
+            summ = 0
+            for j in range(self.channel_count):
+                summ += ffts[j][i]
+            average.append(summ/self.channel_count)
+        yield self.normaliseSpectrum(average)
         while True:
             for _ in range(self.length/self.step):
+                segment = [[] for _ in range(self.channel_count)]
                 for j in range(self.step):
                     for channel in range(self.channel_count):
                         y = yield
-                        del coordinates[channel][0]
-                        coordinates[channel].append(y)
+                        segment[channel].append(y)
+                for i in range(self.channel_count):
+                    coordinates[i].extend(self.segmentPipeline(segment[i]))
+                    del coordinates[channel][:self.step]
                 k += 1
                 ffts = []
                 for i in range(self.channel_count):
@@ -158,17 +160,36 @@ class SingleRegular(FFTPlot, Regular, Single, PlotWindow.SinglePlotWindow):
         Single.__init__(self)
 
     def coordinates_generator(self, index):
-        average = [0 for _ in range(self.length//2+1)]
-        yield
-        coordinates = [self.init_coordinates[i] for i in range(self.channel_count)]
+        average = []
+        coordinates = [[] for _ in range(self.channel_count)]
         self.filter_prev_state = self.filterPrevState([0])
+        for _ in range(self.length/self.step):
+            segment = [[] for _ in range(self.channel_count)]
+            for j in range(self.step):
+                for channel in range(self.channel_count):
+                    y = yield
+                    segment[channel].append(y)
+            for i in range(self.channel_count):
+                coordinates[i].extend(self.segmentPipeline(segment[i]))
+        ffts = []
+        for i in range(self.channel_count):
+            ffts.append(self.signalPipeline(coordinates[i]))
+        for i in range(len(ffts[0])):
+            summ = 0
+            for j in range(self.channel_count):
+                summ += ffts[j][i]
+            average.append(summ/self.channel_count)
+        yield self.normaliseSpectrum(average)
         while True:
             for _ in range(self.length/self.step):
+                segment = [[] for _ in range(self.channel_count)]
                 for j in range(self.step):
                     for channel in range(self.channel_count):
                         y = yield
-                        del coordinates[channel][0]
-                        coordinates[channel].append(y)
+                        segment[channel].append(y)
+                for i in range(self.channel_count):
+                    coordinates[i].extend(self.segmentPipeline(segment[i]))
+                    del coordinates[channel][:self.step]
                 ffts = []
                 for i in range(self.channel_count):
                     ffts.append(self.signalPipeline(coordinates[i]))

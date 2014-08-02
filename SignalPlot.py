@@ -4,8 +4,6 @@ import operator
 import PlotWindow
 # import sklearn.cross_decomposition
 import numpy as np
-import scipy.signal
-import copy
 
 
 class Signal(object):
@@ -19,24 +17,17 @@ class Signal(object):
             result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count, 10, -10))
         return result
 
+    def getSegment(self, array, i):
+        if array is not None:
+            return array[i*self.step:i*self.step+self.step]
+        else:
+            return None
+
     def addPrevious(self, signal, previous):
         if isinstance(signal, list):
             return [previous] + signal
         else:
             return np.insert(signal, 0, previous)
-
-    def filterSignal(self, signal):
-        if self.filter:
-            result, self.filter_prev_state = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.filter_prev_state)
-            return result
-        else:
-            return signal
-
-    def setInitSignal(self, min_packet, max_packet, averages, init_coordinates):
-        self.min_packet = min_packet
-        self.max_packet = max_packet
-        self.averages = averages
-        self.init_coordinates = copy.deepcopy(init_coordinates)
 
     def signalPipeline(self, signal, i, prev_coordinate):
         detrended_signal = self.detrendSignal(signal)

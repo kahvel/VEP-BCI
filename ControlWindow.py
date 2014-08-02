@@ -113,57 +113,13 @@ class ControlWindow(MyWindows.TkWindow):
         if len(self.chosen_sensor_names) == 0:
             print "No channels chosen"
 
-    def getSensorValues(self, channel_count, packets):
-        result = [[] for _ in range(channel_count)]
-        for i in range(channel_count):
-            for packet in packets:
-                result[i].append(float(packet.sensors[self.chosen_sensor_names[i]]["value"]))
-        return result
-
-    def getMinMaxAvg(self, channel_count, init_signal):
-        min_packet = []
-        max_packet = []
-        averages = []
-        for i in range(channel_count):
-            averages.append(float(sum(init_signal[i]))/len(init_signal[i]))
-            min_packet.append(min(init_signal[i])-averages[i])
-            max_packet.append(max(init_signal[i])-averages[i])
-        print averages, min_packet, max_packet, init_signal
-        return min_packet, max_packet, averages
-
-    def subtractaverages(self, channel_count, signal, averages):
-        for i in range(channel_count):
-            for j in range(len(signal[i])):
-                signal[i][j] = float(signal[i][j] - averages[i])
-
-    def getInitialSignal(self, init_packets):
-        channel_count = len(self.chosen_sensor_names)
-        init_signal = self.getSensorValues(channel_count, init_packets)
-        min_packet, max_packet, averages = self.getMinMaxAvg(channel_count, init_signal)
-        self.subtractaverages(channel_count, init_signal, averages)
-        return min_packet, max_packet, averages, init_signal
-
-    def setupWindows(self, min_packet, max_packet, averages, init_signal):
+    def setupWindows(self):
         for group_name in self.window_group_names:
             for name in self.window_names:
                 if self.window_groups[group_name][name] is not None:
                     self.reset(self.window_groups[group_name], name, self.chosen_sensor_names)
-                    # self.window_groups[group_name][name].setInitSignal(min_packet, max_packet, averages, init_signal)
-
-    def getPackets(self, length, array):
-        for _ in range(length):
-            packet = self.recvPacket(self.to_emotiv)
-            if isinstance(packet, basestring):
-                return packet
-            array.append(packet)
 
     def start(self):
-        init_packets = []
-        # message = self.getPackets(int(self.options_textboxes["Length"].get()), init_packets)
-        # if message is not None:
-        #     return message
         self.setSensorNames()
-        # min_packet, max_packet, averages, init_signal = self.getInitialSignal(init_packets)
-        # self.setupWindows(min_packet, max_packet, averages, init_signal)
-        self.setupWindows([], [], [], [])
+        self.setupWindows()
         self.startPacketSending()

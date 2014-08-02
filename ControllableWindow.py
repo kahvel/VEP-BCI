@@ -28,11 +28,12 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.filter_prev_state = None
         self.breakpoints = 0
 
-    def getSegment(self, array, i):
-        if array is not None:
-            return array[i*self.step:i*self.step+self.step]
+    def filterSignal(self, signal):
+        if self.filter:
+            result, self.filter_prev_state = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.filter_prev_state)
+            return result
         else:
-            return None
+            return signal
 
     def detrendSignal(self, signal):
         if self.detrend:
