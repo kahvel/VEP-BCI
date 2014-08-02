@@ -34,6 +34,12 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         else:
             return None
 
+    def detrendSignal(self, signal):
+        if self.detrend:
+            return scipy.signal.detrend(signal, bp=self.breakpoints)
+        else:
+            return scipy.signal.detrend(signal, type="constant")
+
     def windowSignal(self, signal, window):
         if self.window:
             return signal*window
@@ -104,7 +110,7 @@ class ControllableWindow(MyWindows.ToplevelWindow):
                 self.breakpoints = []
                 breakpoints = int(breakpoints)
                 for i in range(breakpoints):
-                    self.breakpoints.append(self.length/breakpoints*(i+1))
+                    self.breakpoints.append(self.step/breakpoints*(i+1))
         else:
             self.detrend = False
 

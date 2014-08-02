@@ -13,7 +13,7 @@ class FFTPlot(FFT.FFT):
         result = []
         for i in range(len(coordinates)):
             result.append(i*self.window_width/len(coordinates))
-            result.append(self.scaleY(coordinates[i], index, self.plot_count))
+            result.append(self.scaleY(coordinates[i], index, self.plot_count, 3.3, 0.2))
         return result
 
     def setInitSignal(self, min_packet, max_packet, averages, init_coordinates):
@@ -26,8 +26,15 @@ class FFTPlot(FFT.FFT):
         self.max_packet = []
         self.minp = min_packet
         self.maxp = max_packet
-        for i in range(len(init_coordinates)):
-            spectrum = self.normaliseSpectrum(self.signalPipeline(init_coordinates[i]))[1:]
+        import numpy as np
+        for i in range(len(self.init_coordinates)):
+            detrended_signal = self.detrendSignal(self.init_coordinates[i])
+            filtered_signal = self.filterSignal(detrended_signal)
+            windowed_signal = self.windowSignal(filtered_signal, self.window_function)
+            spectrum = np.abs(np.fft.rfft(windowed_signal))
+            spectrum = self.normaliseSpectrum(spectrum)
+            self.canvas.delete(self.line)
+            self.line = self.canvas.create_line(self.scalea(windowed_signal, 0, 0), fill="Red")
             self.min_packet.append(min(spectrum))
             self.max_packet.append(max(spectrum))
 
@@ -35,13 +42,13 @@ class FFTPlot(FFT.FFT):
 class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
+            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
 
 
 class Single(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
+            self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]))
 
 
 class Regular(object):
@@ -62,15 +69,26 @@ class MultipleRegular(FFTPlot, Regular, Multiple, PlotWindow.MultiplePlotWindow)
 
     def coordinates_generator(self, index):
         yield
-        coordinates = self.init_coordinates[index]
+        coordinates = []
         self.filter_prev_state = self.filterPrevState([0])
+        for i in range(self.length/self.step):
+            segment = []
+            for j in range(self.step):
+                y = yield
+                segment.append(y)
+            coordinates.extend(self.segmentPipeline(segment))
+        spectrum = self.signalPipeline(coordinates)
+        yield self.normaliseSpectrum(spectrum)[1:]
         while True:
             for i in range(self.length/self.step):
-                del coordinates[:self.step]
+                segment = []
                 for j in range(self.step):
                     y = yield
-                    coordinates.append(y)
-                spectrum = self.signalPipeline(coordinates)
+                    segment.append(y)
+
+                del coordinates[:self.step]
+                coordinates.extend(self.segmentPipeline(segment))
+                spectrum = self.signalPipeline(coordinates)[1:]
                 yield self.normaliseSpectrum(spectrum)
 
 

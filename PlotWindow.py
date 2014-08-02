@@ -11,8 +11,8 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         self.min_packet = []
         self.max_packet = []
 
-    def scaleY(self, y,  index, plot_count, new_max=-100, new_min=100):
-        return ((((y - self.min_packet[index]) * (new_max - new_min)) / (self.max_packet[index] - self.min_packet[index])) + new_min
+    def scaleY(self, y,  index, plot_count, old_max, old_min, new_max=-100, new_min=100):
+        return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
                 + index*self.window_height + self.window_height/2) / plot_count
 
     def generator(self, index, start_deleting):

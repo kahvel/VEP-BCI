@@ -16,15 +16,8 @@ class Signal(object):
         result = []
         for i in range(packet_count-len(coordinates), packet_count):
             result.append(i*self.window_width/self.length)
-            result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count))
+            result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count, 10, -10))
         return result
-
-
-    def detrendSignal(self, signal):
-        if self.detrend:
-            return scipy.signal.detrend(signal)
-        else:
-            return signal
 
     def addPrevious(self, signal, previous):
         if isinstance(signal, list):
@@ -57,7 +50,7 @@ class Signal(object):
 class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
-            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]-self.averages[i]))
+            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
 
 
 class Single(object):
@@ -65,7 +58,7 @@ class Single(object):
         summ = 0
         for i in range(self.channel_count):
             summ += packet.sensors[self.sensor_names[i]]["value"]
-        self.generators[0].send(float(summ)/self.channel_count-float(sum(self.averages))/len(self.averages))
+        self.generators[0].send(float(summ)/self.channel_count)
 
 
 class Average(object):
@@ -74,7 +67,7 @@ class Average(object):
         k = 0
         prev_coordinate = 0
         yield
-        self.filter_prev_state = self.filterPrevState(self.init_coordinates[index])
+        self.filter_prev_state = self.filterPrevState([0])
         while True:
             k += 1
             for i in range(self.length/self.step):
@@ -92,7 +85,7 @@ class Regular(object):
         average = [0 for _ in range(self.step)]
         prev_coordinate = 0
         yield
-        self.filter_prev_state = self.filterPrevState(self.init_coordinates[index])
+        self.filter_prev_state = self.filterPrevState([0])
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):

@@ -148,7 +148,7 @@ class ControlWindow(MyWindows.TkWindow):
             for name in self.window_names:
                 if self.window_groups[group_name][name] is not None:
                     self.reset(self.window_groups[group_name], name, self.chosen_sensor_names)
-                    self.window_groups[group_name][name].setInitSignal(min_packet, max_packet, averages, init_signal)
+                    # self.window_groups[group_name][name].setInitSignal(min_packet, max_packet, averages, init_signal)
 
     def getPackets(self, length, array):
         for _ in range(length):
@@ -159,10 +159,11 @@ class ControlWindow(MyWindows.TkWindow):
 
     def start(self):
         init_packets = []
-        message = self.getPackets(int(self.options_textboxes["Length"].get()), init_packets)
-        if message is not None:
-            return message
+        # message = self.getPackets(int(self.options_textboxes["Length"].get()), init_packets)
+        # if message is not None:
+        #     return message
         self.setSensorNames()
-        min_packet, max_packet, averages, init_signal = self.getInitialSignal(init_packets)
-        self.setupWindows(min_packet, max_packet, averages, init_signal)
+        # min_packet, max_packet, averages, init_signal = self.getInitialSignal(init_packets)
+        # self.setupWindows(min_packet, max_packet, averages, init_signal)
+        self.setupWindows([], [], [], [])
         self.startPacketSending()
