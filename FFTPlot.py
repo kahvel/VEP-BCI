@@ -55,7 +55,7 @@ class Average(object):
 class MultipleRegular(FFTPlot, Regular, Multiple, PlotWindow.MultiplePlotWindow):
     def __init__(self):
         PlotWindow.MultiplePlotWindow.__init__(self, "FFTs")
-        # self.line = self.canvas.create_line(0,0,0,0)
+        self.line = self.canvas.create_line(0,0,0,0)
         FFTPlot.__init__(self)
         Regular.__init__(self)
         Multiple.__init__(self)

@@ -19,6 +19,13 @@ class Signal(object):
             result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count))
         return result
 
+
+    def detrendSignal(self, signal):
+        if self.detrend:
+            return scipy.signal.detrend(signal)
+        else:
+            return signal
+
     def addPrevious(self, signal, previous):
         if isinstance(signal, list):
             return [previous] + signal
@@ -39,7 +46,8 @@ class Signal(object):
         self.init_coordinates = copy.deepcopy(init_coordinates)
 
     def signalPipeline(self, signal, i, prev_coordinate):
-        filtered_signal = self.filterSignal(signal)
+        detrended_signal = self.detrendSignal(signal)
+        filtered_signal = self.filterSignal(detrended_signal)
         window_segment = self.getSegment(self.window_function, i)
         windowed_signal = self.windowSignal(filtered_signal, window_segment)
         extended_signal = self.addPrevious(windowed_signal, prev_coordinate)

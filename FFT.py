@@ -7,6 +7,12 @@ class FFT(object):
     def __init__(self):
         self.start_deleting = lambda x: True
 
+    def detrendSignal(self, signal):
+        if self.detrend:
+            return scipy.signal.detrend(signal, bp=self.breakpoints)
+        else:
+            return signal
+
     def filterSignal(self, signal):
         if self.filter:
             if self.filter_prev_state is None:
@@ -38,10 +44,10 @@ class FFT(object):
         return result
 
     def signalPipeline(self, coordinates):
-        detrended_signal = scipy.signal.detrend(coordinates)
+        detrended_signal = self.detrendSignal(coordinates)
         filtered_signal = self.filterSignal(detrended_signal)
         windowed_signal = self.windowSignal(filtered_signal, self.window_function)
         amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
-        # self.canvas.delete(self.line)
-        # self.line = self.canvas.create_line(self.scalea(windowed_signal, 0, 0), fill="Red")
+        self.canvas.delete(self.line)
+        self.line = self.canvas.create_line(self.scalea(windowed_signal, 0, 0), fill="Red")
         return amplitude_spectrum

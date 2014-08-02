@@ -21,10 +21,12 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.window = False
         self.normalise = False
         self.filter = False
+        self.detrend = False
         self.init_coordinates = []
         self.averages = []
         self.filter_coefficients = []
         self.filter_prev_state = None
+        self.breakpoints = 0
 
     def getSegment(self, array, i):
         if array is not None:
@@ -63,7 +65,6 @@ class ControllableWindow(MyWindows.ToplevelWindow):
                 self.window_function = np.bartlett(self.length)
 
     def setFilter(self, options_textboxes, variables):
-        self.filter = False
         self.filter_coefficients = []
         if variables["Filter"].get() == 1:
             self.filter = True
@@ -84,20 +85,38 @@ class ControllableWindow(MyWindows.ToplevelWindow):
             else:
                 print "Insert from and/or to value"
                 self.filter = False
+        else:
+            self.filter = False
 
     def setNormalisation(self, variables):
-        self.normalise = False
         if variables["Norm"].get() == 1:
             self.normalise = True
+        else:
+            self.normalise = False
+
+    def setDetrend(self, options_textboxes, variables):
+        if variables["Detrend"].get() == 1:
+            self.detrend = True
+            breakpoints = options_textboxes["Break"].get()
+            if breakpoints == "" or breakpoints == "0":
+                self.breakpoints = 0
+            else:
+                self.breakpoints = []
+                breakpoints = int(breakpoints)
+                for i in range(breakpoints):
+                    self.breakpoints.append(self.length/breakpoints*(i+1))
+        else:
+            self.detrend = False
 
     def setOptions(self, options_textboxes, variables):
+        self.length = int(options_textboxes["Length"].get())
+        self.step = int(options_textboxes["Step"].get())
         self.setWindow(options_textboxes, variables)
         self.setFilter(options_textboxes, variables)
         self.setNormalisation(variables)
+        self.setDetrend(options_textboxes, variables)
 
     def setup(self, options_textboxes, variables, sensor_names, freq_points=None):
-        self.length = int(options_textboxes["Length"].get())
-        self.step = int(options_textboxes["Step"].get())
         self.setOptions(options_textboxes, variables)
         self.sensor_names = sensor_names
         self.channel_count = len(sensor_names)
