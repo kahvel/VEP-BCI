@@ -24,10 +24,10 @@ class FFT(object):
             result.append(self.scaleYa(coordinates[i], index, self.plot_count))
         return result
 
-    def segmentPipeline(self, coordinates):
+    def segmentPipeline(self, coordinates, filter_prev_state):
         detrended_segment = self.detrendSignal(coordinates)
-        filtered_segment = self.filterSignal(detrended_segment)
-        return filtered_segment
+        filtered_segment, filter_prev_state = self.filterSignal(detrended_segment, filter_prev_state)
+        return filtered_segment, filter_prev_state
 
     def signalPipeline(self, coordinates):
         windowed_signal = self.windowSignal(coordinates, self.window_function)

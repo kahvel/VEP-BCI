@@ -22,18 +22,15 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.normalise = False
         self.filter = False
         self.detrend = False
-        self.init_coordinates = []
         self.averages = []
         self.filter_coefficients = []
-        self.filter_prev_state = None
         self.breakpoints = 0
 
-    def filterSignal(self, signal):
+    def filterSignal(self, signal, filter_prev_state):
         if self.filter:
-            result, self.filter_prev_state = scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=self.filter_prev_state)
-            return result
+            return scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=filter_prev_state)
         else:
-            return signal
+            return signal, None
 
     def detrendSignal(self, signal):
         if self.detrend:

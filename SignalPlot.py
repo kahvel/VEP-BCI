@@ -29,13 +29,13 @@ class Signal(object):
         else:
             return np.insert(signal, 0, previous)
 
-    def signalPipeline(self, signal, i, prev_coordinate):
+    def signalPipeline(self, signal, i, prev_coordinate, filter_prev_state):
         detrended_signal = self.detrendSignal(signal)
-        filtered_signal = self.filterSignal(detrended_signal)
+        filtered_signal, filter_prev_state = self.filterSignal(detrended_signal, filter_prev_state)
         window_segment = self.getSegment(self.window_function, i)
         windowed_signal = self.windowSignal(filtered_signal, window_segment)
         extended_signal = self.addPrevious(windowed_signal, prev_coordinate)
-        return extended_signal
+        return extended_signal, filter_prev_state
 
 
 class Multiple(object):
@@ -58,7 +58,7 @@ class Average(object):
         k = 0
         prev_coordinate = 0
         yield
-        self.filter_prev_state = self.filterPrevState([0])
+        filter_prev_state = self.filterPrevState([0])
         while True:
             k += 1
             for i in range(self.length/self.step):
@@ -66,7 +66,7 @@ class Average(object):
                     y = yield
                     average[i*self.step+j] = (average[i*self.step+j] * (k - 1) + y) / k
                 signal_segment = self.getSegment(average, i)
-                result = self.signalPipeline(signal_segment, i, prev_coordinate)
+                result, filter_prev_state = self.signalPipeline(signal_segment, i, prev_coordinate, filter_prev_state)
                 yield Queue.deque(result)
                 prev_coordinate = result[-1]
 
@@ -76,13 +76,13 @@ class Regular(object):
         average = [0 for _ in range(self.step)]
         prev_coordinate = 0
         yield
-        self.filter_prev_state = self.filterPrevState([0])
+        filter_prev_state = self.filterPrevState([0])
         while True:
             for i in range(self.length/self.step):
                 for j in range(self.step):
                     y = yield
                     average[j] = y
-                result = self.signalPipeline(average, i, prev_coordinate)
+                result, filter_prev_state = self.signalPipeline(average, i, prev_coordinate, filter_prev_state)
                 yield Queue.deque(result)
                 prev_coordinate = result[-1]
 
