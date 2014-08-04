@@ -13,8 +13,7 @@ class MainWindow(MyWindows.TkWindow):
     def __init__(self):
         MyWindows.TkWindow.__init__(self, "Main Menu", 310, 500)
         self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
-        self.buttons = []
-        self.radiobuttons = []
+        self.start_button = None
         self.target_textboxes = {}
         self.background_textboxes = {}
         self.checkbox_values = []
@@ -35,12 +34,8 @@ class MainWindow(MyWindows.TkWindow):
         self.targets[0]["Disable"] = self.targets[1]["Disable"] = 0
         self.target_color_buttons = {}
         self.background_color_buttons = {}
-        self.plot_window = None
-        self.fft_window = None
-        self.average_fft_window = None
-        self.average_plot_window = None
-        self.average_window = None
-        self.average_fft_window2 = None
+        self.current_radio_button = IntVar()
+        self.previous_radio_button = 0
         self.initElements()
         self.main_to_plot = []
         self.main_to_psychopy = []
@@ -51,70 +46,83 @@ class MainWindow(MyWindows.TkWindow):
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
-    def initElements(self):
+    def initTitleFrame(self, title):
         windowtitleframe = Frame(self)
-        Label(windowtitleframe, text="Window").grid(column=0, row=0, padx=5, pady=5)
-
-        self.windowframe = Frame(self)
-        MyWindows.newTextBox(self.windowframe, "Width:", 0, 0, self.background_textboxes)
-        MyWindows.newTextBox(self.windowframe, "Height:", 2, 0, self.background_textboxes)
-        MyWindows.newColorButton(4, 0, self.backgroundColor, self.windowframe,
+        Label(windowtitleframe, text=title).grid(column=0, row=0, padx=5, pady=5)
+        return windowtitleframe
+        
+    def initWindowFrame(self):
+        window_frame = Frame(self)
+        MyWindows.newTextBox(window_frame, "Width:", 0, 0, self.background_textboxes)
+        MyWindows.newTextBox(window_frame, "Height:", 2, 0, self.background_textboxes)
+        MyWindows.newColorButton(4, 0, self.backgroundColor, window_frame,
                              "Color", self.background_textboxes, self.background_color_buttons)
-        MyWindows.newTextBox(self.windowframe, "Freq:", 0, 1, self.background_textboxes)
+        MyWindows.newTextBox(window_frame, "Freq:", 0, 1, self.background_textboxes)
         self.background_textboxes["Width"].insert(0, 800)
         self.background_textboxes["Height"].insert(0, 600)
         self.background_textboxes["Color"].insert(0, "#000000")
         self.background_textboxes["Freq"].insert(0, 60)
+        MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
+        return window_frame
 
-        targettitleframe = Frame(self)
-        self.radiobuttonframe = Frame(self)
-        self.current_radio_button = IntVar()
-        self.previous_radio_button = 0
-        Label(targettitleframe, text="Targets").grid(column=0, row=0, padx=5, pady=5)
-
-        self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text="All", variable=self.current_radio_button,
+    def initRadiobuttonFrame(self):
+        radiobuttons = []
+        radiobutton_frame = Frame(self)
+        radiobuttons.append(Radiobutton(radiobutton_frame, text="All", variable=self.current_radio_button,
                                              value=0, command=lambda:self.radioButtonChange()))
-        self.radiobuttons[0].grid(column=0, row=0)
-        self.radiobuttons[0].select()
+        radiobuttons[0].grid(column=0, row=0)
+        radiobuttons[0].select()
         for i in range(1, 7):
-            self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text=i, variable=self.current_radio_button,
+            radiobuttons.append(Radiobutton(radiobutton_frame, text=i, variable=self.current_radio_button,
                                                  value=i, command=lambda:self.radioButtonChange()))
-            self.radiobuttons[i].grid(column=i, row=0)
+            radiobuttons[i].grid(column=i, row=0)
+        return radiobutton_frame
 
-        targetframe = Frame(self)
-        self.newTarget(targetframe)
+    def initTargetFrame(self):
+        frame = Frame(self)
+        MyWindows.newFreqTextBox(frame, "Freq:", 0, 0, self.target_textboxes)
+        disable_checkbox = Checkbutton(frame, text="Disable", variable=self.disable_checkbox_var, command=lambda: self.disableButtonChange())
+        disable_checkbox.grid(row=0, column=2, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(frame, "Width:", 0, 1, self.target_textboxes)
+        MyWindows.newTextBox(frame, "Height:", 2, 1, self.target_textboxes)
+        MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color1", self.target_textboxes, self.target_color_buttons)
+        MyWindows.newColorButton(4, 2, self.targetColor, frame, "Color2", self.target_textboxes, self.target_color_buttons)
+        MyWindows.newTextBox(frame, "x:", 0, 2, self.target_textboxes)
+        MyWindows.newTextBox(frame, "y:", 2, 2, self.target_textboxes)
         self.loadValues(0)
         for key in self.target_color_buttons:
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
-        MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
+        return frame
 
-        buttonframe2 = Frame(self)
-        self.buttons.append(Button(buttonframe2, text="Targets", command=lambda: self.targetsWindow()))
-        self.buttons.append(Button(buttonframe2, text="Plots", command=lambda: self.plotWindow()))
-        self.buttons.append(Button(buttonframe2, text="Extraction", command=lambda: self.extraction()))
-        for i in range(3):
-            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
+    def initButtonFrame(self, button_names, commands, start_column=0):
+        frame=Frame()
+        for i in range(len(button_names)):
+            Button(frame, text=button_names[i], command=lambda i=i: commands[i]()).grid(column=start_column+i, row=0, padx=5, pady=5)
+        return frame
 
-        buttonframe1 = Frame(self)
-        self.buttons.append(Button(buttonframe1, text="Start", command=lambda: self.start()))
-        self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
-        self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
-        self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
-        for i in range(3, len(self.buttons)):
-            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
-
-        # buttonframe3 = Frame(self)
-        # self.buttons.append(Button(buttonframe3, text="Neutral", command=lambda: self.recordNeutral()))
-        # self.buttons.append(Button(buttonframe3, text="Target 1", command=lambda: self.recordTarget()))
-
-        windowtitleframe.grid(column=0, row=0)
-        self.windowframe.grid(column=0, row=1)
-        targettitleframe.grid(column=0, row=2)
-        self.radiobuttonframe.grid(column=0, row=4)
-        targetframe.grid(column=0, row=5)
-        buttonframe2.grid(column=0, row=6)
-        buttonframe1.grid(column=0, row=7)
-        # buttonframe3.pack()
+    def initElements(self):
+        window_title_frame = self.initTitleFrame("Window")
+        window_frame = self.initWindowFrame()
+        target_title_frame = self.initTitleFrame("Targets")
+        radiobutton_frame = self.initRadiobuttonFrame()
+        target_frame = self.initTargetFrame()
+        button_frame = self.initButtonFrame(["Targets", "Plots", "Extraction"],
+                                            [self.targetsWindow, self.plotWindow, self.extraction])
+        button_frame2 = self.initButtonFrame(["Save", "Load", "Exit"],
+                                             [self.saveFile, self.loadFile, self.exit], 1)
+        self.start_button = Button(button_frame2, text="Start", command=lambda: self.start())
+        self.start_button.grid(row=0, column=0, padx=5, pady=5)
+        record_frame = self.initButtonFrame(["Neutral", "Target"],
+                                            [self.recordNeutral, self.recordTarget], 2)
+        Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
+        window_title_frame.pack()
+        window_frame.pack()
+        target_title_frame.pack()
+        radiobutton_frame.pack()
+        target_frame.pack()
+        record_frame.pack()
+        button_frame.pack()
+        button_frame2.pack()
 
     def exit(self):
         print "Exiting main window"
@@ -127,16 +135,27 @@ class MainWindow(MyWindows.TkWindow):
     def extraction(self):
         self.main_to_detection.append(self.newProcess(Main.runPSIdentification, "New pipe", self.sensor_names, self.detection_to_psychopy))
 
-    def start(self):
-        self.saveValues(self.current_radio_button.get())
-        self.buttons[0].configure(text="Stop", command=lambda: self.stop())
-        self.sendMessage(self.main_to_plot, "Start", "plot")
-        self.saveValues(self.current_radio_button.get())
-        self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
-        self.sendMessage(self.main_to_psychopy, self.targets, "psychopy")
+    def getEnabledTargets(self):
+        targets = []
+        for target in self.targets[1:]:
+            if target["Disable"] == 0:
+                targets.append(target)
+        return targets
+
+    def getChosenFreq(self):
         freq = []
         for i in range(1, len(self.targets)):
             freq.append(float(self.targets[i]["Freq"]))
+        return freq
+
+    def start(self):
+        self.saveValues(self.current_radio_button.get())
+        self.start_button.configure(text="Stop", command=lambda: self.stop())
+        self.sendMessage(self.main_to_plot, "Start", "plot")
+        self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
+        targets = self.getEnabledTargets()
+        self.sendMessage(self.main_to_psychopy, targets, "psychopy")
+        freq = self.getChosenFreq()
         self.sendMessage(self.main_to_detection, "Start", "Ps")
         self.sendMessage(self.main_to_detection, freq, "Ps")
         self.main_to_emo.send("Start")
@@ -148,10 +167,10 @@ class MainWindow(MyWindows.TkWindow):
                 connections[i].close()
                 del connections[i]
             else:
-                 connections[i].send(message)
+                connections[i].send(message)
 
     def stop(self):
-        self.buttons[0].configure(text="Start", command=lambda: self.start())
+        self.start_button.configure(text="Start", command=lambda: self.start())
         self.sendMessage(self.main_to_plot, "Stop", "plot")
         self.sendMessage(self.main_to_psychopy, "Stop", "psychopy")
         self.sendMessage(self.main_to_detection, "Stop", "PS")
@@ -234,16 +253,14 @@ class MainWindow(MyWindows.TkWindow):
         #             self.targets[i]["Disable"] = value
         #     # self.disable_prev_value = value
 
-    def newTarget(self, frame):
-        MyWindows.newFreqTextBox(frame, "Freq:", 0, 0, self.target_textboxes)
-        checkbox = Checkbutton(frame, text="Disable", variable=self.disable_checkbox_var, command=lambda: self.disableButtonChange())
-        checkbox.grid(row=0, column=2, padx=5, pady=5, columnspan=2)
-        MyWindows.newTextBox(frame, "Width:", 0, 1, self.target_textboxes)
-        MyWindows.newTextBox(frame, "Height:", 2, 1, self.target_textboxes)
-        MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color1", self.target_textboxes, self.target_color_buttons)
-        MyWindows.newColorButton(4, 2, self.targetColor, frame, "Color2", self.target_textboxes, self.target_color_buttons)
-        MyWindows.newTextBox(frame, "x:", 0, 2, self.target_textboxes)
-        MyWindows.newTextBox(frame, "y:", 2, 2, self.target_textboxes)
+    def recordTarget(self):
+        self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
+        targets = self.getEnabledTargets()
+        self.sendMessage(self.main_to_psychopy, targets, "psychopy")
+        self.main_to_emo.send("Start")
+
+    def recordNeutral(self):
+        pass
 
     def saveFile(self):
         self.saveValues(self.current_radio_button.get())

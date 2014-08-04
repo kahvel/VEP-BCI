@@ -92,7 +92,7 @@ class TargetsWindow:
 
     def setTargets(self, targets):
         self.generators = []
-        for target in targets[1:]:
+        for target in targets:
             rect = Target(target, self.window, self.monitor_frequency)
             self.generators.append(rect.generator())
             self.generators[-1].send(None)
