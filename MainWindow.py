@@ -26,9 +26,13 @@ class MainWindow(MyWindows.TkWindow):
                                "y": 0,
                                "Freq": 10.0,
                                "Color1": "#ffffff",
-                               "Color2": "#777777"}
-        self.targets.append(self.initial_target.copy())
-        self.targets.append(self.initial_target.copy())
+                               "Color2": "#777777",
+                               "Disable": 1}
+        self.disable_checkbox_var = IntVar()
+        # self.n_targets = 6
+        for _ in range(7):
+            self.targets.append(self.initial_target.copy())
+        self.targets[0]["Disable"] = self.targets[1]["Disable"] = 0
         self.target_color_buttons = {}
         self.background_color_buttons = {}
         self.plot_window = None
@@ -48,7 +52,6 @@ class MainWindow(MyWindows.TkWindow):
         self.mainloop()
 
     def initElements(self):
-
         windowtitleframe = Frame(self)
         Label(windowtitleframe, text="Window").grid(column=0, row=0, padx=5, pady=5)
 
@@ -69,16 +72,14 @@ class MainWindow(MyWindows.TkWindow):
         self.previous_radio_button = 0
         Label(targettitleframe, text="Targets").grid(column=0, row=0, padx=5, pady=5)
 
-        targetbuttonframe = Frame(self)
-        Button(targetbuttonframe, text="Add", command=lambda:self.addTarget()).grid(column=1, row=0, padx=5, pady=5)
-        Button(targetbuttonframe, text="Remove", command=lambda:self.removeTarget()).grid(column=2, row=0, padx=5, pady=5)
         self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text="All", variable=self.current_radio_button,
                                              value=0, command=lambda:self.radioButtonChange()))
         self.radiobuttons[0].grid(column=0, row=0)
-        self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text="1", variable=self.current_radio_button,
-                                             value=1, command=lambda:self.radioButtonChange()))
-        self.radiobuttons[1].grid(column=1, row=0)
         self.radiobuttons[0].select()
+        for i in range(1, 7):
+            self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text=i, variable=self.current_radio_button,
+                                                 value=i, command=lambda:self.radioButtonChange()))
+            self.radiobuttons[i].grid(column=i, row=0)
 
         targetframe = Frame(self)
         self.newTarget(targetframe)
@@ -87,29 +88,33 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
         MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
 
+        buttonframe2 = Frame(self)
+        self.buttons.append(Button(buttonframe2, text="Targets", command=lambda: self.targetsWindow()))
+        self.buttons.append(Button(buttonframe2, text="Plots", command=lambda: self.plotWindow()))
+        self.buttons.append(Button(buttonframe2, text="Extraction", command=lambda: self.extraction()))
+        for i in range(3):
+            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
+
         buttonframe1 = Frame(self)
         self.buttons.append(Button(buttonframe1, text="Start", command=lambda: self.start()))
         self.buttons.append(Button(buttonframe1, text="Load", command=lambda: self.loadFile()))
         self.buttons.append(Button(buttonframe1, text="Save", command=lambda: self.saveFile()))
         self.buttons.append(Button(buttonframe1, text="Exit", command=lambda: self.exit()))
-        for i in range(4):
+        for i in range(3, len(self.buttons)):
             self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
 
-        buttonframe2 = Frame(self)
-        self.buttons.append(Button(buttonframe2, text="Targets", command=lambda: self.targetsWindow()))
-        self.buttons.append(Button(buttonframe2, text="Plots", command=lambda: self.plotWindow()))
-        self.buttons.append(Button(buttonframe2, text="Extraction", command=lambda: self.extraction()))
-        for i in range(4, len(self.buttons)):
-            self.buttons[i].grid(column=i, row=0, padx=5, pady=5)
+        # buttonframe3 = Frame(self)
+        # self.buttons.append(Button(buttonframe3, text="Neutral", command=lambda: self.recordNeutral()))
+        # self.buttons.append(Button(buttonframe3, text="Target 1", command=lambda: self.recordTarget()))
 
         windowtitleframe.grid(column=0, row=0)
         self.windowframe.grid(column=0, row=1)
         targettitleframe.grid(column=0, row=2)
-        targetbuttonframe.grid(column=0, row=3)
         self.radiobuttonframe.grid(column=0, row=4)
         targetframe.grid(column=0, row=5)
         buttonframe2.grid(column=0, row=6)
         buttonframe1.grid(column=0, row=7)
+        # buttonframe3.pack()
 
     def exit(self):
         print "Exiting main window"
@@ -176,24 +181,23 @@ class MainWindow(MyWindows.TkWindow):
         if index == 0:
             for key in self.target_textboxes:
                 valid = False
-                value1 = self.targets[0][key]
-                for i in range(1, len(self.targets)):
-                    value2 = self.targets[i][key]
-                    if value1 != value2:
+                first_value = self.targets[1][key]
+                for i in range(2, len(self.targets)):
+                    if first_value != self.targets[i][key]:
                         valid = False
                         break
                     else:
                         valid = True
                 self.target_textboxes[key].delete(0, END)
                 if valid:
-                    self.target_textboxes[key].insert(0, str(value1))
-
+                    self.target_textboxes[key].insert(0, str(self.targets[0][key]))
         else:
             for key in self.target_textboxes:
                 self.target_textboxes[key].delete(0, END)
                 self.target_textboxes[key].insert(0, str(self.targets[index][key]))
         for key in self.target_color_buttons:
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
+        self.disable_checkbox_var.set(self.targets[index]["Disable"])
 
     def saveValues(self, index):
         MyWindows.validateFreq(self.target_textboxes["Freq"])
@@ -204,41 +208,42 @@ class MainWindow(MyWindows.TkWindow):
                         target[key] = self.target_textboxes[key].get()
         for key in self.target_textboxes:
             self.targets[index][key] = self.target_textboxes[key].get()
+        self.targets[index]["Disable"] = self.disable_checkbox_var.get()
 
     def radioButtonChange(self):
+        for key in self.target_textboxes:
+            self.target_textboxes[key].config(state=NORMAL)
         self.saveValues(self.previous_radio_button)
         self.loadValues(self.current_radio_button.get())
         self.previous_radio_button = self.current_radio_button.get()
+        self.disableButtonChange()
 
-    def removeTarget(self):
-        if len(self.radiobuttons) > 2:
-            self.radiobuttons[len(self.radiobuttons)-1].grid_forget()
-            del self.radiobuttons[-1]
-            del self.targets[-1]
+    def disableButtonChange(self):
+        value = self.disable_checkbox_var.get()
+        if value == 1:
+            for key in self.target_textboxes:
+                self.target_textboxes[key].config(state="readonly")
+        else:
+            for key in self.target_textboxes:
+                self.target_textboxes[key].config(state=NORMAL)
 
-    def addTarget(self):
-        if len(self.radiobuttons) < 7:
-            self.radiobuttons.append(Radiobutton(self.radiobuttonframe, text=str(len(self.radiobuttons)),
-                                                 variable=self.current_radio_button, value=len(self.radiobuttons),
-                                                 command=lambda:self.radioButtonChange()))
-            self.radiobuttons[len(self.radiobuttons)-1].grid(column=len(self.radiobuttons)-1, row=0)
-            self.targets.append(self.initial_target.copy())
-            self.defaultValues()
-
-    def defaultValues(self):
-        for key in self.targets[0]:
-            value1 = self.targets[0][key]
-            if value1 != "":
-                self.targets[-1][key] = value1
+        # if self.current_radio_button.get() == 0:
+        #     value = self.targets[0]
+        #     if self.all_disable:
+        #         for i in range(1, len(self.targets)):
+        #             self.targets[i]["Disable"] = value
+        #     # self.disable_prev_value = value
 
     def newTarget(self, frame):
-        MyWindows.newTextBox(frame, "Width:", 0, 0, self.target_textboxes)
-        MyWindows.newTextBox(frame, "Height:", 2, 0, self.target_textboxes)
-        MyWindows.newColorButton(4, 0, self.targetColor, frame, "Color1", self.target_textboxes, self.target_color_buttons)
-        MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color2", self.target_textboxes, self.target_color_buttons)
-        MyWindows.newTextBox(frame, "x:", 0, 1, self.target_textboxes)
-        MyWindows.newTextBox(frame, "y:", 2, 1, self.target_textboxes)
-        MyWindows.newFreqTextBox(frame, "Freq:", 0, 2, self.target_textboxes)
+        MyWindows.newFreqTextBox(frame, "Freq:", 0, 0, self.target_textboxes)
+        checkbox = Checkbutton(frame, text="Disable", variable=self.disable_checkbox_var, command=lambda: self.disableButtonChange())
+        checkbox.grid(row=0, column=2, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(frame, "Width:", 0, 1, self.target_textboxes)
+        MyWindows.newTextBox(frame, "Height:", 2, 1, self.target_textboxes)
+        MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color1", self.target_textboxes, self.target_color_buttons)
+        MyWindows.newColorButton(4, 2, self.targetColor, frame, "Color2", self.target_textboxes, self.target_color_buttons)
+        MyWindows.newTextBox(frame, "x:", 0, 2, self.target_textboxes)
+        MyWindows.newTextBox(frame, "y:", 2, 2, self.target_textboxes)
 
     def saveFile(self):
         self.saveValues(self.current_radio_button.get())
@@ -247,16 +252,16 @@ class MainWindow(MyWindows.TkWindow):
             for key in sorted(self.background_textboxes):
                 file.write(self.background_textboxes[key].get()+" ")
             file.write("\n")
-            for target in self.targets:
+            for target in self.targets[1:]:
                 for key in sorted(target):
-                    file.write(str(target[key]+" "))
+                    file.write(str(target[key])+" ")
                 file.write("\n")
             file.close()
 
     def loadFile(self):
         file = tkFileDialog.askopenfile()
         if file is not None:
-            j = 0
+            j = 1
             line = file.readline()
             values = line.split()
             k = 0
@@ -266,15 +271,13 @@ class MainWindow(MyWindows.TkWindow):
                 k += 1
             for line in file:
                 values = line.split()
-                if j == len(self.targets):
-                    self.addTarget()
                 target = self.targets[j]
                 i = 0
                 for key in sorted(target):
                     target[key] = values[i]
                     i += 1
                 j += 1
-            self.loadValues(self.current_radio_button.get())
+        self.loadValues(self.current_radio_button.get())
 
     def targetColor(self, title):
         ColorWindow.TargetColorWindow(self, self.target_textboxes[title], title, self.targets[self.current_radio_button.get()],

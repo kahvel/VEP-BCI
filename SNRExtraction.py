@@ -18,6 +18,7 @@ class Abstract(ControllableWindow.ControllableWindow, FFT.FFT):
 
     def setup(self, options_textboxes, variables, sensor_names, freq_points=None):
         self.freq_points = freq_points
+        self.freq_indexes = []
         ControllableWindow.ControllableWindow.setup(self, options_textboxes, variables, sensor_names)
 
     def generator(self, index, start_deleting):
@@ -43,6 +44,11 @@ class Abstract(ControllableWindow.ControllableWindow, FFT.FFT):
                         if ratio> max:
                             max = ratio
                             max_index = i
+                    detected_freq = self.freq_points[max_index]
+                    # print np.argmax(coordinates[self.freq_indexes[i]-3:self.freq_indexes])
+                    # print max_index, coordinates[self.freq_indexes[max_index]-3], coordinates[self.freq_indexes[max_index]-2], \
+                    #     coordinates[self.freq_indexes[max_index]-1], coordinates[self.freq_indexes[max_index]],\
+                    #     coordinates[self.freq_indexes[max_index]+1], coordinates[self.freq_indexes[max_index]+2]
                     self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
                     max = 0
                     max_index = -1
@@ -67,10 +73,6 @@ class Abstract(ControllableWindow.ControllableWindow, FFT.FFT):
                         if ratio> max:
                             max = ratio
                             max_index = i
-                    detected_freq = self.freq_points[max_index]
-                    # print coordinates[self.freq_indexes[i]-3], coordinates[self.freq_indexes[i]-2], \
-                    #     coordinates[self.freq_indexes[i]-1], coordinates[self.freq_indexes[i]],\
-                    #     coordinates[self.freq_indexes[i]+1], coordinates[self.freq_indexes[i]+2]
                     self.canvas.insert(Tkinter.END, str(self.freq_points[max_index])+" "+str(max)+"  ")
                     max = 0
                     max_index = -1

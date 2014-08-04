@@ -45,18 +45,21 @@ class MultipleRegular(FFTPlot, Regular, Multiple, PlotWindow.MultiplePlotWindow)
         Multiple.__init__(self)
 
     def coordinates_generator(self, index):
-        # for i in range(0, 512, 40):  # scale
-        #     self.canvas.create_line(i, 0, i, 512, fill="red")
-        #     self.canvas.create_text(i, 10, text=i/8)
+        for i in range(0, 512, 40):  # scale
+            self.canvas.create_line(i, 0, i, 512, fill="red")
+            self.canvas.create_text(i, 10, text=i/8)
         coordinates = []
         filter_prev_state = self.filterPrevState([0])
+        self.average = 0
         for i in range(self.length/self.step):
             segment = []
             for j in range(self.step):
                 y = yield
+                self.average += y
                 segment.append(y)
             result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
             coordinates.extend(result)
+        self.average /= float(self.length)
         spectrum = self.signalPipeline(coordinates)
         yield self.normaliseSpectrum(spectrum)
         while True:
@@ -80,6 +83,9 @@ class MultipleAverage(FFTPlot, Average, Multiple, PlotWindow.MultiplePlotWindow)
         Multiple.__init__(self)
 
     def coordinates_generator(self, index):
+        for i in range(0, 512, 40):  # scale
+            self.canvas.create_line(i, 0, i, 512, fill="red")
+            self.canvas.create_text(i, 10, text=i/8)
         k = 1
         coordinates = []
         filter_prev_state = self.filterPrevState([0])
@@ -116,6 +122,9 @@ class SingleAverage(FFTPlot, Average, Single, PlotWindow.SinglePlotWindow):
         Single.__init__(self)
 
     def coordinates_generator(self, index):
+        for i in range(0, 512, 40):  # scale
+            self.canvas.create_line(i, 0, i, 512, fill="red")
+            self.canvas.create_text(i, 10, text=i/8)
         average = []
         k = 1
         coordinates = [[] for _ in range(self.channel_count)]
@@ -169,6 +178,9 @@ class SingleRegular(FFTPlot, Regular, Single, PlotWindow.SinglePlotWindow):
         Single.__init__(self)
 
     def coordinates_generator(self, index):
+        for i in range(0, 512, 40):  # scale
+            self.canvas.create_line(i, 0, i, 512, fill="red")
+            self.canvas.create_text(i, 10, text=i/8)
         average = []
         coordinates = [[] for _ in range(self.channel_count)]
         filter_prev_state = [self.filterPrevState([0]) for _ in range(self.channel_count)]

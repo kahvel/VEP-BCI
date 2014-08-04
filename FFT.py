@@ -9,9 +9,21 @@ class FFT(object):
 
     def normaliseSpectrum(self, fft):
         if self.normalise:
-            return fft/sum(fft)
+            return (fft/sum(fft))[1:]
         else:
             return np.log10(fft)[1:]
+
+    def detrendSegment(self, signal):
+        if self.detrend:
+            return scipy.signal.detrend(signal, bp=self.breakpoints)
+        else:
+            return signal
+
+    def detrendSignal(self, signal):
+        if not self.detrend:
+            return scipy.signal.detrend(signal, type="constant")
+        else:
+            return scipy.signal.detrend(signal, bp=self.breakpoints)
 
     def scaleYa(self, y,  index, plot_count, new_max=-100, new_min=100):
         return ((((y - (-10)) * (new_max - new_min)) / (10 - (-10))) + new_min
@@ -25,12 +37,13 @@ class FFT(object):
         return result
 
     def segmentPipeline(self, coordinates, filter_prev_state):
-        detrended_segment = self.detrendSignal(coordinates)
-        filtered_segment, filter_prev_state = self.filterSignal(detrended_segment, filter_prev_state)
+        filtered_segment, filter_prev_state = self.filterSignal(coordinates, filter_prev_state)
+        # detrended_segment = self.detrendSegment(filtered_segment)
         return filtered_segment, filter_prev_state
 
     def signalPipeline(self, coordinates):
-        windowed_signal = self.windowSignal(coordinates, self.window_function)
+        detrended_signal = self.detrendSignal(coordinates)
+        windowed_signal = self.windowSignal(detrended_signal, self.window_function)
         amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
         # self.canvas.delete(self.line)
         # self.line = self.canvas.create_line(self.scalea(windowed_signal, 0, 0), fill="Red")
