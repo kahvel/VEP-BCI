@@ -27,6 +27,8 @@ class MainWindow(MyWindows.TkWindow):
                                "Color1": "#ffffff",
                                "Color2": "#777777",
                                "Disable": 1}
+        self.neutral_signal = None
+        self.target_signal = [None for _ in range(6)]
         self.disable_checkbox_var = IntVar()
         # self.n_targets = 6
         for _ in range(7):
@@ -37,7 +39,7 @@ class MainWindow(MyWindows.TkWindow):
         self.current_radio_button = IntVar()
         self.previous_radio_button = 0
         self.initElements()
-        self.post_office_connection, post_office_to_main = multiprocessing.Pipe()
+        self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
         self.newProcess(Main.runEmotiv, "Add emotiv")
         self.protocol("WM_DELETE_WINDOW", self.exit)
@@ -123,7 +125,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def exit(self):
         print "Exiting main window"
-        self.post_office_connection.send("Exit")
+        self.connection.send("Exit")
         self.destroy()
 
     def extraction(self):
@@ -139,27 +141,56 @@ class MainWindow(MyWindows.TkWindow):
     def getChosenFreq(self):
         freq = []
         for i in range(1, len(self.targets)):
-            freq.append(float(self.targets[i]["Freq"]))
+            if self.targets[i]["Disable"] == 0:
+                freq.append(float(self.targets[i]["Freq"]))
         return freq
+
+    def getRecordedSignals(self):
+        signals = []
+        for i in range(1, len(self.targets)):
+            if self.targets[i]["Disable"] == 0:
+                signals.append(float(self.targets[i]["Freq"]))
+        signals.append(self.neutral_signal)
+        return signals
+
+    def recordTarget(self):
+        if self.current_radio_button.get() == 0:
+            print "Choose target"
+        else:
+            self.connection.send("Record target")
+            # self.connection.send(self.getEnabledTargets())
+            self.connection.send(self.targets[self.current_radio_button.get()])
+            self.connection.send(512)
+            while not self.connection.poll(0.1):
+                self.update()
+            self.target_signal[self.current_radio_button.get()] = self.connection.recv()
+
+    def recordNeutral(self):
+        self.connection.send("Record neutral")
+        self.connection.send(512)  # length
+        while not self.connection.poll(0.1):
+            self.update()
+        self.neutral_signal = self.connection.recv()
 
     def start(self):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
-        self.post_office_connection.send("Start")
-        self.post_office_connection.send(self.getEnabledTargets())
-        self.post_office_connection.send(self.getChosenFreq())
+        self.connection.send("Start")
+        self.connection.send(self.getEnabledTargets())
+        self.connection.send(self.getChosenFreq())
+        self.connection.send(self.getRecordedSignals())
 
     def stop(self):
         self.start_button.configure(text="Start", command=lambda: self.start())
-        self.post_office_connection.send("Stop")
+        self.connection.send("Stop")
 
     def newProcess(self, func, message, *args):
         new_to_post_office, post_office_to_new = multiprocessing.Pipe()
         p = multiprocessing.Process(target=func, args=(new_to_post_office, args))
         p.start()
-        self.post_office_connection.send(message)
+        self.connection.send(message)
         reduced = reduction.reduce_connection(post_office_to_new)
-        self.post_office_connection.send(reduced)
+        self.connection.send(reduced)
 
     def targetsWindow(self):
         self.saveValues(self.current_radio_button.get())
@@ -228,13 +259,6 @@ class MainWindow(MyWindows.TkWindow):
         #             self.targets[i]["Disable"] = value
         #     # self.disable_prev_value = value
 
-    def recordTarget(self):
-        self.post_office_connection.send("Start")
-        self.post_office_connection.send(self.getEnabledTargets())
-
-    def recordNeutral(self):
-        pass
-
     def saveFile(self):
         self.saveValues(self.current_radio_button.get())
         file = tkFileDialog.asksaveasfile()
@@ -251,7 +275,6 @@ class MainWindow(MyWindows.TkWindow):
     def loadFile(self):
         file = tkFileDialog.askopenfile()
         if file is not None:
-            j = 1
             line = file.readline()
             values = line.split()
             k = 0
@@ -259,6 +282,7 @@ class MainWindow(MyWindows.TkWindow):
                 self.background_textboxes[key].delete(0, END)
                 self.background_textboxes[key].insert(0, values[k])
                 k += 1
+            j = 1
             for line in file:
                 values = line.split()
                 target = self.targets[j]

@@ -12,6 +12,8 @@ class Window(ControlWindow.ControlWindow):
         self.files = [SNRExtraction]
         ControlWindow.ControlWindow.__init__(self, "Plot control", 320, 370, sensor_names)
         self.connection = connection
+        self.freq_points = None
+        self.recorded_signals = None
         self.myMainloop()
 
     def myMainloop(self):
@@ -20,6 +22,7 @@ class Window(ControlWindow.ControlWindow):
             if message == "Start":
                 print "Starting extraction"
                 self.freq_points = self.connection.recv()
+                self.recorded_signals = self.connection.recv()
                 message = self.start()
             if message == "Stop":
                 print "Extraction stopped"

@@ -35,6 +35,7 @@ class PostOffice(object):
                     self.sendMessage(self.extraction_connection, "Start")
                     self.sendMessage(self.psychopy_connection, self.main_connection.recv())
                     self.sendMessage(self.extraction_connection, self.main_connection.recv())
+                    self.sendMessage(self.extraction_connection, self.main_connection.recv())
                     message = self.start()
                     if message == "Stop":
                         self.sendMessage(self.emotiv_connection, "Stop")
@@ -46,8 +47,30 @@ class PostOffice(object):
                     self.sendMessage(self.psychopy_connection, "Exit")
                     self.sendMessage(self.plot_connection, "Exit")
                     self.sendMessage(self.extraction_connection, "Exit")
+                    return
+                elif message == "Record neutral":
+                    self.sendMessage(self.emotiv_connection, "Start")
+                    self.recordSignal(self.main_connection.recv())
+                    self.sendMessage(self.emotiv_connection, "Stop")
+                elif message == "Record target":
+                    self.sendMessage(self.psychopy_connection, "Start")
+                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())
+                    self.sendMessage(self.emotiv_connection, "Start")
+                    self.recordSignal(self.main_connection.recv())
+                    self.sendMessage(self.emotiv_connection, "Stop")
                 else:
                     print "Unknown message:", message
+
+    def recordSignal(self, length):
+        signal = []
+        while len(signal) < length:
+            if self.main_connection.poll():
+                message = self.main_connection.recv()
+                return message
+            if self.emotiv_connection[0].poll():
+                message = self.emotiv_connection[0].recv()
+                signal.append(message)
+        self.main_connection.send(signal)
 
     def handleMessage(self, connections, name):
         for i in range(len(connections)-1, -1, -1):

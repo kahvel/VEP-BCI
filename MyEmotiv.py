@@ -67,7 +67,6 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def cleanUp(self):
         self._goOn = False
         self.closeDevices()
-        print("Emotiv cleanup successful")
 
     def setupCrypto(self, sn):
         type = 0 # feature[5]
@@ -118,19 +117,15 @@ class myEmotiv(emokit.emotiv.Emotiv):
 
         # Make sure we get packets
         self.setup()
+        if self.serialNum == None:
+            print "USB not connected"
+            return "Stop"
         self.setupCrypto(self.serialNum)
-        counter = 0
-        while True:
-            try:
-                task = self.packets.get(True, 1)
-                break
-            except:
-                if self.connection.poll():
-                    return self.connection.recv()
-                counter += 1
-                print("No packet " + str(counter))
-                if counter == 10:
-                    return "Stop"
+        try:
+            task = self.packets.get(True, 1)
+        except:
+            print "Turn on headset"
+            return "Stop"
 
         # Mainloop
         # send message to psychopy
