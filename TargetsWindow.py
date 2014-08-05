@@ -40,11 +40,9 @@ class Target:
 
 
 class TargetsWindow:
-    def __init__(self, targets_to_main, targets_to_emo, background_data, targets_to_detection):
+    def __init__(self, connection, background_data):
         logging.console.setLevel(logging.WARNING)
-        self.targets_to_main = targets_to_main
-        self.targets_to_emo = targets_to_emo
-        self.targets_to_detection = targets_to_detection
+        self.connection = connection
         self.generators = []
         self.window = None
         self.monitor_frequency = None
@@ -55,33 +53,29 @@ class TargetsWindow:
         #self.window.setRecordFrameIntervals(True)
         #self.run()
 
-    def recvPacket(self, connection):
+    def recvPacket(self):
         while True:
             self.window.flip()
-            if self.targets_to_main.poll():
-                message = self.targets_to_main.recv()
+            if self.connection.poll():
+                message = self.connection.recv()
                 return message
             if len(event.getKeys()) > 0:
                 return "Exit"
-            if connection.poll(0.1):
-                return connection.recv()
 
     def MyMainloop(self):
         while True:
-            message = self.recvPacket(self.targets_to_main)
+            message = self.recvPacket()
             if message == "Start":
                 print "Starting targets"
-                self.setTargets(self.targets_to_main.recv())
+                self.setTargets(self.connection.recv())
                 message = self.run()
             if message == "Stop":
                 print "Targets stopped"
             if message == "Exit":
                 print "Exiting targets"
                 break
-        self.targets_to_emo.send("Close")
-        self.targets_to_emo.close()
-        self.targets_to_main.send("Close")
-        self.targets_to_main.close()
+        self.connection.send("Close")
+        self.connection.close()
         self.window.close()
 
     def setWindow(self, background_data):
@@ -98,15 +92,14 @@ class TargetsWindow:
             self.generators[-1].send(None)
 
     def run(self):
-        while not self.targets_to_emo.poll(0.1):  # Start emotiv and psychopy together
-            self.window.flip()
-        self.targets_to_emo.recv()
+        # while not self.connection.poll(0.1):  # Start emotiv and psychopy together
+        #     self.window.flip()
         while True:
-            if self.targets_to_main.poll():
-                return self.targets_to_main.recv()
             freq = None
-            if self.targets_to_detection.poll():
-                freq = self.targets_to_detection.recv()
+            if self.connection.poll():
+                freq = self.connection.recv()
+            if isinstance(freq, basestring):
+                return freq
             for generator in self.generators:
                 generator.send(freq)
             self.window.flip()

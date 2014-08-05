@@ -37,12 +37,9 @@ class MainWindow(MyWindows.TkWindow):
         self.current_radio_button = IntVar()
         self.previous_radio_button = 0
         self.initElements()
-        self.main_to_plot = []
-        self.main_to_psychopy = []
-        self.main_to_detection = []
-        self.main_to_emo, emo_to_main = multiprocessing.Pipe()
-        self.detection_to_psychopy, self.psychopy_to_detection = multiprocessing.Pipe()
-        multiprocessing.Process(target=Main.runEmotiv, args=(emo_to_main,)).start()
+        self.post_office_connection, post_office_to_main = multiprocessing.Pipe()
+        multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
+        self.newProcess(Main.runEmotiv, "Add emotiv")
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -126,14 +123,11 @@ class MainWindow(MyWindows.TkWindow):
 
     def exit(self):
         print "Exiting main window"
-        self.sendMessage(self.main_to_detection, "Exit", "PS")
-        self.sendMessage(self.main_to_psychopy, "Exit", "psychopy")
-        self.sendMessage(self.main_to_plot, "Exit", "plot")
-        self.main_to_emo.send("Exit")
+        self.post_office_connection.send("Exit")
         self.destroy()
 
     def extraction(self):
-        self.main_to_detection.append(self.newProcess(Main.runPSIdentification, "New pipe", self.sensor_names, self.detection_to_psychopy))
+        self.newProcess(Main.runPSIdentification, "Add extraction", self.sensor_names)
 
     def getEnabledTargets(self):
         targets = []
@@ -151,50 +145,31 @@ class MainWindow(MyWindows.TkWindow):
     def start(self):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
-        self.sendMessage(self.main_to_plot, "Start", "plot")
-        self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
-        targets = self.getEnabledTargets()
-        self.sendMessage(self.main_to_psychopy, targets, "psychopy")
-        freq = self.getChosenFreq()
-        self.sendMessage(self.main_to_detection, "Start", "Ps")
-        self.sendMessage(self.main_to_detection, freq, "Ps")
-        self.main_to_emo.send("Start")
-
-    def sendMessage(self, connections, message, name):
-        for i in range(len(connections)-1, -1, -1):
-            if connections[i].poll():
-                print "Main to " + name + " closed"
-                connections[i].close()
-                del connections[i]
-            else:
-                connections[i].send(message)
+        self.post_office_connection.send("Start")
+        self.post_office_connection.send(self.getEnabledTargets())
+        self.post_office_connection.send(self.getChosenFreq())
 
     def stop(self):
         self.start_button.configure(text="Start", command=lambda: self.start())
-        self.sendMessage(self.main_to_plot, "Stop", "plot")
-        self.sendMessage(self.main_to_psychopy, "Stop", "psychopy")
-        self.sendMessage(self.main_to_detection, "Stop", "PS")
-        self.main_to_emo.send("Stop")
+        self.post_office_connection.send("Stop")
 
     def newProcess(self, func, message, *args):
-        main_to_new, new_to_main = multiprocessing.Pipe()
-        emo_to_new, new_to_emo = multiprocessing.Pipe()
-        p = multiprocessing.Process(target=func, args=(new_to_main, new_to_emo, args))
+        new_to_post_office, post_office_to_new = multiprocessing.Pipe()
+        p = multiprocessing.Process(target=func, args=(new_to_post_office, args))
         p.start()
-        self.main_to_emo.send(message)
-        reduced = reduction.reduce_connection(emo_to_new)
-        self.main_to_emo.send(reduced)
-        return main_to_new
+        self.post_office_connection.send(message)
+        reduced = reduction.reduce_connection(post_office_to_new)
+        self.post_office_connection.send(reduced)
 
     def targetsWindow(self):
         self.saveValues(self.current_radio_button.get())
         bk = {}
         for key in self.background_textboxes:
             bk[key] = self.background_textboxes[key].get()
-        self.main_to_psychopy.append(self.newProcess(Main.runPsychopy, "Psychopy", bk, self.psychopy_to_detection))
+        self.newProcess(Main.runPsychopy, "Add psychopy", bk)
 
     def plotWindow(self):
-        self.main_to_plot.append(self.newProcess(Main.runPlotControl, "New pipe", self.sensor_names))
+        self.newProcess(Main.runPlotControl, "Add plot", self.sensor_names)
 
     def loadValues(self, index):
         if index == 0:
@@ -254,10 +229,8 @@ class MainWindow(MyWindows.TkWindow):
         #     # self.disable_prev_value = value
 
     def recordTarget(self):
-        self.sendMessage(self.main_to_psychopy, "Start", "psychopy")
-        targets = self.getEnabledTargets()
-        self.sendMessage(self.main_to_psychopy, targets, "psychopy")
-        self.main_to_emo.send("Start")
+        self.post_office_connection.send("Start")
+        self.post_office_connection.send(self.getEnabledTargets())
 
     def recordNeutral(self):
         pass

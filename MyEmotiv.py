@@ -7,10 +7,8 @@ from Crypto import Random
 
 
 class myEmotiv(emokit.emotiv.Emotiv):
-    def __init__(self, emo_to_main):
-        self.emo_to_main = emo_to_main
-        self.emo_to_psychopy = []
-        self.connections = []
+    def __init__(self, connection):
+        self.connection = connection
         self.devices = []
         self.serialNum = None
         emokit.emotiv.Emotiv.__init__(self)
@@ -19,23 +17,15 @@ class myEmotiv(emokit.emotiv.Emotiv):
 
     def myMainloop(self):
         while True:
-            while not self.emo_to_main.poll(1):
+            while not self.connection.poll(1):
                 pass
-            message = self.emo_to_main.recv()
-            if message == "New pipe":
-                print "Adding pipe"
-                connection = reduction.rebuild_pipe_connection(*self.emo_to_main.recv()[1])
-                self.connections.append(connection)
-            elif message == "Psychopy":
-                print "Adding pipe"
-                connection = reduction.rebuild_pipe_connection(*self.emo_to_main.recv()[1])
-                self.emo_to_psychopy.append(connection)
+            message = self.connection.recv()
             if message == "Start":
                 print "Starting emotiv"
                 message = self.run()
                 self.cleanUp()
-            if message == "Stop":
-                print "Emotiv stopped"
+                if message == "Stop":
+                    print "Emotiv stopped"
             if message == "Exit":
                 print "Exiting emotiv"
                 break
@@ -78,15 +68,6 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self._goOn = False
         self.closeDevices()
         print("Emotiv cleanup successful")
-
-    def sendMessage(self, connections, message, name):
-        for i in range(len(connections)-1, -1, -1):
-            if connections[i].poll():
-                print "Main to " + name + " closed"
-                connections[i].close()
-                del connections[i]
-            else:
-                 connections[i].send(message)
 
     def setupCrypto(self, sn):
         type = 0 # feature[5]
@@ -144,31 +125,25 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 task = self.packets.get(True, 1)
                 break
             except:
-                if self.emo_to_main.poll():
-                    return self.emo_to_main.recv()
+                if self.connection.poll():
+                    return self.connection.recv()
                 counter += 1
                 print("No packet " + str(counter))
                 if counter == 10:
                     return "Stop"
 
         # Mainloop
-        self.sendMessage(self.emo_to_psychopy, "Start", "Pscyhopy")
+        # send message to psychopy
         while True:
             try:
                 data = self.cipher.decrypt(task[:16]) + self.cipher.decrypt(task[16:])
                 packet = emokit.emotiv.EmotivPacket(data, self.sensors)
                 task = self.packets.get(True, 0.01)
-                for i in range(len(self.connections)-1, -1, -1):
-                    if self.connections[i].poll():
-                        print "Emo to plot closed"
-                        self.connections[i].close()
-                        del self.connections[i]
-                    else:
-                        self.connections[i].send(packet)
-                # print "Emotiv " + str(packet)
+                self.connection.send(packet)
+                print "Emotiv " + str(packet)
                 if self.packets.qsize() > 150:
                     print self.packets.qsize(), "packets in queue. Slow down!"
             except Exception, e:
                 print "No packet", e
-            if self.emo_to_main.poll():
-                return self.emo_to_main.recv()
+            if self.connection.poll():
+                return self.connection.recv()

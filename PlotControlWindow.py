@@ -7,14 +7,13 @@ import FFTPlot
 
 
 class Window(ControlWindow.ControlWindow):
-    def __init__(self, to_main, to_emotiv, sensor_names):
+    def __init__(self, connection, sensor_names):
         self.window_group_names = ["Signal", "FFT"]
         self.window_names = ["MultipleAverage", "SingleAverage", "MultipleRegular", "SingleRegular"]
         self.button_names = ["Avg", "Sum Avg", "", "Sum"]
         self.files = [SignalPlot, FFTPlot]
         ControlWindow.ControlWindow.__init__(self, "Plot control", 320, 370, sensor_names)
-        self.to_main = to_main
-        self.to_emotiv = to_emotiv
+        self.connection = connection
         self.fft_reset_buttons = {}
         self.signal_reset_buttons = {}
         button_frame = Tkinter.Frame(self)
@@ -30,21 +29,17 @@ class Window(ControlWindow.ControlWindow):
 
     def myMainloop(self):
         while True:
-            message = self.recvPacket(self.to_main)
+            message = self.recvPacket()
             if message == "Start":
                 print "Starting plot"
                 message = self.start()
-                while self.to_emotiv.poll():
-                    print self.to_emotiv.recv()
-            if message == "Stop":
-                print "Plot stopped"
-            if message == "Exit":
+                if message == "Stop":
+                    print "Plot stopped"
+            if message == "Exit" or self.exitFlag:
                 print "Exiting plot"
                 break
-        self.to_emotiv.send("Close")
-        self.to_emotiv.close()
-        self.to_main.send("Close")
-        self.to_main.close()
+        self.connection.send("Close")
+        self.connection.close()
         self.destroy()
 
     def reset(self, windows, key, sensor_names):
@@ -57,7 +52,7 @@ class Window(ControlWindow.ControlWindow):
 
     def startPacketSending(self):
         while True:
-            packet = self.recvPacket(self.to_emotiv)
+            packet = self.recvPacket()
             if isinstance(packet, basestring):
                 return packet
             for group_name in self.window_group_names:

@@ -94,16 +94,14 @@ class ControlWindow(MyWindows.TkWindow):
         for generator in generators:
             generator.close()
 
-    def recvPacket(self, connection):
+    def recvPacket(self):
         while True:
             self.update()
-            if self.to_main.poll():
-                message = self.to_main.recv()
+            if self.connection.poll():
+                message = self.connection.recv()
                 return message
             if self.exitFlag:
                 return "Exit"
-            if connection.poll(0.1):
-                return connection.recv()
 
     def setSensorNames(self):
         self.chosen_sensor_names = []

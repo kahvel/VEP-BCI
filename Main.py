@@ -5,18 +5,22 @@ if __name__ == "__main__":
     MainWindow.MainWindow()
 
 
-def runPlotControl(plot_to_main, plot_to_emo, args):
+def runPostOffice(connection):
+    import PostOffice
+    PostOffice.PostOffice(connection)
+
+def runPlotControl(connection, args):
     import PlotControlWindow
-    PlotControlWindow.Window(plot_to_main, plot_to_emo, args[0])
+    PlotControlWindow.Window(connection, args[0])
 
-def runEmotiv(main_conn):
+def runEmotiv(connection, args):
     import MyEmotiv
-    MyEmotiv.myEmotiv(main_conn)
+    MyEmotiv.myEmotiv(connection)
 
-def runPsychopy(psy_to_main, psy_to_emo, args):
+def runPsychopy(connection, args):
     import TargetsWindow
-    TargetsWindow.TargetsWindow(psy_to_main, psy_to_emo, args[0], args[1])
+    TargetsWindow.TargetsWindow(connection, args[0])
 
-def runPSIdentification(ps_to_main, ps_to_emo, args):
+def runPSIdentification(connection, args):
     import ExtractionControlWindow
-    ExtractionControlWindow.Window(ps_to_main, ps_to_emo, args[0], args[1])
+    ExtractionControlWindow.Window(connection, args[0])

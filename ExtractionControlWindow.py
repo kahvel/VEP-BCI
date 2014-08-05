@@ -5,25 +5,21 @@ import ControlWindow
 
 
 class Window(ControlWindow.ControlWindow):
-    def __init__(self, to_main, to_emotiv, sensor_names, to_targets):
+    def __init__(self, connection, sensor_names):
         self.window_group_names = ["SNR"]
         self.window_names = ["SNR", "SumSNR"]
         self.button_names = ["", "Sum"]
         self.files = [SNRExtraction]
         ControlWindow.ControlWindow.__init__(self, "Plot control", 320, 370, sensor_names)
-        self.to_emotiv = to_emotiv
-        self.to_main = to_main
-        self.to_targets = to_targets
+        self.connection = connection
         self.myMainloop()
 
     def myMainloop(self):
         while True:
-            message = self.recvPacket(self.to_main)
+            message = self.recvPacket()
             if message == "Start":
                 print "Starting extraction"
-                self.freq_points = self.to_main.recv()
-                while self.to_emotiv.poll():
-                    print self.to_emotiv.recv()
+                self.freq_points = self.connection.recv()
                 message = self.start()
             if message == "Stop":
                 print "Extraction stopped"
@@ -41,7 +37,7 @@ class Window(ControlWindow.ControlWindow):
 
     def startPacketSending(self):
         while True:
-            packet = self.recvPacket(self.to_emotiv)
+            packet = self.recvPacket()
             if isinstance(packet, basestring):
                 return packet
             for group_name in self.window_group_names:
@@ -50,6 +46,6 @@ class Window(ControlWindow.ControlWindow):
                         if self.window_groups[group_name][name].continue_generating:
                             extracted_freq = self.window_groups[group_name][name].sendPacket(packet)
                             if extracted_freq is not None:
-                                self.to_targets.send(extracted_freq)
+                                self.connection.send(extracted_freq)
 
 
