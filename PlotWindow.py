@@ -8,8 +8,9 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         ControllableWindow.ControllableWindow.__init__(self, title, 512, 512)
         self.canvas = Tkinter.Canvas(self, width=512, height=512)
         self.canvas.pack()
-        self.min_packet = []
-        self.max_packet = []
+
+    def resetCanvas(self):
+        self.canvas.delete("all")
 
     def scaleY(self, y,  index, plot_count, old_max, old_min, new_max=-100, new_min=100):
         return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
@@ -41,17 +42,11 @@ class PlotWindow(ControllableWindow.ControllableWindow):
             coordinates_generator.close()
 
 
-class MultiplePlotWindow(PlotWindow):
-    def __init__(self, title):
-        PlotWindow.__init__(self, title)
-
-    def setPlotCount(self):
-        self.plot_count = self.channel_count
+class MultiplePlotWindow(object):
+    def getPlotCount(self, channel_count):
+        return channel_count
 
 
-class SinglePlotWindow(PlotWindow):
-    def __init__(self, title):
-        PlotWindow.__init__(self, title)
-
-    def setPlotCount(self):
-        self.plot_count = 1
+class SinglePlotWindow(object):
+    def getPlotCount(self, channel_count):
+        return 1

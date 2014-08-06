@@ -27,29 +27,6 @@ class Window(ControlWindow.ControlWindow):
         button_frame.pack()
         self.myMainloop()
 
-    def myMainloop(self):
-        while True:
-            message = self.recvPacket()
-            if message == "Start":
-                print "Starting plot"
-                message = self.start()
-                if message == "Stop":
-                    print "Plot stopped"
-            if message == "Exit" or self.exitFlag:
-                print "Exiting plot"
-                break
-        self.connection.send("Close")
-        self.connection.close()
-        self.destroy()
-
-    def reset(self, windows, key, sensor_names):
-        window = windows[key]
-        if window is not None:
-            window.canvas.delete("all")
-            self.closeGenerators(window.generators)
-            window.continue_generating = True
-            window.setup(self.options_textboxes, self.variables, sensor_names)
-
     def startPacketSending(self):
         while True:
             packet = self.recvPacket()

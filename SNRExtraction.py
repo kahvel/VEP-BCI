@@ -13,12 +13,17 @@ class Abstract(ControllableWindow.ControllableWindow, FFT.FFT):
         FFT.FFT.__init__(self)
         self.canvas = ScrolledText.ScrolledText(self)
         self.canvas.pack()
-        self.freq_points = []
-        self.freq_indexes = []
+        self.freq_points = None
+        self.freq_indexes = None
+        self.recorded_signals = None
+
+    def resetCanvas(self):
+        self.canvas.insert(Tkinter.END, "Starting\n")
 
     def setup(self, options_textboxes, variables, sensor_names, freq_points=None):
         self.freq_points = freq_points
         self.freq_indexes = []
+        self.recorded_signals = []
         ControllableWindow.ControllableWindow.setup(self, options_textboxes, variables, sensor_names)
 
     def generator(self, index, start_deleting):

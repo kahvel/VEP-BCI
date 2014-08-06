@@ -1,50 +1,36 @@
 __author__ = 'Anti'
-import Queue
 import operator
 import PlotWindow
+import Signal
 # import sklearn.cross_decomposition
-import numpy as np
 
 
-class Signal(object):
-    def __init__(self):
-        self.start_deleting = lambda packet_count: operator.eq(packet_count, self.length)
+class SignalPlot(PlotWindow.PlotWindow):
+    def __init__(self, title):
+        PlotWindow.PlotWindow.__init__(self, title)
+        self.start_deleting = lambda packet_count: operator.eq(packet_count, self.options["Length"])
 
     def scale(self, coordinates, index, packet_count):
         result = []
         for i in range(packet_count-len(coordinates), packet_count):
-            result.append(i*self.window_width/self.length)
+            result.append(i*self.window_width/self.options["Length"])
             result.append(self.scaleY(coordinates.popleft(),  index, self.plot_count, 10, -10))
         return result
 
-    def getSegment(self, array, i):
-        if array is not None:
-            return array[i*self.step:i*self.step+self.step]
-        else:
-            return None
 
-    def addPrevious(self, signal, previous):
-        if isinstance(signal, list):
-            return [previous] + signal
-        else:
-            return np.insert(signal, 0, previous)
+class Multiple(PlotWindow.MultiplePlotWindow):
+    def __init__(self):
+        PlotWindow.MultiplePlotWindow.__init__(self)
 
-    def signalPipeline(self, signal, i, prev_coordinate, filter_prev_state):
-        detrended_signal = self.detrendSignal(signal)
-        filtered_signal, filter_prev_state = self.filterSignal(detrended_signal, filter_prev_state)
-        window_segment = self.getSegment(self.window_function, i)
-        windowed_signal = self.windowSignal(filtered_signal, window_segment)
-        extended_signal = self.addPrevious(windowed_signal, prev_coordinate)
-        return extended_signal, filter_prev_state
-
-
-class Multiple(object):
     def sendPacket(self, packet):
         for i in range(self.channel_count):
             self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
 
 
-class Single(object):
+class Single(PlotWindow.SinglePlotWindow):
+    def __init__(self):
+        PlotWindow.SinglePlotWindow.__init__(self)
+
     def sendPacket(self, packet):
         summ = 0
         for i in range(self.channel_count):
@@ -53,70 +39,43 @@ class Single(object):
 
 
 class Average(object):
-    def coordinates_generator(self, index):
-        average = [0 for _ in range(self.length)]
-        k = 0
-        prev_coordinate = 0
-        yield
-        filter_prev_state = self.filterPrevState([0])
-        while True:
-            k += 1
-            for i in range(self.length/self.step):
-                for j in range(self.step):
-                    y = yield
-                    average[i*self.step+j] = (average[i*self.step+j] * (k - 1) + y) / k
-                signal_segment = self.getSegment(average, i)
-                result, filter_prev_state = self.signalPipeline(signal_segment, i, prev_coordinate, filter_prev_state)
-                yield Queue.deque(result)
-                prev_coordinate = result[-1]
+    pass
 
 
 class Regular(object):
-    def coordinates_generator(self, index):
-        average = [0 for _ in range(self.step)]
-        prev_coordinate = 0
-        yield
-        filter_prev_state = self.filterPrevState([0])
-        while True:
-            for i in range(self.length/self.step):
-                for j in range(self.step):
-                    y = yield
-                    average[j] = y
-                result, filter_prev_state = self.signalPipeline(average, i, prev_coordinate, filter_prev_state)
-                yield Queue.deque(result)
-                prev_coordinate = result[-1]
+    pass
 
 
-class MultipleRegular(Signal, Regular, Multiple, PlotWindow.MultiplePlotWindow):
+class MultipleRegular(SignalPlot, Regular, Multiple, Signal.Regular):
     def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self, "Signals")
-        Signal.__init__(self)
+        SignalPlot.__init__(self, "Signals")
         Regular.__init__(self)
         Multiple.__init__(self)
+        Signal.Regular.__init__(self)
 
 
-class SingleRegular(Signal, Regular, Single, PlotWindow.SinglePlotWindow):
+class SingleRegular(SignalPlot, Regular, Single, Signal.Regular):
     def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self, "Sum of signals")
-        Signal.__init__(self)
+        SignalPlot.__init__(self, "Sum of signals")
         Regular.__init__(self)
         Single.__init__(self)
+        Signal.Regular.__init__(self)
 
 
-class MultipleAverage(Signal, Average, Multiple, PlotWindow.MultiplePlotWindow):
+class MultipleAverage(SignalPlot, Average, Multiple, Signal.Average):
     def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self, "Average signals")
-        Signal.__init__(self)
+        SignalPlot.__init__(self, "Average signals")
         Average.__init__(self)
         Multiple.__init__(self)
+        Signal.Average.__init__(self)
 
 
-class SingleAverage(Signal, Average, Single, PlotWindow.SinglePlotWindow):
+class SingleAverage(SignalPlot, Average, Single, Signal.Average):
     def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self, "Sum of average signals")
-        Signal.__init__(self)
+        SignalPlot.__init__(self, "Sum of average signals")
         Average.__init__(self)
         Single.__init__(self)
+        Signal.Average.__init__(self)
 
 
 # class CCARegular(Signal, PlotWindow.SinglePlotWindow):

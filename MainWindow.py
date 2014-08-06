@@ -4,7 +4,7 @@ from Tkinter import *
 import MyWindows
 import tkFileDialog
 import multiprocessing
-from multiprocessing import reduction
+import multiprocessing.reduction
 import Main
 import ColorWindow
 
@@ -189,7 +189,7 @@ class MainWindow(MyWindows.TkWindow):
         p = multiprocessing.Process(target=func, args=(new_to_post_office, args))
         p.start()
         self.connection.send(message)
-        reduced = reduction.reduce_connection(post_office_to_new)
+        reduced = multiprocessing.reduction.reduce_connection(post_office_to_new)
         self.connection.send(reduced)
 
     def targetsWindow(self):
