@@ -5,8 +5,8 @@ import SignalProcessing
 
 
 class FFT(SignalProcessing.SignalProcessing):
-    def __init__(self):
-        SignalProcessing.SignalProcessing.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        SignalProcessing.SignalProcessing.__init__(self, options, window_function, channel_count, filter_coefficients)
 
     def normaliseSpectrum(self, fft):
         if self.options["Normalise"]:
@@ -46,10 +46,10 @@ class FFT(SignalProcessing.SignalProcessing):
 
 
 class MultipleRegular(FFT):
-    def __init__(self):
-        FFT.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
 
-    def coordinates_generator(self, index):
+    def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
         # for i in range(0, 512, 40):  # scale
@@ -80,10 +80,10 @@ class MultipleRegular(FFT):
 
 
 class MultipleAverage(FFT):
-    def __init__(self):
-        FFT.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
 
-    def coordinates_generator(self, index):
+    def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
         k = 1
@@ -115,10 +115,10 @@ class MultipleAverage(FFT):
 
 
 class SingleAverage(FFT):
-    def __init__(self):
-        FFT.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
 
-    def coordinates_generator(self, index):
+    def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
         channel_count = self.channel_count
@@ -168,10 +168,10 @@ class SingleAverage(FFT):
 
 
 class SingleRegular(FFT):
-    def __init__(self):
-        FFT.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
 
-    def coordinates_generator(self, index):
+    def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
         channel_count = self.channel_count
@@ -216,3 +216,21 @@ class SingleRegular(FFT):
                         summ += ffts[j][i]
                     average[i] = summ/channel_count
                 yield self.normaliseSpectrum(average)
+
+
+class Multiple(SignalProcessing.Multiple):
+    def __init__(self):
+        SignalProcessing.Multiple.__init__(self)
+
+    def sendPacket(self, packet, generators, sensor_names):
+        for i in range(len(sensor_names)):
+            generators[i].send(float(packet.sensors[sensor_names[i]]["value"]))
+
+
+class Single(SignalProcessing.Single):
+    def __init__(self):
+        SignalProcessing.Single.__init__(self)
+
+    def sendPacket(self, packet, generators, sensor_names):
+        for i in range(len(sensor_names)):
+            generators[0].send(float(packet.sensors[sensor_names[i]]["value"]))

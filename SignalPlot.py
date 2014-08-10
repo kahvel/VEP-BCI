@@ -8,7 +8,9 @@ import Signal
 class SignalPlot(PlotWindow.PlotWindow):
     def __init__(self, title):
         PlotWindow.PlotWindow.__init__(self, title)
-        self.start_deleting = lambda packet_count: operator.eq(packet_count, self.options["Length"])
+
+    def startDeleting(self):
+        return lambda packet_count: operator.eq(packet_count, self.options["Length"])
 
     def scale(self, coordinates, index, packet_count):
         result = []
@@ -18,64 +20,40 @@ class SignalPlot(PlotWindow.PlotWindow):
         return result
 
 
-class Multiple(PlotWindow.MultiplePlotWindow):
-    def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self)
-
-    def sendPacket(self, packet):
-        for i in range(self.channel_count):
-            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
-
-
-class Single(PlotWindow.SinglePlotWindow):
-    def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self)
-
-    def sendPacket(self, packet):
-        summ = 0
-        for i in range(self.channel_count):
-            summ += packet.sensors[self.sensor_names[i]]["value"]
-        self.generators[0].send(float(summ)/self.channel_count)
-
-
-class Average(object):
-    pass
-
-
-class Regular(object):
-    pass
-
-
-class MultipleRegular(SignalPlot, Regular, Multiple, Signal.Regular):
+class MultipleRegular(SignalPlot, Signal.Multiple):
     def __init__(self):
         SignalPlot.__init__(self, "Signals")
-        Regular.__init__(self)
-        Multiple.__init__(self)
-        Signal.Regular.__init__(self)
+        Signal.Multiple.__init__(self)
+
+    def getGenerator(self):
+        return Signal.Regular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
-class SingleRegular(SignalPlot, Regular, Single, Signal.Regular):
+class SingleRegular(SignalPlot, Signal.Single):
     def __init__(self):
         SignalPlot.__init__(self, "Sum of signals")
-        Regular.__init__(self)
-        Single.__init__(self)
-        Signal.Regular.__init__(self)
+        Signal.Single.__init__(self)
+
+    def getGenerator(self):
+        return Signal.Regular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
-class MultipleAverage(SignalPlot, Average, Multiple, Signal.Average):
+class MultipleAverage(SignalPlot, Signal.Multiple):
     def __init__(self):
         SignalPlot.__init__(self, "Average signals")
-        Average.__init__(self)
-        Multiple.__init__(self)
-        Signal.Average.__init__(self)
+        Signal.Multiple.__init__(self)
+
+    def getGenerator(self):
+        return Signal.Average(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
-class SingleAverage(SignalPlot, Average, Single, Signal.Average):
+class SingleAverage(SignalPlot, Signal.Single):
     def __init__(self):
         SignalPlot.__init__(self, "Sum of average signals")
-        Average.__init__(self)
-        Single.__init__(self)
-        Signal.Average.__init__(self)
+        Signal.Single.__init__(self)
+
+    def getGenerator(self):
+        return Signal.Average(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
 # class CCARegular(Signal, PlotWindow.SinglePlotWindow):

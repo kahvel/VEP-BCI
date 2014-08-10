@@ -6,7 +6,9 @@ import FFT
 class FFTPlot(PlotWindow.PlotWindow):
     def __init__(self, title):
         PlotWindow.PlotWindow.__init__(self, title)
-        self.start_deleting = lambda x: True
+
+    def startDeleting(self):
+        return lambda x: True
 
     def scale(self, coordinates, index, packet_count):
         result = []
@@ -16,59 +18,37 @@ class FFTPlot(PlotWindow.PlotWindow):
         return result
 
 
-class Multiple(PlotWindow.MultiplePlotWindow):
-    def __init__(self):
-        PlotWindow.MultiplePlotWindow.__init__(self)
-
-    def sendPacket(self, packet):
-        for i in range(self.channel_count):
-            self.generators[i].send(float(packet.sensors[self.sensor_names[i]]["value"]))
-
-
-class Single(PlotWindow.SinglePlotWindow):
-    def __init__(self):
-        PlotWindow.SinglePlotWindow.__init__(self)
-
-    def sendPacket(self, packet):
-        for i in range(self.channel_count):
-            self.generators[0].send(float(packet.sensors[self.sensor_names[i]]["value"]))
-
-
-class Regular(object):
-    pass
-
-
-class Average(object):
-    pass
-
-
-class MultipleRegular(FFTPlot, Multiple, Regular, FFT.MultipleRegular):
+class MultipleRegular(FFTPlot, FFT.Multiple):
     def __init__(self):
         FFTPlot.__init__(self, "FFTs")
-        Regular.__init__(self)
-        Multiple.__init__(self)
-        FFT.MultipleRegular.__init__(self)
+        FFT.Multiple.__init__(self)
+
+    def getGenerator(self):
+        return FFT.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
-class MultipleAverage(FFTPlot, Average, Multiple, FFT.MultipleAverage):
+class MultipleAverage(FFTPlot, FFT.Multiple):
     def __init__(self):
         FFTPlot.__init__(self, "Average FFTs")
-        Average.__init__(self)
-        Multiple.__init__(self)
-        FFT.MultipleAverage.__init__(self)
+        FFT.Multiple.__init__(self)
+
+    def getGenerator(self):
+        return FFT.MultipleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
-class SingleAverage(FFTPlot, Average, Single, FFT.SingleAverage):
+class SingleAverage(FFTPlot, FFT.Single):
     def __init__(self):
         FFTPlot.__init__(self, "Sum of average FFTs")
-        Average.__init__(self)
-        Single.__init__(self)
-        FFT.SingleAverage.__init__(self)
+        FFT.Single.__init__(self)
+
+    def getGenerator(self):
+        return FFT.SingleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients)
 
 
-class SingleRegular(FFTPlot, Regular, Single, FFT.SingleRegular):
+class SingleRegular(FFTPlot, FFT.Single):
     def __init__(self):
         FFTPlot.__init__(self, "Sum of FFTs")
-        Regular.__init__(self)
-        Single.__init__(self)
-        FFT.SingleRegular.__init__(self)
+        FFT.Single.__init__(self)
+
+    def getGenerator(self):
+        return FFT.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients)

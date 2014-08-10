@@ -153,6 +153,18 @@ class ControlWindow(MyWindows.TkWindow):
         self.setupWindows()
         self.startPacketSending()
 
+    def startPacketSending(self):
+        while True:
+            packet = self.recvPacket()
+            if isinstance(packet, basestring):
+                return packet
+            for group_name in self.window_group_names:
+                for name in self.window_names:
+                    window = self.window_groups[group_name][name]
+                    if window is not None:
+                        if window.continue_generating:
+                            window.sendPacket(packet, window.generators, self.chosen_sensor_names)
+
     def setWindowFunction(self, options_textboxes, variables):
         window_var = variables["Window"].get()
         if window_var == "None":

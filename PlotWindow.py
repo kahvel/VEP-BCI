@@ -16,8 +16,14 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
                 + index*self.window_height + self.window_height/2) / plot_count
 
+    def getGenerator(self):
+        raise NotImplementedError("getGenerator not implemented")
+
+    def scale(self, avg, index, packet_count):
+        raise NotImplementedError("scale not implemented")
+
     def generator(self, index, start_deleting):
-        coordinates_generator = self.coordinates_generator(index)
+        coordinates_generator = self.getGenerator()
         try:
             lines = [self.canvas.create_line(0, 0, 0, 0)]
             packet_count = 0
@@ -40,13 +46,3 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         finally:
             print "Closing generator"
             coordinates_generator.close()
-
-
-class MultiplePlotWindow(object):
-    def getPlotCount(self, channel_count):
-        return channel_count
-
-
-class SinglePlotWindow(object):
-    def getPlotCount(self, channel_count):
-        return 1

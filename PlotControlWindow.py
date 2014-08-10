@@ -26,14 +26,3 @@ class Window(ControlWindow.ControlWindow):
             self.fft_reset_buttons[self.window_names[i]].grid(column=i % 2, row=i//2+1, padx=5, pady=5)
         button_frame.pack()
         self.myMainloop()
-
-    def startPacketSending(self):
-        while True:
-            packet = self.recvPacket()
-            if isinstance(packet, basestring):
-                return packet
-            for group_name in self.window_group_names:
-                for name in self.window_names:
-                    if self.window_groups[group_name][name] is not None:
-                        if self.window_groups[group_name][name].continue_generating:
-                            self.window_groups[group_name][name].sendPacket(packet)

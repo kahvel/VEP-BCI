@@ -5,8 +5,8 @@ import Queue
 
 
 class Signal(SignalProcessing.SignalProcessing):
-    def __init__(self):
-        SignalProcessing.SignalProcessing.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        SignalProcessing.SignalProcessing.__init__(self, options, window_function, channel_count, filter_coefficients)
 
     def getSegment(self, array, i):
         if array is not None:
@@ -31,10 +31,10 @@ class Signal(SignalProcessing.SignalProcessing):
 
 
 class Average(Signal):
-    def __init__(self):
-        Signal.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        Signal.__init__(self, options, window_function, channel_count, filter_coefficients)
 
-    def coordinates_generator(self, index):
+    def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
         average = [0 for _ in range(length)]
@@ -55,10 +55,10 @@ class Average(Signal):
 
 
 class Regular(Signal):
-    def __init__(self):
-        Signal.__init__(self)
+    def __init__(self, options, window_function, channel_count, filter_coefficients):
+        Signal.__init__(self, options, window_function, channel_count, filter_coefficients)
 
-    def coordinates_generator(self, index):
+    def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
         average = [0 for _ in range(step)]
@@ -73,3 +73,23 @@ class Regular(Signal):
                 result, filter_prev_state = self.signalPipeline(average, i, prev_coordinate, filter_prev_state)
                 yield Queue.deque(result)
                 prev_coordinate = result[-1]
+
+
+class Multiple(SignalProcessing.Multiple):
+    def __init__(self):
+        SignalProcessing.Multiple.__init__(self)
+
+    def sendPacket(self, packet, generators, sensor_names):
+        for i in range(len(sensor_names)):
+            generators[i].send(float(packet.sensors[sensor_names[i]]["value"]))
+
+
+class Single(SignalProcessing.Single):
+    def __init__(self):
+        SignalProcessing.Single.__init__(self)
+
+    def sendPacket(self, packet, generators, sensor_names):
+        summ = 0
+        for i in range(len(sensor_names)):
+            summ += packet.sensors[sensor_names[i]]["value"]
+        generators[0].send(float(summ)/len(sensor_names))
