@@ -26,7 +26,7 @@ class MultipleRegular(SignalPlot, Signal.Multiple):
         Signal.Multiple.__init__(self)
 
     def getGenerator(self):
-        return Signal.Regular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return Signal.Regular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleRegular(SignalPlot, Signal.Single):
@@ -35,7 +35,7 @@ class SingleRegular(SignalPlot, Signal.Single):
         Signal.Single.__init__(self)
 
     def getGenerator(self):
-        return Signal.Regular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return Signal.Regular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class MultipleAverage(SignalPlot, Signal.Multiple):
@@ -44,7 +44,7 @@ class MultipleAverage(SignalPlot, Signal.Multiple):
         Signal.Multiple.__init__(self)
 
     def getGenerator(self):
-        return Signal.Average(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return Signal.Average(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleAverage(SignalPlot, Signal.Single):
@@ -53,7 +53,7 @@ class SingleAverage(SignalPlot, Signal.Single):
         Signal.Single.__init__(self)
 
     def getGenerator(self):
-        return Signal.Average(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return Signal.Average(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 # class CCARegular(Signal, PlotWindow.SinglePlotWindow):

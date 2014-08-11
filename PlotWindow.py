@@ -16,9 +16,6 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
                 + index*self.window_height + self.window_height/2) / plot_count
 
-    def getGenerator(self):
-        raise NotImplementedError("getGenerator not implemented")
-
     def scale(self, avg, index, packet_count):
         raise NotImplementedError("scale not implemented")
 

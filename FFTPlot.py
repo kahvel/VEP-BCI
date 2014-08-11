@@ -24,7 +24,7 @@ class MultipleRegular(FFTPlot, FFT.Multiple):
         FFT.Multiple.__init__(self)
 
     def getGenerator(self):
-        return FFT.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return FFT.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class MultipleAverage(FFTPlot, FFT.Multiple):
@@ -33,7 +33,7 @@ class MultipleAverage(FFTPlot, FFT.Multiple):
         FFT.Multiple.__init__(self)
 
     def getGenerator(self):
-        return FFT.MultipleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return FFT.MultipleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleAverage(FFTPlot, FFT.Single):
@@ -42,7 +42,7 @@ class SingleAverage(FFTPlot, FFT.Single):
         FFT.Single.__init__(self)
 
     def getGenerator(self):
-        return FFT.SingleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return FFT.SingleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleRegular(FFTPlot, FFT.Single):
@@ -51,4 +51,4 @@ class SingleRegular(FFTPlot, FFT.Single):
         FFT.Single.__init__(self)
 
     def getGenerator(self):
-        return FFT.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients)
+        return FFT.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()

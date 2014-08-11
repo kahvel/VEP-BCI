@@ -15,6 +15,9 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.filter_coefficients = None
         self.options = None
 
+    def getGenerator(self):
+        raise NotImplementedError("getGenerator not implemented")
+
     # def getPlotCount(self, channel_count):  # implemented in SignalProcessing
     #     raise NotImplementedError("getPlotCount not implemented")
 
