@@ -10,6 +10,9 @@ class SNRExtraction(ExtractionWindow.ExtractionWindow):
     def __init__(self, title):
         ExtractionWindow.ExtractionWindow.__init__(self, title)
 
+    def startDeleting(self):
+        return lambda x: True
+
     def generator(self, index, start_deleting):
         coordinates_generator = self.getGenerator()
         try:
