@@ -34,6 +34,7 @@ class PostOffice(object):
                     self.sendMessage(self.plot_connection, "Start")
                     self.sendMessage(self.extraction_connection, "Start")
                     self.sendMessage(self.psychopy_connection, self.main_connection.recv())
+                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())
                     self.sendMessage(self.extraction_connection, self.main_connection.recv())
                     self.sendMessage(self.extraction_connection, self.main_connection.recv())
                     message = self.start()

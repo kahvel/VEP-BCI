@@ -79,7 +79,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def initTargetFrame(self):
         frame = Frame(self)
-        MyWindows.newFreqTextBox(frame, "Freq:", 0, 0, self.target_textboxes)
+        MyWindows.newTextBox(frame, "Freq:", 0, 0, self.target_textboxes, validatecommand=self.validateFreq)
         disable_checkbox = Checkbutton(frame, text="Disable", variable=self.disable_checkbox_var, command=lambda: self.disableButtonChange())
         disable_checkbox.grid(row=0, column=2, padx=5, pady=5, columnspan=2)
         MyWindows.newTextBox(frame, "Width:", 0, 1, self.target_textboxes)
@@ -131,27 +131,44 @@ class MainWindow(MyWindows.TkWindow):
     def extraction(self):
         self.newProcess(Main.runPSIdentification, "Add extraction", self.sensor_names)
 
+    def validateFreq(self, textbox):
+        if textbox.get() != "":
+            monitor_freq = int(self.background_textboxes["Freq"].get())
+            freq = float(textbox.get())
+            freq_on = int(monitor_freq/freq//2)
+            freq_off = int(monitor_freq/freq/2.0+0.5)
+            textbox.delete(0, END)
+            textbox.insert(0, float(monitor_freq)/(freq_off+freq_on))
+        return True
+
     def getEnabledTargets(self):
         targets = []
         for target in self.targets[1:]:
-            if target["Disable"] == 0:
+            if int(target["Disable"]) == 0:
                 targets.append(target)
         return targets
 
     def getChosenFreq(self):
         freq = []
         for i in range(1, len(self.targets)):
-            if self.targets[i]["Disable"] == 0:
+            if int(self.targets[i]["Disable"]) == 0:
                 freq.append(float(self.targets[i]["Freq"]))
         return freq
 
     def getRecordedSignals(self):
         signals = []
         for i in range(1, len(self.targets)):
-            if self.targets[i]["Disable"] == 0:
+            if int(self.targets[i]["Disable"]) == 0:
                 signals.append(float(self.targets[i]["Freq"]))
         signals.append(self.neutral_signal)
         return signals
+
+    def getBackgroundData(self):
+        self.saveValues(self.current_radio_button.get())
+        bk = {}
+        for key in self.background_textboxes:
+            bk[key] = self.background_textboxes[key].get()
+        return bk
 
     def recordTarget(self):
         if self.current_radio_button.get() == 0:
@@ -176,6 +193,7 @@ class MainWindow(MyWindows.TkWindow):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
         self.connection.send("Start")
+        self.connection.send(self.getBackgroundData())
         self.connection.send(self.getEnabledTargets())
         self.connection.send(self.getChosenFreq())
         self.connection.send(self.getRecordedSignals())
@@ -193,11 +211,7 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(reduced)
 
     def targetsWindow(self):
-        self.saveValues(self.current_radio_button.get())
-        bk = {}
-        for key in self.background_textboxes:
-            bk[key] = self.background_textboxes[key].get()
-        self.newProcess(Main.runPsychopy, "Add psychopy", bk)
+        self.newProcess(Main.runPsychopy, "Add psychopy", self.getBackgroundData())
 
     def plotWindow(self):
         self.newProcess(Main.runPlotControl, "Add plot", self.sensor_names)
@@ -223,9 +237,10 @@ class MainWindow(MyWindows.TkWindow):
         for key in self.target_color_buttons:
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
         self.disable_checkbox_var.set(self.targets[index]["Disable"])
+        self.validateFreq(self.target_textboxes["Freq"])
 
     def saveValues(self, index):
-        MyWindows.validateFreq(self.target_textboxes["Freq"])
+        self.validateFreq(self.target_textboxes["Freq"])
         if index == 0:
             for key in self.target_textboxes:
                 if self.target_textboxes[key].get() != "":

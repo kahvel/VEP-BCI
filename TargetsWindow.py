@@ -2,14 +2,15 @@ __author__ = 'Anti'
 from psychopy import visual, core, logging, event
 
 
-class Target:
+class Target(object):
     def __init__(self, target, window, monitor_frequency):
         self.color = target["Color1"]
         self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
                                 pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=self.color)
         # self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
         # self.fixation.setAutoDraw(True)
-        self.detection_color = "#00ff00"
+        self.detected_rect = visual.Rect(window, width=10, height=10, pos=(int(target["x"]), int(target["y"])+170), fillColor="#00ff00")
+        # self.detection_color = "#00ff00"
         self.freq = float(target["Freq"])
         self.sequence = "01"
         monitor_frequency = int(monitor_frequency)
@@ -18,40 +19,36 @@ class Target:
         print "Frequency: " + str(float(monitor_frequency)/(self.freq_off+self.freq_on)), self.freq_on, self.freq_off
 
     def generator(self):
-        detected = False
         while True:
             for c in self.sequence:
                 if c == "1":
                     for _ in range(self.freq_on):
                         freq = yield
                         if freq == self.freq:
-                            detected = True
-                        if detected:
-                            self.rect.fillColor = self.detection_color
+                            self.detected_rect.draw()
                         self.rect.draw()
                         # self.fixation.draw()
-                detected = False
                 self.rect.fillColor = self.color
                 if c == "0":
                     for _ in range(self.freq_off):
                         freq = yield
                         if freq == self.freq:
-                            detected = True
+                            self.detected_rect.draw()
 
 
-class TargetsWindow:
+class TargetsWindow(object):
     def __init__(self, connection, background_data):
         logging.console.setLevel(logging.WARNING)
         self.connection = connection
         self.generators = []
-        self.window = None
-        self.monitor_frequency = None
-        self.setWindow(background_data)
+        self.window = visual.Window([int(background_data["Width"]),
+                                     int(background_data["Height"])],
+                                    units="pix", color=background_data["Color"])
+        self.monitor_frequency = background_data["Freq"]
         self.MyMainloop()
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
         #self.window.setRecordFrameIntervals(True)
-        #self.run()
 
     def recvPacket(self):
         while True:
@@ -67,6 +64,7 @@ class TargetsWindow:
             message = self.recvPacket()
             if message == "Start":
                 print "Starting targets"
+                self.setFreq(self.connection.recv())
                 self.setTargets(self.connection.recv())
                 message = self.run()
             if message == "Stop":
@@ -78,10 +76,9 @@ class TargetsWindow:
         self.connection.close()
         self.window.close()
 
-    def setWindow(self, background_data):
-        self.window = visual.Window([int(background_data["Width"]),
-                                     int(background_data["Height"])],
-                                    units="pix", color=background_data["Color"])
+    def setFreq(self, background_data):
+        # self.window.size = (int(background_data["Width"]), int(background_data["Height"]))
+        # self.window.color = background_data["Color"]
         self.monitor_frequency = background_data["Freq"]
 
     def setTargets(self, targets):

@@ -44,25 +44,11 @@ def newColorButton(column, row, function, frame, title, textboxes, color_buttons
     textboxes[title] = textbox
 
 
-def newTextBox(frame, text, column, row, textboxes, width=5):
+def newTextBox(frame, text, column, row, textboxes, width=5, validatecommand=None):
     Tkinter.Label(frame, text=text).grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=width)
+    if validatecommand is None:
+        textbox = Tkinter.Entry(frame, width=width)
+    else:
+        textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     textboxes[text[:-1]] = textbox
-
-
-def newFreqTextBox(frame, text, column, row, textboxes, width=5):
-    Tkinter.Label(frame, text=text).grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validateFreq(textbox))
-    textbox.grid(column=column+1, row=row, padx=5, pady=5)
-    textboxes[text[:-1]] = textbox
-
-
-def validateFreq(textbox):
-    if textbox.get() != "":
-        freq = float(textbox.get())
-        freq_on = int(60/freq//2)
-        freq_off = int(60/freq/2.0+0.5)
-        textbox.delete(0, Tkinter.END)
-        textbox.insert(0, float(60)/(freq_off+freq_on))
-    return True
