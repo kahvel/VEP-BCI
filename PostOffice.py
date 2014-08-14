@@ -56,9 +56,11 @@ class PostOffice(object):
                 elif message == "Record target":
                     self.sendMessage(self.psychopy_connection, "Start")
                     self.sendMessage(self.psychopy_connection, self.main_connection.recv())
+                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Start")
                     self.recordSignal(self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Stop")
+                    self.sendMessage(self.psychopy_connection, "Stop")
                 else:
                     print "Unknown message:", message
 

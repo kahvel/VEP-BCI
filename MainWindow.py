@@ -159,7 +159,7 @@ class MainWindow(MyWindows.TkWindow):
         signals = []
         for i in range(1, len(self.targets)):
             if int(self.targets[i]["Disable"]) == 0:
-                signals.append(float(self.targets[i]["Freq"]))
+                signals.append(self.target_signal[i])
         signals.append(self.neutral_signal)
         return signals
 
@@ -176,7 +176,8 @@ class MainWindow(MyWindows.TkWindow):
         else:
             self.connection.send("Record target")
             # self.connection.send(self.getEnabledTargets())
-            self.connection.send(self.targets[self.current_radio_button.get()])
+            self.connection.send(self.getBackgroundData())
+            self.connection.send([self.targets[self.current_radio_button.get()]])
             self.connection.send(512)
             while not self.connection.poll(0.1):
                 self.update()

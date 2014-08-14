@@ -52,9 +52,6 @@ class MultipleRegular(FFT):
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        # for i in range(0, 512, 40):  # scale
-        #     self.canvas.create_line(i, 0, i, 512, fill="red")
-        #     self.canvas.create_text(i, 10, text=i/8)
         coordinates = []
         filter_prev_state = self.filterPrevState([0])
         for i in range(length/step):

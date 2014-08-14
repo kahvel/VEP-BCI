@@ -11,6 +11,9 @@ class PlotWindow(ControllableWindow.ControllableWindow):
 
     def resetCanvas(self):
         self.canvas.delete("all")
+        for i in range(0, 512, 40):  # scale
+            self.canvas.create_line(i, 0, i, 512, fill="red")
+            self.canvas.create_text(i, 10, text=i/8)
 
     def scaleY(self, y,  index, plot_count, old_max, old_min, new_max=-100, new_min=100):
         return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min

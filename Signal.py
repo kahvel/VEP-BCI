@@ -40,7 +40,6 @@ class Average(Signal):
         average = [0 for _ in range(length)]
         k = 0
         prev_coordinate = 0
-        yield
         filter_prev_state = self.filterPrevState([0])
         while True:
             k += 1
@@ -63,7 +62,6 @@ class Regular(Signal):
         length = self.options["Length"]
         average = [0 for _ in range(step)]
         prev_coordinate = 0
-        yield
         filter_prev_state = self.filterPrevState([0])
         while True:
             for i in range(length/step):

@@ -18,9 +18,10 @@ class ExtractionWindow(ControllableWindow.ControllableWindow):
     def resetCanvas(self):
         self.canvas.insert(Tkinter.END, "Starting\n")
 
-    def setup(self, options, sensor_names, window_function, filter_coefficients, freq_points=None, recorded_signal=None, connection=None):
+    def setup(self, options, sensor_names, window_function, filter_coefficients, freq_points=None, recorded_signals=None, connection=None):
         self.freq_points = freq_points
         self.freq_indexes = []
-        self.recorded_signals = recorded_signal
+        self.recorded_signals = recorded_signals
+        self.sensor_names = sensor_names
         self.connection = connection
         ControllableWindow.ControllableWindow.setup(self, options, sensor_names, window_function, filter_coefficients)
