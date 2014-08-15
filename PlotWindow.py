@@ -11,7 +11,7 @@ class PlotWindow(ControllableWindow.ControllableWindow):
 
     def resetCanvas(self):
         self.canvas.delete("all")
-        for i in range(0, 512, 40):  # scale
+        for i in range(0, 512, 40):  # scale for FFT
             self.canvas.create_line(i, 0, i, 512, fill="red")
             self.canvas.create_text(i, 10, text=i/8)
 
@@ -30,8 +30,10 @@ class PlotWindow(ControllableWindow.ControllableWindow):
             delete = False
             coordinates_generator.send(None)
             while True:
-                y = yield
-                avg = coordinates_generator.send(y)
+                for _ in range(self.channel_count-self.plot_count+1):
+                    y = yield
+                    avg = coordinates_generator.send(y)
+                packet_count += 1
                 if avg is not None:
                     scaled_avg = self.scale(avg, index, packet_count)
                     lines.append(self.canvas.create_line(scaled_avg))
@@ -42,7 +44,6 @@ class PlotWindow(ControllableWindow.ControllableWindow):
                     if delete:
                         self.canvas.delete(lines[0])
                         del lines[0]
-                packet_count += 1
         finally:
             print "Closing generator"
             coordinates_generator.close()
