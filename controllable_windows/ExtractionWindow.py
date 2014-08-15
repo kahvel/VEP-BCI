@@ -1,7 +1,8 @@
 __author__ = 'Anti'
+
+from controllable_windows import ControllableWindow
 import Tkinter
 import ScrolledText
-import ControllableWindow
 
 
 class ExtractionWindow(ControllableWindow.ControllableWindow):

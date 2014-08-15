@@ -1,6 +1,6 @@
 __author__ = 'Anti'
 
-import MyWindows
+from main_window import MyWindows
 import Tkinter
 
 

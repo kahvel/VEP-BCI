@@ -1,7 +1,7 @@
 __author__ = 'Anti'
-import SNRExtraction
-import ControlWindow
-import TemplateExtraction
+
+from control_windows import ControlWindow
+from main_logic import SNRExtraction, TemplateExtraction
 
 
 class Window(ControlWindow.ControlWindow):

@@ -1,5 +1,6 @@
 __author__ = 'Anti'
-import MyWindows
+
+from main_window import MyWindows
 
 
 class ControllableWindow(MyWindows.ToplevelWindow):
@@ -18,8 +19,8 @@ class ControllableWindow(MyWindows.ToplevelWindow):
     def getGenerator(self):
         raise NotImplementedError("getGenerator not implemented")
 
-    # def getPlotCount(self, channel_count):  # implemented in SignalProcessing
-    #     raise NotImplementedError("getPlotCount not implemented")
+    def getPlotCount(self, channel_count):  # implemented in SignalProcessing
+        raise NotImplementedError("getPlotCount not implemented")
 
     def generator(self, index, start_deleting):
         raise NotImplementedError("generator not implemented")

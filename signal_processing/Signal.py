@@ -1,5 +1,6 @@
 __author__ = 'Anti'
-import SignalProcessing
+
+from signal_processing import SignalProcessing
 import numpy as np
 import Queue
 
@@ -135,21 +136,3 @@ class SingleRegular(Signal):
                     average[j] = summ/channel_count
                 yield Queue.deque(self.addPrevious(average, prev_coordinate))
                 prev_coordinate = average[-1]
-
-
-class Multiple(SignalProcessing.Multiple):
-    def __init__(self):
-        SignalProcessing.Multiple.__init__(self)
-
-    def sendPacket(self, packet, generators, sensor_names):
-        for i in range(len(sensor_names)):
-            generators[i].send(float(packet.sensors[sensor_names[i]]["value"]))
-
-
-class Single(SignalProcessing.Single):
-    def __init__(self):
-        SignalProcessing.Single.__init__(self)
-
-    def sendPacket(self, packet, generators, sensor_names):
-        for i in range(len(sensor_names)):
-            generators[0].send(float(packet.sensors[sensor_names[i]]["value"]))

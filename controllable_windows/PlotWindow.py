@@ -1,6 +1,7 @@
+from controllable_windows import ControllableWindow
 __author__ = 'Anti'
+
 import Tkinter
-import ControllableWindow
 
 
 class PlotWindow(ControllableWindow.ControllableWindow):

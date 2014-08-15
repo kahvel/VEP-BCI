@@ -1,9 +1,8 @@
 __author__ = 'Anti'
 
+from control_windows import ControlWindow
+from main_logic import FFTPlot, SignalPlot
 import Tkinter
-import ControlWindow
-import SignalPlot
-import FFTPlot
 
 
 class Window(ControlWindow.ControlWindow):

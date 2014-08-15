@@ -1,7 +1,6 @@
 __author__ = 'Anti'
+
 import emokit.emotiv
-import gevent
-from multiprocessing import reduction
 from Crypto.Cipher import AES
 from Crypto import Random
 

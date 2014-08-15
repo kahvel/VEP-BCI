@@ -1,10 +1,10 @@
 __author__ = 'Anti'
 
-import ExtractionWindow
-import FFT
+from controllable_windows import ExtractionWindow
+from signal_processing import FFT
+from main_logic import Abstract
 import Tkinter
 import numpy as np
-import scipy.signal
 
 
 class SNRExtraction(ExtractionWindow.ExtractionWindow):
@@ -92,19 +92,19 @@ class SNRExtraction(ExtractionWindow.ExtractionWindow):
             coordinates_generator.close()
 
 
-class Single(SNRExtraction, FFT.Single):
+class Single(Abstract.Single, SNRExtraction):
     def __init__(self):
+        Abstract.Single.__init__(self)
         SNRExtraction.__init__(self, "Sum SNR")
-        FFT.Single.__init__(self)
 
     def getGenerator(self):
         return FFT.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
-class Multiple(SNRExtraction, FFT.Multiple):
+class Multiple(Abstract.Multiple, SNRExtraction):
     def __init__(self):
+        Abstract.Multiple.__init__(self)
         SNRExtraction.__init__(self, "SNR")
-        FFT.Multiple.__init__(self)
 
     def getGenerator(self):
         return FFT.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()

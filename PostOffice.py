@@ -1,4 +1,5 @@
 __author__ = 'Anti'
+
 import multiprocessing.reduction
 
 
@@ -48,7 +49,12 @@ class PostOffice(object):
                     self.sendMessage(self.psychopy_connection, "Exit")
                     self.sendMessage(self.plot_connection, "Exit")
                     self.sendMessage(self.extraction_connection, "Exit")
-                    return
+                    while True:  # wait until all connections are closed
+                        self.handleMessage(self.psychopy_connection, "Psychopy")
+                        self.handleMessage(self.plot_connection, "Plot")
+                        self.handleMessage(self.extraction_connection, "Extraction")
+                        if len(self.psychopy_connection)+len(self.plot_connection)+len(self.extraction_connection) == 0:
+                            return
                 elif message == "Record neutral":
                     self.sendMessage(self.emotiv_connection, "Start")
                     self.recordSignal(self.main_connection.recv())
@@ -101,6 +107,3 @@ class PostOffice(object):
                 self.sendMessage(self.plot_connection, message)
             self.handleMessage(self.plot_connection, "Plot")
             self.handleMessage(self.extraction_connection, "Extraction")
-
-    def exit(self):
-        pass

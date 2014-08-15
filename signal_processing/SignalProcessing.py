@@ -1,4 +1,5 @@
 __author__ = 'Anti'
+
 import scipy.signal
 
 
@@ -32,13 +33,3 @@ class SignalProcessing(object):
             return scipy.signal.lfiltic(1.0, self.filter_coefficients, prev_coordinates)
         else:
             return None
-
-
-class Multiple(object):
-    def getPlotCount(self, channel_count):
-        return channel_count
-
-
-class Single(object):
-    def getPlotCount(self, channel_count):
-        return 1

@@ -1,5 +1,6 @@
 __author__ = 'Anti'
-import MyWindows
+
+from main_window import MyWindows
 import Tkinter
 import numpy as np
 import scipy.signal

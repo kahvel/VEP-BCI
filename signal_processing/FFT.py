@@ -1,7 +1,7 @@
 __author__ = 'Anti'
+
+from signal_processing import SignalProcessing
 import numpy as np
-import scipy.signal
-import SignalProcessing
 
 
 class FFT(SignalProcessing.SignalProcessing):
@@ -213,21 +213,3 @@ class SingleRegular(FFT):
                         summ += ffts[j][i]
                     average[i] = summ/channel_count
                 yield self.normaliseSpectrum(average)
-
-
-class Multiple(SignalProcessing.Multiple):
-    def __init__(self):
-        SignalProcessing.Multiple.__init__(self)
-
-    def sendPacket(self, packet, generators, sensor_names):
-        for i in range(len(sensor_names)):
-            generators[i].send(float(packet.sensors[sensor_names[i]]["value"]))
-
-
-class Single(SignalProcessing.Single):
-    def __init__(self):
-        SignalProcessing.Single.__init__(self)
-
-    def sendPacket(self, packet, generators, sensor_names):
-        for i in range(len(sensor_names)):
-            generators[0].send(float(packet.sensors[sensor_names[i]]["value"]))

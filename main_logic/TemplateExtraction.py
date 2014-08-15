@@ -1,11 +1,11 @@
 __author__ = 'Anti'
 
-import ExtractionWindow
-import Signal
+from controllable_windows import ExtractionWindow
+from signal_processing import Signal
+from main_logic import Abstract
 import scipy.signal
 import Tkinter
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 # class TemplateExtraction(ExtractionWindow.ExtractionWindow):
@@ -126,19 +126,19 @@ class TemplateExtraction(ExtractionWindow.ExtractionWindow):
             coordinates_generator.close()
 
 
-class Single(TemplateExtraction, Signal.Single):
+class Single(Abstract.Single, TemplateExtraction):
     def __init__(self):
+        Abstract.Single.__init__(self)
         TemplateExtraction.__init__(self, "Template Extraction")
-        Signal.Single.__init__(self)
 
     def getGenerator(self):
         return Signal.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
-class Multiple(TemplateExtraction, Signal.Multiple):
+class Multiple(Abstract.Multiple, TemplateExtraction):
     def __init__(self):
+        Abstract.Multiple.__init__(self)
         TemplateExtraction.__init__(self, "Template Extraction")
-        Signal.Multiple.__init__(self)
 
     def getGenerator(self):
         return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
