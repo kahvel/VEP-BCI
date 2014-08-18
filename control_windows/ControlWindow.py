@@ -152,7 +152,7 @@ class ControlWindow(MyWindows.TkWindow):
         self.setSensorNames()
         self.setOptions(self.options_textboxes, self.variables)
         self.setupWindows()
-        self.startPacketSending()
+        return self.startPacketSending()
 
     def startPacketSending(self):
         while True:
