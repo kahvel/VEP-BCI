@@ -78,77 +78,103 @@ import sklearn.cross_decomposition
 #             print "Closing generator"
 #             coordinates_generator.close()
 
-class TemplateExtraction(ExtractionWindow.ExtractionWindow):
+class CCAExtraction(ExtractionWindow.ExtractionWindow):
     def __init__(self, title):
         ExtractionWindow.ExtractionWindow.__init__(self, title)
 
+    def getGenerator(self, index):
+        return self.generator(index)
+
     def generator(self, index):
-        h = 3  # number of harmonics
-        target_signals = []
-        t = np.arange(0, self.options["Length"])
-        for freq in self.freq_points:
-            target_signals.append([])
-            for harmonic in range(1, h+1):
-                target_signals[-1].append(np.sin(np.pi*2*harmonic*freq/self.headset_freq*t))
-                target_signals[-1].append(np.cos(np.pi*2*harmonic*freq/self.headset_freq*t))
-        cca = sklearn.cross_decomposition.CCA(n_components=1)
-        count = [0 for _ in range(len(self.freq_points))]
         coordinates_generators = [self.getCoordGenerator() for _ in range(self.channel_count)]
-        try:
-            for generator in coordinates_generators:
-                generator.send(None)
+        main_generator = mainGenerator(self.options["Length"], self.options["Step"], self.headset_freq,
+                                       coordinates_generators, self.freq_points, self.canvas)
+        main_generator.send(None)
+        i = 0
+        while True:
+            i += 1
+            coordinate = yield
+            result = main_generator.send(coordinate)
+            if result is not None:
+                print i, result
+                self.connection.send(result)
+                main_generator.next()
+
+    def getCoordGenerator(self):
+        return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+
+
+def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox):
+    coord_gen_count = len(coordinates_generators)
+    h = 3  # number of harmonics
+    target_signals = []
+    t = np.arange(0, length)
+    for freq in target_freqs:
+        target_signals.append([])
+        for harmonic in range(1, h+1):
+            target_signals[-1].append(np.sin(np.pi*2*harmonic*freq/sampling_freq*t))
+            target_signals[-1].append(np.cos(np.pi*2*harmonic*freq/sampling_freq*t))
+    cca = sklearn.cross_decomposition.CCA(n_components=1)
+    count = [0 for _ in range(len(target_freqs))]
+    for generator in coordinates_generators:
+        generator.send(None)
+    i = 0
+    coordinates = [None for _ in range(coord_gen_count)]
+    while i != length/step*coord_gen_count:
+        for channel in range(coord_gen_count):
+            y = yield
+            result = coordinates_generators[channel].send(y)
+            if result is not None:
+                i += 1
+                coordinates[channel] = result
+                coordinates_generators[channel].next()
+    max = 0
+    max_index = 0
+    for i in range(len(target_signals)):
+        res_x, res_y = cca.fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
+        corr = np.corrcoef(res_x.T, res_y.T)[0][1]
+        # print target_freqs[i], corr
+        if corr > max:
+            max = corr
+            max_index = i
+    count[max_index] += 1
+    # print target_freqs[max_index], max
+    # print count
+    yield target_freqs[max_index]
+    while True:
+        for j in range(length/step):
+            # print coordinates
             i = 0
-            coordinates = [None for _ in range(self.channel_count)]
-            while i != self.options["Length"]/self.options["Step"]*self.channel_count:
-                for channel in range(self.channel_count):
+            while i != coord_gen_count:
+                for channel in range(coord_gen_count):
                     y = yield
                     result = coordinates_generators[channel].send(y)
                     if result is not None:
+                        coordinates[channel] = np.roll(result, -(j+1)*step)
                         i += 1
-                        coordinates[channel] = result
-            while True:
-                for j in range(self.options["Length"]/self.options["Step"]):
-                    print coordinates
-                    i = 0
-                    while i != self.channel_count:
-                        for channel in range(self.channel_count):
-                            y = yield
-                            result = coordinates_generators[channel].send(y)
-                            if result is not None:
-                                coordinates[channel] = np.roll(result, -(j+1)*self.options["Step"])
-                                i += 1
-                    max = 0
-                    max_index = 0
-                    for i in range(len(target_signals)):
-                        res_x, res_y = cca.fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
-                        corr = np.corrcoef(res_x.T, res_y.T)[0][1]
-                        # print self.freq_points[i], corr
-                        if corr > max:
-                            max = corr
-                            max_index = i
-                    count[max_index] += 1
-                    print self.freq_points[max_index], max
-                    print count
-                    self.connection.send(self.freq_points[max_index])
-        finally:
-            print "Closing generator"
-            for generator in coordinates_generators:
-                generator.close()
+                        coordinates_generators[channel].next()
+            max = 0
+            max_index = 0
+            for i in range(len(target_signals)):
+                res_x, res_y = cca.fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
+                corr = np.corrcoef(res_x.T, res_y.T)[0][1]
+                # print target_freqs[i], corr
+                if corr > max:
+                    max = corr
+                    max_index = i
+            count[max_index] += 1
+            # print target_freqs[max_index], max
+            # print count
+            yield target_freqs[max_index]
 
 
-class Single(Abstract.Single, TemplateExtraction):
+class Single(Abstract.Single, CCAExtraction):
     def __init__(self):
         Abstract.Single.__init__(self)
-        TemplateExtraction.__init__(self, "Template Extraction")
-
-    def getCoordGenerator(self):
-        return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        CCAExtraction.__init__(self, "Template Extraction")
 
 
-class Multiple(Abstract.Single, TemplateExtraction):
+class Multiple(Abstract.Single, CCAExtraction):
     def __init__(self):
         Abstract.Single.__init__(self)
-        TemplateExtraction.__init__(self, "Template Extraction")
-
-    def getCoordGenerator(self):
-        return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        CCAExtraction.__init__(self, "Template Extraction")

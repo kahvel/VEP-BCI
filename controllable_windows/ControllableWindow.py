@@ -25,7 +25,7 @@ class ControllableWindow(MyWindows.ToplevelWindow):
     def getGenCount(self, channel_count):  # implemented in main_logic.Abstract
         raise NotImplementedError("getGenCount not implemented")
 
-    def generator(self, index):
+    def getGenerator(self, index):
         raise NotImplementedError("generator not implemented")
 
     def setup(self, options, sensor_names, window_function, filter_coefficients):
@@ -36,5 +36,5 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.gen_count = self.getGenCount(self.channel_count)
         self.generators = []
         for i in range(self.gen_count):
-            self.generators.append(self.generator(i))
+            self.generators.append(self.getGenerator(i))
             self.generators[i].send(None)

@@ -31,6 +31,9 @@ class PlotWindow(ControllableWindow.ControllableWindow):
             result.append(self.scaleY(coordinates[i], index))
         return result
 
+    def getGenerator(self, index):
+        return self.generator(index)
+
     def generator(self, index):
         coordinates_generator = self.getCoordGenerator()
         try:
@@ -43,6 +46,7 @@ class PlotWindow(ControllableWindow.ControllableWindow):
                     scaled_avg = self.scale(coordinates, index)
                     self.canvas.delete(line)
                     line = self.canvas.create_line(scaled_avg)
+                    coordinates_generator.next()
         finally:
             print "Closing generator"
             coordinates_generator.close()

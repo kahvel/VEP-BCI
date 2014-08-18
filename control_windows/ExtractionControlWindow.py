@@ -1,15 +1,15 @@
 __author__ = 'Anti'
 
 from control_windows import ControlWindow
-from main_logic import PSDAExtraction, TemplateExtraction
+from main_logic import PSDAExtraction, CCAExtraction, CCAPSDAExtraction
 
 
 class Window(ControlWindow.ControlWindow):
     def __init__(self, connection, sensor_names):
-        self.window_group_names = ["SNR", "Temp"]
+        self.window_group_names = ["PSDA", "CCA", "CCA+PSDA"]
         self.window_names = ["Multiple", "Single"]
         self.button_names = ["", "Sum"]
-        self.files = [PSDAExtraction, TemplateExtraction]
+        self.files = [PSDAExtraction, CCAExtraction, CCAPSDAExtraction]
         ControlWindow.ControlWindow.__init__(self, "Extraction control", 320, 370, sensor_names)
         self.connection = connection
         self.freq_points = None

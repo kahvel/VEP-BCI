@@ -11,7 +11,6 @@ class ExtractionWindow(ControllableWindow.ControllableWindow):
         self.canvas = ScrolledText.ScrolledText(self)
         self.canvas.pack()
         self.freq_points = None
-        self.freq_indexes = None
         self.recorded_signals = None
         self.connection = None
         self.headset_freq = 128
@@ -21,7 +20,6 @@ class ExtractionWindow(ControllableWindow.ControllableWindow):
 
     def setup(self, options, sensor_names, window_function, filter_coefficients, freq_points=None, recorded_signals=None, connection=None):
         self.freq_points = freq_points
-        self.freq_indexes = []
         self.recorded_signals = recorded_signals
         self.sensor_names = sensor_names
         self.connection = connection
