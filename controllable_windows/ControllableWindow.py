@@ -9,18 +9,21 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.window_width = width
         self.window_height = height
         self.channel_count = 0
-        self.plot_count = 0
+        self.gen_count = 0
         self.generators = []
         self.continue_generating = True
         self.window_function = None
         self.filter_coefficients = None
         self.options = None
 
-    def getGenerator(self):
-        raise NotImplementedError("getGenerator not implemented")
+    def getCoordGenerator(self):
+        raise NotImplementedError("getCoordGenerator not implemented")
 
-    def getPlotCount(self, channel_count):  # implemented in main_logic.Abstract
-        raise NotImplementedError("getPlotCount not implemented")
+    def getCoordGenCount(self):
+        raise NotImplementedError("getCoordGenCount not implemented")
+
+    def getGenCount(self, channel_count):  # implemented in main_logic.Abstract
+        raise NotImplementedError("getGenCount not implemented")
 
     def generator(self, index):
         raise NotImplementedError("generator not implemented")
@@ -30,8 +33,8 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.filter_coefficients = filter_coefficients
         self.options = options
         self.channel_count = len(sensor_names)
-        self.plot_count = self.getPlotCount(self.channel_count)
+        self.gen_count = self.getGenCount(self.channel_count)
         self.generators = []
-        for i in range(self.plot_count):
+        for i in range(self.gen_count):
             self.generators.append(self.generator(i))
             self.generators[i].send(None)

@@ -20,15 +20,15 @@ class FFT(SignalProcessing.SignalProcessing):
     #     else:
     #         return signal
 
-    # def scaleYa(self, y,  index, plot_count, new_max=-100, new_min=100):
+    # def scaleYa(self, y,  index, gen_count, new_max=-100, new_min=100):
     #     return ((((y - (-10)) * (new_max - new_min)) / (10 - (-10))) + new_min
-    #             + index*self.window_height + self.window_height/2) / plot_count
+    #             + index*self.window_height + self.window_height/2) / gen_count
     #
     # def scalea(self, coordinates, index, packet_count):
     #     result = []
     #     for i in range(len(coordinates)):
     #         result.append(i*self.window_width/len(coordinates))
-    #         result.append(self.scaleYa(coordinates[i], index, self.plot_count))
+    #         result.append(self.scaleYa(coordinates[i], index, self.gen_count))
     #     return result
 
     def segmentPipeline(self, coordinates, filter_prev_state):

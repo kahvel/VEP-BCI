@@ -19,7 +19,7 @@ class PlotWindow(ControllableWindow.ControllableWindow):
     def scaleY(self, y,  index, new_max=-100, new_min=100):
         old_max, old_min = self.getScale()
         return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
-                + index*self.window_height + self.window_height/2) / self.plot_count
+                + index*self.window_height + self.window_height/2) / self.gen_count
 
     def getScale(self):
         raise NotImplementedError("getScale not implemented")
@@ -32,19 +32,17 @@ class PlotWindow(ControllableWindow.ControllableWindow):
         return result
 
     def generator(self, index):
-        coordinates_generator = self.getGenerator()
+        coordinates_generator = self.getCoordGenerator()
         try:
             line = self.canvas.create_line(0, 0, 0, 0)
             coordinates_generator.send(None)
             while True:
-                for _ in range(self.channel_count-self.plot_count+1):
-                    y = yield
-                    coordinates = coordinates_generator.send(y)
+                y = yield
+                coordinates = coordinates_generator.send(y)
                 if coordinates is not None:
                     scaled_avg = self.scale(coordinates, index)
                     self.canvas.delete(line)
                     line = self.canvas.create_line(scaled_avg)
-                    coordinates_generator.next()
         finally:
             print "Closing generator"
             coordinates_generator.close()

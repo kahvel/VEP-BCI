@@ -1,7 +1,7 @@
 __author__ = 'Anti'
 
 from control_windows import ControlWindow
-from main_logic import SNRExtraction, TemplateExtraction
+from main_logic import PSDAExtraction, TemplateExtraction
 
 
 class Window(ControlWindow.ControlWindow):
@@ -9,7 +9,7 @@ class Window(ControlWindow.ControlWindow):
         self.window_group_names = ["SNR", "Temp"]
         self.window_names = ["Multiple", "Single"]
         self.button_names = ["", "Sum"]
-        self.files = [SNRExtraction, TemplateExtraction]
+        self.files = [PSDAExtraction, TemplateExtraction]
         ControlWindow.ControlWindow.__init__(self, "Extraction control", 320, 370, sensor_names)
         self.connection = connection
         self.freq_points = None

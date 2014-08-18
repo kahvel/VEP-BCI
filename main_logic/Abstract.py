@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 
 class Multiple(object):
-    def getPlotCount(self, channel_count):
+    def getGenCount(self, channel_count):
         return channel_count
 
     def sendPacket(self, packet, generators, sensor_names):
@@ -11,7 +11,7 @@ class Multiple(object):
 
 
 class Single(object):
-    def getPlotCount(self, channel_count):
+    def getGenCount(self, channel_count):
         return 1
 
     def sendPacket(self, packet, generators, sensor_names):

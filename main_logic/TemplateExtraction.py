@@ -17,7 +17,7 @@ import sklearn.cross_decomposition
 #         return lambda x: True
 #
 #     def generator(self, index, start_deleting):
-#         coordinates_generator = self.getGenerator()
+#         coordinates_generator = self.getCoordGenerator()
 #         coordinates_generator.send(None)
 #         recorded_signals = []
 #         for signal in self.recorded_signals:
@@ -52,7 +52,7 @@ import sklearn.cross_decomposition
 #         # recorded_signals.append(np.sin(2*np.pi/20*x))
 #
 #         count = [0 for _ in range(len(recorded_signals))]
-#         coordinates_generator = self.getGenerator()
+#         coordinates_generator = self.getCoordGenerator()
 #         try:
 #             coordinates_generator.send(None)
 #             while True:
@@ -93,7 +93,7 @@ class TemplateExtraction(ExtractionWindow.ExtractionWindow):
                 target_signals[-1].append(np.cos(np.pi*2*harmonic*freq/self.headset_freq*t))
         cca = sklearn.cross_decomposition.CCA(n_components=1)
         count = [0 for _ in range(len(self.freq_points))]
-        coordinates_generators = [self.getGenerator() for _ in range(self.channel_count)]
+        coordinates_generators = [self.getCoordGenerator() for _ in range(self.channel_count)]
         try:
             for generator in coordinates_generators:
                 generator.send(None)
@@ -130,8 +130,6 @@ class TemplateExtraction(ExtractionWindow.ExtractionWindow):
                     print self.freq_points[max_index], max
                     print count
                     self.connection.send(self.freq_points[max_index])
-                    for generator in coordinates_generators:
-                        generator.next()
         finally:
             print "Closing generator"
             for generator in coordinates_generators:
@@ -143,7 +141,7 @@ class Single(Abstract.Single, TemplateExtraction):
         Abstract.Single.__init__(self)
         TemplateExtraction.__init__(self, "Template Extraction")
 
-    def getGenerator(self):
+    def getCoordGenerator(self):
         return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
@@ -152,5 +150,5 @@ class Multiple(Abstract.Single, TemplateExtraction):
         Abstract.Single.__init__(self)
         TemplateExtraction.__init__(self, "Template Extraction")
 
-    def getGenerator(self):
+    def getCoordGenerator(self):
         return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
