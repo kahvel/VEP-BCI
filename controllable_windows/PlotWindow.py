@@ -2,8 +2,6 @@ __author__ = 'Anti'
 
 from controllable_windows import ControllableWindow
 import Tkinter
-import numpy as np
-import Queue
 
 
 class PlotWindow(ControllableWindow.ControllableWindow):
@@ -18,44 +16,35 @@ class PlotWindow(ControllableWindow.ControllableWindow):
             self.canvas.create_line(i, 0, i, 512, fill="red")
             self.canvas.create_text(i, 10, text=i/8)
 
-    def scaleY(self, y,  index, plot_count, old_max, old_min, new_max=-100, new_min=100):
+    def scaleY(self, y,  index, new_max=-100, new_min=100):
+        old_max, old_min = self.getScale()
         return ((((y - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
-                + index*self.window_height + self.window_height/2) / plot_count
+                + index*self.window_height + self.window_height/2) / self.plot_count
 
-    def scale(self, avg, index, packet_count):
-        raise NotImplementedError("scale not implemented")
+    def getScale(self):
+        raise NotImplementedError("getScale not implemented")
 
-    def addPrevious(self, signal, previous):
-        if isinstance(signal, list):
-            return [previous] + signal
-        else:
-            return np.insert(signal, 0, previous)
+    def scale(self, coordinates, index):
+        result = []
+        for i in range(len(coordinates)):
+            result.append(i*self.window_width/len(coordinates))
+            result.append(self.scaleY(coordinates[i], index))
+        return result
 
-    def generator(self, index, start_deleting):
+    def generator(self, index):
         coordinates_generator = self.getGenerator()
         try:
-            lines = [self.canvas.create_line(0, 0, 0, 0)]
-            packet_count = 0
-            delete = False
-            prev_coordinate = 0
+            line = self.canvas.create_line(0, 0, 0, 0)
             coordinates_generator.send(None)
             while True:
                 for _ in range(self.channel_count-self.plot_count+1):
                     y = yield
-                    avg = coordinates_generator.send(y)
-                packet_count += 1
-                if avg is not None:
-                    avg = Queue.deque(self.addPrevious(avg, prev_coordinate))
-                    prev_coordinate = avg[-1]
-                    scaled_avg = self.scale(avg, index, packet_count)
-                    lines.append(self.canvas.create_line(scaled_avg))
+                    coordinates = coordinates_generator.send(y)
+                if coordinates is not None:
+                    scaled_avg = self.scale(coordinates, index)
+                    self.canvas.delete(line)
+                    line = self.canvas.create_line(scaled_avg)
                     coordinates_generator.next()
-                    if start_deleting(packet_count):
-                        packet_count = 0
-                        delete = True
-                    if delete:
-                        self.canvas.delete(lines[0])
-                        del lines[0]
         finally:
             print "Closing generator"
             coordinates_generator.close()

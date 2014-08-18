@@ -9,15 +9,8 @@ class FFTPlot(PlotWindow.PlotWindow):
     def __init__(self, title):
         PlotWindow.PlotWindow.__init__(self, title)
 
-    def startDeleting(self):
-        return lambda x: True
-
-    def scale(self, coordinates, index, packet_count):
-        result = []
-        for i in range(len(coordinates)):
-            result.append(i*self.window_width/len(coordinates))
-            result.append(self.scaleY(coordinates[i], index, self.plot_count, 3.3, 0.2))
-        return result
+    def getScale(self):
+        return 3.3, 0.2
 
 
 class MultipleRegular(Abstract.Multiple, FFTPlot):

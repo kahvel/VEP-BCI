@@ -19,14 +19,11 @@ class ControllableWindow(MyWindows.ToplevelWindow):
     def getGenerator(self):
         raise NotImplementedError("getGenerator not implemented")
 
-    def getPlotCount(self, channel_count):  # implemented in SignalProcessing
+    def getPlotCount(self, channel_count):  # implemented in main_logic.Abstract
         raise NotImplementedError("getPlotCount not implemented")
 
-    def generator(self, index, start_deleting):
+    def generator(self, index):
         raise NotImplementedError("generator not implemented")
-
-    def startDeleting(self):
-        raise NotImplementedError("startDeleting not implemented")
 
     def setup(self, options, sensor_names, window_function, filter_coefficients):
         self.window_function = window_function
@@ -36,5 +33,5 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.plot_count = self.getPlotCount(self.channel_count)
         self.generators = []
         for i in range(self.plot_count):
-            self.generators.append(self.generator(i, self.startDeleting()))
+            self.generators.append(self.generator(i))
             self.generators[i].send(None)

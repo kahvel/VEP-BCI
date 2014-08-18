@@ -30,7 +30,8 @@ class MultipleAverage(Signal):
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        average = [0 for _ in range(length)]
+        result = [0 for _ in range(length)]
+        coordinates = [0 for _ in range(step)]
         k = 0
         filter_prev_state = self.filterPrevState([0])
         while True:
@@ -38,9 +39,10 @@ class MultipleAverage(Signal):
             for i in range(length/step):
                 for j in range(step):
                     y = yield
-                    average[i*step+j] = (average[i*step+j] * (k - 1) + y) / k
-                signal_segment = self.getSegment(average, i)
-                result, filter_prev_state = self.signalPipeline(signal_segment, i, filter_prev_state)
+                    coordinates[j] = y
+                processed_signal, filter_prev_state = self.signalPipeline(coordinates, i, filter_prev_state)
+                for j in range(step):
+                    result[i*step+j] = (result[i*step+j] * (k - 1) + processed_signal[j]) / k
                 yield result
 
 
@@ -51,14 +53,17 @@ class MultipleRegular(Signal):
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        average = [0 for _ in range(step)]
+        coordinates = [0 for _ in range(step)]
+        result = [0 for _ in range(length)]
         filter_prev_state = self.filterPrevState([0])
         while True:
             for i in range(length/step):
                 for j in range(step):
                     y = yield
-                    average[j] = y
-                result, filter_prev_state = self.signalPipeline(average, i, filter_prev_state)
+                    coordinates[j] = y
+                processed_signal, filter_prev_state = self.signalPipeline(coordinates, i, filter_prev_state)
+                for j in range(step):
+                    result[i*step+j] = processed_signal[j]
                 yield result
 
 
@@ -70,28 +75,28 @@ class SingleAverage(Signal):
         step = self.options["Step"]
         length = self.options["Length"]
         channel_count = self.channel_count
-        average = [0 for _ in range(length)]
+        result = [0 for _ in range(length)]
+        coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
+        segment = [[0 for _ in range(step)] for _ in range(channel_count)]
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
         k = 0
         while True:
             k += 1
             for i in range(length/step):
-                coordinates = [[] for _ in range(channel_count)]
-                segment = [[] for _ in range(channel_count)]
                 for j in range(step):
                     for channel in range(channel_count):
                         y = yield
-                        segment[channel].append(y)
-                for j in range(channel_count):
-                    result, filter_prev_state[j] = self.signalPipeline(segment[j], i, filter_prev_state[j])
-                    coordinates[j].extend(result)
-                for j in range(len(coordinates[0])):
+                        segment[channel][j] = y
+                for channel in range(channel_count):
+                    processed_signal, filter_prev_state[channel] = self.signalPipeline(segment[channel], i, filter_prev_state[channel])
+                    for j in range(step):
+                        coordinates[channel][j] = processed_signal[j]
+                for j in range(step):
                     summ = 0
                     for channel in range(channel_count):
                         summ += coordinates[channel][j]
-                    average[i*step+j] = (average[i*step+j] * (k - 1) + summ/channel_count) / k
-                asd = self.getSegment(average, i)
-                yield asd
+                    result[i*step+j] = (result[i*step+j] * (k - 1) + summ/channel_count) / k
+                yield result
 
 
 class SingleRegular(Signal):
@@ -102,22 +107,25 @@ class SingleRegular(Signal):
         step = self.options["Step"]
         length = self.options["Length"]
         channel_count = self.channel_count
-        average = [0 for _ in range(step)]
+        result = [0 for _ in range(length)]
+        coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
+        segment = [[0 for _ in range(step)] for _ in range(channel_count)]
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
+        k = 0
         while True:
+            k += 1
             for i in range(length/step):
-                coordinates = [[] for _ in range(channel_count)]
-                segment = [[] for _ in range(channel_count)]
                 for j in range(step):
                     for channel in range(channel_count):
                         y = yield
-                        segment[channel].append(y)
-                for j in range(channel_count):
-                    result, filter_prev_state[j] = self.signalPipeline(segment[j], i, filter_prev_state[j])
-                    coordinates[j].extend(result)
-                for j in range(len(coordinates[0])):
+                        segment[channel][j] = y
+                for channel in range(channel_count):
+                    processed_signal, filter_prev_state[channel] = self.signalPipeline(segment[channel], i, filter_prev_state[channel])
+                    for j in range(step):
+                        coordinates[channel][j] = processed_signal[j]
+                for j in range(step):
                     summ = 0
-                    for k in range(channel_count):
-                        summ += coordinates[k][j]
-                    average[j] = summ/channel_count
-                yield average
+                    for channel in range(channel_count):
+                        summ += coordinates[channel][j]
+                    result[i*step+j] = summ/channel_count
+                yield result
