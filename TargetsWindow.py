@@ -8,8 +8,8 @@ class Target(object):
         self.color = target["Color1"]
         self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
                                 pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=self.color)
-        # self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
-        # self.fixation.setAutoDraw(True)
+        self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
+        self.fixation.setAutoDraw(True)
         self.detected_rect = visual.Rect(window, width=10, height=10, pos=(int(target["x"]), int(target["y"])+170), fillColor="#00ff00")
         # self.detection_color = "#00ff00"
         self.freq = float(target["Freq"])

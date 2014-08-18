@@ -1,7 +1,9 @@
-from controllable_windows import ControllableWindow
 __author__ = 'Anti'
 
+from controllable_windows import ControllableWindow
 import Tkinter
+import numpy as np
+import Queue
 
 
 class PlotWindow(ControllableWindow.ControllableWindow):
@@ -23,12 +25,19 @@ class PlotWindow(ControllableWindow.ControllableWindow):
     def scale(self, avg, index, packet_count):
         raise NotImplementedError("scale not implemented")
 
+    def addPrevious(self, signal, previous):
+        if isinstance(signal, list):
+            return [previous] + signal
+        else:
+            return np.insert(signal, 0, previous)
+
     def generator(self, index, start_deleting):
         coordinates_generator = self.getGenerator()
         try:
             lines = [self.canvas.create_line(0, 0, 0, 0)]
             packet_count = 0
             delete = False
+            prev_coordinate = 0
             coordinates_generator.send(None)
             while True:
                 for _ in range(self.channel_count-self.plot_count+1):
@@ -36,6 +45,8 @@ class PlotWindow(ControllableWindow.ControllableWindow):
                     avg = coordinates_generator.send(y)
                 packet_count += 1
                 if avg is not None:
+                    avg = Queue.deque(self.addPrevious(avg, prev_coordinate))
+                    prev_coordinate = avg[-1]
                     scaled_avg = self.scale(avg, index, packet_count)
                     lines.append(self.canvas.create_line(scaled_avg))
                     coordinates_generator.next()

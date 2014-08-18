@@ -6,6 +6,7 @@ from main_logic import Abstract
 import scipy.signal
 import Tkinter
 import numpy as np
+import sklearn.cross_decomposition
 
 
 # class TemplateExtraction(ExtractionWindow.ExtractionWindow):
@@ -85,45 +86,80 @@ class TemplateExtraction(ExtractionWindow.ExtractionWindow):
         return lambda x: True
 
     def generator(self, index, start_deleting):
-        # recorded_signals = []
-        # x = np.arange(0, 512)
-        # recorded_signals.append(np.sin(2*np.pi/12*x))
-        # recorded_signals.append(np.sin(2*np.pi/15*x))
-        # recorded_signals.append(np.sin(2*np.pi/20*x))
-        h = 1
+        h = 3  # number of harmonics
         target_signals = []
         t = np.arange(0, self.options["Length"])
         for freq in self.freq_points:
+            target_signals.append([])
             for harmonic in range(1, h+1):
-                target_signals.append(np.sin(np.pi*2*harmonic*freq/self.headset_freq*t))
-                target_signals.append(np.cos(np.pi*2*harmonic*freq/self.headset_freq*t))
+                target_signals[-1].append(np.sin(np.pi*2*harmonic*freq/self.headset_freq*t))
+                target_signals[-1].append(np.cos(np.pi*2*harmonic*freq/self.headset_freq*t))
 
         count = [0 for _ in range(len(self.freq_points))]
-        coordinates_generator = self.getGenerator()
+        coordinates_generators = [self.getGenerator() for _ in range(self.channel_count)]
+        coordinates = [[] for _ in range(self.channel_count)]
         try:
-            coordinates_generator.send(None)
+            for generator in coordinates_generators:
+                generator.send(None)
             while True:
-                y = yield
-                coordinates = coordinates_generator.send(y)
-                if coordinates is not None:
-                    max = 0
-                    max_index = 0
-                    print coordinates
-                    for i in range(len(target_signals)):
-                        if target_signals[i] is not None:
-                            conv = scipy.signal.correlate(target_signals[i], coordinates)
-                            asd = np.max(conv)
-                            if asd > max:
-                                max = asd
-                                max_index = i
-                    count[max_index] += 1
-                    print count
-                    self.canvas.insert(Tkinter.END, str(max_index)+" "+str(max)+"\n")
-                    self.canvas.yview(Tkinter.END)
-                    coordinates_generator.next()
+                j = 0
+                while True:
+                    for i in range(len(coordinates_generators)):
+                        y = yield
+                        result = coordinates_generators[i].send(y)
+                        if result is not None:
+                            coordinates[i].extend(result)
+                            j += 1
+                    if j == self.channel_count:
+                        break
+                if len(coordinates[0]) == self.options["Length"]:
+                    break
+            max = 0
+            max_index = 0
+            print coordinates
+            for i in range(len(target_signals)):
+                res_x, res_y = sklearn.cross_decomposition.CCA(n_components=1).fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
+                corr = np.corrcoef(res_x.T, res_y.T)[0][1]
+                print target_signals[i]
+                print self.freq_points[i], corr
+                if corr > max:
+                    max = corr
+                    max_index = i
+            count[max_index] += 1
+            self.connection.send(self.freq_points[max_index])
+            for generator in coordinates_generators:
+                generator.next()
+            while True:
+                j = 0
+                while True:
+                    for i in range(len(coordinates_generators)):
+                        y = yield
+                        result = coordinates_generators[i].send(y)
+                        if result is not None:
+                            coordinates[i].extend(result)
+                            del coordinates[i][:len(result)]
+                            j += 1
+                    if j == self.channel_count:
+                        break
+                max = 0
+                max_index = 0
+                for i in range(len(target_signals)):
+                    res_x, res_y = sklearn.cross_decomposition.CCA(n_components=1).fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
+                    corr = np.corrcoef(res_x.T, res_y.T)[0][1]
+                    # print self.freq_points[i], corr
+                    if corr > max:
+                        max = corr
+                        max_index = i
+                count[max_index] += 1
+                print self.freq_points[max_index], corr
+                print count
+                self.connection.send(self.freq_points[max_index])
+            for generator in coordinates_generators:
+                generator.next()
         finally:
             print "Closing generator"
-            coordinates_generator.close()
+            for generator in coordinates_generators:
+                generator.close()
 
 
 class Single(Abstract.Single, TemplateExtraction):
@@ -132,12 +168,12 @@ class Single(Abstract.Single, TemplateExtraction):
         TemplateExtraction.__init__(self, "Template Extraction")
 
     def getGenerator(self):
-        return Signal.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
-class Multiple(Abstract.Multiple, TemplateExtraction):
+class Multiple(Abstract.Single, TemplateExtraction):
     def __init__(self):
-        Abstract.Multiple.__init__(self)
+        Abstract.Single.__init__(self)
         TemplateExtraction.__init__(self, "Template Extraction")
 
     def getGenerator(self):

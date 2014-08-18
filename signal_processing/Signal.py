@@ -2,7 +2,6 @@ __author__ = 'Anti'
 
 from signal_processing import SignalProcessing
 import numpy as np
-import Queue
 
 
 class Signal(SignalProcessing.SignalProcessing):
@@ -15,12 +14,6 @@ class Signal(SignalProcessing.SignalProcessing):
             return array[i*step:i*step+step]
         else:
             return None
-
-    def addPrevious(self, signal, previous):
-        if isinstance(signal, list):
-            return [previous] + signal
-        else:
-            return np.insert(signal, 0, previous)
 
     def signalPipeline(self, signal, i, filter_prev_state):
         detrended_signal = self.detrendSignal(signal)
@@ -39,7 +32,6 @@ class MultipleAverage(Signal):
         length = self.options["Length"]
         average = [0 for _ in range(length)]
         k = 0
-        prev_coordinate = 0
         filter_prev_state = self.filterPrevState([0])
         while True:
             k += 1
@@ -49,8 +41,7 @@ class MultipleAverage(Signal):
                     average[i*step+j] = (average[i*step+j] * (k - 1) + y) / k
                 signal_segment = self.getSegment(average, i)
                 result, filter_prev_state = self.signalPipeline(signal_segment, i, filter_prev_state)
-                yield Queue.deque(self.addPrevious(result, prev_coordinate))
-                prev_coordinate = result[-1]
+                yield result
 
 
 class MultipleRegular(Signal):
@@ -61,7 +52,6 @@ class MultipleRegular(Signal):
         step = self.options["Step"]
         length = self.options["Length"]
         average = [0 for _ in range(step)]
-        prev_coordinate = 0
         filter_prev_state = self.filterPrevState([0])
         while True:
             for i in range(length/step):
@@ -69,8 +59,7 @@ class MultipleRegular(Signal):
                     y = yield
                     average[j] = y
                 result, filter_prev_state = self.signalPipeline(average, i, filter_prev_state)
-                yield Queue.deque(self.addPrevious(result, prev_coordinate))
-                prev_coordinate = result[-1]
+                yield result
 
 
 class SingleAverage(Signal):
@@ -82,7 +71,6 @@ class SingleAverage(Signal):
         length = self.options["Length"]
         channel_count = self.channel_count
         average = [0 for _ in range(length)]
-        prev_coordinate = 0
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
         k = 0
         while True:
@@ -103,8 +91,7 @@ class SingleAverage(Signal):
                         summ += coordinates[channel][j]
                     average[i*step+j] = (average[i*step+j] * (k - 1) + summ/channel_count) / k
                 asd = self.getSegment(average, i)
-                yield Queue.deque(self.addPrevious(asd, prev_coordinate))
-                prev_coordinate = asd[-1]
+                yield asd
 
 
 class SingleRegular(Signal):
@@ -116,7 +103,6 @@ class SingleRegular(Signal):
         length = self.options["Length"]
         channel_count = self.channel_count
         average = [0 for _ in range(step)]
-        prev_coordinate = 0
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
         while True:
             for i in range(length/step):
@@ -134,5 +120,4 @@ class SingleRegular(Signal):
                     for k in range(channel_count):
                         summ += coordinates[k][j]
                     average[j] = summ/channel_count
-                yield Queue.deque(self.addPrevious(average, prev_coordinate))
-                prev_coordinate = average[-1]
+                yield average
