@@ -6,7 +6,9 @@ from Crypto import Random
 
 
 class myEmotiv(emokit.emotiv.Emotiv):
-    def __init__(self, connection):
+    def __init__(self, connection, args):
+        self.lock = args[0]
+        self.lock.acquire()
         self.connection = connection
         self.devices = []
         self.serialNum = None
@@ -22,6 +24,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
             if message == "Start":
                 print "Starting emotiv"
                 message = self.run()
+                self.lock.acquire()
                 self.cleanUp()
                 if message == "Stop":
                     print "Emotiv stopped"
@@ -115,29 +118,30 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 break
 
         # Make sure we get packets
-        self.setup()
-        if self.serialNum == None:
+        self.setupWin()
+        if self.serialNum is None:
             print "USB not connected"
             return "Stop"
         self.setupCrypto(self.serialNum)
-        try:
-            task = self.packets.get(True, 1)
-        except:
-            print "Turn on headset"
-            return "Stop"
+        # try:
+        #     task = self.packets.get(True, 0.1)
+        # except:
+        #     print "Turn on headset"
+        #     return "Stop"
 
         # Mainloop
-        # send message to psychopy
+        self.lock.release()  # synchronising with psychopy
         while True:
             try:
+                task = self.packets.get(True, 0.01)
                 data = self.cipher.decrypt(task[:16]) + self.cipher.decrypt(task[16:])
                 packet = emokit.emotiv.EmotivPacket(data, self.sensors)
-                task = self.packets.get(True, 0.01)
                 self.connection.send(packet)
                 # print "Emotiv " + str(packet)
                 if self.packets.qsize() > 150:
                     print self.packets.qsize(), "packets in queue. Slow down!"
-            except Exception, e:
-                print "No packet", e
+            except:
+                pass
+                # print "No packet"
             if self.connection.poll():
                 return self.connection.recv()

@@ -13,19 +13,19 @@ def runPostOffice(connection):
 
 def runPlotControl(connection, args):
     from control_windows import PlotControlWindow
-    PlotControlWindow.Window(connection, args[0])
+    PlotControlWindow.Window(connection, args)
 
 
 def runEmotiv(connection, args):
     import MyEmotiv
-    MyEmotiv.myEmotiv(connection)
+    MyEmotiv.myEmotiv(connection, args)
 
 
 def runPsychopy(connection, args):
     import TargetsWindow
-    TargetsWindow.TargetsWindow(connection, args[0])
+    TargetsWindow.TargetsWindow(connection, args)
 
 
-def runPSIdentification(connection, args):
+def runExtractionControl(connection, args):
     from control_windows import ExtractionControlWindow
-    ExtractionControlWindow.Window(connection, args[0])
+    ExtractionControlWindow.Window(connection, args)

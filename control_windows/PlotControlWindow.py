@@ -6,12 +6,12 @@ import Tkinter
 
 
 class Window(ControlWindow.ControlWindow):
-    def __init__(self, connection, sensor_names):
+    def __init__(self, connection, args):
         self.window_group_names = ["Signal", "FFT"]
         self.window_names = ["MultipleAverage", "SingleAverage", "MultipleRegular", "SingleRegular"]
         self.button_names = ["Avg", "Sum Avg", "", "Sum"]
         self.files = [SignalPlot, FFTPlot]
-        ControlWindow.ControlWindow.__init__(self, "Plot control", 320, 370, sensor_names)
+        ControlWindow.ControlWindow.__init__(self, "Plot control", 320, 370, args)
         self.connection = connection
         self.fft_reset_buttons = {}
         self.signal_reset_buttons = {}

@@ -38,10 +38,12 @@ class Target(object):
 
 
 class TargetsWindow(object):
-    def __init__(self, connection, background_data):
+    def __init__(self, connection, args):
         logging.console.setLevel(logging.WARNING)
         self.connection = connection
         self.generators = []
+        background_data = args[0]
+        self.lock = args[1]
         self.window = visual.Window([int(background_data["Width"]),
                                      int(background_data["Height"])],
                                     units="pix", color=background_data["Color"])
@@ -67,7 +69,9 @@ class TargetsWindow(object):
                 print "Starting targets"
                 self.setFreq(self.connection.recv())
                 self.setTargets(self.connection.recv())
+                self.lock.acquire()
                 message = self.run()
+                self.lock.release()
             if message == "Stop":
                 print "Targets stopped"
             if message == "Exit":
@@ -90,8 +94,6 @@ class TargetsWindow(object):
             self.generators[-1].send(None)
 
     def run(self):
-        # while not self.connection.poll(0.1):  # Start emotiv and psychopy together
-        #     self.window.flip()
         while True:
             freq = None
             if self.connection.poll():

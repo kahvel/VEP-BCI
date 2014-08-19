@@ -40,7 +40,8 @@ class MainWindow(MyWindows.TkWindow):
         self.initElements()
         self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
-        self.newProcess(Main.runEmotiv, "Add emotiv")
+        self.lock = multiprocessing.Lock()
+        self.newProcess(Main.runEmotiv, "Add emotiv", self.lock)
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -132,7 +133,7 @@ class MainWindow(MyWindows.TkWindow):
         self.destroy()
 
     def extraction(self):
-        self.newProcess(Main.runPSIdentification, "Add extraction", self.sensor_names)
+        self.newProcess(Main.runExtractionControl, "Add extraction", self.sensor_names)
 
     def validateFreq(self, textbox):
         if textbox.get() != "":
@@ -215,7 +216,7 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(reduced)
 
     def targetsWindow(self):
-        self.newProcess(Main.runPsychopy, "Add psychopy", self.getBackgroundData())
+        self.newProcess(Main.runPsychopy, "Add psychopy", self.getBackgroundData(), self.lock)
 
     def plotWindow(self):
         self.newProcess(Main.runPlotControl, "Add plot", self.sensor_names)

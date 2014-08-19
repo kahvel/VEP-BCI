@@ -7,10 +7,10 @@ import scipy.signal
 
 
 class ControlWindow(MyWindows.TkWindow):
-    def __init__(self, title, width, height, sensor_names):
+    def __init__(self, title, width, height, args):
         MyWindows.TkWindow.__init__(self, title, width, height)
         self.name = title
-        self.all_sensor_names = sensor_names
+        self.all_sensor_names = args[0]
         self.chosen_sensor_names = []
         self.headset_freq = 128
         self.filter_coefficients = None

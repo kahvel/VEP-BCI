@@ -30,7 +30,6 @@ class PostOffice(object):
                 elif message == "Add extraction":
                     self.addConnection(self.extraction_connection, "extraction")
                 elif message == "Start":
-                    self.sendMessage(self.emotiv_connection, "Start")
                     self.sendMessage(self.psychopy_connection, "Start")
                     self.sendMessage(self.plot_connection, "Start")
                     self.sendMessage(self.extraction_connection, "Start")
@@ -38,6 +37,7 @@ class PostOffice(object):
                     self.sendMessage(self.psychopy_connection, self.main_connection.recv())
                     self.sendMessage(self.extraction_connection, self.main_connection.recv())
                     self.sendMessage(self.extraction_connection, self.main_connection.recv())
+                    self.sendMessage(self.emotiv_connection, "Start")
                     message = self.start()
                     if message == "Stop":
                         self.sendMessage(self.emotiv_connection, "Stop")

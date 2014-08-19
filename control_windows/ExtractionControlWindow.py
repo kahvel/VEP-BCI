@@ -5,12 +5,12 @@ from main_logic import PSDAExtraction, CCAExtraction, CCAPSDAExtraction
 
 
 class Window(ControlWindow.ControlWindow):
-    def __init__(self, connection, sensor_names):
+    def __init__(self, connection, args):
         self.window_group_names = ["PSDA", "CCA", "CCA+PSDA"]
         self.window_names = ["Multiple", "Single"]
         self.button_names = ["", "Sum"]
         self.files = [PSDAExtraction, CCAExtraction, CCAPSDAExtraction]
-        ControlWindow.ControlWindow.__init__(self, "Extraction control", 320, 370, sensor_names)
+        ControlWindow.ControlWindow.__init__(self, "Extraction control", 320, 370, args)
         self.connection = connection
         self.freq_points = None
         self.recorded_signals = None
