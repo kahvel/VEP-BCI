@@ -123,7 +123,7 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
 class Single(Abstract.Single, PSDAExtraction):
     def __init__(self):
         Abstract.Single.__init__(self)
-        PSDAExtraction.__init__(self, "Sum SNR")
+        PSDAExtraction.__init__(self, "Sum Power Spectrum Density Analysis")
 
     def getCoordGenCount(self):
         return 1
@@ -135,7 +135,7 @@ class Single(Abstract.Single, PSDAExtraction):
 class Multiple(Abstract.Single, PSDAExtraction):
     def __init__(self):
         Abstract.Single.__init__(self)
-        PSDAExtraction.__init__(self, "SNR")
+        PSDAExtraction.__init__(self, "Power Spectrum Density Analysis")
 
     def getCoordGenCount(self):
         return self.channel_count

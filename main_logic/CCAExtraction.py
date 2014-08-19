@@ -171,10 +171,10 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
 class Single(Abstract.Single, CCAExtraction):
     def __init__(self):
         Abstract.Single.__init__(self)
-        CCAExtraction.__init__(self, "Template Extraction")
+        CCAExtraction.__init__(self, "Canonical Correlation Analysis")
 
 
 class Multiple(Abstract.Single, CCAExtraction):
     def __init__(self):
         Abstract.Single.__init__(self)
-        CCAExtraction.__init__(self, "Template Extraction")
+        CCAExtraction.__init__(self, "Canonical Correlation Analysis")

@@ -40,13 +40,25 @@ class Window(ControlWindow.ControlWindow):
             self.results.append((self.freq_points[self.current_target-1], self.result))
         else:
             self.results.append((0, self.result))
-        print self.results
-        # for result in self.results:
-        #     detected_freq = []
-        #     freqs = []
-        #     for key in result[1]:
-        #         freqs.append(float(key))
-        #         detected_freq.extend([float(key) for _ in range(result[1][key])])
-        #     actual_freq = [float(result[0]) for _ in range(len(detected_freq))]
-        #     print freqs, actual_freq, detected_freq
-        #     print confusion_matrix(actual_freq, detected_freq, labels=freqs)  # ValueError: Can't handle mix of binary and continuous
+        matrix_data = {}
+        for result in self.results:
+            detected_freq = []
+            freqs = []
+            if result[1] is not None:
+                for key in sorted(result[1]):
+                    freqs.append(str(key))
+                    detected_freq.extend([str(key) for _ in range(result[1][key])])
+                actual_freq = [str(result[0]) for _ in range(len(detected_freq))]
+                str_freq = str(freqs)
+                if str_freq in matrix_data:
+                    matrix_data[str_freq][0].extend(actual_freq)
+                    matrix_data[str_freq][1].extend(detected_freq)
+                else:
+                    matrix_data[str_freq] = []
+                    matrix_data[str_freq].append(actual_freq)
+                    matrix_data[str_freq].append(detected_freq)
+                    matrix_data[str_freq].append(freqs)
+        for key in matrix_data:
+            print "Confusion matrix"
+            print "Frequencies:", matrix_data[key][2]
+            print confusion_matrix(matrix_data[key][0], matrix_data[key][1], labels=matrix_data[key][2])
