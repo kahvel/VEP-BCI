@@ -119,8 +119,8 @@ class MainWindow(MyWindows.TkWindow):
                                             [self.recordNeutral, self.recordTarget], 2)
         Tkinter.Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
         test_frame = self.initButtonFrame(["Test"],
-                                          [self.testExtraction], 2)
-        Tkinter.Label(test_frame, text="Test").grid(column=0, row=0, padx=5, pady=5)
+                                          [self.testExtraction], 0)
+        # MyWindows.newTextBox(test_frame, "Length:", 1, 0, {})
         window_title_frame.pack()
         window_frame.pack()
         target_title_frame.pack()

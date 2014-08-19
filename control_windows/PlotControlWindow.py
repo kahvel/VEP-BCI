@@ -16,10 +16,10 @@ class Window(ControlWindow.ControlWindow):
         self.fft_reset_buttons = {}
         self.signal_reset_buttons = {}
         button_frame = Tkinter.Frame(self)
-        self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(button_frame, text="Reset avg signal", command=lambda: self.reset(self.window_groups["Signal"], "MultipleAverage", self.chosen_sensor_names))
-        self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(button_frame, text="Reset sum avg signal", command=lambda: self.reset(self.window_groups["Signal"], "SingleAverage", self.chosen_sensor_names))
-        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(button_frame, text="Reset avg FFT", command=lambda: self.reset(self.window_groups["FFT"], "MultipleAverage", self.chosen_sensor_names))
-        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(button_frame, text="Reset sum avg FFT", command=lambda: self.reset(self.window_groups["FFT"], "SingleAverage", self.chosen_sensor_names))
+        self.signal_reset_buttons["MultipleAverage"] = Tkinter.Button(button_frame, text="Reset avg signal", command=lambda: self.reset(self.window_groups, "Signal", "MultipleAverage", self.chosen_sensor_names))
+        self.signal_reset_buttons["SingleAverage"] = Tkinter.Button(button_frame, text="Reset sum avg signal", command=lambda: self.reset(self.window_groups, "Signal", "SingleAverage", self.chosen_sensor_names))
+        self.fft_reset_buttons["MultipleAverage"] = Tkinter.Button(button_frame, text="Reset avg FFT", command=lambda: self.reset(self.window_groups, "FFT", "MultipleAverage", self.chosen_sensor_names))
+        self.fft_reset_buttons["SingleAverage"] = Tkinter.Button(button_frame, text="Reset sum avg FFT", command=lambda: self.reset(self.window_groups, "FFT", "SingleAverage", self.chosen_sensor_names))
         for i in range(2):
             self.signal_reset_buttons[self.window_names[i]].grid(column=i % 2, row=i//2, padx=5, pady=5)
             self.fft_reset_buttons[self.window_names[i]].grid(column=i % 2, row=i//2+1, padx=5, pady=5)

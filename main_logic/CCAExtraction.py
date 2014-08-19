@@ -96,7 +96,7 @@ class CCAExtraction(ExtractionWindow.ExtractionWindow):
             coordinate = yield
             result = main_generator.send(coordinate)
             if result is not None:
-                print i, result
+                self.actual_result[result] += 1
                 self.connection.send(result)
                 main_generator.next()
 

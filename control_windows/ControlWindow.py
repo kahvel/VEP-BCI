@@ -138,10 +138,10 @@ class ControlWindow(MyWindows.TkWindow):
         for group_name in self.window_group_names:
             for name in self.window_names:
                 if self.window_groups[group_name][name] is not None:
-                    self.reset(self.window_groups[group_name], name, self.chosen_sensor_names)
+                    self.reset(self.window_groups, group_name, name, self.chosen_sensor_names)
 
-    def reset(self, windows, key, sensor_names):
-        window = windows[key]
+    def reset(self, windows, group_name, name, sensor_names):
+        window = windows[group_name][name]
         if window is not None:
             window.resetCanvas()
             self.closeGenerators(window.generators)
