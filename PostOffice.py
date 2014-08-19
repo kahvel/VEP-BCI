@@ -30,15 +30,17 @@ class PostOffice(object):
                 elif message == "Add extraction":
                     self.addConnection(self.extraction_connection, "extraction")
                 elif message == "Start":
+                    length = self.main_connection.recv()
                     self.sendMessage(self.psychopy_connection, "Start")
                     self.sendMessage(self.plot_connection, "Start")
                     self.sendMessage(self.extraction_connection, "Start")
-                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())
-                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())
-                    self.sendMessage(self.extraction_connection, self.main_connection.recv())
-                    self.sendMessage(self.extraction_connection, self.main_connection.recv())
+                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())    # background data
+                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())    # targets data
+                    self.sendMessage(self.extraction_connection, self.main_connection.recv())  # targets frequencies
+                    self.sendMessage(self.extraction_connection, self.main_connection.recv())  # recorded signals
+                    self.sendMessage(self.extraction_connection, self.main_connection.recv())  # current target
                     self.sendMessage(self.emotiv_connection, "Start")
-                    message = self.start()
+                    message = self.start(length)
                     if message == "Stop":
                         self.sendMessage(self.emotiv_connection, "Stop")
                         self.sendMessage(self.psychopy_connection, "Stop")
@@ -96,14 +98,17 @@ class PostOffice(object):
         for i in range(len(connections)-1, -1, -1):
             connections[i].send(message)
 
-    def start(self):
-        while True:
+    def start(self, length):
+        count = 0
+        while count < length:
             if self.main_connection.poll():
                 message = self.main_connection.recv()
                 return message
             if self.emotiv_connection[0].poll():
+                count += 1
                 message = self.emotiv_connection[0].recv()
                 self.sendMessage(self.extraction_connection, message)
                 self.sendMessage(self.plot_connection, message)
             self.handleMessage(self.plot_connection, "Plot")
             self.handleMessage(self.extraction_connection, "Extraction")
+        return "Stop"

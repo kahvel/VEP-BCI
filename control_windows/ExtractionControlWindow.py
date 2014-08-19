@@ -14,6 +14,7 @@ class Window(ControlWindow.ControlWindow):
         self.connection = connection
         self.freq_points = None
         self.recorded_signals = None
+        self.current_target = None
         self.myMainloop()
 
     def reset(self, windows, key, sensor_names):
@@ -22,9 +23,11 @@ class Window(ControlWindow.ControlWindow):
             window.resetCanvas()
             self.closeGenerators(window.generators)
             window.continue_generating = True
-            window.setup(self.options, sensor_names, self.window_function, self.filter_coefficients, self.freq_points, self.recorded_signals, self.connection)
+            window.setup(self.options, sensor_names, self.window_function, self.filter_coefficients,
+                         self.freq_points, self.recorded_signals, self.connection, self.current_target)
 
     def start(self):
         self.freq_points = self.connection.recv()
         self.recorded_signals = self.connection.recv()
+        self.current_target = self.connection.recv()
         ControlWindow.ControlWindow.start(self)

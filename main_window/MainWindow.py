@@ -118,11 +118,15 @@ class MainWindow(MyWindows.TkWindow):
         record_frame = self.initButtonFrame(["Neutral", "Target"],
                                             [self.recordNeutral, self.recordTarget], 2)
         Tkinter.Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
+        test_frame = self.initButtonFrame(["Test"],
+                                          [self.testExtraction], 2)
+        Tkinter.Label(test_frame, text="Test").grid(column=0, row=0, padx=5, pady=5)
         window_title_frame.pack()
         window_frame.pack()
         target_title_frame.pack()
         radiobutton_frame.pack()
         target_frame.pack()
+        test_frame.pack()
         record_frame.pack()
         button_frame.pack()
         button_frame2.pack()
@@ -174,6 +178,12 @@ class MainWindow(MyWindows.TkWindow):
             bk[key] = self.background_textboxes[key].get()
         return bk
 
+    def testExtraction(self):
+        if self.current_radio_button.get() == 0:
+            print "Choose target"
+        else:
+            self.start(512)
+
     def recordTarget(self):
         if self.current_radio_button.get() == 0:
             print "Choose target"
@@ -194,14 +204,16 @@ class MainWindow(MyWindows.TkWindow):
             self.update()
         self.neutral_signal = self.connection.recv()
 
-    def start(self):
+    def start(self, length=float("inf")):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
         self.connection.send("Start")
+        self.connection.send(length)
         self.connection.send(self.getBackgroundData())
         self.connection.send(self.getEnabledTargets())
         self.connection.send(self.getChosenFreq())
         self.connection.send(self.getRecordedSignals())
+        self.connection.send(self.current_radio_button.get())
 
     def stop(self):
         self.start_button.configure(text="Start", command=lambda: self.start())

@@ -141,7 +141,6 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 if self.packets.qsize() > 150:
                     print self.packets.qsize(), "packets in queue. Slow down!"
             except:
-                pass
-                # print "No packet"
+                print "No packet"
             if self.connection.poll():
                 return self.connection.recv()
