@@ -12,8 +12,8 @@ class PlotWindow(ControllableWindow.ControllableWindow):
 
     def resetCanvas(self):
         self.canvas.delete("all")
-        for i in range(0, 512, 40):  # scale for FFT
-            self.canvas.create_line(i, 0, i, 512, fill="red")
+        for i in range(0, self.window_width, 40):  # scale for FFT
+            self.canvas.create_line(i, 0, i, self.window_height, fill="red")
             self.canvas.create_text(i, 10, text=i/8)
 
     def scaleY(self, y,  index, new_max=-100, new_min=100):
