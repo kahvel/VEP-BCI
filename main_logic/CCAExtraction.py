@@ -105,6 +105,7 @@ class CCAExtraction(ExtractionWindow.ExtractionWindow):
 
 
 def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox):
+    get_segment = True
     coord_gen_count = len(coordinates_generators)
     h = 3  # number of harmonics
     target_signals = []
@@ -118,29 +119,7 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
     count = [0 for _ in range(len(target_freqs))]
     for generator in coordinates_generators:
         generator.send(None)
-    i = 0
     coordinates = [None for _ in range(coord_gen_count)]
-    while i != length/step*coord_gen_count:
-        for channel in range(coord_gen_count):
-            y = yield
-            result = coordinates_generators[channel].send(y)
-            if result is not None:
-                i += 1
-                coordinates[channel] = result
-                coordinates_generators[channel].next()
-    max = 0
-    max_index = 0
-    for i in range(len(target_signals)):
-        res_x, res_y = cca.fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
-        corr = np.corrcoef(res_x.T, res_y.T)[0][1]
-        # print target_freqs[i], corr
-        if corr > max:
-            max = corr
-            max_index = i
-    count[max_index] += 1
-    # print target_freqs[max_index], max
-    # print count
-    yield target_freqs[max_index]
     while True:
         for j in range(length/step):
             # print coordinates
@@ -156,7 +135,13 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             max = 0
             max_index = 0
             for i in range(len(target_signals)):
-                res_x, res_y = cca.fit_transform(np.array(coordinates).T, np.array(target_signals[i]).T)
+                if get_segment:
+                    signal_segment = np.array([target_signals[i][j][:len(coordinates[0])] for j in range(len(target_signals[i]))]).T
+                    if len(coordinates) == length:
+                        get_segment = False
+                    res_x, res_y = cca.fit_transform(np.array(coordinates).T, signal_segment)
+                else:
+                    res_x, res_y = cca.fit_transform(np.array(coordinates).T, target_signals[i].T)
                 corr = np.corrcoef(res_x.T, res_y.T)[0][1]
                 # print target_freqs[i], corr
                 if corr > max:
