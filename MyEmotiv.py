@@ -138,8 +138,8 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 packet = emokit.emotiv.EmotivPacket(data, self.sensors)
                 self.connection.send(packet)
                 # print "Emotiv " + str(packet)
-                if self.packets.qsize() > 150:
-                    print self.packets.qsize(), "packets in queue. Slow down!"
+                if self.packets.qsize() > 6:
+                    print self.packets.qsize(), "packets in queue."
             except:
                 print "No packet"
             if self.connection.poll():

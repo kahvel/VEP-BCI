@@ -12,6 +12,9 @@ class SignalPlot(PlotWindow.PlotWindow):
     def getScale(self):
         return 10, -10
 
+    def getLength(self, coordinates):
+        return self.options["Length"]
+
 
 class MultipleRegular(Abstract.Multiple, SignalPlot):
     def __init__(self):

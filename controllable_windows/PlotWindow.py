@@ -24,10 +24,14 @@ class PlotWindow(ControllableWindow.ControllableWindow):
     def getScale(self):
         raise NotImplementedError("getScale not implemented")
 
+    def getLength(self, coordinates):
+        raise NotImplementedError("getLength not implemented")
+
     def scale(self, coordinates, index):
         result = []
+        length = self.getLength(coordinates)
         for i in range(len(coordinates)):
-            result.append(i*self.window_width/len(coordinates))
+            result.append(i*self.window_width/length)
             result.append(self.scaleY(coordinates[i], index))
         return result
 

@@ -12,6 +12,9 @@ class FFTPlot(PlotWindow.PlotWindow):
     def getScale(self):
         return 3.3, 0.2
 
+    def getLength(self, coordinates):
+        return len(coordinates)
+
 
 class MultipleRegular(Abstract.Multiple, FFTPlot):
     def __init__(self):
