@@ -34,10 +34,7 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
     count = [0 for _ in range(len(target_freqs))]
     coord_gen_count = len(coordinates_generators)
     coordinates = [None for _ in range(coord_gen_count)]
-    freq_indices = []
-    for freq in target_freqs:
-        freq_indices.append(int(freq*length/sampling_freq))
-        print np.fft.rfftfreq(length)[freq_indices[-1]]*sampling_freq
+    calculate_indices = True
     for generator in coordinates_generators:
         generator.send(None)
     while True:
@@ -51,6 +48,18 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
                     coordinates[channel] = result
                     j += 1
                     coordinates_generators[channel].next()
+        ps_len = len(coordinates[0])
+        if calculate_indices:
+            if ps_len == length//2+1:
+                calculate_indices = False
+            freq_indices = []
+            # print "Freqs:"
+            for freq in target_freqs:
+                index = int(freq*(ps_len-1)*2/sampling_freq)
+                if index in freq_indices:
+                    continue
+                freq_indices.append(index)
+                # print np.fft.rfftfreq((ps_len-1)*2)[freq_indices[-1]]*sampling_freq
         for channel in range(coord_gen_count):
             max = 0
             max_index = -1
