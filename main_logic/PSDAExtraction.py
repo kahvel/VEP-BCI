@@ -5,6 +5,7 @@ from signal_processing import FFT
 from main_logic import Abstract
 import Tkinter
 import numpy as np
+from scipy import interpolate
 
 
 class PSDAExtraction(ExtractionWindow.ExtractionWindow):
@@ -28,6 +29,32 @@ class PSDAExtraction(ExtractionWindow.ExtractionWindow):
                 self.actual_result[result] += 1
                 self.connection.send(result)
                 main_generator.next()
+
+
+def getMagnitude(freq, h_start, h_end, interpolation):
+    result = 0
+    for harmonic in range(h_start, h_end+1):
+        result += interpolation(freq*harmonic)
+    return result
+
+
+def getSNR(freq, h_start, h_end, interpolation):
+    result = 0
+    for harmonic in range(h_start, h_end+1):
+        harmonic_freq = freq*harmonic
+        result += interpolation(harmonic_freq)*2/(interpolation(harmonic_freq-1)+interpolation(harmonic_freq+1))
+    return result
+
+
+def getMax(getValue, h_start, h_end, interpolation, target_freqs):
+    max = 0
+    max_index = -1
+    for i in range(len(target_freqs)):
+        ratio = getValue(target_freqs[i], h_start, h_end, interpolation)
+        if ratio > max:
+            max = ratio
+            max_index = i
+    return max, max_index
 
 
 def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox):
@@ -56,70 +83,29 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             # print "Freqs:"
             for freq in target_freqs:
                 index = int(freq*(ps_len-1)*2/sampling_freq)
-                if index in freq_indices:
-                    continue
                 freq_indices.append(index)
-                # print np.fft.rfftfreq((ps_len-1)*2)[freq_indices[-1]]*sampling_freq
+                freqs = np.fft.rfftfreq((ps_len-1)*2)*sampling_freq
+                # print freqs
+                # print freqs[freq_indices[-1]]
+        # if 0 in freq_indices:
+        #     continue
         for channel in range(coord_gen_count):
-            max = 0
-            max_index = -1
-            for i in range(len(freq_indices)):
-                ratio = coordinates[channel][freq_indices[i]-1]
-                ratio += coordinates[channel][freq_indices[i]*2-1]
-                if ratio> max:
-                    max = ratio
-                    max_index = i
+            interpolation_fun = interpolate.interp1d(freqs, coordinates[channel])
+            max, max_index = getMax(getMagnitude, 1, 2, interpolation_fun, target_freqs)
             max_freqs[max_index] += 1
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"  ")
-            max = 0
-            max_index = -1
-            for i in range(len(freq_indices)):
-                ratio = coordinates[channel][freq_indices[i]*2-1]
-                if ratio > max:
-                    max = ratio
-                    max_index = i
+            max, max_index = getMax(getMagnitude, 2, 2, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"  ")
-            max = 0
-            max_index = -1
-            for i in range(len(freq_indices)):
-                ratio = coordinates[channel][freq_indices[i]*3-1]
-                if ratio > max:
-                    max = ratio
-                    max_index = i
+            max, max_index = getMax(getMagnitude, 3, 3, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"\n")
-            max = 0
-            max_index = -1
-            # peaks = scipy.signal.find_peaks_cwt(-coordinates, np.array([0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2]))
-            # actual_index = 0
-            for i in range(len(freq_indices)):
-                ratio = coordinates[channel][freq_indices[i]-1]*2/(coordinates[channel][freq_indices[i]-2]+coordinates[channel][freq_indices[i]])
-                # asd = min(peaks, key=lambda x:abs(x-freq_indices[i]))
-                # ratio = coordinates[asd]
-                if ratio> max:
-                    max = ratio
-                    # actual_index = asd
-                    max_index = i
-            # print freq_indices[max_index], actual_index, peaks
-            # print np.argmax(coordinates[freq_indices[i]-3:freq_indices])
+            max, max_index = getMax(getSNR, 1, 1, interpolation_fun, target_freqs)
             # print max_index, coordinates[freq_indices[max_index]-3], coordinates[freq_indices[max_index]-2], \
             #     coordinates[freq_indices[max_index]-1], coordinates[freq_indices[max_index]],\
             #     coordinates[freq_indices[max_index]+1], coordinates[freq_indices[max_index]+2]
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"  ")
-            max = 0
-            max_index = -1
-            for i in range(len(freq_indices)):
-                ratio = coordinates[channel][freq_indices[i]*2-1]*2/(coordinates[channel][freq_indices[i]*2-2]+coordinates[channel][freq_indices[i]*2])
-                if ratio > max:
-                    max = ratio
-                    max_index = i
+            max, max_index = getMax(getSNR, 2, 2, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"  ")
-            max = 0
-            max_index = -1
-            for i in range(len(freq_indices)):
-                ratio = coordinates[channel][freq_indices[i]*3-1]*2/(coordinates[channel][freq_indices[i]*3-2]+coordinates[channel][freq_indices[i]*3])
-                if ratio > max:
-                    max = ratio
-                    max_index = i
+            max, max_index = getMax(getSNR, 3, 3, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"\n\n")
             textbox.yview(Tkinter.END)
         # print max_freqs, count
