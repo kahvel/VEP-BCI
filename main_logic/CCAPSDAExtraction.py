@@ -31,8 +31,8 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                 print i, cca_result, psda_result
             if psda_result is not None:
                 if cca_result == psda_result:
-                    self.actual_result[cca_result] += 1
                     self.connection.send(cca_result)
+                    self.connection.send("CCAPSDA")
                 cca_generator.next()
                 psda_generator.next()
 

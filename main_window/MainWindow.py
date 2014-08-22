@@ -179,10 +179,7 @@ class MainWindow(MyWindows.TkWindow):
         return bk
 
     def testExtraction(self):
-        if self.current_radio_button.get() == 0:
-            print "Choose target"
-        else:
-            self.start("Test", 128*2)
+        self.start("Test", 128*30)
 
     def recordTarget(self):
         if self.current_radio_button.get() == 0:

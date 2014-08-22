@@ -26,8 +26,8 @@ class PSDAExtraction(ExtractionWindow.ExtractionWindow):
             coordinate = yield
             result = main_generator.send(coordinate)
             if result is not None:
-                self.actual_result[result] += 1
                 self.connection.send(result)
+                self.connection.send("PSDA")
                 main_generator.next()
 
 
