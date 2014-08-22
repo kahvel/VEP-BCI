@@ -113,7 +113,7 @@ class MainWindow(MyWindows.TkWindow):
                                             [self.targetsWindow, self.plotWindow, self.extraction])
         button_frame2 = self.initButtonFrame(["Save", "Load", "Exit"],
                                              [self.saveFile, self.loadFile, self.exit], 1)
-        self.start_button = Tkinter.Button(button_frame2, text="Start", command=lambda: self.start())
+        self.start_button = Tkinter.Button(button_frame2, text="Start", command=lambda: self.start("Start"))
         self.start_button.grid(row=0, column=0, padx=5, pady=5)
         record_frame = self.initButtonFrame(["Neutral", "Target"],
                                             [self.recordNeutral, self.recordTarget], 2)
@@ -182,7 +182,7 @@ class MainWindow(MyWindows.TkWindow):
         if self.current_radio_button.get() == 0:
             print "Choose target"
         else:
-            self.start(512)
+            self.start("Test", 128*2)
 
     def recordTarget(self):
         if self.current_radio_button.get() == 0:
@@ -204,19 +204,19 @@ class MainWindow(MyWindows.TkWindow):
             self.update()
         self.neutral_signal = self.connection.recv()
 
-    def start(self, length=float("inf")):
+    def start(self, message, length=float("inf")):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
-        self.connection.send("Start")
+        self.connection.send(message)
         self.connection.send(length)
+        self.connection.send(self.current_radio_button.get())
         self.connection.send(self.getBackgroundData())
         self.connection.send(self.getEnabledTargets())
         self.connection.send(self.getChosenFreq())
         self.connection.send(self.getRecordedSignals())
-        self.connection.send(self.current_radio_button.get())
 
     def stop(self):
-        self.start_button.configure(text="Start", command=lambda: self.start())
+        self.start_button.configure(text="Start", command=lambda: self.start("Start"))
         self.connection.send("Stop")
 
     def newProcess(self, func, message, *args):

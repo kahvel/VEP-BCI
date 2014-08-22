@@ -35,7 +35,7 @@ class Window(ControlWindow.ControlWindow):
         self.freq_points = self.connection.recv()
         self.recorded_signals = self.connection.recv()
         self.current_target = self.connection.recv()
-        ControlWindow.ControlWindow.start(self)
+        message = ControlWindow.ControlWindow.start(self)
         if self.current_target != 0:
             self.results.append((self.freq_points[self.current_target-1], self.result))
         else:
@@ -62,3 +62,4 @@ class Window(ControlWindow.ControlWindow):
             print "Confusion matrix"
             print "Frequencies:", matrix_data[key][2]
             print confusion_matrix(matrix_data[key][0], matrix_data[key][1], labels=matrix_data[key][2])
+        return message

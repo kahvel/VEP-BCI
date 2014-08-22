@@ -30,22 +30,9 @@ class PostOffice(object):
                 elif message == "Add extraction":
                     self.addConnection(self.extraction_connection, "extraction")
                 elif message == "Start":
-                    length = self.main_connection.recv()
-                    self.sendMessage(self.psychopy_connection, "Start")
-                    self.sendMessage(self.plot_connection, "Start")
-                    self.sendMessage(self.extraction_connection, "Start")
-                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())    # background data
-                    self.sendMessage(self.psychopy_connection, self.main_connection.recv())    # targets data
-                    self.sendMessage(self.extraction_connection, self.main_connection.recv())  # targets frequencies
-                    self.sendMessage(self.extraction_connection, self.main_connection.recv())  # recorded signals
-                    self.sendMessage(self.extraction_connection, self.main_connection.recv())  # current target
-                    self.sendMessage(self.emotiv_connection, "Start")
-                    message = self.start(length)
-                    if message == "Stop":
-                        self.sendMessage(self.emotiv_connection, "Stop")
-                        self.sendMessage(self.psychopy_connection, "Stop")
-                        self.sendMessage(self.plot_connection, "Stop")
-                        self.sendMessage(self.extraction_connection, "Stop")
+                    message = self.start()
+                elif message == "Test":
+                    self.test()
                 elif message == "Exit":
                     self.sendMessage(self.emotiv_connection, "Exit")
                     self.sendMessage(self.psychopy_connection, "Exit")
@@ -98,7 +85,55 @@ class PostOffice(object):
         for i in range(len(connections)-1, -1, -1):
             connections[i].send(message)
 
-    def start(self, length):
+    def test(self):
+        length = self.main_connection.recv()
+        current_target = self.main_connection.recv()
+        background_data = self.main_connection.recv()
+        targets_data = self.main_connection.recv()
+        targets_freqs = self.main_connection.recv()
+        recorded_signals = self.main_connection.recv()
+        self.sendMessage(self.psychopy_connection, "Start")
+        self.sendMessage(self.plot_connection, "Start")
+        self.sendMessage(self.psychopy_connection, background_data)
+        self.sendMessage(self.psychopy_connection, targets_data)
+        self.sendMessage(self.emotiv_connection, "Start")
+        for i in range(len(targets_freqs)):
+            self.sendMessage(self.extraction_connection, "Start")
+            self.sendMessage(self.extraction_connection, targets_freqs)
+            self.sendMessage(self.extraction_connection, recorded_signals)
+            self.sendMessage(self.extraction_connection, i+1)
+            self.sendMessage(self.psychopy_connection, i)
+            message = self.startPacketSending(length)
+            if message == "Stop":
+                self.sendMessage(self.extraction_connection, "Stop")
+            elif message is not None:
+                return message
+        self.sendMessage(self.emotiv_connection, "Stop")
+        self.sendMessage(self.psychopy_connection, "Stop")
+        self.sendMessage(self.plot_connection, "Stop")
+        return message
+
+    def start(self):
+        length = self.main_connection.recv()
+        current_target = self.main_connection.recv()
+        self.sendMessage(self.psychopy_connection, "Start")
+        self.sendMessage(self.plot_connection, "Start")
+        self.sendMessage(self.extraction_connection, "Start")
+        self.sendMessage(self.psychopy_connection, self.main_connection.recv())    # background data
+        self.sendMessage(self.psychopy_connection, self.main_connection.recv())    # targets data
+        self.sendMessage(self.extraction_connection, self.main_connection.recv())  # targets frequencies
+        self.sendMessage(self.extraction_connection, self.main_connection.recv())  # recorded signals
+        self.sendMessage(self.extraction_connection, current_target)
+        self.sendMessage(self.emotiv_connection, "Start")
+        message = self.startPacketSending(length)
+        if message == "Stop":
+            self.sendMessage(self.emotiv_connection, "Stop")
+            self.sendMessage(self.psychopy_connection, "Stop")
+            self.sendMessage(self.plot_connection, "Stop")
+            self.sendMessage(self.extraction_connection, "Stop")
+        return message
+
+    def startPacketSending(self, length):
         count = 0
         while count < length:
             if self.main_connection.poll():
