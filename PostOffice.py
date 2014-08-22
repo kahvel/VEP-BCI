@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
 import multiprocessing.reduction
+import random
 
 
 class PostOffice(object):
@@ -85,6 +86,27 @@ class PostOffice(object):
         for i in range(len(connections)-1, -1, -1):
             connections[i].send(message)
 
+    def randomTestSequence(self, length, min_length=128*2, max_length=128*4):
+        data = []
+        asd = {i: length for i in range(3)}
+        while True:
+            target = random.choice(asd.keys())
+            if 128*2 < asd[target]:
+                time = random.randint(min_length, max_length)
+            else:
+                time = asd[target]
+            asd[target] = asd[target]-time
+            print target, time, asd
+            if asd[target] == 0:
+                del asd[target]
+                if asd == {}:
+                    break
+            if len(data) > 0 and data[-1][0] == target:
+                data[-1][1] += time
+            else:
+                data.append([target, time])
+        return data
+
     def test(self):
         length = self.main_connection.recv()
         current_target = self.main_connection.recv()
@@ -96,14 +118,15 @@ class PostOffice(object):
         self.sendMessage(self.plot_connection, "Start")
         self.sendMessage(self.psychopy_connection, background_data)
         self.sendMessage(self.psychopy_connection, targets_data)
+        random_sequence = self.randomTestSequence(length)
         self.sendMessage(self.emotiv_connection, "Start")
-        for i in range(len(targets_freqs)):
+        for target, time in random_sequence:
             self.sendMessage(self.extraction_connection, "Start")
             self.sendMessage(self.extraction_connection, targets_freqs)
             self.sendMessage(self.extraction_connection, recorded_signals)
-            self.sendMessage(self.extraction_connection, i+1)
-            self.sendMessage(self.psychopy_connection, i)
-            message = self.startPacketSending(length)
+            self.sendMessage(self.extraction_connection, target+1)
+            self.sendMessage(self.psychopy_connection, target)
+            message = self.startPacketSending(time)
             if message == "Stop":
                 self.sendMessage(self.extraction_connection, "Stop")
             elif message is not None:
