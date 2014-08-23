@@ -49,7 +49,7 @@ class MainWindow(MyWindows.TkWindow):
         windowtitleframe = Tkinter.Frame(self)
         Tkinter.Label(windowtitleframe, text=title).grid(column=0, row=0, padx=5, pady=5)
         return windowtitleframe
-        
+
     def initWindowFrame(self):
         window_frame = Tkinter.Frame(self)
         MyWindows.newTextBox(window_frame, "Width:", 0, 0, self.background_textboxes)
@@ -118,8 +118,8 @@ class MainWindow(MyWindows.TkWindow):
         record_frame = self.initButtonFrame(["Neutral", "Target"],
                                             [self.recordNeutral, self.recordTarget], 2)
         Tkinter.Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
-        test_frame = self.initButtonFrame(["Test"],
-                                          [self.testExtraction], 0)
+        test_frame = self.initButtonFrame(["Test", "Game"],
+                                          [self.testExtraction, self.game], 0)
         # MyWindows.newTextBox(test_frame, "Length:", 1, 0, {})
         window_title_frame.pack()
         window_frame.pack()
@@ -130,6 +130,9 @@ class MainWindow(MyWindows.TkWindow):
         record_frame.pack()
         button_frame.pack()
         button_frame2.pack()
+
+    def game(self):
+        self.newProcess(Main.runGame, "Add game")
 
     def exit(self):
         print "Exiting main window"

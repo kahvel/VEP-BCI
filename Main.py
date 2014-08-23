@@ -29,3 +29,8 @@ def runPsychopy(connection, args):
 def runExtractionControl(connection, args):
     from control_windows import ExtractionControlWindow
     ExtractionControlWindow.Window(connection, args)
+
+
+def runGame(connection, args):
+    import Game
+    Game.Game(connection)

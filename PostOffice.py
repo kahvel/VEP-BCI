@@ -11,6 +11,7 @@ class PostOffice(object):
         self.psychopy_connection = []
         self.plot_connection = []
         self.extraction_connection = []
+        self.game_connection = []
         self.results = {"CCA": {}, "PSDA": {}, "CCAPSDA": {}}
         self.target_freqs = None
         self.current_target = None
@@ -33,6 +34,8 @@ class PostOffice(object):
                     self.addConnection(self.plot_connection, "plot")
                 elif message == "Add extraction":
                     self.addConnection(self.extraction_connection, "extraction")
+                elif message == "Add game":
+                    self.addConnection(self.game_connection, "game")
                 elif message == "Start":
                     self.start(self.normalSequence)
                 elif message == "Test":
@@ -42,10 +45,12 @@ class PostOffice(object):
                     self.sendMessage(self.psychopy_connection, "Exit")
                     self.sendMessage(self.plot_connection, "Exit")
                     self.sendMessage(self.extraction_connection, "Exit")
+                    self.sendMessage(self.game_connection, "Exit")
                     while True:  # wait until all connections are closed
                         self.handleMessage(self.psychopy_connection, "Psychopy")
                         self.handleMessage(self.plot_connection, "Plot")
                         self.handleMessage(self.extraction_connection, "Extraction")
+                        self.handleMessage(self.game_connection, "Game")
                         if len(self.psychopy_connection)+len(self.plot_connection)+len(self.extraction_connection) == 0:
                             return
                 elif message == "Record neutral":
@@ -86,6 +91,7 @@ class PostOffice(object):
                     class_name = connections[i].recv()
                     self.results[class_name][str(self.target_freqs)][self.current_target][message] += 1
                     self.sendMessage(self.psychopy_connection, message)
+                    self.sendMessage(self.game_connection, message)
 
     def sendMessage(self, connections, message):
         for i in range(len(connections)-1, -1, -1):
@@ -127,9 +133,11 @@ class PostOffice(object):
         self.sendMessage(self.psychopy_connection, "Start")
         self.sendMessage(self.plot_connection, "Start")
         self.sendMessage(self.extraction_connection, "Start")
+        self.sendMessage(self.game_connection, "Start")
         self.sendMessage(self.psychopy_connection, background_data)
         self.sendMessage(self.psychopy_connection, targets_data)
         self.sendMessage(self.extraction_connection, self.target_freqs)
+        self.sendMessage(self.game_connection, self.target_freqs)
         self.sendMessage(self.extraction_connection, recorded_signals)
         for key in self.results:
             if str(self.target_freqs) not in self.results[key]:
@@ -150,6 +158,13 @@ class PostOffice(object):
         self.sendMessage(self.psychopy_connection, "Stop")
         self.sendMessage(self.plot_connection, "Stop")
         self.sendMessage(self.extraction_connection, "Stop")
+        self.sendMessage(self.game_connection, "Stop")
+        for method in self.results:
+            print method
+            for freqs in self.results[method]:
+                print freqs
+                for row in sorted(self.results[method][freqs]):
+                    print row, self.results[method][freqs][row]
         return message
 
     def startPacketSending(self, length):

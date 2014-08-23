@@ -6,8 +6,6 @@ from main_window import MyWindows
 class ControllableWindow(MyWindows.ToplevelWindow):
     def __init__(self, title, width, height):
         MyWindows.ToplevelWindow.__init__(self, title, width, height)
-        self.window_width = width
-        self.window_height = height
         self.channel_count = 0
         self.gen_count = 0
         self.generators = []

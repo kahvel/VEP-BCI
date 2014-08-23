@@ -2,14 +2,16 @@ __author__ = 'Anti'
 
 from psychopy import visual, core, logging, event
 
+# To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
+
 
 class Target(object):
     def __init__(self, target, window, monitor_frequency):
         self.color = target["Color1"]
         self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
                                 pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=self.color)
-        self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
-        self.fixation.setAutoDraw(True)
+        # self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
+        # self.fixation.setAutoDraw(True)
         self.detected_rect = visual.Rect(window, width=10, height=10, fillColor="#00ff00",
                                          pos=(int(target["x"]), int(target["y"])+int(target["Width"])+20))
         self.current_rect = visual.Rect(window, width=10, height=10, fillColor="#00ff00",
@@ -30,7 +32,7 @@ class Target(object):
                         yield
                         self.rect.draw()
                         # self.fixation.draw()
-                self.rect.fillColor = self.color
+                # self.rect.fillColor = self.color
                 if c == "0":
                     for _ in range(self.freq_off):
                         yield

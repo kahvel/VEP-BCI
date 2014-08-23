@@ -9,7 +9,6 @@ import scipy.signal
 class ControlWindow(MyWindows.TkWindow):
     def __init__(self, title, width, height, args):
         MyWindows.TkWindow.__init__(self, title, width, height)
-        self.name = title
         self.all_sensor_names = args[0]
         self.chosen_sensor_names = []
         self.headset_freq = 128
@@ -120,7 +119,7 @@ class ControlWindow(MyWindows.TkWindow):
     def recvPacket(self):
         while True:
             self.update()
-            if self.connection.poll():
+            if self.connection.poll(0.1):
                 message = self.connection.recv()
                 return message
             if self.exitFlag:

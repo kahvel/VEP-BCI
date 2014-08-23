@@ -5,6 +5,9 @@ import Tkinter
 
 class AbstractWindow(object):
     def __init__(self, title, width, height, color="#eeeeee"):
+        self.window_width = width
+        self.window_height = height
+        self.name = title
         self.title(title)
         self.geometry(str(width)+"x"+str(height))
         self.resizable(0, 0)
