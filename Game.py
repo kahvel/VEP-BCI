@@ -27,14 +27,14 @@ class Game(MyWindows.TkWindow):
             detected_freq = self.recvPacket()
             if isinstance(detected_freq, basestring):
                 return detected_freq
-            if detected_freq == self.target_freqs[0] and self.canvas.coords(self.rect)[0] > step:
-                self.canvas.move(self.rect, -step, 0)
-            elif len(self.target_freqs) > 1 and detected_freq == self.target_freqs[1] and self.canvas.coords(self.rect)[1] > step:
+            if detected_freq == self.target_freqs[0] and self.canvas.coords(self.rect)[1] > step:
                 self.canvas.move(self.rect, 0, -step)
-            elif len(self.target_freqs) > 2 and detected_freq == self.target_freqs[2] and self.canvas.coords(self.rect)[2] < self.window_width-step:
+            elif len(self.target_freqs) > 1 and detected_freq == self.target_freqs[1] and self.canvas.coords(self.rect)[2] < self.window_height-step:
                 self.canvas.move(self.rect, step, 0)
-            elif len(self.target_freqs) > 3 and detected_freq == self.target_freqs[3] and self.canvas.coords(self.rect)[3] < self.window_height-step:
-                self.canvas.move(self.rect, 0, -step)
+            elif len(self.target_freqs) > 2 and detected_freq == self.target_freqs[2] and self.canvas.coords(self.rect)[3] < self.window_width-step:
+                self.canvas.move(self.rect, 0, step)
+            elif len(self.target_freqs) > 3 and detected_freq == self.target_freqs[3] and self.canvas.coords(self.rect)[0] > step:
+                self.canvas.move(self.rect, -step, 0)
 
     def recvPacket(self):
         while True:

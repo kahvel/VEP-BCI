@@ -147,6 +147,7 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
                 if corr > max:
                     max = corr
                     max_index = i
+            textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"\n")
             count[max_index] += 1
             # print target_freqs[max_index], max
             # print count

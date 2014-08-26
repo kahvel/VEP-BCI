@@ -22,6 +22,8 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                                                       coordinates_generators, self.freq_points, self.canvas)
         psda_generator.send(None)
         i = 0
+        result_count = 2
+        prev_result = [None for _ in range(result_count)]
         while True:
             i += 1
             coordinate = yield
@@ -29,10 +31,17 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
             psda_result = psda_generator.send(coordinate)
             if cca_result is not None or psda_result is not None:
                 print i, cca_result, psda_result
-            if psda_result is not None:
+            if psda_result is not None and cca_result is not None:
                 if cca_result == psda_result:
-                    self.connection.send(cca_result)
-                    self.connection.send("CCAPSDA")
+                    prev_result.append(cca_result)
+                    del prev_result[0]
+                    if prev_result[1:] == prev_result[:-1]:
+                        # prev_result = [None for _ in range(result_count)]
+                        self.connection.send(cca_result)
+                        self.connection.send("CCAPSDA")
+                else:
+                    prev_result.append(None)
+                    del prev_result[0]
                 cca_generator.next()
                 psda_generator.next()
 
