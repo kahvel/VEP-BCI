@@ -104,7 +104,7 @@ class CCAExtraction(ExtractionWindow.ExtractionWindow):
         return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
-def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox):
+def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox, max_list=None):
     get_segment = True
     coord_gen_count = len(coordinates_generators)
     h = 3  # number of harmonics
@@ -132,7 +132,7 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
                         coordinates[channel] = np.roll(result, -(j+1)*step)
                         i += 1
                         coordinates_generators[channel].next()
-            max = 0
+            maximum = 0
             max_index = 0
             for i in range(len(target_signals)):
                 if get_segment:
@@ -144,13 +144,15 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
                     res_x, res_y = cca.fit_transform(np.array(coordinates).T, target_signals[i].T)
                 corr = np.corrcoef(res_x.T, res_y.T)[0][1]
                 # print target_freqs[i], corr
-                if corr > max:
-                    max = corr
+                if corr > maximum:
+                    maximum = corr
                     max_index = i
-            textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(max)+"\n")
+            textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"\n")
             count[max_index] += 1
             # print target_freqs[max_index], max
             # print count
+            if max_list is not None:
+                max_list.append(maximum)
             yield target_freqs[max_index]
 
 

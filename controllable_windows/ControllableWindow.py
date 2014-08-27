@@ -9,7 +9,6 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         self.channel_count = 0
         self.gen_count = 0
         self.generators = []
-        self.continue_generating = True
         self.window_function = None
         self.filter_coefficients = None
         self.options = None

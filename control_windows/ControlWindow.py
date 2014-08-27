@@ -107,7 +107,6 @@ class ControlWindow(MyWindows.TkWindow):
         group[name].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(group, name))
 
     def closeWindow(self, windows, key):
-        windows[key].continue_generating = False
         self.closeGenerators(windows[key].generators)
         windows[key].destroy()
         windows[key] = None
@@ -144,7 +143,6 @@ class ControlWindow(MyWindows.TkWindow):
         if window is not None:
             window.resetCanvas()
             self.closeGenerators(window.generators)
-            window.continue_generating = True
             window.setup(self.options, sensor_names, self.window_function, self.filter_coefficients)
 
     def start(self):
@@ -157,13 +155,23 @@ class ControlWindow(MyWindows.TkWindow):
         while True:
             packet = self.recvPacket()
             if isinstance(packet, basestring):
+                for group_name in self.window_group_names:
+                    for name in self.window_names:
+                        window = self.window_groups[group_name][name]
+                        if window is not None:
+                            try:
+                                print window.cca_list
+                                print window.psda_list
+                                print window.short_cca_list
+                                print window.short_psda_list
+                            except:
+                                pass
                 return packet
             for group_name in self.window_group_names:
                 for name in self.window_names:
                     window = self.window_groups[group_name][name]
                     if window is not None:
-                        if window.continue_generating:
-                            window.sendPacket(packet, window.generators, self.chosen_sensor_names)
+                        window.sendPacket(packet, window.generators, self.chosen_sensor_names)
 
     def setWindowFunction(self, options_textboxes, variables):
         window_var = variables["Window"].get()
