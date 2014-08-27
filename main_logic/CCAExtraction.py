@@ -116,7 +116,6 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             target_signals[-1].append(np.sin(np.pi*2*harmonic*freq/sampling_freq*t))
             target_signals[-1].append(np.cos(np.pi*2*harmonic*freq/sampling_freq*t))
     cca = sklearn.cross_decomposition.CCA(n_components=1)
-    count = [0 for _ in range(len(target_freqs))]
     for generator in coordinates_generators:
         generator.send(None)
     coordinates = [None for _ in range(coord_gen_count)]
@@ -134,6 +133,8 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
                         coordinates_generators[channel].next()
             maximum = 0
             max_index = 0
+            if max_list is not None:
+                max_list.append([])
             for i in range(len(target_signals)):
                 if get_segment:
                     signal_segment = np.array([target_signals[i][j][:len(coordinates[0])] for j in range(len(target_signals[i]))]).T
@@ -143,16 +144,12 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
                 else:
                     res_x, res_y = cca.fit_transform(np.array(coordinates).T, target_signals[i].T)
                 corr = np.corrcoef(res_x.T, res_y.T)[0][1]
-                # print target_freqs[i], corr
+                if max_list is not None:
+                    max_list[-1].append(corr)
                 if corr > maximum:
                     maximum = corr
                     max_index = i
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"\n")
-            count[max_index] += 1
-            # print target_freqs[max_index], max
-            # print count
-            if max_list is not None:
-                max_list.append(maximum)
             # print maximum, 0.2
             # if maximum > 0.2:
             #     yield target_freqs[max_index]

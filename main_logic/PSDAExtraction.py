@@ -46,11 +46,13 @@ def getSNR(freq, h_start, h_end, interpolation):
     return result
 
 
-def getMax(getValue, h_start, h_end, interpolation, target_freqs):
+def getMax(getValue, h_start, h_end, interpolation, target_freqs, max_list=None):
     max = 0
     max_index = -1
     for i in range(len(target_freqs)):
         ratio = getValue(target_freqs[i], h_start, h_end, interpolation)
+        if max_list is not None:
+            max_list[-1].append(ratio)
         if ratio > max:
             max = ratio
             max_index = i
@@ -58,7 +60,6 @@ def getMax(getValue, h_start, h_end, interpolation, target_freqs):
 
 
 def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox, max_list=None):
-    count = [0 for _ in range(len(target_freqs))]
     coord_gen_count = len(coordinates_generators)
     coordinates = [None for _ in range(coord_gen_count)]
     calculate_indices = True
@@ -80,18 +81,15 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             if ps_len == length//2+1:
                 calculate_indices = False
             freq_indices = []
-            # print "Freqs:"
             for freq in target_freqs:
                 index = int(freq*(ps_len-1)*2/sampling_freq)
                 freq_indices.append(index)
                 freqs = np.fft.rfftfreq((ps_len-1)*2)*sampling_freq
-                # print freqs
-                # print freqs[freq_indices[-1]]
-        # if 0 in freq_indices:
-        #     continue
+        if max_list is not None:
+            max_list.append([])
         for channel in range(coord_gen_count):
             interpolation_fun = interpolate.interp1d(freqs, coordinates[channel])
-            actual_max, max_index = getMax(getMagnitude, 1, 2, interpolation_fun, target_freqs)
+            actual_max, max_index = getMax(getMagnitude, 1, 2, interpolation_fun, target_freqs, max_list)
             # print actual_max, sum(coordinates[channel])/len(coordinates[channel])*2+1
             # if sum(coordinates[channel])/len(coordinates[channel])*2+1 < actual_max:
             #     max_freqs[max_index] += 1
@@ -102,22 +100,15 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             maximum, max_index = getMax(getMagnitude, 3, 3, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"\n")
             maximum, max_index = getMax(getSNR, 1, 1, interpolation_fun, target_freqs)
-            # print max_index, coordinates[freq_indices[max_index]-3], coordinates[freq_indices[max_index]-2], \
-            #     coordinates[freq_indices[max_index]-1], coordinates[freq_indices[max_index]],\
-            #     coordinates[freq_indices[max_index]+1], coordinates[freq_indices[max_index]+2]
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"  ")
             maximum, max_index = getMax(getSNR, 2, 2, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"  ")
             maximum, max_index = getMax(getSNR, 3, 3, interpolation_fun, target_freqs)
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"\n\n")
             textbox.yview(Tkinter.END)
-        # print max_freqs, count
         for i in range(len(max_freqs)):
             if max_freqs[i] >= coord_gen_count:
-                if max_list is not None:
-                    max_list.append(actual_max)
                 yield target_freqs[i]
-                count[i] += 1
 
 
 class Single(Abstract.Single, PSDAExtraction):

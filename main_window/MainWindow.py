@@ -169,11 +169,10 @@ class MainWindow(MyWindows.TkWindow):
         return freq
 
     def getRecordedSignals(self):
-        signals = []
-        for i in range(1, len(self.targets)):
+        signals = [self.neutral_signal]
+        for i in range(len(self.targets)):
             if int(self.targets[i]["Disable"]) == 0:
                 signals.append(self.target_signal[i])
-        signals.append(self.neutral_signal)
         return signals
 
     def getBackgroundData(self):
