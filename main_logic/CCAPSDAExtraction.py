@@ -66,9 +66,13 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                 else:
                     prev_result.append(None)
                     del prev_result[0]
+            if cca_result is not None:
                 cca_generator.next()
+            if psda_result is not None:
                 psda_generator.next()
+            if short_cca_result is not None:
                 short_cca_generator.next()
+            if short_psda_result is not None:
                 short_psda_generator.next()
 
 

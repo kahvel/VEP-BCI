@@ -11,11 +11,11 @@ class FFT(SignalProcessing.SignalProcessing):
     def normaliseSpectrum(self, fft):
         if self.options["Normalise"]:
             result = (fft/sum(fft))
-            result[0] = result[1]
+            result[0] = 0
             return result
         else:
             result = np.log10(fft)
-            result[0] = result[1]
+            result[0] = 0
             return result
 
     # def detrendSegment(self, signal):

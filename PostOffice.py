@@ -15,6 +15,8 @@ class PostOffice(object):
         self.results = {"CCA": {}, "PSDA": {}, "CCAPSDA": {}}
         self.target_freqs = None
         self.current_target = None
+        self.standby = None
+        self.standby_freq = None
         self.waitConnections()
 
     def addConnection(self, connections_list, title):
@@ -37,9 +39,11 @@ class PostOffice(object):
                 elif message == "Add game":
                     self.addConnection(self.game_connection, "game")
                 elif message == "Start":
-                    self.start(self.normalSequence)
+                    self.start(self.normalSequence, False)
+                elif message == "Start2":
+                    self.start(self.normalSequence, True)
                 elif message == "Test":
-                    self.start(self.randomTestSequence)
+                    self.start(self.randomTestSequence, True)
                 elif message == "Exit":
                     self.sendMessage(self.emotiv_connection, "Exit")
                     self.sendMessage(self.psychopy_connection, "Exit")
@@ -79,7 +83,7 @@ class PostOffice(object):
                 signal.append(message)
         self.main_connection.send(signal)
 
-    def handleMessage(self, connections, name):
+    def handleMessage(self, connections, name, test=False):
         for i in range(len(connections)-1, -1, -1):
             if connections[i].poll():
                 message = connections[i].recv()
@@ -90,8 +94,12 @@ class PostOffice(object):
                 elif name == "Extraction" and isinstance(message, float):
                     class_name = connections[i].recv()
                     self.results[class_name][str(self.target_freqs)][self.current_target][message] += 1
-                    self.sendMessage(self.psychopy_connection, message)
-                    self.sendMessage(self.game_connection, message)
+                    if message == self.standby_freq:
+                        self.sendMessage(self.psychopy_connection, self.standby and not test)
+                        self.standby = not self.standby
+                    if not self.standby or test:
+                        self.sendMessage(self.psychopy_connection, message)
+                        self.sendMessage(self.game_connection, message)
 
     def sendMessage(self, connections, message):
         for i in range(len(connections)-1, -1, -1):
@@ -123,7 +131,7 @@ class PostOffice(object):
     def normalSequence(self, length):
         return [[self.current_target, length]]
 
-    def start(self, function):
+    def start(self, function, test):
         length = self.main_connection.recv()
         self.current_target = self.main_connection.recv()-1
         background_data = self.main_connection.recv()
@@ -151,7 +159,7 @@ class PostOffice(object):
             self.current_target = target
             if target != -1:
                 self.sendMessage(self.psychopy_connection, target)
-            message = self.startPacketSending(time)
+            message = self.startPacketSending(time, test)
             if message is not None:
                 break
         self.sendMessage(self.emotiv_connection, "Stop")
@@ -167,16 +175,21 @@ class PostOffice(object):
                     print row, self.results[method][freqs][row]
         return message
 
-    def startPacketSending(self, length):
+    def startPacketSending(self, length, test):
         count = 0
+        self.standby = True
+        self.standby_freq = self.target_freqs[-1]
+        if test:
+            self.sendMessage(self.psychopy_connection, False)
         while count < length:
             if self.main_connection.poll():
                 message = self.main_connection.recv()
                 return message
             if self.emotiv_connection[0].poll():
-                count += 1
                 message = self.emotiv_connection[0].recv()
                 self.sendMessage(self.extraction_connection, message)
                 self.sendMessage(self.plot_connection, message)
+                if not self.standby or test:
+                    count += 1
             self.handleMessage(self.plot_connection, "Plot")
-            self.handleMessage(self.extraction_connection, "Extraction")
+            self.handleMessage(self.extraction_connection, "Extraction", test=test)

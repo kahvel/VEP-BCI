@@ -92,6 +92,9 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
         for channel in range(coord_gen_count):
             interpolation_fun = interpolate.interp1d(freqs, coordinates[channel])
             actual_max, max_index = getMax(getMagnitude, 1, 2, interpolation_fun, target_freqs)
+            # print actual_max, sum(coordinates[channel])/len(coordinates[channel])*2+1
+            # if sum(coordinates[channel])/len(coordinates[channel])*2+1 < actual_max:
+            #     max_freqs[max_index] += 1
             max_freqs[max_index] += 1
             textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(actual_max)+"  ")
             maximum, max_index = getMax(getMagnitude, 2, 2, interpolation_fun, target_freqs)

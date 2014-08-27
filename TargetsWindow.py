@@ -7,6 +7,7 @@ from psychopy import visual, core, logging, event
 
 class Target(object):
     def __init__(self, target, window, monitor_frequency):
+        self.standby_target = False
         self.color = target["Color1"]
         self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
                                 pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=self.color)
@@ -29,10 +30,10 @@ class Target(object):
             for c in self.sequence:
                 if c == "1":
                     for _ in range(self.freq_on):
-                        yield
-                        self.rect.draw()
+                        standby = yield
+                        if not standby or self.standby_target:
+                            self.rect.draw()
                         # self.fixation.draw()
-                # self.rect.fillColor = self.color
                 if c == "0":
                     for _ in range(self.freq_off):
                         yield
@@ -95,14 +96,19 @@ class TargetsWindow(object):
             self.targets.append(Target(target, self.window, self.monitor_frequency))
             self.generators.append(self.targets[-1].generator())
             self.generators[-1].send(None)
+        self.targets[-1].standby_target = True
 
     def run(self):
         prev_rect = self.targets[0].current_rect
+        standby = True
         while True:
             freq = None
             if self.connection.poll():
                 freq = self.connection.recv()
-            if isinstance(freq, basestring):
+            if isinstance(freq, bool):
+                print freq
+                standby = freq
+            elif isinstance(freq, basestring):
                 prev_rect.setAutoDraw(False)
                 return freq
             for i in range(len(self.targets)):
@@ -112,7 +118,7 @@ class TargetsWindow(object):
                     prev_rect.setAutoDraw(False)
                     self.targets[i].current_rect.setAutoDraw(True)
                     prev_rect = self.targets[i].current_rect
-                self.generators[i].send(None)
+                self.generators[i].send(standby)
             self.window.flip()
             if len(event.getKeys()) > 0:
                 return "Exit"

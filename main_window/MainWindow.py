@@ -112,7 +112,9 @@ class MainWindow(MyWindows.TkWindow):
         button_frame = self.initButtonFrame(["Targets", "Plots", "Extraction"],
                                             [self.targetsWindow, self.plotWindow, self.extraction])
         button_frame2 = self.initButtonFrame(["Save", "Load", "Exit"],
-                                             [self.saveFile, self.loadFile, self.exit], 1)
+                                             [self.saveFile, self.loadFile, self.exit], 2)
+        self.start_button2 = Tkinter.Button(button_frame2, text="Start2", command=lambda: self.start("Start2"))
+        self.start_button2.grid(row=0, column=1, padx=5, pady=5)
         self.start_button = Tkinter.Button(button_frame2, text="Start", command=lambda: self.start("Start"))
         self.start_button.grid(row=0, column=0, padx=5, pady=5)
         record_frame = self.initButtonFrame(["Neutral", "Target"],
@@ -207,6 +209,7 @@ class MainWindow(MyWindows.TkWindow):
     def start(self, message, length=float("inf")):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
+        self.start_button2.configure(text="Stop", command=lambda: self.stop())
         self.connection.send(message)
         self.connection.send(length)
         self.connection.send(self.current_radio_button.get())
@@ -217,6 +220,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def stop(self):
         self.start_button.configure(text="Start", command=lambda: self.start("Start"))
+        self.start_button2.configure(text="Start2", command=lambda: self.start("Start2"))
         self.connection.send("Stop")
 
     def newProcess(self, func, message, *args):

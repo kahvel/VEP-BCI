@@ -153,6 +153,9 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             # print count
             if max_list is not None:
                 max_list.append(maximum)
+            # print maximum, 0.2
+            # if maximum > 0.2:
+            #     yield target_freqs[max_index]
             yield target_freqs[max_index]
 
 
