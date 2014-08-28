@@ -13,7 +13,6 @@ class Window(ControlWindow.ControlWindow):
         ControlWindow.ControlWindow.__init__(self, "Extraction control", 320, 370, args)
         self.connection = connection
         self.freq_points = None
-        self.recorded_signals = None
         self.results = []
         self.myMainloop()
 
@@ -24,10 +23,9 @@ class Window(ControlWindow.ControlWindow):
             self.closeGenerators(window.generators)
             window.continue_generating = True
             window.setup(self.options, sensor_names, self.window_function, self.filter_coefficients,
-                         self.freq_points, self.recorded_signals, self.connection)
+                         self.freq_points, self.connection)
 
     def start(self):
         self.freq_points = self.connection.recv()
-        self.recorded_signals = self.connection.recv()
         message = ControlWindow.ControlWindow.start(self)
         return message

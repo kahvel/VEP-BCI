@@ -117,8 +117,8 @@ class MainWindow(MyWindows.TkWindow):
         self.start_button2.grid(row=0, column=1, padx=5, pady=5)
         self.start_button = Tkinter.Button(button_frame2, text="Start", command=lambda: self.start("Start"))
         self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        record_frame = self.initButtonFrame(["Neutral", "Target"],
-                                            [self.recordNeutral, self.recordTarget], 2)
+        record_frame = self.initButtonFrame(["Neutral", "Target", "Threshold"],
+                                            [self.recordNeutral, self.recordTarget, self.calculateThreshold], 2)
         Tkinter.Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
         test_frame = self.initButtonFrame(["Test", "Game"],
                                           [self.testExtraction, self.game], 0)
@@ -135,6 +135,9 @@ class MainWindow(MyWindows.TkWindow):
 
     def game(self):
         self.newProcess(Main.runGame, "Add game")
+
+    def calculateThreshold(self):
+        self.connection.send("Threshold")
 
     def exit(self):
         print "Exiting main window"
@@ -168,13 +171,6 @@ class MainWindow(MyWindows.TkWindow):
                 freq.append(float(self.targets[i]["Freq"]))
         return freq
 
-    def getRecordedSignals(self):
-        signals = [self.neutral_signal]
-        for i in range(len(self.targets)):
-            if int(self.targets[i]["Disable"]) == 0:
-                signals.append(self.target_signal[i])
-        return signals
-
     def getBackgroundData(self):
         self.saveValues(self.current_radio_button.get())
         bk = {}
@@ -186,6 +182,7 @@ class MainWindow(MyWindows.TkWindow):
         self.start("Test", 128*30)
 
     def recordTarget(self):
+        length = 512
         if self.current_radio_button.get() == 0:
             print "Choose target"
         else:
@@ -193,17 +190,14 @@ class MainWindow(MyWindows.TkWindow):
             # self.connection.send(self.getEnabledTargets())
             self.connection.send(self.getBackgroundData())
             self.connection.send([self.targets[self.current_radio_button.get()]])
-            self.connection.send(512)
-            while not self.connection.poll(0.1):
-                self.update()
-            self.target_signal[self.current_radio_button.get()] = self.connection.recv()
+            self.connection.send(length)
+            self.connection.send(self.current_radio_button.get())
 
     def recordNeutral(self):
+        length = 512
         self.connection.send("Record neutral")
-        self.connection.send(512)  # length
-        while not self.connection.poll(0.1):
-            self.update()
-        self.neutral_signal = self.connection.recv()
+        self.connection.send(length)
+        self.connection.send(self.current_radio_button.get())
 
     def start(self, message, length=float("inf")):
         self.saveValues(self.current_radio_button.get())
@@ -215,7 +209,6 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(self.getBackgroundData())
         self.connection.send(self.getEnabledTargets())
         self.connection.send(self.getChosenFreq())
-        self.connection.send(self.getRecordedSignals())
 
     def stop(self):
         self.start_button.configure(text="Start", command=lambda: self.start("Start"))

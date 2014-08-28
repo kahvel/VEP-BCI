@@ -17,6 +17,7 @@ class PostOffice(object):
         self.current_target = None
         self.standby = None
         self.standby_freq = None
+        self.recorded_signals = [None for _ in range(7)]
         self.waitConnections()
 
     def addConnection(self, connections_list, title):
@@ -44,6 +45,8 @@ class PostOffice(object):
                     self.start(self.normalSequence, True)
                 elif message == "Test":
                     self.start(self.randomTestSequence, True)
+                elif message == "Threshold":
+                    self.calculateThreshold()
                 elif message == "Exit":
                     self.sendMessage(self.emotiv_connection, "Exit")
                     self.sendMessage(self.psychopy_connection, "Exit")
@@ -51,28 +54,38 @@ class PostOffice(object):
                     self.sendMessage(self.extraction_connection, "Exit")
                     self.sendMessage(self.game_connection, "Exit")
                     while True:  # wait until all connections are closed
-                        self.handleMessage(self.psychopy_connection, "Psychopy")
-                        self.handleMessage(self.plot_connection, "Plot")
-                        self.handleMessage(self.extraction_connection, "Extraction")
-                        self.handleMessage(self.game_connection, "Game")
+                        self.getMessages(self.psychopy_connection, "Psychopy")
+                        self.getMessages(self.plot_connection, "Plot")
+                        self.getMessages(self.extraction_connection, "Extraction")
+                        self.getMessages(self.game_connection, "Game")
                         if len(self.psychopy_connection)+len(self.plot_connection)+len(self.extraction_connection) == 0:
                             return
                 elif message == "Record neutral":
                     self.sendMessage(self.emotiv_connection, "Start")
-                    self.recordSignal(self.main_connection.recv())
+                    self.recordSignal(self.main_connection.recv(), self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Stop")
                 elif message == "Record target":
                     self.sendMessage(self.psychopy_connection, "Start")
                     self.sendMessage(self.psychopy_connection, self.main_connection.recv())
                     self.sendMessage(self.psychopy_connection, self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Start")
-                    self.recordSignal(self.main_connection.recv())
+                    self.recordSignal(self.main_connection.recv(), self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Stop")
                     self.sendMessage(self.psychopy_connection, "Stop")
                 else:
                     print "Unknown message:", message
 
-    def recordSignal(self, length):
+    def calculateThreshold(self):
+        self.target_freqs = self.main_connection.recv()
+        self.sendMessage(self.extraction_connection, "Start")
+        self.sendMessage(self.extraction_connection, self.target_freqs)
+        for signal in self.recorded_signals:
+            if signal is not None:
+                for packet in signal:
+                    self.sendMessage(self.extraction_connection, packet)
+        self.sendMessage(self.extraction_connection, "Stop")
+
+    def recordSignal(self, length, target_n):
         signal = []
         while len(signal) < length:
             if self.main_connection.poll():
@@ -81,9 +94,10 @@ class PostOffice(object):
             if self.emotiv_connection[0].poll():
                 message = self.emotiv_connection[0].recv()
                 signal.append(message)
-        self.main_connection.send(signal)
+        self.recorded_signals[target_n] = signal
 
-    def handleMessage(self, connections, name, test=False):
+    def getMessages(self, connections, name):
+        ret = []
         for i in range(len(connections)-1, -1, -1):
             if connections[i].poll():
                 message = connections[i].recv()
@@ -91,15 +105,19 @@ class PostOffice(object):
                     print name, "pipe closed"
                     connections[i].close()
                     del connections[i]
-                elif name == "Extraction" and isinstance(message, float):
-                    class_name = connections[i].recv()
-                    self.results[class_name][str(self.target_freqs)][self.current_target][message] += 1
-                    if message == self.standby_freq:
-                        self.sendMessage(self.psychopy_connection, self.standby and not test)
-                        self.standby = not self.standby
-                    if not self.standby or test:
-                        self.sendMessage(self.psychopy_connection, message)
-                        self.sendMessage(self.game_connection, message)
+                else:  # elif name == "Extraction" and isinstance(message, float):
+                    ret.append((message, connections[i].recv()))
+        return ret
+
+    def handleFreqMessages(self, messages, test=False):
+        for freq, class_name in messages:
+            self.results[class_name][str(self.target_freqs)][self.current_target][freq] += 1
+            if freq == self.standby_freq:
+                self.sendMessage(self.psychopy_connection, self.standby and not test)
+                self.standby = not self.standby
+            if not self.standby or test:
+                self.sendMessage(self.psychopy_connection, freq)
+                self.sendMessage(self.game_connection, freq)
 
     def sendMessage(self, connections, message):
         for i in range(len(connections)-1, -1, -1):
@@ -115,7 +133,6 @@ class PostOffice(object):
                 if asd[target] - time < min_length:
                     time = asd[target]
                 asd[target] = asd[target]-time
-                print target, time, asd
                 if len(data) > 0 and data[-1][0] == target:
                     data[-1][1] += time
                 else:
@@ -137,7 +154,6 @@ class PostOffice(object):
         background_data = self.main_connection.recv()
         targets_data = self.main_connection.recv()
         self.target_freqs = self.main_connection.recv()
-        recorded_signals = self.main_connection.recv()
         self.sendMessage(self.psychopy_connection, "Start")
         self.sendMessage(self.plot_connection, "Start")
         self.sendMessage(self.extraction_connection, "Start")
@@ -146,16 +162,15 @@ class PostOffice(object):
         self.sendMessage(self.psychopy_connection, targets_data)
         self.sendMessage(self.extraction_connection, self.target_freqs)
         self.sendMessage(self.game_connection, self.target_freqs)
-        self.sendMessage(self.extraction_connection, recorded_signals)
         for key in self.results:
             if str(self.target_freqs) not in self.results[key]:
                 self.results[key][str(self.target_freqs)] = {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(-1, len(self.target_freqs))}
             else:
                 break
         self.sendMessage(self.emotiv_connection, "Start")
-        random_sequence = function(length)
-        print random_sequence
-        for target, time in random_sequence:
+        sequence = function(length)
+        print sequence
+        for target, time in sequence:
             self.current_target = target
             if target != -1:
                 self.sendMessage(self.psychopy_connection, target)
@@ -191,5 +206,6 @@ class PostOffice(object):
                 self.sendMessage(self.plot_connection, message)
                 if not self.standby or test:
                     count += 1
-            self.handleMessage(self.plot_connection, "Plot")
-            self.handleMessage(self.extraction_connection, "Extraction", test=test)
+            self.getMessages(self.plot_connection, "Plot")
+            freqs = self.getMessages(self.extraction_connection, "Extraction")
+            self.handleFreqMessages(freqs, test)

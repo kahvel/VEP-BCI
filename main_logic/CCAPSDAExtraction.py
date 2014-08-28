@@ -13,9 +13,6 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
         self.short_cca_list = []
         self.short_psda_list = []
 
-    def getGenerator(self, index):
-        return self.generator(index)
-
     def getShortCoordGenerator(self, length):
         raise NotImplementedError("getShortCoordCount not implemented")
 
@@ -25,6 +22,10 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
         return options
 
     def generator(self, index):
+        self.cca_list = []
+        self.psda_list = []
+        self.short_cca_list = []
+        self.short_psda_list = []
         coordinates_generators = [Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
         cca_generator = CCAExtraction.mainGenerator(self.options["Length"], self.options["Step"], self.headset_freq,
                                                     coordinates_generators, self.freq_points, self.canvas, self.cca_list)

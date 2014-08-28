@@ -12,9 +12,6 @@ class PSDAExtraction(ExtractionWindow.ExtractionWindow):
     def __init__(self, title):
         ExtractionWindow.ExtractionWindow.__init__(self, title)
 
-    def getGenerator(self, index):
-        return self.generator(index)
-
     def generator(self, index):
         coordinates_generators = [self.getCoordGenerator() for _ in range(self.getCoordGenCount())]
         main_generator = mainGenerator(self.options["Length"], self.options["Step"], self.headset_freq,

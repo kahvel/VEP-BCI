@@ -17,7 +17,6 @@ class Target(object):
                                          pos=(int(target["x"]), int(target["y"])+int(target["Width"])+20))
         self.current_rect = visual.Rect(window, width=10, height=10, fillColor="#00ff00",
                                         pos=(int(target["x"]), int(target["y"])-int(target["Height"])+20))
-        # self.detection_color = "#00ff00"
         self.freq = float(target["Freq"])
         self.sequence = "01"
         monitor_frequency = int(monitor_frequency)
@@ -102,22 +101,24 @@ class TargetsWindow(object):
         prev_rect = self.targets[0].current_rect
         standby = True
         while True:
-            freq = None
             if self.connection.poll():
-                freq = self.connection.recv()
-            if isinstance(freq, bool):
-                print freq
-                standby = freq
-            elif isinstance(freq, basestring):
-                prev_rect.setAutoDraw(False)
-                return freq
-            for i in range(len(self.targets)):
-                if freq == self.targets[i].freq and isinstance(freq, float):
-                    self.targets[i].detected_rect.draw()
-                elif freq == i and isinstance(i, int):
+                message = self.connection.recv()
+                if isinstance(message, bool):
+                    standby = message
+                    continue
+                elif isinstance(message, basestring):
                     prev_rect.setAutoDraw(False)
-                    self.targets[i].current_rect.setAutoDraw(True)
-                    prev_rect = self.targets[i].current_rect
+                    return message
+                for i in range(len(self.targets)):
+                    if message == self.targets[i].freq and isinstance(message, float):
+                        self.targets[i].detected_rect.draw()
+                        break
+                    elif message == i and isinstance(message, int):
+                        prev_rect.setAutoDraw(False)
+                        self.targets[i].current_rect.setAutoDraw(True)
+                        prev_rect = self.targets[i].current_rect
+                        break
+            for i in range(len(self.targets)):
                 self.generators[i].send(standby)
             self.window.flip()
             if len(event.getKeys()) > 0:
