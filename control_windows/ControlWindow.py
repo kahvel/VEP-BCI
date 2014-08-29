@@ -160,10 +160,7 @@ class ControlWindow(MyWindows.TkWindow):
                         window = self.window_groups[group_name][name]
                         if window is not None:
                             try:
-                                print window.cca_list
-                                print window.psda_list
-                                print window.short_cca_list
-                                print window.short_psda_list
+                                self.connection.send((window.cca_list, window.psda_list, window.short_cca_list, window.short_psda_list))
                             except:
                                 pass
                 return packet

@@ -84,6 +84,8 @@ class PostOffice(object):
                 for packet in signal:
                     self.sendMessage(self.extraction_connection, packet)
         self.sendMessage(self.extraction_connection, "Stop")
+        thresholds = self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True)
+        print thresholds
 
     def recordSignal(self, length, target_n):
         signal = []
@@ -96,17 +98,19 @@ class PostOffice(object):
                 signal.append(message)
         self.recorded_signals[target_n] = signal
 
-    def getMessages(self, connections, name):
+    def getMessages(self, connections, name, poll=lambda connection: connection.poll()):
         ret = []
         for i in range(len(connections)-1, -1, -1):
-            if connections[i].poll():
+            if poll(connections[i]):
                 message = connections[i].recv()
                 if message == "Close":
                     print name, "pipe closed"
                     connections[i].close()
                     del connections[i]
-                else:  # elif name == "Extraction" and isinstance(message, float):
+                elif isinstance(message, float):  # elif name == "Extraction" and isinstance(message, float):
                     ret.append((message, connections[i].recv()))
+                else:  # elif isinstanse(message, list)
+                    ret = message
         return ret
 
     def handleFreqMessages(self, messages, test=False):
@@ -181,6 +185,8 @@ class PostOffice(object):
         self.sendMessage(self.psychopy_connection, "Stop")
         self.sendMessage(self.plot_connection, "Stop")
         self.sendMessage(self.extraction_connection, "Stop")
+        results = self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True)
+        print results
         self.sendMessage(self.game_connection, "Stop")
         for method in self.results:
             print method
