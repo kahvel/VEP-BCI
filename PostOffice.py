@@ -77,15 +77,23 @@ class PostOffice(object):
 
     def calculateThreshold(self):
         self.target_freqs = self.main_connection.recv()
-        self.sendMessage(self.extraction_connection, "Start")
-        self.sendMessage(self.extraction_connection, self.target_freqs)
+        thresholds = []
         for signal in self.recorded_signals:
             if signal is not None:
+                self.sendMessage(self.extraction_connection, "Start")
+                self.sendMessage(self.extraction_connection, self.target_freqs)
                 for packet in signal:
                     self.sendMessage(self.extraction_connection, packet)
-        self.sendMessage(self.extraction_connection, "Stop")
-        thresholds = self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True)
-        print thresholds
+                self.sendMessage(self.extraction_connection, "Stop")
+                self.sendMessage(self.extraction_connection, "Results")
+                while True:
+                    if "Results" in self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True):
+                        break
+                thresholds.append(self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True))
+            else:
+                thresholds.append(None)
+        print "threshold", thresholds
+
 
     def recordSignal(self, length, target_n):
         signal = []
@@ -110,7 +118,7 @@ class PostOffice(object):
                 elif isinstance(message, float):  # elif name == "Extraction" and isinstance(message, float):
                     ret.append((message, connections[i].recv()))
                 else:  # elif isinstanse(message, list)
-                    ret = message
+                    ret.append(message)
         return ret
 
     def handleFreqMessages(self, messages, test=False):

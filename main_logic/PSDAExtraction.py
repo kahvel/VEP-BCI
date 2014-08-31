@@ -11,6 +11,7 @@ from scipy import interpolate
 class PSDAExtraction(ExtractionWindow.ExtractionWindow):
     def __init__(self, title):
         ExtractionWindow.ExtractionWindow.__init__(self, title)
+        self.results_list = {"PSDA": []}
 
     def generator(self, index):
         coordinates_generators = [self.getCoordGenerator() for _ in range(self.getCoordGenCount())]

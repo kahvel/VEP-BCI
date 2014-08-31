@@ -95,9 +95,14 @@ class ControlWindow(MyWindows.TkWindow):
             if message == "Exit" or self.exitFlag:
                 print "Exiting", self.name
                 break
+            elif message == "Results":
+                self.getResults()
         self.connection.send("Close")
         self.connection.close()
         self.destroy()
+
+    def getResults(self):
+        raise NotImplementedError("getResults not implemented")
 
     def exit(self):
         self.exitFlag = True
@@ -155,14 +160,6 @@ class ControlWindow(MyWindows.TkWindow):
         while True:
             packet = self.recvPacket()
             if isinstance(packet, basestring):
-                for group_name in self.window_group_names:
-                    for name in self.window_names:
-                        window = self.window_groups[group_name][name]
-                        if window is not None:
-                            try:
-                                self.connection.send((window.cca_list, window.psda_list, window.short_cca_list, window.short_psda_list))
-                            except:
-                                pass
                 return packet
             for group_name in self.window_group_names:
                 for name in self.window_names:

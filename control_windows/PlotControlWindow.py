@@ -25,3 +25,6 @@ class Window(ControlWindow.ControlWindow):
             self.fft_reset_buttons[self.window_names[i]].grid(column=i % 2, row=i//2+1, padx=5, pady=5)
         button_frame.pack()
         self.myMainloop()
+
+    def getResults(self):
+        pass

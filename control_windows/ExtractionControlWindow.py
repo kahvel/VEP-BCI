@@ -16,6 +16,14 @@ class Window(ControlWindow.ControlWindow):
         self.results = []
         self.myMainloop()
 
+    def getResults(self):
+        for group_name in self.window_group_names:
+            for name in self.window_names:
+                window = self.window_groups[group_name][name]
+                if window is not None:
+                    self.connection.send("Results")
+                    self.connection.send(window.result_lists)
+
     def reset(self, windows, group_name, name, sensor_names):
         window = windows[group_name][name]
         if window is not None:

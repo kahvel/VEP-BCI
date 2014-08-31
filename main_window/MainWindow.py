@@ -138,6 +138,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def calculateThreshold(self):
         self.connection.send("Threshold")
+        self.connection.send(self.getChosenFreq())
 
     def exit(self):
         print "Exiting main window"

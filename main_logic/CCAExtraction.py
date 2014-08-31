@@ -8,33 +8,10 @@ import numpy as np
 import sklearn.cross_decomposition
 
 
-# class TemplateExtraction(ExtractionWindow.ExtractionWindow):
-#     def __init__(self, title):
-#         ExtractionWindow.ExtractionWindow.__init__(self, title)
-#
-#     def startDeleting(self):
-#         return lambda x: True
-#
-#     def generator(self, index, start_deleting):
-#         coordinates_generator = self.getCoordGenerator()
-#         coordinates_generator.send(None)
-#         recorded_signals = []
-#         for signal in self.recorded_signals:
-#             if signal is not None:
-#                 recorded_signals.append([])
-#                 for packet in signal:
-#                     for i in range(len(self.sensor_names)):
-#                         coordinates = coordinates_generator.send(float(packet.sensors[self.sensor_names[i]]["value"]))
-#                         if coordinates is not None:
-#                             recorded_signals[-1].extend(coordinates)
-#             else:
-#                 recorded_signals.append(None)
-#         print recorded_signals[0]
-#         print recorded_signals[1]
-
 class CCAExtraction(ExtractionWindow.ExtractionWindow):
     def __init__(self, title):
         ExtractionWindow.ExtractionWindow.__init__(self, title)
+        self.results_list = {"CCA": []}
 
     def generator(self, index):
         coordinates_generators = [self.getCoordGenerator() for _ in range(self.channel_count)]

@@ -21,22 +21,6 @@ class ExtractionWindow(ControllableWindow.ControllableWindow):
         raise NotImplementedError("generator not implemented")
 
     def getGenerator(self, index):
-        # for packet in self.recorded_signals:
-        #     self.sendPacket(packet, )
-        # coordinates_generator = self.getCoordGenerator()
-        # coordinates_generator.send(None)
-        # processed_signals = []
-        # for signal in self.recorded_signals:
-        #     if signal is not None:
-        #         processed_signals.append([])
-        #         for packet in signal:
-        #             for i in range(len(self.sensor_names)):
-        #                 coordinates = coordinates_generator.send(float(packet.sensors[self.sensor_names[i]]["value"]))
-        #                 if coordinates is not None:
-        #                     processed_signals[-1].extend(coordinates)
-        #     else:
-        #         processed_signals.append(None)
-        # print processed_signals
         return self.generator(index)
 
     def setup(self, options, sensor_names, window_function, filter_coefficients,
@@ -45,11 +29,3 @@ class ExtractionWindow(ControllableWindow.ControllableWindow):
         self.sensor_names = sensor_names
         self.connection = connection
         ControllableWindow.ControllableWindow.setup(self, options, sensor_names, window_function, filter_coefficients)
-        # generators = []
-        #
-        # for i in range(self.gen_count):
-        #     generators.append(self.getGenerator(i))
-        #     generators[i].send(None)
-        # for packet in self.recorded_signals:
-        #     self.sendPacket(packet, generators, self.sensor_names)
-        # results = []
