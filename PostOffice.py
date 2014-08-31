@@ -2,6 +2,7 @@ __author__ = 'Anti'
 
 import multiprocessing.reduction
 import random
+import numpy as np
 
 
 class PostOffice(object):
@@ -77,7 +78,7 @@ class PostOffice(object):
 
     def calculateThreshold(self):
         self.target_freqs = self.main_connection.recv()
-        thresholds = []
+        all_results = []
         for signal in self.recorded_signals:
             if signal is not None:
                 self.sendMessage(self.extraction_connection, "Start")
@@ -89,10 +90,33 @@ class PostOffice(object):
                 while True:
                     if "Results" in self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True):
                         break
-                thresholds.append(self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True))
+                all_results.append(self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True))
             else:
-                thresholds.append(None)
-        print "threshold", thresholds
+                all_results.append(None)
+        thresholds = []
+        print "results", all_results
+        index = 0
+        for i in range(len(all_results)):  # target
+            if all_results[i] is not None:
+                for k in range(len(all_results[i])):  # window
+                    if len(thresholds) != len(all_results[i]):
+                        thresholds.append({})
+                    for key in all_results[i][k]:  # method
+                        print key
+                        transposed_result = np.transpose(all_results[i][k][key])
+                        if key not in thresholds[k]:
+                            thresholds[k][key] = {True:  [[] for _ in range(len(transposed_result))],
+                                                  False: [[] for _ in range(len(transposed_result))]}
+                        for j in range(len(transposed_result)):  # target
+                            if index == 0:
+                                thresholds[k][key][False][j] = np.append(thresholds[k][key][False][j], transposed_result[j], 1)
+                            elif index-1 == j:
+                                thresholds[k][key][True][j] = np.append(thresholds[k][key][True][j], transposed_result[j], 1)
+                            else:
+                                thresholds[k][key][False][j] = np.append(thresholds[k][key][False][j], transposed_result[j], 1)
+                            print transposed_result[j]
+                index += 1
+        print thresholds
 
 
     def recordSignal(self, length, target_n):
