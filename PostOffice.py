@@ -93,29 +93,43 @@ class PostOffice(object):
                 all_results.append(self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True))
             else:
                 all_results.append(None)
-        thresholds = []
+        shaped_results = []
         print "results", all_results
         index = 0
         for i in range(len(all_results)):  # target
             if all_results[i] is not None:
-                for k in range(len(all_results[i])):  # window
-                    if len(thresholds) != len(all_results[i]):
-                        thresholds.append({})
-                    for key in all_results[i][k]:  # method
-                        print key
-                        transposed_result = np.transpose(all_results[i][k][key])
-                        if key not in thresholds[k]:
-                            thresholds[k][key] = {True:  [[] for _ in range(len(transposed_result))],
+                for window in range(len(all_results[i])):  # window
+                    if len(shaped_results) != len(all_results[i]):
+                        shaped_results.append({})
+                    for method in all_results[i][window]:  # method
+                        print method
+                        transposed_result = np.transpose(all_results[i][window][method])
+                        if method not in shaped_results[window]:
+                            shaped_results[window][method] = {True:  [[] for _ in range(len(transposed_result))],
                                                   False: [[] for _ in range(len(transposed_result))]}
-                        for j in range(len(transposed_result)):  # target
+                        for target in range(len(transposed_result)):  # target
                             if index == 0:
-                                thresholds[k][key][False][j] = np.append(thresholds[k][key][False][j], transposed_result[j], 1)
-                            elif index-1 == j:
-                                thresholds[k][key][True][j] = np.append(thresholds[k][key][True][j], transposed_result[j], 1)
+                                shaped_results[window][method][False][target] = np.append(shaped_results[window][method][False][target], transposed_result[target][16:], 1)
+                            elif index-1 == target:
+                                shaped_results[window][method][True][target] = np.append(shaped_results[window][method][True][target], transposed_result[target][16:], 1)
                             else:
-                                thresholds[k][key][False][j] = np.append(thresholds[k][key][False][j], transposed_result[j], 1)
-                            print transposed_result[j]
+                                shaped_results[window][method][False][target] = np.append(shaped_results[window][method][False][target], transposed_result[target][16:], 1)
+                            print transposed_result[target]
                 index += 1
+        print shaped_results
+        thresholds = []
+        for window in shaped_results:
+            thresholds.append({})
+            for method in window:
+                thresholds[-1][method] = {}
+                for boolean in window[method]:
+                    thresholds[-1][method][boolean] = []
+                    for target in window[method][boolean]:
+                        thresholds[-1][method][boolean].append([])
+                        if len(target) != 0:
+                            thresholds[-1][method][boolean][-1].append(min(target))
+                            thresholds[-1][method][boolean][-1].append(sum(target)/len(target))
+                            thresholds[-1][method][boolean][-1].append(max(target))
         print thresholds
 
 
@@ -217,8 +231,6 @@ class PostOffice(object):
         self.sendMessage(self.psychopy_connection, "Stop")
         self.sendMessage(self.plot_connection, "Stop")
         self.sendMessage(self.extraction_connection, "Stop")
-        results = self.getMessages(self.extraction_connection, "Extraction", poll=lambda connection: True)
-        print results
         self.sendMessage(self.game_connection, "Stop")
         for method in self.results:
             print method

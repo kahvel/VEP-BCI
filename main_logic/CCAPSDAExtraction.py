@@ -45,6 +45,8 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
         i = 0
         result_count = 1
         prev_result = [None for _ in range(result_count)]
+        short_result_count = 2
+        short_prev_result = [None for _ in range(short_result_count)]
         while True:
             i += 1
             coordinate = yield
@@ -63,6 +65,15 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                         self.connection.send(cca_result)
                         self.connection.send("CCAPSDA")
                 else:
+                    # if short_cca_result == short_psda_result:
+                    #     short_prev_result.append(short_cca_result)
+                    #     del short_prev_result[0]
+                    #     if short_prev_result[1:] == short_prev_result[:-1]:
+                    #         self.connection.send(short_cca_result)
+                    #         self.connection.send("CCAPSDA")
+                    # else:
+                    #     short_prev_result.append(None)
+                    #     del short_prev_result[0]
                     prev_result.append(None)
                     del prev_result[0]
             if cca_result is not None:

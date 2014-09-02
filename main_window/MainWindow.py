@@ -183,7 +183,7 @@ class MainWindow(MyWindows.TkWindow):
         self.start("Test", 128*30)
 
     def recordTarget(self):
-        length = 512
+        length = 1024
         if self.current_radio_button.get() == 0:
             print "Choose target"
         else:
@@ -195,7 +195,7 @@ class MainWindow(MyWindows.TkWindow):
             self.connection.send(self.current_radio_button.get())
 
     def recordNeutral(self):
-        length = 512
+        length = 1024
         self.connection.send("Record neutral")
         self.connection.send(length)
         self.connection.send(self.current_radio_button.get())
