@@ -13,7 +13,9 @@ class PostOffice(object):
         self.plot_connection = []
         self.extraction_connection = []
         self.game_connection = []
-        self.results = {"CCA": {}, "PSDA": {}, "CCAPSDA": {}}
+        self.method_names = ["CCA", "PSDA", "CCAPSDA", "shortCCAPSDA"]
+        self.results = None
+        self.resetResults()
         self.target_freqs = None
         self.current_target = None
         self.standby = None
@@ -73,8 +75,13 @@ class PostOffice(object):
                     self.recordSignal(self.main_connection.recv(), self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Stop")
                     self.sendMessage(self.psychopy_connection, "Stop")
+                elif message == "Reset results":
+                    self.resetResults()
                 else:
                     print "Unknown message:", message
+
+    def resetResults(self):
+        self.results = {name: {} for name in self.method_names}
 
     def calculateThreshold(self):
         self.target_freqs = self.main_connection.recv()

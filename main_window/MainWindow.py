@@ -121,8 +121,9 @@ class MainWindow(MyWindows.TkWindow):
                                             [self.recordNeutral, self.recordTarget, self.calculateThreshold], 2)
         Tkinter.Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
         test_frame = self.initButtonFrame(["Test", "Game"],
-                                          [self.testExtraction, self.game], 0)
+                                          [self.testExtraction, self.game])
         # MyWindows.newTextBox(test_frame, "Length:", 1, 0, {})
+        other_frame = self.initButtonFrame(["Reset"], [self.resetResults])
         window_title_frame.pack()
         window_frame.pack()
         target_title_frame.pack()
@@ -132,6 +133,10 @@ class MainWindow(MyWindows.TkWindow):
         record_frame.pack()
         button_frame.pack()
         button_frame2.pack()
+        other_frame.pack()
+
+    def resetResults(self):
+        self.connection.send("Reset results")
 
     def game(self):
         self.newProcess(Main.runGame, "Add game")

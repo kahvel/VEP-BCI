@@ -30,7 +30,7 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                                                       coordinates_generators, self.freq_points, self.canvas,
                                                       self.result_lists["PSDA"])
         psda_generator.send(None)
-        short_length = 64
+        short_length = 384
         options = self.copyDict(short_length)
         coordinates_generators = [Signal.MultipleRegular(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
         short_cca_generator = CCAExtraction.mainGenerator(options["Length"], self.options["Step"], self.headset_freq,
@@ -76,6 +76,17 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                     #     del short_prev_result[0]
                     prev_result.append(None)
                     del prev_result[0]
+            if short_psda_result is not None and short_cca_result is not None:
+                if short_cca_result == short_psda_result:
+                    short_prev_result.append(short_cca_result)
+                    del short_prev_result[0]
+                    if short_prev_result[1:] == short_prev_result[:-1]:
+                        # prev_result = [None for _ in range(result_count)]
+                        self.connection.send(short_cca_result)
+                        self.connection.send("shortCCAPSDA")
+                else:
+                    short_prev_result.append(None)
+                    del short_prev_result[0]
             if cca_result is not None:
                 cca_generator.next()
             if psda_result is not None:
