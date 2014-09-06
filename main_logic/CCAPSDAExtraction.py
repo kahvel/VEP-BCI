@@ -45,10 +45,12 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
         i = 0
         result_count = 1
         prev_result = [None for _ in range(result_count)]
-        short_result_count = 2
+        short_result_count = 1
         short_prev_result = [None for _ in range(short_result_count)]
         while True:
             i += 1
+            result = None
+            short_result = None
             coordinate = yield
             cca_result = cca_generator.send(coordinate)
             psda_result = psda_generator.send(coordinate)
@@ -62,8 +64,7 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                     del prev_result[0]
                     if prev_result[1:] == prev_result[:-1]:
                         # prev_result = [None for _ in range(result_count)]
-                        self.connection.send(cca_result)
-                        self.connection.send("CCAPSDA")
+                        result = (cca_result, "CCAPSDA")
                 else:
                     # if short_cca_result == short_psda_result:
                     #     short_prev_result.append(short_cca_result)
@@ -82,11 +83,16 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                     del short_prev_result[0]
                     if short_prev_result[1:] == short_prev_result[:-1]:
                         # prev_result = [None for _ in range(result_count)]
-                        self.connection.send(short_cca_result)
-                        self.connection.send("shortCCAPSDA")
+                        short_result = (short_cca_result, "shortCCAPSDA")
                 else:
                     short_prev_result.append(None)
                     del short_prev_result[0]
+            if result is not None and short_result is not None:
+                self.connection.send((result, short_result))
+            elif result is not None:
+                self.connection.send((result,))
+            elif short_result is not None:
+                self.connection.send((short_result,))
             if cca_result is not None:
                 cca_generator.next()
             if psda_result is not None:

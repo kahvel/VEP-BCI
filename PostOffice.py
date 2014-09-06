@@ -160,21 +160,23 @@ class PostOffice(object):
                     print name, "pipe closed"
                     connections[i].close()
                     del connections[i]
-                elif isinstance(message, float):  # elif name == "Extraction" and isinstance(message, float):
-                    ret.append((message, connections[i].recv()))
+                elif isinstance(message, tuple):  # elif name == "Extraction" and isinstance(message, float):
+                    print "tuple", message
+                    ret.append(message)
                 else:  # elif isinstanse(message, list)
                     ret.append(message)
         return ret
 
     def handleFreqMessages(self, messages, test=False):
-        for freq, class_name in messages:
-            self.results[class_name][str(self.target_freqs)][self.current_target][freq] += 1
-            if freq == self.standby_freq:
-                self.sendMessage(self.psychopy_connection, self.standby and not test)
-                self.standby = not self.standby
-            if not self.standby or test:
-                self.sendMessage(self.psychopy_connection, freq)
-                self.sendMessage(self.game_connection, freq)
+        for result in messages:
+            for freq, class_name in result:
+                self.results[class_name][str(self.target_freqs)][self.current_target][freq] += 1
+                if freq == self.standby_freq:
+                    self.sendMessage(self.psychopy_connection, self.standby and not test)
+                    self.standby = not self.standby
+                if not self.standby or test:
+                    self.sendMessage(self.psychopy_connection, freq)
+                    self.sendMessage(self.game_connection, freq)
 
     def sendMessage(self, connections, message):
         for i in range(len(connections)-1, -1, -1):
