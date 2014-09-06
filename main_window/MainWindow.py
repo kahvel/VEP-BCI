@@ -6,6 +6,8 @@ import tkFileDialog
 import multiprocessing
 import multiprocessing.reduction
 import Main
+import win32api
+import win32con
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -37,6 +39,8 @@ class MainWindow(MyWindows.TkWindow):
         self.background_color_buttons = {}
         self.current_radio_button = Tkinter.IntVar()
         self.previous_radio_button = 0
+        self.monitor_names = [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
+        self.current_monitor = Tkinter.StringVar(value=self.monitor_names[0])
         self.initElements()
         self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
@@ -56,11 +60,14 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.newTextBox(window_frame, "Height:", 2, 0, self.background_textboxes)
         MyWindows.newColorButton(4, 0, self.backgroundColor, window_frame,
                              "Color", self.background_textboxes, self.background_color_buttons)
-        MyWindows.newTextBox(window_frame, "Freq:", 0, 1, self.background_textboxes)
+        MyWindows.newTextBox(window_frame, "Freq:", 2, 1, self.background_textboxes)
+        menu = Tkinter.OptionMenu(window_frame, self.current_monitor, *self.monitor_names,
+                                  command=lambda a: self.changeMonitor(a, self.background_textboxes["Freq"]))
+        menu.grid(row=1, column=0, columnspan=2)
+        self.changeMonitor(self.monitor_names[0], self.background_textboxes["Freq"])
         self.background_textboxes["Width"].insert(0, 800)
         self.background_textboxes["Height"].insert(0, 600)
         self.background_textboxes["Color"].insert(0, "#000000")
-        self.background_textboxes["Freq"].insert(0, 60)
         MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
         return window_frame
 
@@ -134,6 +141,10 @@ class MainWindow(MyWindows.TkWindow):
         button_frame.pack()
         button_frame2.pack()
         other_frame.pack()
+
+    def changeMonitor(self, monitor, textbox):
+        textbox.delete(0, Tkinter.END)
+        textbox.insert(0, getattr(win32api.EnumDisplaySettings(monitor, win32con.ENUM_CURRENT_SETTINGS), "DisplayFrequency"))
 
     def resetResults(self):
         self.connection.send("Reset results")
