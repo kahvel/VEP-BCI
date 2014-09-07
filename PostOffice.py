@@ -139,7 +139,6 @@ class PostOffice(object):
                             thresholds[-1][method][boolean][-1].append(max(target))
         print thresholds
 
-
     def recordSignal(self, length, target_n):
         signal = []
         while len(signal) < length:
@@ -161,7 +160,6 @@ class PostOffice(object):
                     connections[i].close()
                     del connections[i]
                 elif isinstance(message, tuple):  # elif name == "Extraction" and isinstance(message, float):
-                    print "tuple", message
                     ret.append(message)
                 else:  # elif isinstanse(message, list)
                     ret.append(message)
@@ -175,21 +173,22 @@ class PostOffice(object):
                     self.sendMessage(self.psychopy_connection, self.standby and not test)
                     self.standby = not self.standby
                 if not self.standby or test:
-                    self.sendMessage(self.psychopy_connection, freq)
-                    self.sendMessage(self.game_connection, freq)
+                    if not "short" in class_name:
+                        self.sendMessage(self.psychopy_connection, freq)
+                        self.sendMessage(self.game_connection, freq)
 
     def sendMessage(self, connections, message):
         for i in range(len(connections)-1, -1, -1):
             connections[i].send(message)
 
-    def randomTestSequence(self, length, min_length=128*2, max_length=128*4):
+    def randomTestSequence(self, options):
         if self.current_target == -1:
             data = []
-            asd = {i: length for i in range(len(self.target_freqs))}
+            asd = {i: options["Length"] for i in range(len(self.target_freqs))}
             while True:
                 target = random.choice(asd.keys())
-                time = random.randint(min_length, max_length)
-                if asd[target] - time < min_length:
+                time = random.randint(options["Min"], options["Max"])
+                if asd[target] - time < options["Min"]:
                     time = asd[target]
                 asd[target] = asd[target]-time
                 if len(data) > 0 and data[-1][0] == target:
@@ -202,13 +201,13 @@ class PostOffice(object):
                         break
             return data
         else:
-            return [[self.current_target, length]]
+            return self.normalSequence(options)
 
-    def normalSequence(self, length):
-        return [[self.current_target, length]]
+    def normalSequence(self, options):
+        return [[self.current_target, options["Length"]]]
 
     def start(self, function, test):
-        length = self.main_connection.recv()
+        options = self.main_connection.recv()
         self.current_target = self.main_connection.recv()-1
         background_data = self.main_connection.recv()
         targets_data = self.main_connection.recv()
@@ -227,7 +226,7 @@ class PostOffice(object):
             else:
                 break
         self.sendMessage(self.emotiv_connection, "Start")
-        sequence = function(length)
+        sequence = function(options)
         print sequence
         for target, time in sequence:
             self.current_target = target

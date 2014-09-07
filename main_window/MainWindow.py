@@ -15,6 +15,7 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.TkWindow.__init__(self, "Main Menu", 310, 500)
         self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.start_button = None
+        self.start_button2 = None
         self.target_textboxes = {}
         self.background_textboxes = {}
         self.checkbox_values = []
@@ -94,53 +95,56 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.newTextBox(frame, "Height:", 2, 1, self.target_textboxes)
         MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color1",
                                  self.target_textboxes, self.target_color_buttons)
-        MyWindows.newColorButton(4, 2, self.targetColor, frame, "Color2",
-                                 self.target_textboxes, self.target_color_buttons)
         MyWindows.newTextBox(frame, "x:", 0, 2, self.target_textboxes)
         MyWindows.newTextBox(frame, "y:", 2, 2, self.target_textboxes)
+        MyWindows.newColorButton(4, 2, self.targetColor, frame, "Color2",
+                                 self.target_textboxes, self.target_color_buttons)
         self.loadValues(0)
         for key in self.target_color_buttons:
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
         return frame
 
-    def initButtonFrame(self, button_names, commands, start_column=0):
-        frame = Tkinter.Frame()
+    def initButtonFrame(self, button_names, commands, start_column=0, default_frame=lambda a: Tkinter.Frame(a), *options):
+        frame = default_frame(self)
         for i in range(len(button_names)):
             Tkinter.Button(frame, text=button_names[i],
-                           command=lambda i=i: commands[i]()).grid(column=start_column+i, row=0, padx=5, pady=5)
+                           command=lambda i=i: commands[i](*options)).grid(column=start_column+i, row=0, padx=5, pady=5)
+        return frame
+
+    def initTestFrame(self):
+        textboxes = {}
+        frame = self.initButtonFrame(["Test"], [self.testExtraction], 0, lambda a: Tkinter.Frame(a), textboxes)
+        MyWindows.newTextBox(frame, "Length:", 1, 0, textboxes)
+        MyWindows.newTextBox(frame, "Min:", 3, 0, textboxes)
+        MyWindows.newTextBox(frame, "Max:", 5, 0, textboxes)
+        textboxes["Length"].insert(0, 128*30)
+        textboxes["Min"].insert(0, 128*2)
+        textboxes["Max"].insert(0, 128*4)
+        return frame
+
+    def initMainButtons(self):
+        frame = Tkinter.Frame(self)
+        self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start"))
+        self.start_button.grid(row=0, column=0, padx=5, pady=5)
+        self.start_button2 = Tkinter.Button(frame, text="Start2", command=lambda: self.start("Start2"))
+        self.start_button2.grid(row=0, column=1, padx=5, pady=5)
+        self.initButtonFrame(["Save", "Load", "Exit"],
+                             [self.saveFile, self.loadFile, self.exit], 2, default_frame=lambda a: frame)
         return frame
 
     def initElements(self):
-        window_title_frame = self.initTitleFrame("Window")
-        window_frame = self.initWindowFrame()
-        target_title_frame = self.initTitleFrame("Targets")
-        radiobutton_frame = self.initRadiobuttonFrame()
-        target_frame = self.initTargetFrame()
-        button_frame = self.initButtonFrame(["Targets", "Plots", "Extraction"],
-                                            [self.targetsWindow, self.plotWindow, self.extraction])
-        button_frame2 = self.initButtonFrame(["Save", "Load", "Exit"],
-                                             [self.saveFile, self.loadFile, self.exit], 2)
-        self.start_button2 = Tkinter.Button(button_frame2, text="Start2", command=lambda: self.start("Start2"))
-        self.start_button2.grid(row=0, column=1, padx=5, pady=5)
-        self.start_button = Tkinter.Button(button_frame2, text="Start", command=lambda: self.start("Start"))
-        self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        record_frame = self.initButtonFrame(["Neutral", "Target", "Threshold"],
-                                            [self.recordNeutral, self.recordTarget, self.calculateThreshold], 2)
-        Tkinter.Label(record_frame, text="Record").grid(column=0, row=0, padx=5, pady=5)
-        test_frame = self.initButtonFrame(["Test", "Game"],
-                                          [self.testExtraction, self.game])
-        # MyWindows.newTextBox(test_frame, "Length:", 1, 0, {})
-        other_frame = self.initButtonFrame(["Reset"], [self.resetResults])
-        window_title_frame.pack()
-        window_frame.pack()
-        target_title_frame.pack()
-        radiobutton_frame.pack()
-        target_frame.pack()
-        test_frame.pack()
-        record_frame.pack()
-        button_frame.pack()
-        button_frame2.pack()
-        other_frame.pack()
+        self.initTitleFrame("Window").pack()
+        self.initWindowFrame().pack()
+        self.initTitleFrame("Targets").pack()
+        self.initRadiobuttonFrame().pack()
+        self.initTargetFrame().pack()
+        self.initTestFrame().pack()
+        self.initButtonFrame(["Targets", "Plots", "Extraction", "Game"],
+                             [self.targetsWindow, self.plotWindow, self.extraction, self.game]).pack()
+        self.initButtonFrame(["Neutral", "Target", "Threshold"],
+                             [self.recordNeutral, self.recordTarget, self.calculateThreshold], 2).pack()
+        self.initMainButtons().pack()
+        self.initButtonFrame(["Reset"], [self.resetResults]).pack()
 
     def changeMonitor(self, monitor, textbox):
         textbox.delete(0, Tkinter.END)
@@ -195,8 +199,8 @@ class MainWindow(MyWindows.TkWindow):
             bk[key] = self.background_textboxes[key].get()
         return bk
 
-    def testExtraction(self):
-        self.start("Test", 128*30)
+    def testExtraction(self, *options):
+        self.start("Test", *options)
 
     def recordTarget(self):
         length = 1024
@@ -216,12 +220,18 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(length)
         self.connection.send(self.current_radio_button.get())
 
-    def start(self, message, length=float("inf")):
+    def sendOptions(self, options):
+        if len(options) != 0:
+            self.connection.send({key: int(options[0][key].get()) for key in options[0]})
+        else:
+            self.connection.send({"Length": float("inf")})
+
+    def start(self, message, *options):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
         self.start_button2.configure(text="Stop", command=lambda: self.stop())
         self.connection.send(message)
-        self.connection.send(length)
+        self.sendOptions(options)
         self.connection.send(self.current_radio_button.get())
         self.connection.send(self.getBackgroundData())
         self.connection.send(self.getEnabledTargets())
