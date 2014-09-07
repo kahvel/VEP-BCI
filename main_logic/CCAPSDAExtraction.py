@@ -30,7 +30,7 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
                                                       coordinates_generators, self.freq_points, self.canvas,
                                                       self.result_lists["PSDA"])
         psda_generator.send(None)
-        short_length = 384
+        short_length = self.options["sLength"]
         options = self.copyDict(short_length)
         coordinates_generators = [Signal.MultipleRegular(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
         short_cca_generator = CCAExtraction.mainGenerator(options["Length"], self.options["Step"], self.headset_freq,

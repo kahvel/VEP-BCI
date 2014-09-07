@@ -2,6 +2,7 @@ __author__ = 'Anti'
 
 from control_windows import ControlWindow
 from main_logic import PSDAExtraction, CCAExtraction, CCAPSDAExtraction
+from main_window import MyWindows
 
 
 class Window(ControlWindow.ControlWindow):
@@ -15,6 +16,11 @@ class Window(ControlWindow.ControlWindow):
         self.freq_points = None
         self.results = []
         self.myMainloop()
+
+    def initStepLength(self, frame):
+        ControlWindow.ControlWindow.initStepLength(self, frame)
+        MyWindows.newTextBox(frame, "sLength:", 4, 1, self.options_textboxes)
+        self.options_textboxes["sLength"].insert(0, 256)
 
     def getResults(self):
         for group_name in self.window_group_names:

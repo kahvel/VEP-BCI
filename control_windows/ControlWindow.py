@@ -14,75 +14,94 @@ class ControlWindow(MyWindows.TkWindow):
         self.headset_freq = 128
         self.filter_coefficients = None
         self.window_function = None
-
-        self.checkbox_values = []
-        checkboxframe = Tkinter.Frame(self)
-        for i in range(len(self.all_sensor_names)):
-            self.checkbox_values.append(Tkinter.IntVar())
-            box = Tkinter.Checkbutton(checkboxframe, text=self.all_sensor_names[i], variable=self.checkbox_values[i])
-            box.grid(column=i % 7, row=i//7)
-
         self.options_textboxes = {}
         self.variables = {}
         self.options = {}
-        options_frame = Tkinter.Frame(self)
-        self.variables["Norm"] = Tkinter.IntVar()
-        norm_checkbox = Tkinter.Checkbutton(options_frame, text="Normalise FFT", variable=self.variables["Norm"])
-        norm_checkbox.grid(column=0, row=0, padx=5, pady=5, columnspan=2)
-        self.variables["Detrend"] = Tkinter.IntVar()
-        detrend_checkbox = Tkinter.Checkbutton(options_frame, text="Detrend signal", variable=self.variables["Detrend"])
-        detrend_checkbox.grid(column=2, row=0, padx=5, pady=5, columnspan=2)
-        self.variables["Filter"] = Tkinter.IntVar()
-        filter_checkbox = Tkinter.Checkbutton(options_frame, text="Filter signal", variable=self.variables["Filter"])
-        filter_checkbox.grid(column=4, row=0, padx=5, pady=5, columnspan=2)
-        MyWindows.newTextBox(options_frame, "Step:", 0, 1, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "Length:", 2, 1, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "Break:", 4, 1, self.options_textboxes)
-        self.variables["Window"] = Tkinter.StringVar()
-        self.variables["Window"].set("None")
-        window_box = Tkinter.OptionMenu(options_frame, self.variables["Window"], "None", "hanning", "hamming", "blackman",
-                                        "kaiser", "bartlett")
-        window_box.grid(column=0, row=4, padx=5, pady=5, columnspan=2)
-        MyWindows.newTextBox(options_frame, "Arg:", 2, 4, self.options_textboxes)
-        self.options_textboxes["Length"].insert(0, 512)
-        self.options_textboxes["Step"].insert(0, 8)
-        MyWindows.newTextBox(options_frame, "From:", 0, 3, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "To:", 2, 3, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "Taps:", 4, 3, self.options_textboxes)
-
+        self.checkbox_values = []
+        self.initCheckboxFrame().pack()
         self.window_groups = {}
+        self.initWindowButtons()
+        self.initOptionsFrame().pack()
+        self.exitFlag = False
+        self.protocol("WM_DELETE_WINDOW", self.exit)
+
+    def initButtonFramesWindowGroups(self):
         button_frames = []
-        button_groups = {}
         for group_name in self.window_group_names:
             windows = {}
             button_frames.append(Tkinter.Frame(self))
             for window_name in self.window_names:
                 windows[window_name] = None
             self.window_groups[group_name] = windows
+        return button_frames
 
+    def initButtonGroups(self, button_frames):
+        button_groups = {}
         for i in range(len(self.window_group_names)):
             buttons = {}
             group_name = self.window_group_names[i]
             for j in range(len(self.window_names)):
                 name = self.window_names[j]
-                buttons[self.window_names[j]] = Tkinter.Button(button_frames[i],
-                                                          text=self.button_names[j]+" "+group_name,
-                                                          command=lambda a_name=name, a_file=self.files[i], a_group=self.window_groups[group_name]: self.setWindow(a_name, a_file, a_group))
+                buttons[self.window_names[j]] = \
+                    Tkinter.Button(button_frames[i], text=self.button_names[j]+" "+group_name,
+                                   command=lambda a_name=name, a_file=self.files[i],
+                                                  a_group=self.window_groups[group_name]:
+                                   self.setWindow(a_name, a_file, a_group))
             button_groups[self.window_group_names[i]] = buttons
+        return button_groups
 
+    def placeButtons(self, button_groups):
         for i in range(len(self.window_group_names)):
             group_name = self.window_group_names[i]
             for j in range(len(self.window_names)):
                 name = self.window_names[j]
                 button_groups[group_name][name].grid(row=0, column=j % 4,padx=5, pady=5)
 
-        checkboxframe.pack()
-        for i in range(len(button_frames)):
-            button_frames[i].pack()
-        options_frame.pack()
+    def placeFrames(self, button_frames):
+        for frame in button_frames:
+            frame.pack()
 
-        self.exitFlag = False
-        self.protocol("WM_DELETE_WINDOW", self.exit)
+    def initWindowButtons(self):
+        button_frames = self.initButtonFramesWindowGroups()
+        button_groups = self.initButtonGroups(button_frames)
+        self.placeButtons(button_groups)
+        self.placeFrames(button_frames)
+
+    def initCheckboxFrame(self):
+        checkbox_frame = Tkinter.Frame(self)
+        for i in range(len(self.all_sensor_names)):
+            self.checkbox_values.append(Tkinter.IntVar())
+            Tkinter.Checkbutton(checkbox_frame, text=self.all_sensor_names[i],
+                                variable=self.checkbox_values[i]).grid(column=i % 7, row=i//7)
+        return checkbox_frame
+
+    def initOptionsFrame(self):
+        options_frame = Tkinter.Frame(self)
+        self.newCheckbox("Norm", "Normalise PS", options_frame)
+        self.newCheckbox("Detrend", "Detrend signal", options_frame, column=2)
+        self.newCheckbox("Filter", "Filter signal", options_frame, column=4)
+        self.initStepLength(options_frame)
+        self.variables["Window"] = Tkinter.StringVar()
+        self.variables["Window"].set("None")
+        MyWindows.newTextBox(options_frame, "From:", 0, 3, self.options_textboxes)
+        MyWindows.newTextBox(options_frame, "To:", 2, 3, self.options_textboxes)
+        MyWindows.newTextBox(options_frame, "Taps:", 4, 3, self.options_textboxes)
+        Tkinter.OptionMenu(options_frame, self.variables["Window"], "None", "hanning", "hamming","blackman", "kaiser",
+                           "bartlett").grid(column=0, row=4, padx=5, pady=5, columnspan=2)
+        MyWindows.newTextBox(options_frame, "Arg:", 2, 4, self.options_textboxes)
+        MyWindows.newTextBox(options_frame, "Break:", 4, 4, self.options_textboxes)
+        return options_frame
+
+    def initStepLength(self, frame):
+        MyWindows.newTextBox(frame, "Step:", 0, 1, self.options_textboxes)
+        MyWindows.newTextBox(frame, "Length:", 2, 1, self.options_textboxes)
+        self.options_textboxes["Length"].insert(0, 512)
+        self.options_textboxes["Step"].insert(0, 32)
+
+    def newCheckbox(self, variable_name, text, frame, column=0, row=0):
+        self.variables[variable_name] = Tkinter.IntVar()
+        norm_checkbox = Tkinter.Checkbutton(frame, text=text, variable=self.variables[variable_name])
+        norm_checkbox.grid(column=column, row=row, padx=5, pady=5, columnspan=2)
 
     def myMainloop(self):
         while True:
@@ -234,6 +253,7 @@ class ControlWindow(MyWindows.TkWindow):
     def setOptions(self, options_textboxes, variables):
         self.options["Length"] = int(options_textboxes["Length"].get())
         self.options["Step"] = int(options_textboxes["Step"].get())
+        self.options["sLength"] = int(options_textboxes["sLength"].get())
         self.setWindowFunction(options_textboxes, variables)
         self.setFilter(options_textboxes, variables)
         self.setNormalisation(variables)
