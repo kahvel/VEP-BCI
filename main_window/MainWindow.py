@@ -51,20 +51,20 @@ class MainWindow(MyWindows.TkWindow):
         self.mainloop()
 
     def initTitleFrame(self, title):
-        windowtitleframe = Tkinter.Frame(self)
-        Tkinter.Label(windowtitleframe, text=title).grid(column=0, row=0, padx=5, pady=5)
-        return windowtitleframe
+        frame = Tkinter.Frame(self)
+        Tkinter.Label(frame, text=title).grid(column=0, row=0, padx=5, pady=5)
+        return frame
 
     def initWindowFrame(self):
         window_frame = Tkinter.Frame(self)
         MyWindows.newTextBox(window_frame, "Width:", 0, 0, self.background_textboxes)
         MyWindows.newTextBox(window_frame, "Height:", 2, 0, self.background_textboxes)
         MyWindows.newColorButton(4, 0, self.backgroundColor, window_frame,
-                             "Color", self.background_textboxes, self.background_color_buttons)
+                                 "Color", self.background_textboxes, self.background_color_buttons)
         MyWindows.newTextBox(window_frame, "Freq:", 2, 1, self.background_textboxes)
-        menu = Tkinter.OptionMenu(window_frame, self.current_monitor, *self.monitor_names,
-                                  command=lambda a: self.changeMonitor(a, self.background_textboxes["Freq"]))
-        menu.grid(row=1, column=0, columnspan=2)
+        Tkinter.OptionMenu(window_frame, self.current_monitor, *self.monitor_names,
+                           command=lambda a:
+                           self.changeMonitor(a, self.background_textboxes["Freq"])).grid(row=1, column=0, columnspan=2)
         self.changeMonitor(self.monitor_names[0], self.background_textboxes["Freq"])
         self.background_textboxes["Width"].insert(0, 800)
         self.background_textboxes["Height"].insert(0, 600)
@@ -132,17 +132,27 @@ class MainWindow(MyWindows.TkWindow):
                              [self.saveFile, self.loadFile, self.exit], 2, default_frame=lambda a: frame)
         return frame
 
+    def initRecordFrame(self):
+        textboxes = {}
+        frame = self.initButtonFrame(["Neutral", "Target", "Threshold"],
+                                     [self.recordNeutral, self.recordTarget, self.calculateThreshold], 0,
+                                     lambda a: Tkinter.Frame(a), textboxes)
+        MyWindows.newTextBox(frame, "Length:", 3, 0, textboxes)
+        textboxes["Length"].insert(0, 128*8)
+        return frame
+
     def initElements(self):
         self.initTitleFrame("Window").pack()
         self.initWindowFrame().pack()
         self.initTitleFrame("Targets").pack()
         self.initRadiobuttonFrame().pack()
         self.initTargetFrame().pack()
+        self.initTitleFrame("Record").pack()
+        self.initRecordFrame().pack()
+        self.initTitleFrame("Test").pack()
         self.initTestFrame().pack()
         self.initButtonFrame(["Targets", "Plots", "Extraction", "Game"],
                              [self.targetsWindow, self.plotWindow, self.extraction, self.game]).pack()
-        self.initButtonFrame(["Neutral", "Target", "Threshold"],
-                             [self.recordNeutral, self.recordTarget, self.calculateThreshold], 2).pack()
         self.initMainButtons().pack()
         self.initButtonFrame(["Reset"], [self.resetResults]).pack()
 
@@ -156,7 +166,7 @@ class MainWindow(MyWindows.TkWindow):
     def game(self):
         self.newProcess(Main.runGame, "Add game")
 
-    def calculateThreshold(self):
+    def calculateThreshold(self, options):
         self.connection.send("Threshold")
         self.connection.send(self.getChosenFreq())
 
@@ -202,8 +212,8 @@ class MainWindow(MyWindows.TkWindow):
     def testExtraction(self, *options):
         self.start("Test", *options)
 
-    def recordTarget(self):
-        length = 1024
+    def recordTarget(self, options):
+        length = int(options["Length"].get())
         if self.current_radio_button.get() == 0:
             print "Choose target"
         else:
@@ -214,8 +224,8 @@ class MainWindow(MyWindows.TkWindow):
             self.connection.send(length)
             self.connection.send(self.current_radio_button.get())
 
-    def recordNeutral(self):
-        length = 1024
+    def recordNeutral(self, options):
+        length = int(options["Length"].get())
         self.connection.send("Record neutral")
         self.connection.send(length)
         self.connection.send(self.current_radio_button.get())
