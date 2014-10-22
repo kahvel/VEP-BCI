@@ -227,10 +227,10 @@ class MainWindow(MyWindows.TkWindow):
         self.start_button.configure(text="Stop", command=lambda: self.stop())
         self.connection.send(message)
         self.sendOptions(options)
-        self.connection.send(self.current_radio_button.get())
-        self.connection.send(self.getBackgroundData())
-        self.connection.send(self.getEnabledTargets())
-        self.connection.send(self.getChosenFreq())
+        self.connection.send((self.current_radio_button.get(),
+                              self.getBackgroundData(),
+                              self.getEnabledTargets(),
+                              self.getChosenFreq()))
 
     def stop(self):
         self.start_button.configure(text="Start", command=lambda: self.start("Start", self.options))

@@ -205,26 +205,22 @@ class PostOffice(object):
         else:
             return self.normalSequence(options)
 
-    def start(self):
-        options = self.main_connection.recv()
-        self.current_target = self.main_connection.recv()-1
-        background_data = self.main_connection.recv()
-        targets_data = self.main_connection.recv()
-        self.target_freqs = self.main_connection.recv()
-        self.sendMessage(self.psychopy_connection, "Start")
-        self.sendMessage(self.plot_connection, "Start")
-        self.sendMessage(self.extraction_connection, "Start")
-        self.sendMessage(self.game_connection, "Start")
-        self.sendMessage(self.psychopy_connection, background_data)
-        self.sendMessage(self.psychopy_connection, targets_data)
-        self.sendMessage(self.extraction_connection, self.target_freqs)
-        self.sendMessage(self.game_connection, self.target_freqs)
+    def setupResults(self):
         for key in self.results:
             if str(self.target_freqs) not in self.results[key]:
                 self.results[key][str(self.target_freqs)] = {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(-1, len(self.target_freqs))}
             else:
                 break
-        self.sendMessage(self.emotiv_connection, "Start")
+
+    def printResults(self):
+        for method in self.results:
+            print method
+            for freqs in self.results[method]:
+                print freqs
+                for row in sorted(self.results[method][freqs]):
+                    print row, self.results[method][freqs][row]
+
+    def mainSendingLoop(self, options):
         sequence = self.getSequence(options)
         no_standby = not options["Standby"]
         print sequence
@@ -235,17 +231,34 @@ class PostOffice(object):
             message = self.startPacketSending(time, no_standby)
             if message is not None:
                 break
+        return message
+
+    def sendStartMessages(self, background_data, targets_data):
+        self.sendMessage(self.psychopy_connection, "Start")
+        self.sendMessage(self.plot_connection, "Start")
+        self.sendMessage(self.extraction_connection, "Start")
+        self.sendMessage(self.game_connection, "Start")
+        self.sendMessage(self.psychopy_connection, background_data)
+        self.sendMessage(self.psychopy_connection, targets_data)
+        self.sendMessage(self.extraction_connection, self.target_freqs)
+        self.sendMessage(self.game_connection, self.target_freqs)
+        self.sendMessage(self.emotiv_connection, "Start")
+
+    def sendStopMessages(self):
         self.sendMessage(self.emotiv_connection, "Stop")
         self.sendMessage(self.psychopy_connection, "Stop")
         self.sendMessage(self.plot_connection, "Stop")
         self.sendMessage(self.extraction_connection, "Stop")
         self.sendMessage(self.game_connection, "Stop")
-        for method in self.results:
-            print method
-            for freqs in self.results[method]:
-                print freqs
-                for row in sorted(self.results[method][freqs]):
-                    print row, self.results[method][freqs][row]
+
+    def start(self):
+        options = self.main_connection.recv()
+        self.current_target, background_data, targets_data, self.target_freqs = self.main_connection.recv()
+        self.sendStartMessages(background_data, targets_data)
+        self.setupResults()
+        message = self.mainSendingLoop(options)
+        self.sendStopMessages()
+        self.printResults()
         return message
 
     def startPacketSending(self, length, no_standby):
