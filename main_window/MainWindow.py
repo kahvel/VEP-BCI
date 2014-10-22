@@ -15,11 +15,8 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.TkWindow.__init__(self, "Main Menu", 310, 500)
         self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.start_button = None
-        self.start_button2 = None
         self.target_textboxes = {}
         self.background_textboxes = {}
-        self.checkbox_values = []
-        self.checkbox_values_fft = []
         self.targets = []
         self.initial_target = {"Height": 150,
                                "Width": 150,
@@ -31,7 +28,8 @@ class MainWindow(MyWindows.TkWindow):
                                "Disable": 1}
         self.neutral_signal = None
         self.target_signal = [None for _ in range(6)]
-        self.disable_checkbox_var = Tkinter.IntVar()
+        self.checkbox_vars = {name: Tkinter.IntVar() for name in ["Disable", "Random", "Standby"]}
+        self.options = {"Random": self.checkbox_vars["Random"], "Standby": self.checkbox_vars["Standby"]}
         # self.n_targets = 6
         for _ in range(7):
             self.targets.append(self.initial_target.copy())
@@ -88,9 +86,9 @@ class MainWindow(MyWindows.TkWindow):
     def initTargetFrame(self):
         frame = Tkinter.Frame(self)
         MyWindows.newTextBox(frame, "Freq:", 0, 0, self.target_textboxes, validatecommand=self.validateFreq)
-        disable_checkbox = Tkinter.Checkbutton(frame, text="Disable", variable=self.disable_checkbox_var,
-                                               command=lambda: self.disableButtonChange())
-        disable_checkbox.grid(row=0, column=2, padx=5, pady=5, columnspan=2)
+        Tkinter.Checkbutton(frame, text="Disable", variable=self.checkbox_vars["Disable"],
+                            command=lambda: self.disableButtonChange()).grid(row=0, column=2, padx=5, pady=5,
+                                                                             columnspan=2)
         MyWindows.newTextBox(frame, "Width:", 0, 1, self.target_textboxes)
         MyWindows.newTextBox(frame, "Height:", 2, 1, self.target_textboxes)
         MyWindows.newColorButton(4, 1, self.targetColor, frame, "Color1",
@@ -104,39 +102,34 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
         return frame
 
-    def initButtonFrame(self, button_names, commands, start_column=0, default_frame=lambda a: Tkinter.Frame(a), *options):
-        frame = default_frame(self)
-        for i in range(len(button_names)):
-            Tkinter.Button(frame, text=button_names[i],
-                           command=lambda i=i: commands[i](*options)).grid(column=start_column+i, row=0, padx=5, pady=5)
-        return frame
-
-    def initTestFrame(self):
-        textboxes = {}
-        frame = self.initButtonFrame(["Test"], [self.testExtraction], 0, lambda a: Tkinter.Frame(a), textboxes)
-        MyWindows.newTextBox(frame, "Length:", 1, 0, textboxes)
-        MyWindows.newTextBox(frame, "Min:", 3, 0, textboxes)
-        MyWindows.newTextBox(frame, "Max:", 5, 0, textboxes)
-        textboxes["Length"].insert(0, 128*30)
-        textboxes["Min"].insert(0, 128*2)
-        textboxes["Max"].insert(0, 128*4)
-        return frame
-
-    def initMainButtons(self):
+    def initButtonFrame(self, button_names, commands, column=0, row=0, *options):
         frame = Tkinter.Frame(self)
-        self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start"))
-        self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        self.start_button2 = Tkinter.Button(frame, text="Start2", command=lambda: self.start("Start2"))
-        self.start_button2.grid(row=0, column=1, padx=5, pady=5)
-        self.initButtonFrame(["Save", "Load", "Exit"],
-                             [self.saveFile, self.loadFile, self.exit], 2, default_frame=lambda a: frame)
+        for i in range(len(button_names)):
+            Tkinter.Button(frame, text=button_names[i],command=lambda i=i: commands[i](*options))\
+                .grid(column=column+i, row=row, padx=5, pady=5)
+        return frame
+
+    def initStartFrame(self):
+        frame = Tkinter.Frame(self)
+        self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start", self.options))
+        self.start_button.grid(row=1, column=4, padx=5, pady=5)
+        MyWindows.newTextBox(frame, "Length:", 0, 0, self.options)
+        MyWindows.newTextBox(frame, "Min:", 2, 0, self.options)
+        MyWindows.newTextBox(frame, "Max:", 4, 0, self.options)
+        self.options["Length"].insert(0, 128*30)
+        self.options["Min"].insert(0, 128*2)
+        self.options["Max"].insert(0, 128*4)
+        Tkinter.Checkbutton(frame, text="Random", variable=self.checkbox_vars["Random"])\
+            .grid(row=1, column=0, padx=5, pady=5, columnspan=2)
+        Tkinter.Checkbutton(frame, text="Standby", variable=self.checkbox_vars["Standby"])\
+            .grid(row=1, column=2, padx=5, pady=5, columnspan=2)
         return frame
 
     def initRecordFrame(self):
         textboxes = {}
         frame = self.initButtonFrame(["Neutral", "Target", "Threshold"],
-                                     [self.recordNeutral, self.recordTarget, self.calculateThreshold], 0,
-                                     lambda a: Tkinter.Frame(a), textboxes)
+                                     [self.recordNeutral, self.recordTarget, self.calculateThreshold],
+                                     0, 0, textboxes)
         MyWindows.newTextBox(frame, "Length:", 3, 0, textboxes)
         textboxes["Length"].insert(0, 128*8)
         return frame
@@ -150,11 +143,11 @@ class MainWindow(MyWindows.TkWindow):
         self.initTitleFrame("Record").pack()
         self.initRecordFrame().pack()
         self.initTitleFrame("Test").pack()
-        self.initTestFrame().pack()
+        self.initStartFrame().pack()
         self.initButtonFrame(["Targets", "Plots", "Extraction", "Game"],
                              [self.targetsWindow, self.plotWindow, self.extraction, self.game]).pack()
-        self.initMainButtons().pack()
-        self.initButtonFrame(["Reset"], [self.resetResults]).pack()
+        self.initButtonFrame(["Reset", "Save", "Load", "Exit"],
+                             [self.resetResults, self.saveFile, self.loadFile, self.exit]).pack()
 
     def changeMonitor(self, monitor, textbox):
         textbox.delete(0, Tkinter.END)
@@ -209,9 +202,6 @@ class MainWindow(MyWindows.TkWindow):
             bk[key] = self.background_textboxes[key].get()
         return bk
 
-    def testExtraction(self, *options):
-        self.start("Test", *options)
-
     def recordTarget(self, options):
         length = int(options["Length"].get())
         if self.current_radio_button.get() == 0:
@@ -225,21 +215,16 @@ class MainWindow(MyWindows.TkWindow):
             self.connection.send(self.current_radio_button.get())
 
     def recordNeutral(self, options):
-        length = int(options["Length"].get())
         self.connection.send("Record neutral")
-        self.connection.send(length)
+        self.connection.send(int(options["Length"].get()))
         self.connection.send(self.current_radio_button.get())
 
     def sendOptions(self, options):
-        if len(options) != 0:
-            self.connection.send({key: int(options[0][key].get()) for key in options[0]})
-        else:
-            self.connection.send({"Length": float("inf")})
+        self.connection.send({key: int(options[0][key].get()) for key in options[0]})
 
     def start(self, message, *options):
         self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
-        self.start_button2.configure(text="Stop", command=lambda: self.stop())
         self.connection.send(message)
         self.sendOptions(options)
         self.connection.send(self.current_radio_button.get())
@@ -248,17 +233,14 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(self.getChosenFreq())
 
     def stop(self):
-        self.start_button.configure(text="Start", command=lambda: self.start("Start"))
-        self.start_button2.configure(text="Start2", command=lambda: self.start("Start2"))
+        self.start_button.configure(text="Start", command=lambda: self.start("Start", self.options))
         self.connection.send("Stop")
 
     def newProcess(self, func, message, *args):
         new_to_post_office, post_office_to_new = multiprocessing.Pipe()
-        p = multiprocessing.Process(target=func, args=(new_to_post_office, args))
-        p.start()
+        multiprocessing.Process(target=func, args=(new_to_post_office, args)).start()
         self.connection.send(message)
-        reduced = multiprocessing.reduction.reduce_connection(post_office_to_new)
-        self.connection.send(reduced)
+        self.connection.send(multiprocessing.reduction.reduce_connection(post_office_to_new))
 
     def targetsWindow(self):
         self.newProcess(Main.runPsychopy, "Add psychopy", self.getBackgroundData(), self.lock)
@@ -286,7 +268,7 @@ class MainWindow(MyWindows.TkWindow):
                 self.target_textboxes[key].insert(0, str(self.targets[index][key]))
         for key in self.target_color_buttons:
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
-        self.disable_checkbox_var.set(self.targets[index]["Disable"])
+        self.checkbox_vars["Disable"].set(self.targets[index]["Disable"])
         self.validateFreq(self.target_textboxes["Freq"])
 
     def saveValues(self, index):
@@ -298,7 +280,7 @@ class MainWindow(MyWindows.TkWindow):
                         target[key] = self.target_textboxes[key].get()
         for key in self.target_textboxes:
             self.targets[index][key] = self.target_textboxes[key].get()
-        self.targets[index]["Disable"] = self.disable_checkbox_var.get()
+        self.targets[index]["Disable"] = self.checkbox_vars["Disable"].get()
 
     def radioButtonChange(self):
         for key in self.target_textboxes:
@@ -309,7 +291,7 @@ class MainWindow(MyWindows.TkWindow):
         self.disableButtonChange()
 
     def disableButtonChange(self):
-        value = self.disable_checkbox_var.get()
+        value = self.checkbox_vars["Disable"].get()
         if value == 1:
             for key in self.target_textboxes:
                 self.target_textboxes[key].config(state="readonly")

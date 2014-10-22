@@ -43,11 +43,7 @@ class PostOffice(object):
                 elif message == "Add game":
                     self.addConnection(self.game_connection, "game")
                 elif message == "Start":
-                    self.start(self.normalSequence, False)
-                elif message == "Start2":
-                    self.start(self.normalSequence, True)
-                elif message == "Test":
-                    self.start(self.randomTestSequence, True)
+                    self.start()
                 elif message == "Threshold":
                     self.calculateThreshold()
                 elif message == "Exit":
@@ -165,14 +161,14 @@ class PostOffice(object):
                     ret.append(message)
         return ret
 
-    def handleFreqMessages(self, messages, test=False):
+    def handleFreqMessages(self, messages, no_standby):
         for result in messages:
             for freq, class_name in result:
                 self.results[class_name][str(self.target_freqs)][self.current_target][freq] += 1
                 if freq == self.standby_freq:
-                    self.sendMessage(self.psychopy_connection, self.standby and not test)
+                    self.sendMessage(self.psychopy_connection, self.standby and not no_standby)
                     self.standby = not self.standby
-                if not self.standby or test:
+                if not self.standby or no_standby:
                     if not "short" in class_name:
                         self.sendMessage(self.psychopy_connection, freq)
                         self.sendMessage(self.game_connection, freq)
@@ -181,32 +177,35 @@ class PostOffice(object):
         for i in range(len(connections)-1, -1, -1):
             connections[i].send(message)
 
-    def randomTestSequence(self, options):
-        if self.current_target == -1:
-            data = []
-            asd = {i: options["Length"] for i in range(len(self.target_freqs))}
-            while True:
-                target = random.choice(asd.keys())
-                time = random.randint(options["Min"], options["Max"])
-                if asd[target] - time < options["Min"]:
-                    time = asd[target]
-                asd[target] = asd[target]-time
-                if len(data) > 0 and data[-1][0] == target:
-                    data[-1][1] += time
-                else:
-                    data.append([target, time])
-                if asd[target] == 0:
-                    del asd[target]
-                    if asd == {}:
-                        break
-            return data
-        else:
-            return self.normalSequence(options)
+    def randomSequence(self, options):
+        data = []
+        asd = {i: options["Length"] for i in range(len(self.target_freqs))}
+        while True:
+            target = random.choice(asd.keys())
+            time = random.randint(options["Min"], options["Max"])
+            if asd[target] - time < options["Min"]:
+                time = asd[target]
+            asd[target] = asd[target]-time
+            if len(data) > 0 and data[-1][0] == target:
+                data[-1][1] += time
+            else:
+                data.append([target, time])
+            if asd[target] == 0:
+                del asd[target]
+                if asd == {}:
+                    break
+        return data
 
     def normalSequence(self, options):
         return [[self.current_target, options["Length"]]]
 
-    def start(self, function, test):
+    def getSequence(self, options):
+        if options["Random"]:
+            return self.randomSequence(options)
+        else:
+            return self.normalSequence(options)
+
+    def start(self):
         options = self.main_connection.recv()
         self.current_target = self.main_connection.recv()-1
         background_data = self.main_connection.recv()
@@ -226,13 +225,14 @@ class PostOffice(object):
             else:
                 break
         self.sendMessage(self.emotiv_connection, "Start")
-        sequence = function(options)
+        sequence = self.getSequence(options)
+        no_standby = not options["Standby"]
         print sequence
         for target, time in sequence:
             self.current_target = target
             if target != -1:
                 self.sendMessage(self.psychopy_connection, target)
-            message = self.startPacketSending(time, test)
+            message = self.startPacketSending(time, no_standby)
             if message is not None:
                 break
         self.sendMessage(self.emotiv_connection, "Stop")
@@ -248,11 +248,11 @@ class PostOffice(object):
                     print row, self.results[method][freqs][row]
         return message
 
-    def startPacketSending(self, length, test):
+    def startPacketSending(self, length, no_standby):
         count = 0
         self.standby = True
         self.standby_freq = self.target_freqs[-1]
-        if test:
+        if no_standby:
             self.sendMessage(self.psychopy_connection, False)
         while count < length:
             if self.main_connection.poll():
@@ -262,8 +262,8 @@ class PostOffice(object):
                 message = self.emotiv_connection[0].recv()
                 self.sendMessage(self.extraction_connection, message)
                 self.sendMessage(self.plot_connection, message)
-                if not self.standby or test:
+                if not self.standby or no_standby:
                     count += 1
             self.getMessages(self.plot_connection, "Plot")
             freqs = self.getMessages(self.extraction_connection, "Extraction")
-            self.handleFreqMessages(freqs, test)
+            self.handleFreqMessages(freqs, no_standby)
