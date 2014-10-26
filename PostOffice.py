@@ -208,7 +208,8 @@ class PostOffice(object):
     def setupResults(self):
         for key in self.results:
             if str(self.target_freqs) not in self.results[key]:
-                self.results[key][str(self.target_freqs)] = {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(-1, len(self.target_freqs))}
+                self.results[key][str(self.target_freqs)] = \
+                    {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(-1, len(self.target_freqs))}
             else:
                 break
 
@@ -220,14 +221,17 @@ class PostOffice(object):
                 for row in sorted(self.results[method][freqs]):
                     print row, self.results[method][freqs][row]
 
+    def sendCurrentTarget(self, target):
+        if target != -1:
+            self.sendMessage(self.psychopy_connection, target)
+
     def mainSendingLoop(self, options):
         sequence = self.getSequence(options)
         no_standby = not options["Standby"]
         print sequence
         for target, time in sequence:
             self.current_target = target
-            if target != -1:
-                self.sendMessage(self.psychopy_connection, target)
+            self.sendCurrentTarget(target)
             message = self.startPacketSending(time, no_standby)
             if message is not None:
                 break
@@ -261,22 +265,30 @@ class PostOffice(object):
         self.printResults()
         return message
 
+    def handleEmotivMessages(self, no_standby):
+        if self.emotiv_connection[0].poll():
+            message = self.emotiv_connection[0].recv()
+            self.sendMessage(self.extraction_connection, message)
+            self.sendMessage(self.plot_connection, message)
+            if not self.standby or no_standby:
+                return 1
+        return 0
+
+    def sendStandbyMessage(self, no_standby):
+        if no_standby:
+            self.sendMessage(self.psychopy_connection, False)
+
     def startPacketSending(self, length, no_standby):
         count = 0
         self.standby = True
         self.standby_freq = self.target_freqs[-1]
-        if no_standby:
-            self.sendMessage(self.psychopy_connection, False)
+        self.sendStandbyMessage(no_standby)
         while count < length:
             if self.main_connection.poll():
-                message = self.main_connection.recv()
-                return message
-            if self.emotiv_connection[0].poll():
-                message = self.emotiv_connection[0].recv()
-                self.sendMessage(self.extraction_connection, message)
-                self.sendMessage(self.plot_connection, message)
-                if not self.standby or no_standby:
-                    count += 1
+                return self.main_connection.recv()
+            count += self.handleEmotivMessages(no_standby)
             self.getMessages(self.plot_connection, "Plot")
-            freqs = self.getMessages(self.extraction_connection, "Extraction")
-            self.handleFreqMessages(freqs, no_standby)
+            self.handleFreqMessages(self.getMessages(self.extraction_connection, "Extraction"), no_standby)
+        # Wait for the last result
+        self.handleFreqMessages(self.getMessages(self.extraction_connection, "Extraction", poll=lambda x: x.poll(True)),
+                                no_standby)
