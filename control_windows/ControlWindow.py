@@ -83,18 +83,18 @@ class ControlWindow(MyWindows.TkWindow):
         self.initStepLength(options_frame)
         self.variables["Window"] = Tkinter.StringVar()
         self.variables["Window"].set("None")
-        MyWindows.newTextBox(options_frame, "From:", 0, 3, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "To:", 2, 3, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "Taps:", 4, 3, self.options_textboxes)
+        self.options_textboxes["From"] = MyWindows.newTextBox(options_frame, "From", 0, 3)
+        self.options_textboxes["To"] = MyWindows.newTextBox(options_frame, "To", 2, 3)
+        self.options_textboxes["Taps"] = MyWindows.newTextBox(options_frame, "Taps", 4, 3)
         Tkinter.OptionMenu(options_frame, self.variables["Window"], "None", "hanning", "hamming","blackman", "kaiser",
                            "bartlett").grid(column=0, row=4, padx=5, pady=5, columnspan=2)
-        MyWindows.newTextBox(options_frame, "Arg:", 2, 4, self.options_textboxes)
-        MyWindows.newTextBox(options_frame, "Break:", 4, 4, self.options_textboxes)
+        self.options_textboxes["Arg"] = MyWindows.newTextBox(options_frame, "Arg", 2, 4)
+        self.options_textboxes["Break"] = MyWindows.newTextBox(options_frame, "Break", 4, 4)
         return options_frame
 
     def initStepLength(self, frame):
-        MyWindows.newTextBox(frame, "Step:", 0, 1, self.options_textboxes)
-        MyWindows.newTextBox(frame, "Length:", 2, 1, self.options_textboxes)
+        self.options_textboxes["Step"] = MyWindows.newTextBox(frame, "Step", 0, 1)
+        self.options_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 2, 1)
         self.options_textboxes["Length"].insert(0, 512)
         self.options_textboxes["Step"].insert(0, 32)
 

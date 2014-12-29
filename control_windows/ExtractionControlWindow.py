@@ -19,7 +19,7 @@ class Window(ControlWindow.ControlWindow):
 
     def initStepLength(self, frame):
         ControlWindow.ControlWindow.initStepLength(self, frame)
-        MyWindows.newTextBox(frame, "sLength:", 4, 1, self.options_textboxes)
+        self.options_textboxes["sLength"] = MyWindows.newTextBox(frame, "sLength", 4, 1)
         self.options_textboxes["sLength"].insert(0, 256)
 
     def getResults(self):
