@@ -73,6 +73,8 @@ class PostOffice(object):
                     self.sendMessage(self.psychopy_connection, "Stop")
                 elif message == "Reset results":
                     self.resetResults()
+                elif message == "Show results":
+                    self.printResults()
                 else:
                     print "Unknown message:", message
 
