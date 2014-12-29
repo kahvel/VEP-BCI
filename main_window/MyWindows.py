@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
 import Tkinter
+import tkColorChooser
 
 
 class AbstractWindow(object):
@@ -37,20 +38,27 @@ def changeButtonColor(button, textbox):
     return True
 
 
-def newColorButton(column, row, function, frame, title, textboxes, color_buttons):
-    color_buttons[title] = Tkinter.Button(frame, text=title, command=lambda:function(title))
-    color_buttons[title].grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=7, validate="focusout",
-                    validatecommand=lambda: changeButtonColor(color_buttons[title], textboxes[title]))
+def saveColor(color_buttons, textboxes, name):
+    if name in textboxes:
+        previous = textboxes[name].get()
+        textboxes[name].delete(0, Tkinter.END)
+        textboxes[name].insert(0, tkColorChooser.askcolor(previous)[1])
+        changeButtonColor(color_buttons[name], textboxes[name])
+
+
+def newColorButton(column, row, frame, name, textboxes, color_buttons):
+    color_buttons[name] = Tkinter.Button(frame, text=name, command=lambda: saveColor(color_buttons, textboxes, name))
+    color_buttons[name].grid(column=column, row=row, padx=5, pady=5)
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: changeButtonColor(color_buttons[name], textboxes[name]))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
-    textboxes[title] = textbox
+    return textbox
 
 
-def newTextBox(frame, text, column, row, textboxes, width=5, validatecommand=None):
-    Tkinter.Label(frame, text=text).grid(column=column, row=row, padx=5, pady=5)
+def newTextBox(frame, text, column, row, width=5, validatecommand=None):
+    Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
     if validatecommand is None:
         textbox = Tkinter.Entry(frame, width=width)
     else:
         textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
-    textboxes[text[:-1]] = textbox
+    return textbox
