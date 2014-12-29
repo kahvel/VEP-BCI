@@ -9,7 +9,6 @@ class AbstractWindow(object):
         self.window_height = height
         self.name = title
         self.title(title)
-        self.geometry(str(width)+"x"+str(height))
         self.resizable(0, 0)
         self.configure(background=color)
 

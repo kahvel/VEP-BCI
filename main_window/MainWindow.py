@@ -8,7 +8,7 @@ import multiprocessing.reduction
 import Main
 import win32api
 import win32con
-
+import ttk
 
 class MainWindow(MyWindows.TkWindow):
     def __init__(self):
@@ -25,6 +25,7 @@ class MainWindow(MyWindows.TkWindow):
                                "Freq": 10.0,
                                "Color1": "#ffffff",
                                "Color2": "#777777",
+                               "Delay": 0,
                                "Disable": 1}
         self.neutral_signal = None
         self.target_signal = [None for _ in range(6)]
@@ -40,7 +41,7 @@ class MainWindow(MyWindows.TkWindow):
         self.previous_radio_button = 0
         self.monitor_names = [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
         self.current_monitor = Tkinter.StringVar(value=self.monitor_names[0])
-        self.initElements()
+        self.initNotebook()
         self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
         self.lock = multiprocessing.Lock()
@@ -48,13 +49,8 @@ class MainWindow(MyWindows.TkWindow):
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
-    def initTitleFrame(self, title):
-        frame = Tkinter.Frame(self)
-        Tkinter.Label(frame, text=title).grid(column=0, row=0, padx=5, pady=5)
-        return frame
-
-    def initWindowFrame(self):
-        window_frame = Tkinter.Frame(self)
+    def windowFrame(self, parent):
+        window_frame = Tkinter.Frame(parent)
         MyWindows.newTextBox(window_frame, "Width:", 0, 0, self.background_textboxes)
         MyWindows.newTextBox(window_frame, "Height:", 2, 0, self.background_textboxes)
         MyWindows.newColorButton(4, 0, self.backgroundColor, window_frame,
@@ -70,9 +66,9 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
         return window_frame
 
-    def initRadiobuttonFrame(self):
+    def targetRadiobuttonFrame(self, parent):
         radiobuttons = []
-        radiobutton_frame = Tkinter.Frame(self)
+        radiobutton_frame = Tkinter.Frame(parent)
         radiobuttons.append(Tkinter.Radiobutton(radiobutton_frame, text="All", variable=self.current_radio_button,
                                                 value=0, command=lambda:self.radioButtonChange()))
         radiobuttons[0].grid(column=0, row=0)
@@ -83,11 +79,12 @@ class MainWindow(MyWindows.TkWindow):
             radiobuttons[i].grid(column=i, row=0)
         return radiobutton_frame
 
-    def initTargetFrame(self):
-        frame = Tkinter.Frame(self)
+    def targetOptionsFrame(self, parent):
+        frame = Tkinter.Frame(parent)
         MyWindows.newTextBox(frame, "Freq:", 0, 0, self.target_textboxes, validatecommand=self.validateFreq)
+        MyWindows.newTextBox(frame, "Delay:", 2, 0, self.target_textboxes)
         Tkinter.Checkbutton(frame, text="Disable", variable=self.checkbox_vars["Disable"],
-                            command=lambda: self.disableButtonChange()).grid(row=0, column=2, padx=5, pady=5,
+                            command=lambda: self.disableButtonChange()).grid(row=0, column=4, padx=5, pady=5,
                                                                              columnspan=2)
         MyWindows.newTextBox(frame, "Width:", 0, 1, self.target_textboxes)
         MyWindows.newTextBox(frame, "Height:", 2, 1, self.target_textboxes)
@@ -102,15 +99,30 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.changeButtonColor(self.target_color_buttons[key], self.target_textboxes[key])
         return frame
 
-    def initButtonFrame(self, button_names, commands, column=0, row=0, *options):
+    def initFrame(self, functions):
         frame = Tkinter.Frame(self)
+        for f in functions:
+            f(frame).pack()
+        return frame
+
+    def initButtonFrame(self, parent, button_names, commands, column=0, row=0, *options):
+        frame = Tkinter.Frame(parent)
         for i in range(len(button_names)):
             Tkinter.Button(frame, text=button_names[i],command=lambda i=i: commands[i](*options))\
                 .grid(column=column+i, row=row, padx=5, pady=5)
         return frame
 
-    def initStartFrame(self):
-        frame = Tkinter.Frame(self)
+    def recordFrame(self, parent):
+        textboxes = {}
+        frame = self.initButtonFrame(parent, ["Neutral", "Target", "Threshold"],
+                                     [self.recordNeutral, self.recordTarget, self.calculateThreshold],
+                                     0, 0, textboxes)
+        MyWindows.newTextBox(frame, "Length:", 3, 0, textboxes)
+        textboxes["Length"].insert(0, 128*8)
+        return frame
+
+    def startOptionsFrame(self, parent):
+        frame = Tkinter.Frame(parent)
         self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start", self.options))
         self.start_button.grid(row=1, column=4, padx=5, pady=5)
         MyWindows.newTextBox(frame, "Length:", 0, 0, self.options)
@@ -125,33 +137,27 @@ class MainWindow(MyWindows.TkWindow):
             .grid(row=1, column=2, padx=5, pady=5, columnspan=2)
         return frame
 
-    def initRecordFrame(self):
-        textboxes = {}
-        frame = self.initButtonFrame(["Neutral", "Target", "Threshold"],
-                                     [self.recordNeutral, self.recordTarget, self.calculateThreshold],
-                                     0, 0, textboxes)
-        MyWindows.newTextBox(frame, "Length:", 3, 0, textboxes)
-        textboxes["Length"].insert(0, 128*8)
+    def startButtonsFrame(self, parent):
+        frame = Tkinter.Frame(parent)
+        self.initButtonFrame(frame, ["Targets", "Plots", "Extraction", "Game"],
+                             [self.targetsWindow, self.plotWindow, self.extraction, self.game]).pack()
+        self.initButtonFrame(frame, ["Reset", "Save", "Load", "Exit"],
+                             [self.resetResults, self.saveFile, self.loadFile, self.exit]).pack()
         return frame
 
-    def initElements(self):
-        self.initTitleFrame("Window").pack()
-        self.initWindowFrame().pack()
-        self.initTitleFrame("Targets").pack()
-        self.initRadiobuttonFrame().pack()
-        self.initTargetFrame().pack()
-        self.initTitleFrame("Record").pack()
-        self.initRecordFrame().pack()
-        self.initTitleFrame("Test").pack()
-        self.initStartFrame().pack()
-        self.initButtonFrame(["Targets", "Plots", "Extraction", "Game"],
-                             [self.targetsWindow, self.plotWindow, self.extraction, self.game]).pack()
-        self.initButtonFrame(["Reset", "Save", "Load", "Exit"],
-                             [self.resetResults, self.saveFile, self.loadFile, self.exit]).pack()
+    def initNotebook(self):
+        notebook = ttk.Notebook(self)
+        notebook.add(self.initFrame([self.windowFrame]), text="Window")
+        notebook.add(self.initFrame([self.targetRadiobuttonFrame, self.targetOptionsFrame]), text="Targets")
+        notebook.add(self.initFrame([self.recordFrame]), text="Record")
+        notebook.add(self.initFrame([self.startOptionsFrame, self.startButtonsFrame]), text="Test")
+        notebook.pack()
 
     def changeMonitor(self, monitor, textbox):
+        self.background_textboxes["Freq"].config(state=Tkinter.NORMAL)
         textbox.delete(0, Tkinter.END)
         textbox.insert(0, getattr(win32api.EnumDisplaySettings(monitor, win32con.ENUM_CURRENT_SETTINGS), "DisplayFrequency"))
+        self.background_textboxes["Freq"].config(state="readonly")
 
     def resetResults(self):
         self.connection.send("Reset results")
