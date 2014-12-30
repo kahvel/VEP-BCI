@@ -62,3 +62,8 @@ def newTextBox(frame, text, column, row, width=5, validatecommand=None):
         textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     return textbox
+
+
+def updateTextbox(textbox, value):
+    textbox.delete(0, Tkinter.END)
+    textbox.insert(0, value)
