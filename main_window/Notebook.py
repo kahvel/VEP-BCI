@@ -3,6 +3,8 @@ __author__ = 'Anti'
 import ttk
 import Tkinter
 import MyWindows
+import math
+from main_logic import PSDAExtraction, CCAExtraction, CCAPSDAExtraction
 
 
 class Notebook(ttk.Notebook):
@@ -20,26 +22,25 @@ class Notebook(ttk.Notebook):
         self.add(self.add_tab, text="+")
 
     def frameGenerator(self, parent, remove):
-        pass
+        raise NotImplementedError("frameGenerator not implemented!")
 
     def removeTab(self):
         current = self.index("current")
         if current != 0:
             self.tab_count -= 1
-            #self.removeEvent(current)
-            self.updateTabs(current, current)
+            self.updateTabs(current)
             self.forget(current)
             return True
         else:
             return False
 
-    def updateTabs(self, current, tab_nr):
+    def updateTabs(self, current):
         if current == self.tab_count+1:
-            self.select(tab_nr-1)
+            self.select(current-1)
         else:
-            while tab_nr < self.tab_count+2:
-                self.tab(tab_nr, text=self.tab(tab_nr, "text")-1)
-                tab_nr += 1
+            while current < self.tab_count+2:
+                self.tab(current, text=self.tab(current, "text")-1)
+                current += 1
 
     def addTab(self):
         self.tab_count += 1
@@ -115,8 +116,8 @@ class TargetNotebook(Notebook):
         if textbox.get() != "":
             monitor_freq = int(self.frequency_textbox.get())
             freq = float(textbox.get())
-            freq_on = int(monitor_freq/freq//2)
-            freq_off = int(monitor_freq/freq/2.0+0.5)
+            freq_on = math.floor(monitor_freq/freq/2)
+            freq_off = math.ceil(monitor_freq/freq/2)
             MyWindows.updateTextbox(textbox, float(monitor_freq)/(freq_off+freq_on))
         return True
 
@@ -138,3 +139,44 @@ class TargetNotebook(Notebook):
             textboxes[key].config(state=textbox_state)
         for key in color_buttons:
             color_buttons[key].config(state=button_state)
+
+
+class ExctractionNotebook(Notebook):
+    def __init__(self, parent, sensor_checkbox_vars):
+        Notebook.__init__(self, parent)
+        self.sensor_checkbox_vars = sensor_checkbox_vars
+        self.classes = {"PSDA": {}, "CCA": {}, "CCA+PSDA": {}}
+        self.addAllTab()
+        self.addPlusTab()
+
+    def frameGenerator(self, parent, remove):
+        frame = Tkinter.Frame(parent)
+        self.checkboxFrame(frame).grid(columnspan=5)
+        MyWindows.initButtonFrame(frame, ["PSDA", "Sum PSDA", "CCA", "Both", "Sum Both"],
+                                  [lambda: self.createInstance(PSDAExtraction, "PSDA", "Multiple"),
+                                   lambda: self.createInstance(PSDAExtraction, "PSDA", "Single"),
+                                   lambda: self.createInstance(CCAExtraction, "CCA", "Single"),
+                                   lambda: self.createInstance(CCAPSDAExtraction, "Both", "Multiple"),
+                                   lambda: self.createInstance(CCAPSDAExtraction, "Both", "Single")], row=1)
+        return frame
+
+    def createInstance(self, file, group, object):
+        self.classes[group][object] = getattr(file, object)()
+        self.classes[group][object].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(group, object))
+
+    def closeWindow(self, group, object):
+        self.closeGenerators(self.classes[group][object].generators)
+        self.classes[group][object].destroy()
+        self.classes[group][object] = None
+
+    def closeGenerators(self, generators):
+        for generator in generators:
+            generator.close()
+
+    def checkboxFrame(self, parent):
+        frame = Tkinter.Frame(parent)
+        for i in range(len(MyWindows.sensor_names)):
+            self.sensor_checkbox_vars.append(Tkinter.IntVar())
+            Tkinter.Checkbutton(frame, text=MyWindows.sensor_names[i],
+                                variable=self.sensor_checkbox_vars[i]).grid(column=i % 7, row=i//7)
+        return frame

@@ -4,6 +4,9 @@ import Tkinter
 import tkColorChooser
 
 
+sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
+
+
 class AbstractWindow(object):
     def __init__(self, title, width, height, color="#eeeeee"):
         self.window_width = width
@@ -67,3 +70,8 @@ def newTextBox(frame, text, column, row, width=5, validatecommand=None):
 def updateTextbox(textbox, value):
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, value)
+
+
+def initButtonFrame(frame, button_names, commands, column=0, row=0):
+    for i in range(len(button_names)):
+        Tkinter.Button(frame, text=button_names[i],command=commands[i]).grid(column=column+i, row=row, padx=5, pady=5)

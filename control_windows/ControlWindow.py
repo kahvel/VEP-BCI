@@ -9,7 +9,6 @@ import scipy.signal
 class ControlWindow(MyWindows.TkWindow):
     def __init__(self, title, width, height, args):
         MyWindows.TkWindow.__init__(self, title, width, height)
-        self.all_sensor_names = args[0]
         self.chosen_sensor_names = []
         self.headset_freq = 128
         self.filter_coefficients = None
@@ -69,9 +68,9 @@ class ControlWindow(MyWindows.TkWindow):
 
     def initCheckboxFrame(self):
         checkbox_frame = Tkinter.Frame(self)
-        for i in range(len(self.all_sensor_names)):
+        for i in range(len(MyWindows.sensor_names)):
             self.checkbox_values.append(Tkinter.IntVar())
-            Tkinter.Checkbutton(checkbox_frame, text=self.all_sensor_names[i],
+            Tkinter.Checkbutton(checkbox_frame, text=MyWindows.sensor_names[i],
                                 variable=self.checkbox_values[i]).grid(column=i % 7, row=i//7)
         return checkbox_frame
 
@@ -152,7 +151,7 @@ class ControlWindow(MyWindows.TkWindow):
         self.chosen_sensor_names = []
         for i in range(len(self.checkbox_values)):
             if self.checkbox_values[i].get() == 1:
-                self.chosen_sensor_names.append(self.all_sensor_names[i])
+                self.chosen_sensor_names.append(MyWindows.sensor_names[i])
         if len(self.chosen_sensor_names) == 0:
             print "No channels chosen"
 

@@ -14,19 +14,15 @@ import Notebook
 
 class MainWindow(MyWindows.TkWindow):
     def __init__(self):
-        MyWindows.TkWindow.__init__(self, "Main Menu", 310, 500)
+        MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
         default_file_name = "default.txt"
-        self.sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
         self.start_button = None
-        self.target_count = 0
         self.target_textboxes = []
         self.background_textboxes = {}
         self.target_color_buttons = []
         self.background_color_buttons = {}
         self.frequency_textbox = None
 
-        self.neutral_signal = None
-        self.target_signal = [None for _ in range(self.target_count)]
         self.test_vars = {name: Tkinter.IntVar() for name in ["Random", "Standby"]}
         self.test_textboxes = {}
         self.record_textboxes = {}
@@ -37,12 +33,16 @@ class MainWindow(MyWindows.TkWindow):
         self.monitor_names = [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
         self.current_monitor = Tkinter.StringVar(value=self.monitor_names[0])
 
-        self.sensor_checkbox_values = []
+        self.sensor_checkbox_vars = []
         self.target_notebook = None
+        self.extraction_notebook = None
 
         self.initNotebook()
         self.loadValues(self.target_textboxes, self.target_color_buttons, default_file_name)
         self.initBottomFrame(self).pack()
+
+        self.neutral_signal = None
+        self.target_signal = [None for _ in range(self.target_notebook.tab_count)]
 
         self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
@@ -55,7 +55,7 @@ class MainWindow(MyWindows.TkWindow):
         frame = Tkinter.Frame(parent)
         self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start"))
         self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        self.initButtonFrame(frame, ["Save", "Load", "Exit"], [self.saveFile, self.askLoadFile, self.exit], 1)
+        MyWindows.initButtonFrame(frame, ["Save", "Load", "Exit"], [self.saveFile, self.askLoadFile, self.exit], 1)
         return frame
 
     def loadValues(self, target_textboxes, target_color_buttons, default_file_name):
@@ -65,7 +65,6 @@ class MainWindow(MyWindows.TkWindow):
         except IOError:
             for _ in range(6):
                 self.target_notebook.addTab()
-                pass
             self.background_textboxes["Width"].insert(0, 800)
             self.background_textboxes["Height"].insert(0, 600)
             self.background_textboxes["Color"].insert(0, "#000000")
@@ -74,7 +73,7 @@ class MainWindow(MyWindows.TkWindow):
             self.test_textboxes["Min"].insert(0, 128*2)
             self.test_textboxes["Max"].insert(0, 128*4)
             self.record_textboxes["Length"].insert(0, 128*8)
-            for i in range(2, self.target_count+1):
+            for i in range(2, self.target_notebook.tab_count+1):
                 self.updateVar(self.disable_vars[i], 1)
             self.disableTargets()
             self.vep_type_var.set("removeEvent")
@@ -107,13 +106,9 @@ class MainWindow(MyWindows.TkWindow):
         else:
             self.seed_textbox.config(state=Tkinter.NORMAL)
 
-    def initButtonFrame(self, frame, button_names, commands, column=0, row=0):
-        for i in range(len(button_names)):
-            Tkinter.Button(frame, text=button_names[i],command=commands[i]).grid(column=column+i, row=row, padx=5, pady=5)
-
     def recordFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        self.initButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold])
+        MyWindows.initButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold])
         self.record_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 3, 0)
         return frame
 
@@ -124,46 +119,31 @@ class MainWindow(MyWindows.TkWindow):
         self.test_textboxes["Max"] = MyWindows.newTextBox(frame, "Max", 4, 0)
         Tkinter.Checkbutton(frame, text="Random", variable=self.test_vars["Random"]).grid(row=1, column=0, padx=5, pady=5, columnspan=2)
         Tkinter.Checkbutton(frame, text="Standby", variable=self.test_vars["Standby"]).grid(row=1, column=2, padx=5, pady=5, columnspan=2)
-        self.initButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction], row=2)
+        MyWindows.initButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction], row=2)
         return frame
 
     def resultsFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        self.initButtonFrame(frame, ["Show", "Reset"], [self.showResults, self.resetResults])
+        MyWindows.initButtonFrame(frame, ["Show", "Reset"], [self.showResults, self.resetResults])
         return frame
 
     def gameFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        self.initButtonFrame(frame, ["Game"], [self.game])
+        MyWindows.initButtonFrame(frame, ["Game"], [self.game])
         return frame
-
-    def checkboxFrame(self, parent):
-        checkbox_frame = Tkinter.Frame(parent)
-        for i in range(len(self.sensor_names)):
-            self.sensor_checkbox_values.append(Tkinter.IntVar())
-            Tkinter.Checkbutton(checkbox_frame, text=self.sensor_names[i],
-                                variable=self.sensor_checkbox_values[i]).grid(column=i % 7, row=i//7)
-        return checkbox_frame
-
-    def extractionFrame(self, parent):
-        return self.checkboxFrame(parent)
-
-    def extractionNotebookFrame(self, parent):
-        notebook = ttk.Notebook(parent)
-        notebook.add(self.extractionFrame(notebook), text="All")
-        return notebook
 
     def initNotebook(self):
         main_notebook = ttk.Notebook(self)  # Has to be defined before inner notebooks!
         main_notebook.add(self.windowFrame(self), text="Window")
         # frequency_textbox gets value from windowFrame and it is needed in TargetNotebook
-        self.target_notebook = Notebook.TargetNotebook(self, self.target_textboxes, self.disable_vars,
+        self.target_notebook = Notebook.TargetNotebook(main_notebook, self.target_textboxes, self.disable_vars,
                                                        self.target_color_buttons, self.frequency_textbox)
         main_notebook.add(self.target_notebook, text="Targets")
         main_notebook.add(self.recordFrame(self), text="Record")
         main_notebook.add(self.testFrame(self), text="Test")
         main_notebook.add(self.resultsFrame(self), text="Results")
-        main_notebook.add(self.extractionNotebookFrame(self), text="Extraction")
+        self.extraction_notebook = Notebook.ExctractionNotebook(main_notebook, self.sensor_checkbox_vars)
+        main_notebook.add(self.extraction_notebook, text="Extraction")
         main_notebook.add(self.gameFrame(self), text="Game")
         main_notebook.pack()
 
@@ -191,16 +171,7 @@ class MainWindow(MyWindows.TkWindow):
         self.destroy()
 
     def extraction(self):
-        self.newProcess(Main.runExtractionControl, "Add extraction", self.sensor_names)
-
-    def validateFreq(self, textbox):
-        if textbox.get() != "":
-            monitor_freq = int(self.frequency_textbox.get())
-            freq = float(textbox.get())
-            freq_on = int(monitor_freq/freq//2)
-            freq_off = int(monitor_freq/freq/2.0+0.5)
-            MyWindows.updateTextbox(textbox, float(monitor_freq)/(freq_off+freq_on))
-        return True
+        self.newProcess(Main.runExtractionControl, "Add extraction")
 
     def getEnabledTargets(self):
         targets = []
@@ -268,7 +239,7 @@ class MainWindow(MyWindows.TkWindow):
         self.newProcess(Main.runPsychopy, "Add psychopy", self.getBackgroundData(), self.lock)
 
     def plotWindow(self):
-        self.newProcess(Main.runPlotControl, "Add plot", self.sensor_names)
+        self.newProcess(Main.runPlotControl, "Add plot")
 
     def saveDict(self, dictionary, file):
         for key in sorted(dictionary):
@@ -301,7 +272,7 @@ class MainWindow(MyWindows.TkWindow):
         var.set(value)
 
     def disableTargets(self):
-        for i in range(self.target_count+1):
+        for i in range(self.target_notebook.tab_count+1):
             self.target_notebook.disableButtonChange(self.target_textboxes[i], self.disable_vars[i], self.target_color_buttons[i])
 
     def loadFile(self, file):
@@ -311,9 +282,9 @@ class MainWindow(MyWindows.TkWindow):
             self.updateDict(self.test_textboxes, file, MyWindows.updateTextbox)
             self.updateDict(self.test_vars, file, self.updateVar)
             self.updateDict(self.record_textboxes, file, MyWindows.updateTextbox)
-            if self.target_count != 0:
+            if self.target_notebook.tab_count != 0:
                 self.target_notebook.select(1)
-                while self.target_count > 0:
+                while self.target_notebook.tab_count > 0:
                     self.removeTarget(self.target_textboxes.index(self.target_textboxes[-1]))
             for line in file:
                 self.target_notebook.addTab()
