@@ -109,6 +109,7 @@ class MainWindow(MyWindows.TkWindow):
         textboxes["Freq"] = MyWindows.newTextBox(frame, "Freq", 0, 0, validatecommand=self.validateFreq)
         textboxes["Delay"] = MyWindows.newTextBox(frame, "Delay", 2, 0)
         Tkinter.Button(frame, text="Disable", command=lambda: self.disableButtonPressed(textboxes, disable_var, color_buttons)).grid(row=0, column=4, padx=5, pady=5)
+        Tkinter.Button(frame, text="Delete", command=lambda: self.removeTarget(textboxes)).grid(row=0, column=5, padx=5, pady=5)
         textboxes["Width"] = MyWindows.newTextBox(frame, "Width", 0, 1)
         textboxes["Height"] = MyWindows.newTextBox(frame, "Height", 2, 1)
         textboxes["Color1"] = MyWindows.newColorButton(4, 1, frame, "Color1", textboxes, color_buttons)
@@ -126,7 +127,7 @@ class MainWindow(MyWindows.TkWindow):
     def addTarget(self):
         self.target_count += 1
         self.createTarget(self.last_target_tab).pack()
-        self.disable_vars[-1].set(1)
+        self.disable_vars[-1].set(0)
         self.target_notebook.tab(self.target_count, text=self.target_count)
         self.addPlusTab(self.target_notebook)
         self.loadDefaultTarget(-1)
@@ -137,11 +138,22 @@ class MainWindow(MyWindows.TkWindow):
         self.target_color_buttons.append({})
         return self.targetOptionsFrame(frame, self.target_textboxes[-1], self.disable_vars[-1], self.target_color_buttons[-1])
 
-    def removeTarget(self, i):
-        self.target_count -= 1
-        del self.target_textboxes[i]
-        del self.target_color_buttons[i]
-        del self.disable_vars[i]
+    def removeTarget(self, textbox):
+        current = self.target_notebook.index("current")
+        if current != 0:
+            self.target_count -= 1
+            i = self.target_textboxes.index(textbox)
+            del self.target_textboxes[i]
+            del self.target_color_buttons[i]
+            del self.disable_vars[i]
+            if current == self.target_count+1:
+                self.target_notebook.select(i-1)
+            else:
+                index = i
+                while index < self.target_count+2:
+                    self.target_notebook.tab(index, text=self.target_notebook.tab(index, "text")-1)
+                    index += 1
+            self.target_notebook.forget(i)
 
     def tabChangedEvent(self, event):
         if event.widget.index("current") == self.target_count+1:
