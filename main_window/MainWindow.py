@@ -47,9 +47,8 @@ class MainWindow(MyWindows.TkWindow):
 
         self.sensor_checkbox_values = []
 
-        self.target_count = self.loadTargetCount(default_file_name)
         self.initNotebook()
-        self.loadValues(self.target_count, self.target_textboxes, self.target_color_buttons, default_file_name)
+        self.loadValues(self.target_textboxes, self.target_color_buttons, default_file_name)
         self.initBottomFrame(self).pack()
 
         self.connection, post_office_to_main = multiprocessing.Pipe()
@@ -66,19 +65,13 @@ class MainWindow(MyWindows.TkWindow):
         self.initButtonFrame(frame, ["Save", "Load", "Exit"], [self.saveFile, self.askLoadFile, self.exit], 1)
         return frame
 
-    def loadTargetCount(self, default_file_name, default_count=6):
-        try:
-            return int(open(default_file_name).readline())
-        except IOError:
-            return default_count
-
-    def loadValues(self, target_count, target_textboxes, target_color_buttons, default_file_name):
+    def loadValues(self, target_textboxes, target_color_buttons, default_file_name):
         try:
             file = open(default_file_name)
             self.loadFile(file)
         except IOError:
-            for i in range(1, target_count+1):
-                self.loadDefaultTarget(i)
+            for _ in range(6):
+                self.addTarget()
             self.background_textboxes["Width"].insert(0, 800)
             self.background_textboxes["Height"].insert(0, 600)
             self.background_textboxes["Color"].insert(0, "#000000")
@@ -127,7 +120,7 @@ class MainWindow(MyWindows.TkWindow):
     def addTarget(self):
         self.target_count += 1
         self.createTarget(self.last_target_tab).pack()
-        self.disable_vars[-1].set(0)
+        #self.disable_vars[-1].set(0)
         self.target_notebook.tab(self.target_count, text=self.target_count)
         self.addPlusTab(self.target_notebook)
         self.loadDefaultTarget(-1)
@@ -166,8 +159,6 @@ class MainWindow(MyWindows.TkWindow):
     def targetNotebookFrame(self, parent):
         self.target_notebook = ttk.Notebook(parent)
         self.target_notebook.add(self.createTarget(self.target_notebook), text="All")
-        for i in range(self.target_count):
-            self.target_notebook.add(self.createTarget(self.target_notebook), text=i+1)
         self.addPlusTab(self.target_notebook)
         self.target_notebook.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
         self.target_notebook.pack()
@@ -353,12 +344,11 @@ class MainWindow(MyWindows.TkWindow):
             disable_var.set(1)
         self.disableButtonChange(textboxes, disable_var, color_buttons)
 
-
     def disableButtonChange(self, textboxes, disable_var, color_buttons):
         if disable_var.get() == 1:
             textbox_state = "readonly"
             button_state = "disabled"
-        else:
+        elif disable_var.get() == 0:
             textbox_state = Tkinter.NORMAL
             button_state = Tkinter.NORMAL
         for key in textboxes:
@@ -378,23 +368,17 @@ class MainWindow(MyWindows.TkWindow):
             file.write(str(dictionary[key].get())+" ")
         file.write("\n")
 
-    def saveList(self, list, file):
-        for value in list:
-            file.write(str(value.get())+" ")
-        file.write("\n")
-
     def saveFile(self):
         file = tkFileDialog.asksaveasfile()
         if file is not None:
-            file.write(str(self.target_count)+"\n")
             self.saveDict(self.background_textboxes, file)
             self.saveDict(self.test_textboxes, file)
             self.saveDict(self.test_vars, file)
             self.saveDict(self.record_textboxes, file)
-            self.saveList(self.disable_vars, file)
-            for textboxes in self.target_textboxes[1:]:
-                for key in sorted(textboxes):
-                    file.write(str(textboxes[key].get())+" ")
+            for i in range(len(self.target_textboxes[1:])):
+                for key in sorted(self.target_textboxes[1:][i]):
+                    file.write(str(self.target_textboxes[1:][i][key].get())+" ")
+                file.write(str(self.disable_vars[1:][i].get()))
                 file.write("\n")
             file.close()
 
@@ -413,26 +397,27 @@ class MainWindow(MyWindows.TkWindow):
     def loadVar(self, var, value):
         var.set(value)
 
-    def loadList(self, list, file):
-        for i, value in enumerate(file.readline().split()):
-            self.loadVar(list[i], value)
-
     def disableTargets(self):
         for i in range(self.target_count+1):
             self.disableButtonChange(self.target_textboxes[i], self.disable_vars[i], self.target_color_buttons[i])
 
     def loadFile(self, file):
         if file is not None:
-            file.readline()
             self.loadDict(self.background_textboxes, file, self.loadTextbox)
             MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
             self.loadDict(self.test_textboxes, file, self.loadTextbox)
             self.loadDict(self.test_vars, file, self.loadVar)
             self.loadDict(self.record_textboxes, file, self.loadTextbox)
-            self.loadList(self.disable_vars, file)
-            for line, textboxes, color_buttons in zip(file, self.target_textboxes[1:], self.target_color_buttons[1:]):
-                for key, value in zip(sorted(textboxes), line.split()):
-                    self.loadTextbox(textboxes[key], value)
-                for key in color_buttons:
-                    MyWindows.changeButtonColor(color_buttons[key], textboxes[key])
+            if self.target_count != 0:
+                self.target_notebook.select(1)
+                while self.target_count > 0:
+                    self.removeTarget(self.target_textboxes[-1])
+            for line in file:
+                self.addTarget()
+                values = line.split()
+                for key, value in zip(sorted(self.target_textboxes[-1]), values):
+                    self.loadTextbox(self.target_textboxes[-1][key], value)
+                for key in self.target_color_buttons[-1]:
+                    MyWindows.changeButtonColor(self.target_color_buttons[-1][key], self.target_textboxes[-1][key])
+                self.loadVar(self.disable_vars[-1], values[-1])
             self.disableTargets()
