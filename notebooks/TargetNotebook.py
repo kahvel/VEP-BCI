@@ -25,7 +25,7 @@ class TargetNotebook(Notebook.Notebook):
         for key in self.default_values:
             MyWindows.updateTextbox(self.textboxes[-1][key], self.default_values[key])
         for key in self.buttons[-1]:
-            MyWindows.changeButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
+            MyWindows.validate(self.textboxes[-1][key], lambda x: self.buttons[-1][key].configure(background=x.get()))
 
     def addTab(self):
         Notebook.Notebook.addTab(self)
@@ -34,7 +34,7 @@ class TargetNotebook(Notebook.Notebook):
     def frameGenerator(self, parent, remove, disable):
         frame = Tkinter.Frame(parent)
         textboxes, disable_var, buttons = self.textboxes[-1], self.disable_vars[-1], self.buttons[-1]
-        textboxes["Freq"] = MyWindows.newTextBox(frame, "Freq", validatecommand=self.validateFreq)
+        textboxes["Freq"] = MyWindows.newTextBox(frame, "Freq", validatefunction=lambda x: self.validateFreq(x))
         textboxes["Delay"] = MyWindows.newTextBox(frame, "Delay", 2)
         Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, buttons)).grid(row=0, column=4, padx=5, pady=5)
         Tkinter.Button(frame, text="Delete", command=remove).grid(row=0, column=5, padx=5, pady=5)
@@ -47,18 +47,16 @@ class TargetNotebook(Notebook.Notebook):
         return frame
 
     def validateFreq(self, textbox):
-        if textbox.get() != "":
-            monitor_freq = int(self.frequency_textbox.get())
-            freq = float(textbox.get())
-            freq_on = math.floor(monitor_freq/freq/2)
-            freq_off = math.ceil(monitor_freq/freq/2)
-            MyWindows.updateTextbox(textbox, float(monitor_freq)/(freq_off+freq_on))
-        return True
+        target_freq = float(textbox.get())
+        monitor_freq = int(self.frequency_textbox.get())
+        freq_on = math.floor(monitor_freq/target_freq/2)
+        freq_off = math.ceil(monitor_freq/target_freq/2)
+        MyWindows.updateTextbox(textbox, float(monitor_freq)/(freq_off+freq_on))
 
     def loadValues(self, values):
         Notebook.Notebook.loadValues(self, values)
         for key in self.buttons[-1]:
-            MyWindows.changeButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
+            MyWindows.validateButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
 
     def defaultDisability(self):
         for i in range(2, self.tab_count+1):

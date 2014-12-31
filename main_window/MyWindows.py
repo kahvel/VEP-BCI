@@ -33,14 +33,14 @@ class ToplevelWindow(AbstractWindow, Tkinter.Toplevel):
         AbstractWindow.__init__(self, title, width, height, color)
 
 
-def changeButtonColor(button, textbox):
+def validate(textbox, function):
     try:
-        button.configure(background=textbox.get())
+        function(textbox)
         textbox.configure(background="#ffffff")
+        return True
     except:
         textbox.configure(background="#ff0000")
         return False
-    return True
 
 
 def saveColor(button, textbox):
@@ -53,24 +53,25 @@ def saveColor(button, textbox):
         color = previous
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, color)
-    changeButtonColor(button, textbox)
+    validateButtonColor(button, textbox)
+
+
+def validateButtonColor(button, textbox):
+    return validate(textbox, lambda x: button.configure(background=textbox.get()))
 
 
 def newColorButton(frame, name, column=0, row=0):
     button = Tkinter.Button(frame, text=name)
     button.grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: changeButtonColor(button, textbox))
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: validateButtonColor(button, textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     button.config(command=lambda: saveColor(button, textbox))
     return textbox, button
 
 
-def newTextBox(frame, text, column=0, row=0, width=5, validatecommand=None):
+def newTextBox(frame, text, column=0, row=0, width=5, validatefunction=lambda x: int(x.get())):
     Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
-    if validatecommand is None:
-        textbox = Tkinter.Entry(frame, width=width)
-    else:
-        textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
+    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validate(textbox, validatefunction))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     return textbox
 

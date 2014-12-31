@@ -38,8 +38,6 @@ class MainWindow(MyWindows.TkWindow):
 
         self.initNotebook()
         self.loadValues(default_file_name)
-        print(self.plot_notebook.windows)
-        print(self.extraction_notebook.windows)
         self.initBottomFrame(self).pack()
 
         self.neutral_signal = None
@@ -69,7 +67,7 @@ class MainWindow(MyWindows.TkWindow):
             self.background_textboxes["Width"].insert(0, 800)
             self.background_textboxes["Height"].insert(0, 600)
             self.background_textboxes["Color"].insert(0, "#000000")
-            MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
+            MyWindows.validateButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
             self.test_textboxes["Length"].insert(0, 128*30)
             self.test_textboxes["Min"].insert(0, 128*2)
             self.test_textboxes["Max"].insert(0, 128*4)
@@ -259,7 +257,7 @@ class MainWindow(MyWindows.TkWindow):
     def loadFile(self, file):
         if file is not None:
             MyWindows.updateDict(self.background_textboxes, file.readline().split(), MyWindows.updateTextbox)
-            MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
+            MyWindows.validateButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
             MyWindows.updateDict(self.test_textboxes, file.readline().split(), MyWindows.updateTextbox)
             MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
             MyWindows.updateDict(self.record_textboxes, file.readline().split(), MyWindows.updateTextbox)
