@@ -70,7 +70,6 @@ class MainWindow(MyWindows.TkWindow):
             self.test_textboxes["Max"].insert(0, 128*4)
             self.record_textboxes["Length"].insert(0, 128*8)
             self.target_notebook.defaultDisability()
-            self.target_notebook.disableTabs()
             self.vep_type_var.set("removeEvent")
             #self.vepTypeChange()
 
@@ -235,36 +234,28 @@ class MainWindow(MyWindows.TkWindow):
     def plotWindow(self):
         self.newProcess(Main.runPlotControl, "Add plot")
 
-    def saveDict(self, dictionary, file):
-        for key in sorted(dictionary):
-            file.write(str(dictionary[key].get())+" ")
-        file.write("\n")
-
     def saveFile(self):
         file = tkFileDialog.asksaveasfile()
         if file is not None:
-            self.saveDict(self.background_textboxes, file)
-            self.saveDict(self.test_textboxes, file)
-            self.saveDict(self.test_vars, file)
-            self.saveDict(self.record_textboxes, file)
+            MyWindows.saveDict(self.background_textboxes, file)
+            MyWindows.saveDict(self.test_textboxes, file)
+            MyWindows.saveDict(self.test_vars, file)
+            MyWindows.saveDict(self.record_textboxes, file)
             self.target_notebook.save(file)
+            self.extraction_notebook.save(file)
             file.close()
 
     def askLoadFile(self):
         file = tkFileDialog.askopenfile()
         self.loadFile(file)
 
-    def updateDict(self, dictionary, file, set):
-        for key, value in zip(sorted(dictionary), file.readline().split()):
-            set(dictionary[key], value)
-
     def loadFile(self, file):
         if file is not None:
-            self.updateDict(self.background_textboxes, file, MyWindows.updateTextbox)
+            MyWindows.updateDict(self.background_textboxes, file.readline().split(), MyWindows.updateTextbox)
             MyWindows.changeButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
-            self.updateDict(self.test_textboxes, file, MyWindows.updateTextbox)
-            self.updateDict(self.test_vars, file, MyWindows.updateVar)
-            self.updateDict(self.record_textboxes, file, MyWindows.updateTextbox)
-            self.target_notebook.removeAllTabs()
+            MyWindows.updateDict(self.test_textboxes, file.readline().split(), MyWindows.updateTextbox)
+            MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
+            MyWindows.updateDict(self.record_textboxes, file.readline().split(), MyWindows.updateTextbox)
             self.target_notebook.load(file)
-            self.target_notebook.disableTabs()
+            self.extraction_notebook.load(file)
+            file.close()

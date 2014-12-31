@@ -10,23 +10,68 @@ from main_logic import PSDAExtraction, CCAExtraction, CCAPSDAExtraction
 class Notebook(ttk.Notebook):
     def __init__(self, parent):
         ttk.Notebook.__init__(self, parent)
-        self.add_tab = None
+        self.empty_tab = None
         self.tab_count = 0
         self.disable_vars = []
+        self.vars = []
+        self.textboxes = []
+        self.checkboxes = []
+        self.buttons = []
         self.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
-    def addAllTab(self):
-        self.add(self.frameGenerator(self.add_tab, self.removeTab, self.disableButtonPressed), text="All")
+    def addInitialTabs(self):
+        self.addPlusTab()
+        self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
+        self.tab(self.tab_count, text="All")
+        self.addPlusTab()
 
     def addPlusTab(self):
-        self.add_tab = Tkinter.Frame(self)
-        self.add(self.add_tab, text="+")
+        self.empty_tab = Tkinter.Frame(self)
+        self.add(self.empty_tab, text="+")
 
     def frameGenerator(self, parent, remove, disable):
         raise NotImplementedError("frameGenerator not implemented!")
 
     def removeEvent(self, i):
-        raise NotImplementedError("removeEvent not implemented!")
+        del self.disable_vars[i]
+        del self.vars[i]
+        del self.textboxes[i]
+
+    def newTab(self):
+        self.vars.append({})
+        self.textboxes.append({})
+        self.disable_vars.append(Tkinter.IntVar())
+
+    def loadValues(self, values):
+        MyWindows.updateDict(self.textboxes[-1], values[0].split(), MyWindows.updateTextbox)
+        MyWindows.updateDict(self.vars[-1], values[1].split(), MyWindows.updateVar)
+        MyWindows.updateVar(self.disable_vars[-1], values[2].split(":")[1])
+
+    def save(self, file):
+        file.write(str(self.tab_count)+"\n")
+        for textboxes, vars, disable_var in zip(self.textboxes, self.vars, self.disable_vars):
+            MyWindows.saveDict(textboxes, file, end=";")
+            MyWindows.saveDict(vars, file, end=";")
+            file.write("Disable:"+str(disable_var.get())+"\n")
+
+    def load(self, file):
+        self.removeAllTabs()
+        tab_count = int(file.readline())
+        self.loadValues(file.readline().split(";"))  # Values to All tab
+        for i in range(tab_count):
+            self.addTab()
+            self.loadValues(file.readline().split(";"))
+        self.disableTabs()
+
+    def disableTabs(self):
+        for i in range(self.tab_count+1):
+            self.disableButtonChange(self.disable_vars[i], self.textboxes[i], self.buttons[i])
+
+    def removeAllTabs(self):
+        if self.tab_count != 0:
+            self.select(1)
+            while self.tab_count > 0:
+                self.removeTab()
 
     def removeTab(self):
         current = self.index("current")
@@ -46,7 +91,7 @@ class Notebook(ttk.Notebook):
 
     def addTab(self):
         self.tab_count += 1
-        self.frameGenerator(self.add_tab, self.removeTab, self.disableButtonPressed).pack()
+        self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
         self.tab(self.tab_count, text=self.tab_count)
         self.addPlusTab()
 
@@ -74,29 +119,26 @@ class Notebook(ttk.Notebook):
         self.disableDict(buttons, button_state)
         self.disableDict(checkboxes, checkbox_state)
 
-    def disableList(self, list, state):
-        for item in list:
-            item.config(state=state)
+    # def disableList(self, list, state):
+    #     for item in list:
+    #         item.config(state=state)
 
     def disableDict(self, dict, state):
         for key in dict:
             dict[key].config(state=state)
 
-    def disable(self, iterable, state):
-        if isinstance(iterable, dict):
-            self.disableDict(iterable, state)
-        else:
-            self.disableList(iterable, state)
+    # def disable(self, iterable, state):
+    #     if isinstance(iterable, dict):
+    #         self.disableDict(iterable, state)
+    #     else:
+    #         self.disableList(iterable, state)
 
 
 class TargetNotebook(Notebook):
     def __init__(self, parent, frequency_textbox):
         Notebook.__init__(self, parent)
         self.frequency_textbox = frequency_textbox
-        self.textboxes = []
-        self.buttons = []
-        self.addAllTab()
-        self.addPlusTab()
+        self.addInitialTabs()
         self.default_values = {"Height": 150,
                                "Width": 150,
                                "x": 0,
@@ -105,10 +147,10 @@ class TargetNotebook(Notebook):
                                "Color1": "#ffffff",
                                "Color2": "#777777",
                                "Delay": 0}
+        self.loadDefaultValues()
 
     def newTab(self):
-        self.textboxes.append({})
-        self.disable_vars.append(Tkinter.IntVar())
+        Notebook.newTab(self)
         self.buttons.append({})
         return self.textboxes[-1], self.disable_vars[-1], self.buttons[-1]
 
@@ -119,9 +161,8 @@ class TargetNotebook(Notebook):
             MyWindows.changeButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
 
     def removeEvent(self, i):
-        del self.textboxes[i]
+        Notebook.removeEvent(self, i)
         del self.buttons[i]
-        del self.disable_vars[i]
 
     def addTab(self):
         Notebook.addTab(self)
@@ -151,70 +192,40 @@ class TargetNotebook(Notebook):
             MyWindows.updateTextbox(textbox, float(monitor_freq)/(freq_off+freq_on))
         return True
 
-    def save(self, file):
-        for i in range(len(self.textboxes[1:])):
-            for key in sorted(self.textboxes[1:][i]):
-                file.write(str(self.textboxes[1:][i][key].get())+" ")
-            file.write(str(self.disable_vars[1:][i].get()))
-            file.write("\n")
-
-    def load(self, file):
-        for line in file:
-            self.addTab()
-            values = line.split()
-            for key, value in zip(sorted(self.textboxes[-1]), values):
-                MyWindows.updateTextbox(self.textboxes[-1][key], value)
-            for key in self.buttons[-1]:
-                MyWindows.changeButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
-            MyWindows.updateVar(self.disable_vars[-1], values[-1])
-
-    def removeAllTabs(self):
-        if self.tab_count != 0:
-            self.select(1)
-            while self.tab_count > 0:
-                self.removeTab()
-
-    def disableTabs(self):
-        for i in range(self.tab_count+1):
-            self.disableButtonChange(self.disable_vars[i], self.textboxes[i], self.buttons[i])
+    def loadValues(self, values):
+        Notebook.loadValues(self, values)
+        for key in self.buttons[-1]:
+            MyWindows.changeButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
 
     def defaultDisability(self):
         for i in range(2, self.tab_count+1):
             MyWindows.updateVar(self.disable_vars[i], 1)
+        self.disableTabs()
 
 
 class ExctractionNotebook(Notebook):
     def __init__(self, parent):
         Notebook.__init__(self, parent)
-        self.sensor_vars = []
         self.classes = []
-        self.vars = []
-        self.textboxes = []
-        self.checkboxes = []
-        self.buttons = []
-        self.addAllTab()
-        self.addPlusTab()
+        self.addInitialTabs()
 
     def newTab(self):
+        Notebook.newTab(self)
         self.classes.append({"PSDA": {}, "CCA": {}, "Both": {}})
-        self.vars.append({})
-        self.textboxes.append({})
         self.checkboxes.append({})
-        self.disable_vars.append(Tkinter.IntVar())
-        self.sensor_vars.append([None for _ in range(len(MyWindows.sensor_names))])
-        return self.classes[-1], self.vars[-1], self.textboxes[-1], self.sensor_vars[-1], self.disable_vars[-1], self.checkboxes[-1]
+        return self.classes[-1], self.vars[-1], self.textboxes[-1], self.disable_vars[-1], self.checkboxes[-1]
 
     def removeEvent(self, i):
-        del self.disable_vars[i]
-        del self.vars[i]
-        del self.textboxes[i]
-        del self.sensor_vars[i]
+        Notebook.removeEvent(self, i)
         del self.checkboxes[i]
+        del self.buttons[i]
+        self.closeAllWindows(self.classes[i])
+        del self.classes[i]
 
     def frameGenerator(self, parent, remove, disable):
         frame = Tkinter.Frame(parent)
-        classes, vars, textboxes, sensor_vars, disable_var, checkboxes = self.newTab()
-        self.checkboxFrame(frame, sensor_vars, checkboxes).grid(columnspan=5)
+        classes, vars, textboxes, disable_var, checkboxes = self.newTab()
+        self.checkboxFrame(frame, vars, checkboxes).grid(columnspan=5)
         self.buttons.append(MyWindows.initButtonFrame(frame, ["PSDA", "Sum PSDA", "CCA", "Both", "Sum Both"],
                                   [lambda: self.createInstance(PSDAExtraction, classes["PSDA"], "Multiple"),
                                    lambda: self.createInstance(PSDAExtraction, classes["PSDA"], "Single"),
@@ -230,19 +241,23 @@ class ExctractionNotebook(Notebook):
         classes[object] = getattr(file, object)()
         classes[object].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(classes, object))
 
+    def closeAllWindows(self, classes):
+        for key in classes:
+            for key2 in classes[key]:
+                self.closeWindow(classes[key], key2)
+
     def closeWindow(self, classes, object):
         self.closeGenerators(classes[object].generators)
         classes[object].destroy()
-        classes[object] = None
 
     def closeGenerators(self, generators):
         for generator in generators:
             generator.close()
 
-    def checkboxFrame(self, parent, sensor_vars, checkboxes):
+    def checkboxFrame(self, parent, vars, checkboxes):
         frame = Tkinter.Frame(parent)
         for i in range(len(MyWindows.sensor_names)):
-            sensor_vars[i], checkboxes[i] = MyWindows.newCheckbox(frame, MyWindows.sensor_names[i], column=i % 7, row=i//7, columnspan=1, padx=0, pady=0)
+            vars[str(i)], checkboxes[i] = MyWindows.newCheckbox(frame, MyWindows.sensor_names[i], column=i % 7, row=i//7, columnspan=1, padx=0, pady=0)
         return frame
 
     def initOptionsFrame(self, parent, vars, textboxes, checkboxes):

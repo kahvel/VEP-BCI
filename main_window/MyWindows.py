@@ -84,6 +84,19 @@ def updateVar(var, value):
     var.set(value)
 
 
+def updateDict(dictionary, values, set):
+    for pair in values:
+        key, value = pair.split(":")
+        set(dictionary[key], value)
+
+
+def saveDict(dictionary, file, end="\n"):
+    for key in sorted(dictionary):
+        value = str(dictionary[key].get())
+        file.write(str(key)+":"+(value if value != "" else "0")+" ")
+    file.write(end)
+
+
 def initButtonFrame(frame, button_names, commands, column=0, row=0):
     buttons = {}
     for i in range(len(button_names)):
