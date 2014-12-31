@@ -10,6 +10,7 @@ class TargetNotebook(Notebook.Notebook):
     def __init__(self, parent, frequency_textbox):
         Notebook.Notebook.__init__(self, parent)
         self.frequency_textbox = frequency_textbox
+        self.default_tab_count = 6
         self.addInitialTabs()
         self.default_values = {"Height": 150,
                                "Width": 150,
@@ -19,17 +20,12 @@ class TargetNotebook(Notebook.Notebook):
                                "Color1": "#ffffff",
                                "Color2": "#777777",
                                "Delay": 0}
-        self.loadDefaultValues()
 
     def loadDefaultValues(self):
         for key in self.default_values:
             MyWindows.updateTextbox(self.textboxes[-1][key], self.default_values[key])
         for key in self.buttons[-1]:
-            MyWindows.validate(self.textboxes[-1][key], lambda x: self.buttons[-1][key].configure(background=x.get()))
-
-    def addTab(self):
-        Notebook.Notebook.addTab(self)
-        self.loadDefaultValues()
+            MyWindows.validateButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
 
     def frameGenerator(self, parent, remove, disable):
         frame = Tkinter.Frame(parent)

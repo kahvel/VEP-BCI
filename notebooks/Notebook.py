@@ -10,11 +10,13 @@ class Notebook(ttk.Notebook):
         ttk.Notebook.__init__(self, parent)
         self.empty_tab = None
         self.tab_count = 0
+        self.default_tab_count = None
         self.disable_vars = []
         self.vars = []
         self.textboxes = []
         self.checkboxes = []
         self.buttons = []
+        self.disabled_textboxes = []
         self.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
     def addInitialTabs(self):
@@ -30,6 +32,18 @@ class Notebook(ttk.Notebook):
 
     def frameGenerator(self, parent, remove, disable):
         raise NotImplementedError("frameGenerator not implemented!")
+
+    def loadDefaultValues(self):
+        raise NotImplementedError("loadDefaultValues not implemented!")
+
+    def defaultDisability(self):
+        raise NotImplementedError("defaultDisability not implemented!")
+
+    def loadDefaultNotebook(self):
+        self.loadDefaultValues()  # Default values to All tab
+        for _ in range(self.default_tab_count):
+            self.addTab()
+        self.defaultDisability()
 
     def removeListElement(self, i):
         del self.disable_vars[i]
@@ -98,6 +112,7 @@ class Notebook(ttk.Notebook):
         self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
         self.tab(self.tab_count, text=self.tab_count)
         self.addPlusTab()
+        self.loadDefaultValues()
 
     def tabChangedEvent(self, event):
         if event.widget.index("current") == self.tab_count+1:
@@ -125,4 +140,5 @@ class Notebook(ttk.Notebook):
 
     def disableDict(self, dict, state):
         for key in dict:
-            dict[key].config(state=state)
+            if dict[key] not in self.disabled_textboxes:
+                dict[key].config(state=state)

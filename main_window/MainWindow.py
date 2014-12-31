@@ -62,8 +62,9 @@ class MainWindow(MyWindows.TkWindow):
             file = open(default_file_name)
             self.loadFile(file)
         except IOError:
-            for _ in range(6):
-                self.target_notebook.addTab()
+            self.target_notebook.loadDefaultNotebook()
+            self.extraction_notebook.loadDefaultNotebook()
+            self.plot_notebook.loadDefaultNotebook()
             self.background_textboxes["Width"].insert(0, 800)
             self.background_textboxes["Height"].insert(0, 600)
             self.background_textboxes["Color"].insert(0, "#000000")
@@ -72,7 +73,6 @@ class MainWindow(MyWindows.TkWindow):
             self.test_textboxes["Min"].insert(0, 128*2)
             self.test_textboxes["Max"].insert(0, 128*4)
             self.record_textboxes["Length"].insert(0, 128*8)
-            self.target_notebook.defaultDisability()
             self.vep_type_var.set("removeListElement")
             #self.vepTypeChange()
 

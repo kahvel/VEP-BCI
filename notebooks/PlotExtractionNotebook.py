@@ -8,6 +8,7 @@ from main_window import MyWindows
 class PlotExtractionNotebook(Notebook.Notebook):
     def __init__(self, parent):
         Notebook.Notebook.__init__(self, parent)
+        self.default_tab_count = 1
         self.windows = []
         self.addInitialTabs()
 
@@ -15,6 +16,18 @@ class PlotExtractionNotebook(Notebook.Notebook):
         Notebook.Notebook.removeListElement(self, i)
         self.closeAllWindows(self.windows[i])
         del self.windows[i]
+
+    def loadDefaultValues(self):
+        MyWindows.updateTextbox(self.textboxes[-1]["Step"], 32)
+        MyWindows.updateTextbox(self.textboxes[-1]["Length"], 512)
+        MyWindows.updateVar(self.vars[-1]["6"], 1)
+        MyWindows.updateVar(self.vars[-1]["7"], 1)
+        MyWindows.updateVar(self.vars[-1]["Window"], "None")
+        self.disableTextboxes(self.vars[-1]["Filter"], self.textboxes[-1], ["From", "To", "Taps"], 1)
+        self.disableTextboxes(self.vars[-1]["Window"], self.textboxes[-1], ["Beta"], "Kaiser")
+
+    def defaultDisability(self):
+        pass  # Already have all tabs enabled
 
     def buttonFrame(self, frame, windows, buttons):
         raise NotImplementedError("buttonFrame not implemented!")
@@ -52,16 +65,28 @@ class PlotExtractionNotebook(Notebook.Notebook):
         frame = Tkinter.Frame(parent)
         vars["Normalise"], checkboxes["Normalise"] = MyWindows.newCheckbox(frame, "Normalise")
         vars["Detrend"], checkboxes["Detrend"] = MyWindows.newCheckbox(frame, "Detrend", column=2)
-        vars["Filter"], checkboxes["Filter"] = MyWindows.newCheckbox(frame, "Filter", column=4)
+        vars["Filter"], checkboxes["Filter"] = MyWindows.newCheckbox(frame, "Filter", column=4, command=lambda: self.disableTextboxes(vars["Filter"], textboxes, ["From", "To", "Taps"], 1))
         textboxes["Step"] = MyWindows.newTextBox(frame, "Step", row=1)
         textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 2, 1)
         vars["Window"] = Tkinter.StringVar()
-        vars["Window"].set("None") # TODO
-        buttons["OptionMenu"] = Tkinter.OptionMenu(frame, vars["Window"], "None", "hanning", "hamming", "blackman", "kaiser", "bartlett")
+        buttons["OptionMenu"] = Tkinter.OptionMenu(frame, vars["Window"], "None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett", command=lambda x: self.disableTextboxes(vars["Window"], textboxes, ["Beta"], "Kaiser"))
         buttons["OptionMenu"].grid(column=0, row=4, padx=5, pady=5, columnspan=2)
         textboxes["From"] = MyWindows.newTextBox(frame, "From", row=3)
         textboxes["To"] = MyWindows.newTextBox(frame, "To", 2, 3)
         textboxes["Taps"] = MyWindows.newTextBox(frame, "Taps", 4, 3)
-        textboxes["Arg"] = MyWindows.newTextBox(frame, "Arg", 2, 4)
+        textboxes["Beta"] = MyWindows.newTextBox(frame, "Beta", 2, 4)
         textboxes["Break"] = MyWindows.newTextBox(frame, "Break", 4, 4)
         return frame
+
+    def disableTextbox(self, textbox):
+        textbox.config(state="readonly")
+        self.disabled_textboxes.append(textbox)
+
+    def enableTextbox(self, textbox):
+        textbox.config(state=Tkinter.NORMAL)
+        self.disabled_textboxes.remove(textbox)
+
+    def disableTextboxes(self, var, textboxes, keys, value):
+        function = self.enableTextbox if var.get() == value else self.disableTextbox
+        for key in keys:
+            function(textboxes[key])

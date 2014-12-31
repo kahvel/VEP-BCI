@@ -76,9 +76,9 @@ def newTextBox(frame, text, column=0, row=0, width=5, validatefunction=lambda x:
     return textbox
 
 
-def newCheckbox(frame, text, column=0, row=0, columnspan=2, padx=5, pady=5):
+def newCheckbox(frame, text, column=0, row=0, columnspan=2, padx=5, pady=5, command=None):
     var = Tkinter.IntVar()
-    button = Tkinter.Checkbutton(frame, text=text, variable=var)
+    button = Tkinter.Checkbutton(frame, text=text, variable=var, command=command)
     button.grid(column=column, row=row, padx=padx, pady=pady, columnspan=columnspan)
     return var, button
 
