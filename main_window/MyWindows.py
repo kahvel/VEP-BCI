@@ -5,6 +5,7 @@ import tkColorChooser
 
 
 sensor_names = ["AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4"]
+headset_freq = 128
 
 
 class AbstractWindow(object):
@@ -41,23 +42,23 @@ def changeButtonColor(button, textbox):
     return True
 
 
-def saveColor(color_buttons, textboxes, name):
-    if name in textboxes:
-        previous = textboxes[name].get()
-        textboxes[name].delete(0, Tkinter.END)
-        textboxes[name].insert(0, tkColorChooser.askcolor(previous)[1])
-        changeButtonColor(color_buttons[name], textboxes[name])
+def saveColor(button, textbox):
+    previous = textbox.get()
+    textbox.delete(0, Tkinter.END)
+    textbox.insert(0, tkColorChooser.askcolor(previous)[1])
+    changeButtonColor(button, textbox)
 
 
-def newColorButton(column, row, frame, name, textboxes, color_buttons):
-    color_buttons[name] = Tkinter.Button(frame, text=name, command=lambda: saveColor(color_buttons, textboxes, name))
-    color_buttons[name].grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: changeButtonColor(color_buttons[name], textboxes[name]))
+def newColorButton(frame, name, column=0, row=0):
+    button = Tkinter.Button(frame, text=name)
+    button.grid(column=column, row=row, padx=5, pady=5)
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: changeButtonColor(button, textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
-    return textbox
+    button.config(command=lambda: saveColor(button, textbox))
+    return textbox, button
 
 
-def newTextBox(frame, text, column, row, width=5, validatecommand=None):
+def newTextBox(frame, text, column=0, row=0, width=5, validatecommand=None):
     Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
     if validatecommand is None:
         textbox = Tkinter.Entry(frame, width=width)
@@ -67,11 +68,25 @@ def newTextBox(frame, text, column, row, width=5, validatecommand=None):
     return textbox
 
 
+def newCheckbox(frame, text, column=0, row=0, columnspan=2, padx=5, pady=5):
+    var = Tkinter.IntVar()
+    button = Tkinter.Checkbutton(frame, text=text, variable=var)
+    button.grid(column=column, row=row, padx=padx, pady=pady, columnspan=columnspan)
+    return var, button
+
+
 def updateTextbox(textbox, value):
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, value)
 
 
+def updateVar(var, value):
+    var.set(value)
+
+
 def initButtonFrame(frame, button_names, commands, column=0, row=0):
+    buttons = {}
     for i in range(len(button_names)):
-        Tkinter.Button(frame, text=button_names[i],command=commands[i]).grid(column=column+i, row=row, padx=5, pady=5)
+        buttons[button_names[i]] = (Tkinter.Button(frame, text=button_names[i],command=commands[i]))
+        buttons[button_names[i]].grid(column=column+i, row=row, padx=5, pady=5)
+    return buttons

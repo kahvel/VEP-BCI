@@ -10,7 +10,6 @@ class ControlWindow(MyWindows.TkWindow):
     def __init__(self, title, width, height, args):
         MyWindows.TkWindow.__init__(self, title, width, height)
         self.chosen_sensor_names = []
-        self.headset_freq = 128
         self.filter_coefficients = None
         self.window_function = None
         self.options_textboxes = {}
@@ -209,7 +208,7 @@ class ControlWindow(MyWindows.TkWindow):
             to_value = options_textboxes["To"].get()
             from_value = options_textboxes["From"].get()
             num_taps = int(options_textboxes["Taps"].get())
-            nyq = self.headset_freq/2.0
+            nyq = MyWindows.headset_freq/2.0
             if from_value != "" and to_value != "":
                 to_value = float(to_value)
                 from_value = float(from_value)
