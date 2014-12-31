@@ -1,6 +1,9 @@
+from notebooks import Notebook
+
 __author__ = 'Anti'
 
 from main_window import MyWindows
+from notebooks import TargetNotebook, ExtractionNotebook, PlotNotebook
 import Tkinter
 import tkFileDialog
 import multiprocessing
@@ -9,7 +12,6 @@ import Main
 import win32api
 import win32con
 import ttk
-import Notebook
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -32,6 +34,7 @@ class MainWindow(MyWindows.TkWindow):
 
         self.target_notebook = None
         self.extraction_notebook = None
+        self.plot_notebook = None
 
         self.initNotebook()
         self.loadValues(default_file_name)
@@ -113,7 +116,7 @@ class MainWindow(MyWindows.TkWindow):
         self.test_textboxes["Max"] = MyWindows.newTextBox(frame, "Max", 4)
         self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[0]
         self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[0]
-        MyWindows.initButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction], row=2)
+        MyWindows.initButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction], start_row=2)
         return frame
 
     def resultsFrame(self, parent):
@@ -130,14 +133,15 @@ class MainWindow(MyWindows.TkWindow):
         main_notebook = ttk.Notebook(self)  # Has to be defined before inner notebooks!
         main_notebook.add(self.windowFrame(self), text="Window")
         # frequency_textbox gets value from windowFrame and it is needed in TargetNotebook
-        self.target_notebook = Notebook.TargetNotebook(main_notebook, self.frequency_textbox)
+        self.target_notebook = TargetNotebook.TargetNotebook(main_notebook, self.frequency_textbox)
+        self.extraction_notebook = ExtractionNotebook.ExctractionNotebook(main_notebook)
+        self.plot_notebook = PlotNotebook.PlotNotebook(main_notebook)
         main_notebook.add(self.target_notebook, text="Targets")
+        main_notebook.add(self.extraction_notebook, text="Extraction")
+        main_notebook.add(self.plot_notebook, text="Plot")
         main_notebook.add(self.recordFrame(self), text="Record")
         main_notebook.add(self.testFrame(self), text="Test")
         main_notebook.add(self.resultsFrame(self), text="Results")
-        self.extraction_notebook = Notebook.ExctractionNotebook(main_notebook)
-        main_notebook.add(self.extraction_notebook, text="Extraction")
-        main_notebook.add(self.gameFrame(self), text="Game")
         main_notebook.pack()
 
     def changeMonitor(self, monitor, textbox):
@@ -243,6 +247,7 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.saveDict(self.record_textboxes, file)
             self.target_notebook.save(file)
             self.extraction_notebook.save(file)
+            self.plot_notebook.save(file)
             file.close()
 
     def askLoadFile(self):
@@ -258,4 +263,5 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.updateDict(self.record_textboxes, file.readline().split(), MyWindows.updateTextbox)
             self.target_notebook.load(file)
             self.extraction_notebook.load(file)
+            self.plot_notebook.load(file)
             file.close()
