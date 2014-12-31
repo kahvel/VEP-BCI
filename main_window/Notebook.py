@@ -21,6 +21,7 @@ class Notebook(ttk.Notebook):
 
     def addInitialTabs(self):
         self.addPlusTab()
+        self.addListElement()
         self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
         self.tab(self.tab_count, text="All")
         self.addPlusTab()
@@ -32,15 +33,19 @@ class Notebook(ttk.Notebook):
     def frameGenerator(self, parent, remove, disable):
         raise NotImplementedError("frameGenerator not implemented!")
 
-    def removeEvent(self, i):
+    def removeListElement(self, i):
         del self.disable_vars[i]
         del self.vars[i]
         del self.textboxes[i]
+        del self.buttons[i]
+        del self.checkboxes[i]
 
-    def newTab(self):
+    def addListElement(self):
         self.vars.append({})
         self.textboxes.append({})
         self.disable_vars.append(Tkinter.IntVar())
+        self.buttons.append({})
+        self.checkboxes.append({})
 
     def loadValues(self, values):
         MyWindows.updateDict(self.textboxes[-1], values[0].split(), MyWindows.updateTextbox)
@@ -77,7 +82,7 @@ class Notebook(ttk.Notebook):
         current = self.index("current")
         if current != 0:
             self.tab_count -= 1
-            self.removeEvent(current)
+            self.removeListElement(current)
             self.updateTabs(current)
             self.forget(current)
 
@@ -91,6 +96,7 @@ class Notebook(ttk.Notebook):
 
     def addTab(self):
         self.tab_count += 1
+        self.addListElement()
         self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
         self.tab(self.tab_count, text=self.tab_count)
         self.addPlusTab()
@@ -149,20 +155,11 @@ class TargetNotebook(Notebook):
                                "Delay": 0}
         self.loadDefaultValues()
 
-    def newTab(self):
-        Notebook.newTab(self)
-        self.buttons.append({})
-        return self.textboxes[-1], self.disable_vars[-1], self.buttons[-1]
-
     def loadDefaultValues(self):
         for key in self.default_values:
             MyWindows.updateTextbox(self.textboxes[-1][key], self.default_values[key])
         for key in self.buttons[-1]:
             MyWindows.changeButtonColor(self.buttons[-1][key], self.textboxes[-1][key])
-
-    def removeEvent(self, i):
-        Notebook.removeEvent(self, i)
-        del self.buttons[i]
 
     def addTab(self):
         Notebook.addTab(self)
@@ -170,7 +167,7 @@ class TargetNotebook(Notebook):
 
     def frameGenerator(self, parent, remove, disable):
         frame = Tkinter.Frame(parent)
-        textboxes, disable_var, buttons = self.newTab()
+        textboxes, disable_var, buttons = self.textboxes[-1], self.disable_vars[-1], self.buttons[-1]
         textboxes["Freq"] = MyWindows.newTextBox(frame, "Freq", validatecommand=self.validateFreq)
         textboxes["Delay"] = MyWindows.newTextBox(frame, "Delay", 2)
         Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, buttons)).grid(row=0, column=4, padx=5, pady=5)
@@ -180,7 +177,7 @@ class TargetNotebook(Notebook):
         textboxes["Color1"], buttons["Color1"] = MyWindows.newColorButton(frame, "Color1", 4, 1)
         textboxes["x"] = MyWindows.newTextBox(frame, "x", row=2)
         textboxes["y"] = MyWindows.newTextBox(frame, "y", 2, 2)
-        textboxes["Color2"], buttons["Color1"] = MyWindows.newColorButton(frame, "Color2", 4, 2)
+        textboxes["Color2"], buttons["Color2"] = MyWindows.newColorButton(frame, "Color2", 4, 2)
         return frame
 
     def validateFreq(self, textbox):
@@ -209,31 +206,29 @@ class ExctractionNotebook(Notebook):
         self.classes = []
         self.addInitialTabs()
 
-    def newTab(self):
-        Notebook.newTab(self)
+    def addListElement(self):
+        Notebook.addListElement(self)
         self.classes.append({"PSDA": {}, "CCA": {}, "Both": {}})
-        self.checkboxes.append({})
-        return self.classes[-1], self.vars[-1], self.textboxes[-1], self.disable_vars[-1], self.checkboxes[-1]
 
-    def removeEvent(self, i):
-        Notebook.removeEvent(self, i)
-        del self.checkboxes[i]
-        del self.buttons[i]
+    def removeListElement(self, i):
+        Notebook.removeListElement(self, i)
         self.closeAllWindows(self.classes[i])
         del self.classes[i]
 
     def frameGenerator(self, parent, remove, disable):
         frame = Tkinter.Frame(parent)
-        classes, vars, textboxes, disable_var, checkboxes = self.newTab()
+        classes, vars, textboxes, disable_var, checkboxes, buttons = \
+            self.classes[-1], self.vars[-1], self.textboxes[-1], self.disable_vars[-1], self.checkboxes[-1], self.buttons[-1]
         self.checkboxFrame(frame, vars, checkboxes).grid(columnspan=5)
-        self.buttons.append(MyWindows.initButtonFrame(frame, ["PSDA", "Sum PSDA", "CCA", "Both", "Sum Both"],
+        MyWindows.initButtonFrame(frame, ["PSDA", "Sum PSDA", "CCA", "Both", "Sum Both"],
                                   [lambda: self.createInstance(PSDAExtraction, classes["PSDA"], "Multiple"),
                                    lambda: self.createInstance(PSDAExtraction, classes["PSDA"], "Single"),
                                    lambda: self.createInstance(CCAExtraction, classes["CCA"], "Single"),
                                    lambda: self.createInstance(CCAPSDAExtraction, classes["Both"], "Multiple"),
-                                   lambda: self.createInstance(CCAPSDAExtraction, classes["Both"], "Single")], row=1))
-        self.initOptionsFrame(frame, vars, textboxes, checkboxes).grid(columnspan=5)
-        Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, self.buttons[-1],checkboxes)).grid(column=0, row=5)
+                                   lambda: self.createInstance(CCAPSDAExtraction, classes["Both"], "Single")],
+                                  row=1, buttons=buttons)
+        self.initOptionsFrame(frame, vars, textboxes, checkboxes, buttons).grid(columnspan=5)
+        Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, buttons, checkboxes)).grid(column=0, row=5)
         Tkinter.Button(frame, text="Remove", command=remove).grid(column=1, row=5)
         return frame
 
@@ -260,7 +255,7 @@ class ExctractionNotebook(Notebook):
             vars[str(i)], checkboxes[i] = MyWindows.newCheckbox(frame, MyWindows.sensor_names[i], column=i % 7, row=i//7, columnspan=1, padx=0, pady=0)
         return frame
 
-    def initOptionsFrame(self, parent, vars, textboxes, checkboxes):
+    def initOptionsFrame(self, parent, vars, textboxes, checkboxes, buttons):
         frame = Tkinter.Frame(parent)
         vars["Normalise"], checkboxes["Normalise"] = MyWindows.newCheckbox(frame, "Normalise")
         vars["Detrend"], checkboxes["Detrend"] = MyWindows.newCheckbox(frame, "Detrend", column=2)
@@ -269,7 +264,8 @@ class ExctractionNotebook(Notebook):
         textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 2, 1)
         vars["Window"] = Tkinter.StringVar()
         vars["Window"].set("None") # TODO
-        Tkinter.OptionMenu(frame, vars["Window"], "None", "hanning", "hamming", "blackman", "kaiser", "bartlett").grid(column=0, row=4, padx=5, pady=5, columnspan=2)
+        buttons["OptionMenu"] = Tkinter.OptionMenu(frame, vars["Window"], "None", "hanning", "hamming", "blackman", "kaiser", "bartlett")
+        buttons["OptionMenu"].grid(column=0, row=4, padx=5, pady=5, columnspan=2)
         textboxes["From"] = MyWindows.newTextBox(frame, "From", row=3)
         textboxes["To"] = MyWindows.newTextBox(frame, "To", 2, 3)
         textboxes["Taps"] = MyWindows.newTextBox(frame, "Taps", 4, 3)

@@ -70,7 +70,7 @@ class MainWindow(MyWindows.TkWindow):
             self.test_textboxes["Max"].insert(0, 128*4)
             self.record_textboxes["Length"].insert(0, 128*8)
             self.target_notebook.defaultDisability()
-            self.vep_type_var.set("removeEvent")
+            self.vep_type_var.set("removeListElement")
             #self.vepTypeChange()
 
     def windowFrame(self, parent):
@@ -88,14 +88,14 @@ class MainWindow(MyWindows.TkWindow):
     #     frame = Tkinter.Frame(parent)
     #     Tkinter.Button(frame, text="- ").grid(row=0, column=0)
     #     Tkinter.Button(frame, text="+").grid(row=0, column=1)
-    #     Tkinter.Radiobutton(frame, text="removeEvent-VEP", variable=self.vep_type_var, value="removeEvent", command=self.vepTypeChange).grid(row=0, column=2)
+    #     Tkinter.Radiobutton(frame, text="removeListElement-VEP", variable=self.vep_type_var, value="removeListElement", command=self.vepTypeChange).grid(row=0, column=2)
     #     Tkinter.Radiobutton(frame, text="c-VEP", variable=self.vep_type_var, value="c", command=self.vepTypeChange).grid(row=0, column=3)
     #     self.seed_textbox = MyWindows.newTextBox(frame, "Seed", 4, 0, 10)
     #     self.targetNotebookFrame(frame).grid(row=1, columnspan=6)
     #     return frame
 
     def vepTypeChange(self):
-        if self.vep_type_var.get() == "removeEvent":
+        if self.vep_type_var.get() == "removeListElement":
             self.seed_textbox.config(state="readonly")
         else:
             self.seed_textbox.config(state=Tkinter.NORMAL)

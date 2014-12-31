@@ -36,16 +36,23 @@ class ToplevelWindow(AbstractWindow, Tkinter.Toplevel):
 def changeButtonColor(button, textbox):
     try:
         button.configure(background=textbox.get())
+        textbox.configure(background="#ffffff")
     except:
-        button.configure(background="#eeeeee")
+        textbox.configure(background="#ff0000")
         return False
     return True
 
 
 def saveColor(button, textbox):
     previous = textbox.get()
+    try:
+        color = tkColorChooser.askcolor(previous)[1]
+    except:
+        color = tkColorChooser.askcolor()[1]
+    if color is None:
+        color = previous
     textbox.delete(0, Tkinter.END)
-    textbox.insert(0, tkColorChooser.askcolor(previous)[1])
+    textbox.insert(0, color)
     changeButtonColor(button, textbox)
 
 
@@ -97,9 +104,7 @@ def saveDict(dictionary, file, end="\n"):
     file.write(end)
 
 
-def initButtonFrame(frame, button_names, commands, column=0, row=0):
-    buttons = {}
+def initButtonFrame(frame, button_names, commands, column=0, row=0, buttons={}):
     for i in range(len(button_names)):
-        buttons[button_names[i]] = (Tkinter.Button(frame, text=button_names[i],command=commands[i]))
+        buttons[button_names[i]] = Tkinter.Button(frame, text=button_names[i],command=commands[i])
         buttons[button_names[i]].grid(column=column+i, row=row, padx=5, pady=5)
-    return buttons
