@@ -8,44 +8,39 @@ from main_window import MyWindows
 class PlotExtractionNotebook(Notebook.Notebook):
     def __init__(self, parent):
         Notebook.Notebook.__init__(self, parent)
-        self.classes = []
+        self.windows = []
         self.addInitialTabs()
 
     def removeListElement(self, i):
         Notebook.Notebook.removeListElement(self, i)
-        self.closeAllWindows(self.classes[i])
-        del self.classes[i]
+        self.closeAllWindows(self.windows[i])
+        del self.windows[i]
 
-    def buttonFrame(self, frame, classes, buttons):
+    def buttonFrame(self, frame, windows, buttons):
         raise NotImplementedError("buttonFrame not implemented!")
 
     def frameGenerator(self, parent, remove, disable):
         frame = Tkinter.Frame(parent)
-        classes, vars, textboxes, disable_var, checkboxes, buttons = \
-            self.classes[-1], self.vars[-1], self.textboxes[-1], self.disable_vars[-1], self.checkboxes[-1], self.buttons[-1]
+        windows, vars, textboxes, disable_var, checkboxes, buttons = \
+            self.windows[-1], self.vars[-1], self.textboxes[-1], self.disable_vars[-1], self.checkboxes[-1], self.buttons[-1]
         self.checkboxFrame(frame, vars, checkboxes).grid(columnspan=5)
-        self.buttonFrame(frame, classes, buttons)
+        self.buttonFrame(frame, windows, buttons)
         self.optionsFrame(frame, vars, textboxes, checkboxes, buttons).grid(columnspan=5)
-        Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, buttons, checkboxes)).grid(column=0, row=5)
-        Tkinter.Button(frame, text="Remove", command=remove).grid(column=1, row=5)
+        Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, buttons, checkboxes)).grid(column=0, row=6)
+        Tkinter.Button(frame, text="Delete", command=remove).grid(column=1, row=6)
         return frame
 
-    def createInstance(self, file, classes, object):
-        classes[object] = getattr(file, object)()
-        classes[object].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(classes, object))
+    def createWindow(self, file, windows, object):
+        windows[object] = getattr(file, object)()
+        windows[object].protocol("WM_DELETE_WINDOW", lambda: self.closeWindow(windows, object))
 
-    def closeAllWindows(self, classes):
-        for key in classes:
-            for key2 in classes[key]:
-                self.closeWindow(classes[key], key2)
+    def closeAllWindows(self, windows):
+        for key in windows:
+            for key2 in windows[key]:
+                self.closeWindow(windows[key], key2)
 
-    def closeWindow(self, classes, object):
-        self.closeGenerators(classes[object].generators)
-        classes[object].destroy()
-
-    def closeGenerators(self, generators):
-        for generator in generators:
-            generator.close()
+    def closeWindow(self, windows, object):
+        windows[object].close()
 
     def checkboxFrame(self, parent, vars, checkboxes):
         frame = Tkinter.Frame(parent)

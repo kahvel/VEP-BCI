@@ -104,7 +104,7 @@ def saveDict(dictionary, file, end="\n"):
     file.write(end)
 
 
-def initButtonFrame(frame, button_names, commands, start_column=0, start_row=0, buttons={}, buttons_in_row=0):
+def initButtonFrame(frame, button_names, commands, start_column=0, start_row=0, buttons={}, buttons_in_row=0, columnspan=1):
     for i in range(len(button_names)):
         if buttons_in_row == 0:
             column = start_column + i
@@ -112,5 +112,6 @@ def initButtonFrame(frame, button_names, commands, start_column=0, start_row=0, 
         else:
             column = start_column + i % buttons_in_row
             row = start_row + i//buttons_in_row
+        column *= columnspan
         buttons[button_names[i]] = Tkinter.Button(frame, text=button_names[i],command=commands[i])
-        buttons[button_names[i]].grid(column=column, row=row, padx=5, pady=5)
+        buttons[button_names[i]].grid(column=column, row=row, padx=5, pady=5, columnspan=columnspan)

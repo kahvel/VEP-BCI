@@ -12,13 +12,13 @@ class ExctractionNotebook(PlotExtractionNotebook.PlotExtractionNotebook):
 
     def addListElement(self):
         PlotExtractionNotebook.PlotExtractionNotebook.addListElement(self)
-        self.classes.append({"PSDA": {}, "CCA": {}, "Both": {}})
+        self.windows.append({"PSDA": {}, "CCA": {}, "Both": {}})
 
-    def buttonFrame(self, frame, classes, buttons):
+    def buttonFrame(self, frame, windows, buttons):
         MyWindows.initButtonFrame(frame, ["PSDA", "Sum PSDA", "CCA", "Both", "Sum Both"],
-                                  [lambda: self.createInstance(PSDAExtraction, classes["PSDA"], "Multiple"),
-                                   lambda: self.createInstance(PSDAExtraction, classes["PSDA"], "Single"),
-                                   lambda: self.createInstance(CCAExtraction, classes["CCA"], "Single"),
-                                   lambda: self.createInstance(CCAPSDAExtraction, classes["Both"], "Multiple"),
-                                   lambda: self.createInstance(CCAPSDAExtraction, classes["Both"], "Single")],
+                                  [lambda: self.createWindow(PSDAExtraction, windows["PSDA"], "Multiple"),
+                                   lambda: self.createWindow(PSDAExtraction, windows["PSDA"], "Single"),
+                                   lambda: self.createWindow(CCAExtraction, windows["CCA"], "Single"),
+                                   lambda: self.createWindow(CCAPSDAExtraction, windows["Both"], "Multiple"),
+                                   lambda: self.createWindow(CCAPSDAExtraction, windows["Both"], "Single")],
                                   start_row=1, buttons=buttons)

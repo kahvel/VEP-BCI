@@ -38,6 +38,8 @@ class MainWindow(MyWindows.TkWindow):
 
         self.initNotebook()
         self.loadValues(default_file_name)
+        print(self.plot_notebook.windows)
+        print(self.extraction_notebook.windows)
         self.initBottomFrame(self).pack()
 
         self.neutral_signal = None
@@ -163,7 +165,7 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(self.getChosenFreq())
 
     def exit(self):
-        print "Exiting main window"
+        print("Exiting main window")
         self.connection.send("Exit")
         self.destroy()
 
@@ -194,7 +196,7 @@ class MainWindow(MyWindows.TkWindow):
     def recordTarget(self):
         length = int(self.record_textboxes["Length"].get())
         if self.current_radio_button.get() == 0:
-            print "Choose target"
+            print("Choose target")
         else:
             self.connection.send("Record target")
             # self.connection.send(self.getEnabledTargets())

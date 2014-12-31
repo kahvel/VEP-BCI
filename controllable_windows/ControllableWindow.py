@@ -35,3 +35,16 @@ class ControllableWindow(MyWindows.ToplevelWindow):
         for i in range(self.gen_count):
             self.generators.append(self.getGenerator(i))
             self.generators[i].send(None)
+
+    def close(self):
+        self.closeGenerators()
+        self.destroy()
+
+    def closeGenerators(self):
+        for generator in self.generators:
+            generator.close()
+
+    def reset(self):
+        self.resetCanvas()
+        self.closeGenerators()
+        self.setup(self.options, None, None, None)
