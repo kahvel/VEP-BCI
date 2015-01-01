@@ -23,6 +23,11 @@ class PlotExtractionNotebook(Notebook.Notebook):
         MyWindows.updateVar(self.vars[-1]["6"], 1)
         MyWindows.updateVar(self.vars[-1]["7"], 1)
         MyWindows.updateVar(self.vars[-1]["Window"], "None")
+        MyWindows.updateTextbox(self.textboxes[-1]["Beta"], 0)
+        MyWindows.updateTextbox(self.textboxes[-1]["From"], 0)
+        MyWindows.updateTextbox(self.textboxes[-1]["To"], 0)
+        MyWindows.updateTextbox(self.textboxes[-1]["Taps"], 0)
+        MyWindows.updateTextbox(self.textboxes[-1]["Break"], 0)
         self.disableTextboxes(self.vars[-1]["Filter"], self.textboxes[-1], ["From", "To", "Taps"], 1)
         self.disableTextboxes(self.vars[-1]["Window"], self.textboxes[-1], ["Beta"], "Kaiser")
 
@@ -90,3 +95,13 @@ class PlotExtractionNotebook(Notebook.Notebook):
         function = self.enableTextbox if var.get() == value else self.disableTextbox
         for key in keys:
             function(textboxes[key])
+
+    def disableAllTextboxes(self):
+        for i in range(self.tab_count):
+            self.disableTextboxes(self.vars[i]["Filter"], self.textboxes[i], ["From", "To", "Taps"], 1)
+            self.disableTextboxes(self.vars[i]["Window"], self.textboxes[i], ["Beta"], "Kaiser")
+
+    def load(self, file):
+        Notebook.Notebook.load(self, file)
+        self.disableAllTextboxes()
+

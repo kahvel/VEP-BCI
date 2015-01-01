@@ -84,8 +84,11 @@ def newCheckbox(frame, text, column=0, row=0, columnspan=2, padx=5, pady=5, comm
 
 
 def updateTextbox(textbox, value):
+    previous_state = textbox.config("state")[4]
+    textbox.config(state=Tkinter.NORMAL)
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, value)
+    textbox.config(state=previous_state)
 
 
 def updateVar(var, value):
