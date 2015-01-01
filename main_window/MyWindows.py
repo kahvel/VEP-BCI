@@ -57,10 +57,10 @@ def saveColor(button, textbox):
         color = previous
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, color)
-    validateColor(button, textbox)
+    validateColor(textbox, button)
 
 
-def validateColor(button, textbox):  # if allow_negative is True, no assertion will be performed
+def validateColor(textbox, button):  # if allow_... is True, no assertion will be performed
     return validate(textbox, lambda x: button.configure(background=textbox.get()), True, True)
 
 
@@ -78,18 +78,19 @@ def newOptionMenu(frame, options, column=0, row=0, command=None, columnspan=2):
     menu.grid(column=column, row=row, padx=5, pady=5, columnspan=columnspan)
     return var, menu
 
-def newColorButton(frame, name, column=0, row=0):
+
+def newColorButton(frame, name, validatecommand, column=0, row=0):
     button = Tkinter.Button(frame, text=name)
     button.grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: validateColor(button, textbox))
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: validatecommand(textbox, button))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     button.config(command=lambda: saveColor(button, textbox))
     return textbox, button
 
 
-def newTextBox(frame, text, column=0, row=0, width=5, validatecommand=validateInt, allow_negative=False, allow_zero=True):
+def newTextBox(frame, text, validatecommand=lambda x: None, column=0, row=0, width=5):
     Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox, allow_negative, allow_zero))
+    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     return textbox
 

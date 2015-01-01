@@ -1,5 +1,3 @@
-from notebooks import Notebook
-
 __author__ = 'Anti'
 
 from main_window import MyWindows
@@ -19,15 +17,17 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
         default_file_name = "default.txt"
         self.start_button = None
-        self.background_textboxes = {}
         self.background_color_buttons = {}
         self.frequency_textbox = None
 
         self.test_vars = {name: Tkinter.IntVar() for name in ["Random", "Standby"]}
-        self.test_textboxes = {}
-        self.record_textboxes = {}
         self.vep_type_var = Tkinter.StringVar()
         self.seed_textbox = None
+        self.textboxes = {
+            "Window": {},
+            "Record": {},
+            "Test": {}
+        }
 
         self.monitor_names = [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
         self.current_monitor = Tkinter.StringVar(value=self.monitor_names[0])
@@ -37,6 +37,21 @@ class MainWindow(MyWindows.TkWindow):
         self.extraction_notebook = ExtractionNotebook.ExctractionNotebook(self.main_notebook)
         self.plot_notebook = PlotNotebook.PlotNotebook(self.main_notebook)
 
+        self.validate_commands = {
+            "Window": {
+                "Width": lambda textbox: MyWindows.validateInt(textbox, False, False),
+                "Height": lambda textbox: MyWindows.validateInt(textbox, False, False),
+                "Color": lambda textbox, button: MyWindows.validateColor(textbox, button)
+            },
+            "Record": {
+                "Length": lambda textbox: MyWindows.validateInt(textbox, False, False)
+            },
+            "Test": {
+                "Min": lambda textbox: MyWindows.validateInt(textbox, False, False),
+                "Max": lambda textbox: MyWindows.validateInt(textbox, False, False),
+                "Length": lambda textbox: MyWindows.validateInt(textbox, False, False)
+            }
+        }
         self.initNotebook(self.main_notebook)
         self.target_notebook.setFrequencyTextbox(self.frequency_textbox)
         self.loadValues(default_file_name)
@@ -68,23 +83,23 @@ class MainWindow(MyWindows.TkWindow):
             self.target_notebook.loadDefaultNotebook()
             self.extraction_notebook.loadDefaultNotebook()
             self.plot_notebook.loadDefaultNotebook()
-            self.background_textboxes["Width"].insert(0, 800)
-            self.background_textboxes["Height"].insert(0, 600)
-            self.background_textboxes["Color"].insert(0, "#000000")
-            MyWindows.validateColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
-            self.test_textboxes["Length"].insert(0, 128*30)
-            self.test_textboxes["Min"].insert(0, 128*2)
-            self.test_textboxes["Max"].insert(0, 128*4)
-            self.record_textboxes["Length"].insert(0, 128*8)
+            self.textboxes["Window"]["Width"].insert(0, 800)
+            self.textboxes["Window"]["Height"].insert(0, 600)
+            self.textboxes["Window"]["Color"].insert(0, "#000000")
+            MyWindows.validateColor(self.textboxes["Window"]["Color"], self.background_color_buttons["Color"])
+            self.textboxes["Test"]["Length"].insert(0, 128*30)
+            self.textboxes["Test"]["Min"].insert(0, 128*2)
+            self.textboxes["Test"]["Max"].insert(0, 128*4)
+            self.textboxes["Record"]["Length"].insert(0, 128*8)
             self.vep_type_var.set("removeListElement")
             #self.vepTypeChange()
 
     def windowFrame(self, parent):
         window_frame = Tkinter.Frame(parent)
-        self.background_textboxes["Width"] = MyWindows.newTextBox(window_frame, "Width", allow_zero=False)
-        self.background_textboxes["Height"] = MyWindows.newTextBox(window_frame, "Height", 2, allow_zero=False)
-        self.background_textboxes["Color"], self.background_color_buttons["Color"] = MyWindows.newColorButton(window_frame, "Color", 4)
-        self.frequency_textbox = MyWindows.newTextBox(window_frame, "Freq", 2, 1)
+        self.textboxes["Window"]["Width"] = MyWindows.newTextBox(window_frame, "Width", self.validate_commands["Window"]["Width"])
+        self.textboxes["Window"]["Height"] = MyWindows.newTextBox(window_frame, "Height", self.validate_commands["Window"]["Height"], column=2)
+        self.textboxes["Window"]["Color"], self.background_color_buttons["Color"] = MyWindows.newColorButton(window_frame, "Color", self.validate_commands["Window"]["Color"], column=4)
+        self.frequency_textbox = MyWindows.newTextBox(window_frame, "Freq", column=2, row=1)
         Tkinter.OptionMenu(window_frame, self.current_monitor, *self.monitor_names, command=lambda a:
                            self.changeMonitor(a, self.frequency_textbox)).grid(row=1, column=0, columnspan=2)
         self.changeMonitor(self.monitor_names[0], self.frequency_textbox)
@@ -109,14 +124,14 @@ class MainWindow(MyWindows.TkWindow):
     def recordFrame(self, parent):
         frame = Tkinter.Frame(parent)
         MyWindows.newButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold]).grid()
-        self.record_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 3, allow_zero=False)
+        self.textboxes["Record"]["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Record"]["Length"], column=3)
         return frame
 
     def testFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        self.test_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", allow_zero=False)
-        self.test_textboxes["Min"] = MyWindows.newTextBox(frame, "Min", 2, allow_zero=False)
-        self.test_textboxes["Max"] = MyWindows.newTextBox(frame, "Max", 4, allow_zero=False)
+        self.textboxes["Test"]["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Test"]["Length"])
+        self.textboxes["Test"]["Min"] = MyWindows.newTextBox(frame, "Min", self.validate_commands["Test"]["Min"], column=2)
+        self.textboxes["Test"]["Max"] = MyWindows.newTextBox(frame, "Max", self.validate_commands["Test"]["Max"], column=4)
         self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[0]
         self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[0]
         MyWindows.newButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction]).grid(columnspan=3)
@@ -187,12 +202,12 @@ class MainWindow(MyWindows.TkWindow):
     def getBackgroundData(self):
         self.saveValues(self.current_radio_button.get())
         bk = {}
-        for key in self.background_textboxes:
-            bk[key] = self.background_textboxes[key].get()
+        for key in self.textboxes["Window"]:
+            bk[key] = self.textboxes["Window"][key].get()
         return bk
 
     def recordTarget(self):
-        length = int(self.record_textboxes["Length"].get())
+        length = int(self.textboxes["Record"]["Length"].get())
         if self.current_radio_button.get() == 0:
             print("Choose target")
         else:
@@ -205,11 +220,11 @@ class MainWindow(MyWindows.TkWindow):
 
     def recordNeutral(self):
         self.connection.send("Record neutral")
-        self.connection.send(int(self.record_textboxes["Length"].get()))
+        self.connection.send(int(self.textboxes["Record"]["Length"].get()))
         self.connection.send(self.current_radio_button.get())
 
     def sendOptions(self):
-        options = self.test_textboxes.update(self.test_vars)
+        options = self.textboxes["Test"].update(self.test_vars)
         self.connection.send({key: int(options[key].get()) for key in options})
 
     def start(self, message):
@@ -240,10 +255,10 @@ class MainWindow(MyWindows.TkWindow):
     def saveFile(self):
         file = tkFileDialog.asksaveasfile()
         if file is not None:
-            MyWindows.saveDict(self.background_textboxes, file)
-            MyWindows.saveDict(self.test_textboxes, file)
+            MyWindows.saveDict(self.textboxes["Window"], file)
+            MyWindows.saveDict(self.textboxes["Test"], file)
             MyWindows.saveDict(self.test_vars, file)
-            MyWindows.saveDict(self.record_textboxes, file)
+            MyWindows.saveDict(self.textboxes["Record"], file)
             self.target_notebook.save(file)
             self.extraction_notebook.save(file)
             self.plot_notebook.save(file)
@@ -255,11 +270,11 @@ class MainWindow(MyWindows.TkWindow):
 
     def loadFile(self, file):
         if file is not None:
-            MyWindows.updateDict(self.background_textboxes, file.readline().split(), MyWindows.updateTextbox)
-            MyWindows.validateColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
-            MyWindows.updateDict(self.test_textboxes, file.readline().split(), MyWindows.updateTextbox)
+            MyWindows.updateDict(self.textboxes["Window"], file.readline().split(), MyWindows.updateTextbox)
+            MyWindows.validateColor(self.textboxes["Window"]["Color"], self.background_color_buttons["Color"])
+            MyWindows.updateDict(self.textboxes["Test"], file.readline().split(), MyWindows.updateTextbox)
             MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
-            MyWindows.updateDict(self.record_textboxes, file.readline().split(), MyWindows.updateTextbox)
+            MyWindows.updateDict(self.textboxes["Record"], file.readline().split(), MyWindows.updateTextbox)
             self.target_notebook.load(file)
             self.extraction_notebook.load(file)
             self.plot_notebook.load(file)

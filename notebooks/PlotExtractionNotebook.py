@@ -7,6 +7,15 @@ from main_window import MyWindows
 
 class PlotExtractionNotebook(Notebook.Notebook):
     def __init__(self, parent):
+        self.validate_commands = {
+            "Step": lambda textbox: MyWindows.validateInt(textbox, False, False),
+            "Length": lambda textbox: MyWindows.validateInt(textbox, False, False),
+            "Beta": lambda textbox: MyWindows.validateInt(textbox, False, True),
+            "From": lambda textbox: MyWindows.validateFloat(textbox, False, True),
+            "To": lambda textbox: MyWindows.validateFloat(textbox, False, True),
+            "Taps": lambda textbox: MyWindows.validateInt(textbox, False, True),
+            "Break": lambda textbox: MyWindows.validateInt(textbox, False, True)
+        }
         Notebook.Notebook.__init__(self, parent)
         self.default_tab_count = 1
         self.windows = []
@@ -69,14 +78,14 @@ class PlotExtractionNotebook(Notebook.Notebook):
         vars["Normalise"], checkboxes["Normalise"] = MyWindows.newCheckbox(frame, "Normalise")
         vars["Detrend"], checkboxes["Detrend"] = MyWindows.newCheckbox(frame, "Detrend", column=2)
         vars["Filter"], checkboxes["Filter"] = MyWindows.newCheckbox(frame, "Filter", column=4, command=lambda: self.disableTextboxes(vars["Filter"], textboxes, ["From", "To", "Taps"], 1))
-        textboxes["Step"] = MyWindows.newTextBox(frame, "Step", row=1, allow_zero=False)
-        textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 2, 1, allow_zero=False)
+        textboxes["Step"] = MyWindows.newTextBox(frame, "Step", self.validate_commands["Step"], row=1)
+        textboxes["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Length"], column=2, row=1)
         vars["Window"], buttons["OptionMenu"] = MyWindows.newOptionMenu(frame, ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett"), row=4, command=lambda x: self.disableTextboxes(vars["Window"], textboxes, ["Beta"], "Kaiser"))
-        textboxes["From"] = MyWindows.newTextBox(frame, "From", row=3)
-        textboxes["To"] = MyWindows.newTextBox(frame, "To", 2, 3)
-        textboxes["Taps"] = MyWindows.newTextBox(frame, "Taps", 4, 3)
-        textboxes["Beta"] = MyWindows.newTextBox(frame, "Beta", 2, 4)
-        textboxes["Break"] = MyWindows.newTextBox(frame, "Break", 4, 4)
+        textboxes["From"] = MyWindows.newTextBox(frame, "From", self.validate_commands["From"], row=3)
+        textboxes["To"] = MyWindows.newTextBox(frame, "To", self.validate_commands["To"], column=2, row=3)
+        textboxes["Taps"] = MyWindows.newTextBox(frame, "Taps", self.validate_commands["Taps"], column=4, row=3)
+        textboxes["Beta"] = MyWindows.newTextBox(frame, "Beta", self.validate_commands["Beta"], column=2, row=4)
+        textboxes["Break"] = MyWindows.newTextBox(frame, "Break", self.validate_commands["Break"], column=4, row=4)
         return frame
 
     def disableTextbox(self, textbox):
@@ -100,4 +109,3 @@ class PlotExtractionNotebook(Notebook.Notebook):
     def load(self, file):
         Notebook.Notebook.load(self, file)
         self.disableAllTextboxes()
-
