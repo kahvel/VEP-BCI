@@ -32,12 +32,15 @@ class MainWindow(MyWindows.TkWindow):
         self.monitor_names = [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
         self.current_monitor = Tkinter.StringVar(value=self.monitor_names[0])
 
-        self.target_notebook = None
-        self.extraction_notebook = None
-        self.plot_notebook = None
+        self.main_notebook = ttk.Notebook(self)  # Has to be defined before inner notebooks
+        self.target_notebook = TargetNotebook.TargetNotebook(self.main_notebook)
+        self.extraction_notebook = ExtractionNotebook.ExctractionNotebook(self.main_notebook)
+        self.plot_notebook = PlotNotebook.PlotNotebook(self.main_notebook)
 
-        self.initNotebook()
+        self.initNotebook(self.main_notebook)
+        self.target_notebook.setFrequencyTextbox(self.frequency_textbox)
         self.loadValues(default_file_name)
+        self.target_notebook.changeAllFreqs()
         self.initBottomFrame(self).pack()
 
         self.neutral_signal = None
@@ -68,7 +71,7 @@ class MainWindow(MyWindows.TkWindow):
             self.background_textboxes["Width"].insert(0, 800)
             self.background_textboxes["Height"].insert(0, 600)
             self.background_textboxes["Color"].insert(0, "#000000")
-            MyWindows.validateButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
+            MyWindows.validateColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
             self.test_textboxes["Length"].insert(0, 128*30)
             self.test_textboxes["Min"].insert(0, 128*2)
             self.test_textboxes["Max"].insert(0, 128*4)
@@ -129,25 +132,22 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.initButtonFrame(frame, ["Game"], [self.game])
         return frame
 
-    def initNotebook(self):
-        main_notebook = ttk.Notebook(self)  # Has to be defined before inner notebooks!
-        main_notebook.add(self.windowFrame(self), text="Window")
+    def initNotebook(self, notebook):
+        notebook.add(self.windowFrame(self), text="Window")
         # frequency_textbox gets value from windowFrame and it is needed in TargetNotebook
-        self.target_notebook = TargetNotebook.TargetNotebook(main_notebook, self.frequency_textbox)
-        self.extraction_notebook = ExtractionNotebook.ExctractionNotebook(main_notebook)
-        self.plot_notebook = PlotNotebook.PlotNotebook(main_notebook)
-        main_notebook.add(self.target_notebook, text="Targets")
-        main_notebook.add(self.extraction_notebook, text="Extraction")
-        main_notebook.add(self.plot_notebook, text="Plot")
-        main_notebook.add(self.recordFrame(self), text="Record")
-        main_notebook.add(self.testFrame(self), text="Test")
-        main_notebook.add(self.resultsFrame(self), text="Results")
-        main_notebook.pack()
+        notebook.add(self.target_notebook, text="Targets")
+        notebook.add(self.extraction_notebook, text="Extraction")
+        notebook.add(self.plot_notebook, text="Plot")
+        notebook.add(self.recordFrame(self), text="Record")
+        notebook.add(self.testFrame(self), text="Test")
+        notebook.add(self.resultsFrame(self), text="Results")
+        notebook.pack()
 
     def changeMonitor(self, monitor, textbox):
         self.frequency_textbox.config(state=Tkinter.NORMAL)
         MyWindows.updateTextbox(textbox, getattr(win32api.EnumDisplaySettings(monitor, win32con.ENUM_CURRENT_SETTINGS), "DisplayFrequency"))
         self.frequency_textbox.config(state="readonly")
+        self.target_notebook.changeAllFreqs()
 
     def resetResults(self):
         self.connection.send("Reset results")
@@ -213,7 +213,6 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send({key: int(options[key].get()) for key in options})
 
     def start(self, message):
-        self.saveValues(self.current_radio_button.get())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
         self.connection.send(message)
         self.sendOptions()
@@ -257,7 +256,7 @@ class MainWindow(MyWindows.TkWindow):
     def loadFile(self, file):
         if file is not None:
             MyWindows.updateDict(self.background_textboxes, file.readline().split(), MyWindows.updateTextbox)
-            MyWindows.validateButtonColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
+            MyWindows.validateColor(self.background_color_buttons["Color"], self.background_textboxes["Color"])
             MyWindows.updateDict(self.test_textboxes, file.readline().split(), MyWindows.updateTextbox)
             MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
             MyWindows.updateDict(self.record_textboxes, file.readline().split(), MyWindows.updateTextbox)

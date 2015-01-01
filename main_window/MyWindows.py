@@ -53,25 +53,39 @@ def saveColor(button, textbox):
         color = previous
     textbox.delete(0, Tkinter.END)
     textbox.insert(0, color)
-    validateButtonColor(button, textbox)
+    validateColor(button, textbox)
 
 
-def validateButtonColor(button, textbox):
+def validateColor(button, textbox):
     return validate(textbox, lambda x: button.configure(background=textbox.get()))
 
+
+def validateInt(textbox):
+    return validate(textbox, lambda x: int(x.get()))
+
+
+def validateFloat(textbox):
+    return validate(textbox, lambda x: float(x.get()))
+
+
+def newOptionMenu(frame, options, column=0, row=0, command=None, columnspan=2):
+    var = Tkinter.StringVar()
+    menu = Tkinter.OptionMenu(frame, var, *options, command=command)
+    menu.grid(column=column, row=row, padx=5, pady=5, columnspan=columnspan)
+    return var, menu
 
 def newColorButton(frame, name, column=0, row=0):
     button = Tkinter.Button(frame, text=name)
     button.grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: validateButtonColor(button, textbox))
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: validateColor(button, textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     button.config(command=lambda: saveColor(button, textbox))
     return textbox, button
 
 
-def newTextBox(frame, text, column=0, row=0, width=5, validatefunction=lambda x: int(x.get())):
+def newTextBox(frame, text, column=0, row=0, width=5, validatecommand=validateInt):
     Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validate(textbox, validatefunction))
+    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     return textbox
 
