@@ -72,34 +72,34 @@ def validateFloat(textbox, allow_negative, allow_zero):
     return validate(textbox, lambda x: float(x.get()), allow_negative, allow_zero)
 
 
-def newOptionMenu(frame, options, column=0, row=0, command=None, columnspan=2):
+def newOptionMenu(frame, command, row, column, columnspan, options):
     var = Tkinter.StringVar()
     menu = Tkinter.OptionMenu(frame, var, *options, command=command)
     menu.grid(column=column, row=row, padx=5, pady=5, columnspan=columnspan)
-    return var, menu
+    return menu, var
 
 
-def newColorButton(frame, name, validatecommand, column=0, row=0):
+def newColorButton(frame, name, command, row=0, column=0, columnspan=1):
     button = Tkinter.Button(frame, text=name)
     button.grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: validatecommand(textbox, button))
+    textbox = Tkinter.Entry(frame, width=7, validate="focusout", validatecommand=lambda: command(textbox, button))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     button.config(command=lambda: saveColor(button, textbox))
     return textbox, button
 
 
-def newTextBox(frame, text, validatecommand=lambda x: None, column=0, row=0, width=5):
+def newTextBox(frame, text, command=lambda x: None, row=0, column=0, columnspan=1, width=5):
     Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
+    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: command(textbox))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     return textbox
 
 
-def newCheckbox(frame, text, column=0, row=0, columnspan=2, padx=5, pady=5, command=None):
+def newCheckbox(frame, text, command=None, row=0, column=0, columnspan=2, padx=5, pady=5):
     var = Tkinter.IntVar()
     button = Tkinter.Checkbutton(frame, text=text, variable=var, command=command)
     button.grid(column=column, row=row, padx=padx, pady=pady, columnspan=columnspan)
-    return var, button
+    return button, var
 
 
 def updateTextbox(textbox, value):

@@ -18,31 +18,23 @@ class MainWindow(MyWindows.TkWindow):
         default_file_name = "default.txt"
         self.start_button = None
         self.background_color_buttons = {}
-        self.frequency_textbox = None
 
         self.test_vars = {name: Tkinter.IntVar() for name in ["Random", "Standby"]}
         self.vep_type_var = Tkinter.StringVar()
         self.seed_textbox = None
         self.textboxes = {
-            "Window": {},
             "Record": {},
-            "Test": {}
+            "Test": {},
+            "Frequency": None
+        }
+        self.notebooks = {
+            "Main": ttk.Notebook(self),
+            "Target": TargetNotebook.TargetNotebook(self),
+            "Extraction": ExtractionNotebook.ExctractionNotebook(self),
+            "Plot": PlotNotebook.PlotNotebook(self)
         }
 
-        self.monitor_names = [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
-        self.current_monitor = Tkinter.StringVar(value=self.monitor_names[0])
-
-        self.main_notebook = ttk.Notebook(self)  # Has to be defined before inner notebooks
-        self.target_notebook = TargetNotebook.TargetNotebook(self.main_notebook)
-        self.extraction_notebook = ExtractionNotebook.ExctractionNotebook(self.main_notebook)
-        self.plot_notebook = PlotNotebook.PlotNotebook(self.main_notebook)
-
         self.validate_commands = {
-            "Window": {
-                "Width": lambda textbox: MyWindows.validateInt(textbox, False, False),
-                "Height": lambda textbox: MyWindows.validateInt(textbox, False, False),
-                "Color": lambda textbox, button: MyWindows.validateColor(textbox, button)
-            },
             "Record": {
                 "Length": lambda textbox: MyWindows.validateInt(textbox, False, False)
             },
@@ -52,14 +44,12 @@ class MainWindow(MyWindows.TkWindow):
                 "Length": lambda textbox: MyWindows.validateInt(textbox, False, False)
             }
         }
-        self.initNotebook(self.main_notebook)
-        self.target_notebook.setFrequencyTextbox(self.frequency_textbox)
+        self.initNotebook(self.notebooks["Main"])
         self.loadValues(default_file_name)
-        self.target_notebook.changeAllFreqs()
         self.initBottomFrame(self).pack()
 
         self.neutral_signal = None
-        self.target_signal = [None for _ in range(self.target_notebook.tab_count)]
+        self.target_signal = [None for _ in range(self.notebooks["Target"].tab_count)]
 
         self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
@@ -80,9 +70,9 @@ class MainWindow(MyWindows.TkWindow):
             file = open(default_file_name)
             self.loadFile(file)
         except IOError:
-            self.target_notebook.loadDefaultNotebook()
-            self.extraction_notebook.loadDefaultNotebook()
-            self.plot_notebook.loadDefaultNotebook()
+            self.notebooks["Target"].loadDefaultNotebook()
+            self.notebooks["Extraction"].loadDefaultNotebook()
+            self.notebooks["Plot"].loadDefaultNotebook()
             self.textboxes["Window"]["Width"].insert(0, 800)
             self.textboxes["Window"]["Height"].insert(0, 600)
             self.textboxes["Window"]["Color"].insert(0, "#000000")
@@ -93,17 +83,6 @@ class MainWindow(MyWindows.TkWindow):
             self.textboxes["Record"]["Length"].insert(0, 128*8)
             self.vep_type_var.set("removeListElement")
             #self.vepTypeChange()
-
-    def windowFrame(self, parent):
-        window_frame = Tkinter.Frame(parent)
-        self.textboxes["Window"]["Width"] = MyWindows.newTextBox(window_frame, "Width", self.validate_commands["Window"]["Width"])
-        self.textboxes["Window"]["Height"] = MyWindows.newTextBox(window_frame, "Height", self.validate_commands["Window"]["Height"], column=2)
-        self.textboxes["Window"]["Color"], self.background_color_buttons["Color"] = MyWindows.newColorButton(window_frame, "Color", self.validate_commands["Window"]["Color"], column=4)
-        self.frequency_textbox = MyWindows.newTextBox(window_frame, "Freq", column=2, row=1)
-        Tkinter.OptionMenu(window_frame, self.current_monitor, *self.monitor_names, command=lambda a:
-                           self.changeMonitor(a, self.frequency_textbox)).grid(row=1, column=0, columnspan=2)
-        self.changeMonitor(self.monitor_names[0], self.frequency_textbox)
-        return window_frame
 
     # def targetFrame(self, parent):
     #     frame = Tkinter.Frame(parent)
@@ -132,8 +111,8 @@ class MainWindow(MyWindows.TkWindow):
         self.textboxes["Test"]["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Test"]["Length"])
         self.textboxes["Test"]["Min"] = MyWindows.newTextBox(frame, "Min", self.validate_commands["Test"]["Min"], column=2)
         self.textboxes["Test"]["Max"] = MyWindows.newTextBox(frame, "Max", self.validate_commands["Test"]["Max"], column=4)
-        self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[0]
-        self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[0]
+        self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[1]
+        self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[1]
         MyWindows.newButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction]).grid(columnspan=3)
         return frame
 
@@ -148,21 +127,15 @@ class MainWindow(MyWindows.TkWindow):
         return frame
 
     def initNotebook(self, notebook):
-        notebook.add(self.windowFrame(self), text="Window")
+        notebook.add(WindowFrameTab(notebook), text="Window")
         # frequency_textbox gets value from windowFrame and it is needed in TargetNotebook
-        notebook.add(self.target_notebook, text="Targets")
-        notebook.add(self.extraction_notebook, text="Extraction")
-        notebook.add(self.plot_notebook, text="Plot")
+        notebook.add(self.notebooks["Target"], text="Targets")
+        notebook.add(self.notebooks["Extraction"], text="Extraction")
+        notebook.add(self.notebooks["Plot"], text="Plot")
         notebook.add(self.recordFrame(self), text="Record")
         notebook.add(self.testFrame(self), text="Test")
         notebook.add(self.resultsFrame(self), text="Results")
         notebook.pack()
-
-    def changeMonitor(self, monitor, textbox):
-        self.frequency_textbox.config(state=Tkinter.NORMAL)
-        MyWindows.updateTextbox(textbox, getattr(win32api.EnumDisplaySettings(monitor, win32con.ENUM_CURRENT_SETTINGS), "DisplayFrequency"))
-        self.frequency_textbox.config(state="readonly")
-        self.target_notebook.changeAllFreqs()
 
     def resetResults(self):
         self.connection.send("Reset results")
@@ -259,9 +232,9 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.saveDict(self.textboxes["Test"], file)
             MyWindows.saveDict(self.test_vars, file)
             MyWindows.saveDict(self.textboxes["Record"], file)
-            self.target_notebook.save(file)
-            self.extraction_notebook.save(file)
-            self.plot_notebook.save(file)
+            self.notebooks["Target"].save(file)
+            self.notebooks["Extraction"].save(file)
+            self.notebooks["Plot"].save(file)
             file.close()
 
     def askLoadFile(self):
@@ -270,12 +243,113 @@ class MainWindow(MyWindows.TkWindow):
 
     def loadFile(self, file):
         if file is not None:
-            MyWindows.updateDict(self.textboxes["Window"], file.readline().split(), MyWindows.updateTextbox)
-            MyWindows.validateColor(self.textboxes["Window"]["Color"], self.background_color_buttons["Color"])
+            #MyWindows.updateDict(self.textboxes["Window"], file.readline().split(), MyWindows.updateTextbox)
+            #MyWindows.validateColor(self.textboxes["Window"]["Color"], self.background_color_buttons["Color"])
+            file.readline()
             MyWindows.updateDict(self.textboxes["Test"], file.readline().split(), MyWindows.updateTextbox)
             MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
             MyWindows.updateDict(self.textboxes["Record"], file.readline().split(), MyWindows.updateTextbox)
-            self.target_notebook.load(file)
-            self.extraction_notebook.load(file)
-            self.plot_notebook.load(file)
+            self.notebooks["Target"].load(file)
+            self.notebooks["Extraction"].load(file)
+            self.notebooks["Plot"].load(file)
             file.close()
+
+
+class Tab(object):
+    def __init__(self, widget_options):
+        # Textbox: frame, name, command, column, row, padx, pady, columnspan, default_value
+        self.widget_options = widget_options
+        self.buttons = {
+            "Color": {},
+            "Other": {}
+        }
+        self.menus = {}
+        self.textboxes = {}
+        self.variables = {}
+        self.default_values = {
+            "Textboxes": {},
+            "Variables": {}
+        }
+
+    def save(self):
+        pass
+
+    def load(self):
+        pass
+
+    def loadDefaultValues(self):
+        pass
+
+
+class FrameTab(Tkinter.Frame, Tab):
+    def __init__(self, widget_options, parent):
+        Tab.__init__(self, widget_options)
+        Tkinter.Frame.__init__(self, parent)
+        self.createFrame()
+        self.loadDefaultValues()
+
+    def createFrame(self):
+        for options in self.widget_options:
+            if options[0] == "Textbox":
+                self.textboxes[options[1]] = MyWindows.newTextBox(self, *options[1:-1])
+                self.default_values["Textboxes"][options[1]] = options[6]
+            elif options[0] == "Color":
+                self.textboxes[options[1]], self.buttons["Color"][options[1]] = MyWindows.newColorButton(self, *options[1:-1])
+                self.default_values["Textboxes"][options[1]] = options[6]
+            elif options[0] == "Menu":
+                self.menus[options[1]], self.variables[options[1]] = MyWindows.newOptionMenu(self, *options[2:])
+                self.default_values["Variables"][options[1]] = options[6][0]
+            elif options[0] == "Button":
+                self.buttons["Other"] = Tkinter.Button(self, text=options[1], command=options[2]).grid(row=options[3], column=options[4], columnspan=options[5])
+            else:
+                print("Unknown type: "+options[0])
+
+    def save(self):
+        pass
+
+    def load(self):
+        pass
+
+    def loadDefaultValues(self):
+        for key in self.textboxes:
+            value = self.default_values["Textboxes"][key]
+            if value is not None:
+                MyWindows.updateTextbox(self.textboxes[key], value)
+        for key in self.buttons["Color"]:
+            MyWindows.validateColor(self.textboxes[key], self.buttons["Color"][key])
+        for key in self.menus:
+            MyWindows.updateVar(self.variables[key], self.default_values["Variables"][key])
+
+
+class WindowFrameTab(FrameTab):
+    def __init__(self, parent):
+        options = (
+            ("Textbox", "Width",   lambda textbox: MyWindows.validateInt(textbox, False, False),     0, 0, 1, 800),
+            ("Textbox", "Height",  lambda textbox: MyWindows.validateInt(textbox, False, False),     0, 2, 1, 600),
+            ("Color",   "Color",   lambda textbox, button: MyWindows.validateColor(textbox, button), 0, 4, 1, "#000000"),
+            ("Menu",    "Monitor", self.updateMonitorFreqTextbox,                                    1, 0, 2, self.getMonitorNames()),
+            ("Textbox", "Freq",    lambda textbox: MyWindows.validateInt(textbox, False, False),     1, 2, 1, self.getMonitorFrequency(self.getMonitorNames()[0])),
+            ("Button",  "Refresh", self.refreshMonitorNames,                                         1, 4, 1)
+        )
+        FrameTab.__init__(self, options, parent)
+
+    def getMonitorNames(self):
+        return [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]
+
+    def getMonitorFrequency(self, monitor_name):
+        return getattr(win32api.EnumDisplaySettings(monitor_name, win32con.ENUM_CURRENT_SETTINGS), "DisplayFrequency")
+
+    def refreshMonitorNames(self):
+        self.menus["Monitor"]["menu"].delete(0, Tkinter.END)
+        for monitor_name in self.getMonitorNames():
+            self.menus["Monitor"]["menu"].add_command(label=monitor_name, command=lambda x=monitor_name: (self.variables["Monitor"].set(x), self.updateMonitorFreqTextbox(x)))
+        self.updateMonitorFreqTextbox(self.variables["Monitor"].get())
+
+    def updateMonitorFreqTextbox(self, monitor_name):
+        monitor_names = self.getMonitorNames()
+        if monitor_name not in monitor_names:
+            MyWindows.updateVar(self.variables["Monitor"], monitor_names[0])
+            self.refreshMonitorNames()
+        else:
+            MyWindows.updateTextbox(self.textboxes["Freq"], self.getMonitorFrequency(monitor_name))
+        #self.notebooks["Target"].changeAllFreqs()

@@ -70,17 +70,17 @@ class PlotExtractionNotebook(Notebook.Notebook):
     def checkboxFrame(self, parent, vars, checkboxes):
         frame = Tkinter.Frame(parent)
         for i in range(len(MyWindows.sensor_names)):
-            vars[str(i)], checkboxes[i] = MyWindows.newCheckbox(frame, MyWindows.sensor_names[i], column=i % 7, row=i//7, columnspan=1, padx=0, pady=0)
+            checkboxes[i], vars[str(i)] = MyWindows.newCheckbox(frame, MyWindows.sensor_names[i], column=i % 7, row=i//7, columnspan=1, padx=0, pady=0)
         return frame
 
     def optionsFrame(self, parent, vars, textboxes, checkboxes, buttons):
         frame = Tkinter.Frame(parent)
-        vars["Normalise"], checkboxes["Normalise"] = MyWindows.newCheckbox(frame, "Normalise")
-        vars["Detrend"], checkboxes["Detrend"] = MyWindows.newCheckbox(frame, "Detrend", column=2)
-        vars["Filter"], checkboxes["Filter"] = MyWindows.newCheckbox(frame, "Filter", column=4, command=lambda: self.disableTextboxes(vars["Filter"], textboxes, ["From", "To", "Taps"], 1))
+        checkboxes["Normalise"], vars["Normalise"] = MyWindows.newCheckbox(frame, "Normalise")
+        checkboxes["Detrend"], vars["Detrend"] = MyWindows.newCheckbox(frame, "Detrend", column=2)
+        checkboxes["Filter"], vars["Filter"] = MyWindows.newCheckbox(frame, "Filter", column=4, command=lambda: self.disableTextboxes(vars["Filter"], textboxes, ["From", "To", "Taps"], 1))
         textboxes["Step"] = MyWindows.newTextBox(frame, "Step", self.validate_commands["Step"], row=1)
         textboxes["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Length"], column=2, row=1)
-        vars["Window"], buttons["OptionMenu"] = MyWindows.newOptionMenu(frame, ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett"), row=4, command=lambda x: self.disableTextboxes(vars["Window"], textboxes, ["Beta"], "Kaiser"))
+        buttons["Menu"], vars["Window"] = MyWindows.newOptionMenu(frame, lambda x: self.disableTextboxes(vars["Window"], textboxes, ["Beta"], "Kaiser"), 4, 0, 1, ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett"))
         textboxes["From"] = MyWindows.newTextBox(frame, "From", self.validate_commands["From"], row=3)
         textboxes["To"] = MyWindows.newTextBox(frame, "To", self.validate_commands["To"], column=2, row=3)
         textboxes["Taps"] = MyWindows.newTextBox(frame, "Taps", self.validate_commands["Taps"], column=4, row=3)
