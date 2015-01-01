@@ -14,7 +14,7 @@ class PlotNotebook(PlotExtractionNotebook.PlotExtractionNotebook):
         self.windows.append({"Signal": {}, "Power": {}})
 
     def buttonFrame(self, frame, windows, buttons):
-        MyWindows.initButtonFrame(frame, ["Signal", "Sum signal", "Avg signal", "Sum avg signal", "Power", "Sum power", "Avg power", "Sum avg power"],
+        return MyWindows.newButtonFrame(frame, ["Signal", "Sum signal", "Avg signal", "Sum avg signal", "Power", "Sum power", "Avg power", "Sum avg power"],
                                   [lambda: self.createWindow(SignalPlot, windows["Signal"], "MultipleRegular"),
                                    lambda: self.createWindow(SignalPlot, windows["Signal"], "SingleRegular"),
                                    lambda: self.createWindow(SignalPlot, windows["Signal"], "MultipleAverage"),
@@ -23,17 +23,17 @@ class PlotNotebook(PlotExtractionNotebook.PlotExtractionNotebook):
                                    lambda: self.createWindow(FFTPlot, windows["Power"], "SingleRegular"),
                                    lambda: self.createWindow(FFTPlot, windows["Power"], "MultipleAverage"),
                                    lambda: self.createWindow(FFTPlot, windows["Power"], "SingleAverage")],
-                                  start_row=1, buttons=buttons, buttons_in_row=4)
+                                  buttons=buttons, buttons_in_row=4)
 
-    def frameGenerator(self, parent, remove, disable):
-        frame = PlotExtractionNotebook.PlotExtractionNotebook.frameGenerator(self, parent, remove, disable)
+    def frameGenerator(self, parent):
+        frame = PlotExtractionNotebook.PlotExtractionNotebook.frameGenerator(self, parent)
         windows, buttons = self.windows[-1], self.buttons[-1]
-        MyWindows.initButtonFrame(frame, ["Reset avg signal", "Reset sum avg signal", "Reset avg power", "Reset sum avg power"],
+        MyWindows.newButtonFrame(frame, ["Reset avg signal", "Reset sum avg signal", "Reset avg power", "Reset sum avg power"],
                                   [lambda: self.resetWindow(windows["Signal"], "MultipleAverage"),
                                    lambda: self.resetWindow(windows["Signal"], "SingleAverage"),
                                    lambda: self.resetWindow(windows["Power"], "MultipleAverage"),
                                    lambda: self.resetWindow(windows["Power"], "SingleAverage")],
-                                  start_row=4, buttons=buttons, buttons_in_row=2, columnspan=2)
+                                  buttons=buttons, buttons_in_row=2, columnspan=2).pack()
         return frame
 
     def resetWindow(self, windows, key):

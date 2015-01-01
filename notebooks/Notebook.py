@@ -22,7 +22,7 @@ class Notebook(ttk.Notebook):
     def addInitialTabs(self):
         self.addPlusTab()
         self.addListElement()
-        self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
+        self.fillFrame()
         self.tab(self.tab_count, text="All")
         self.addPlusTab()
 
@@ -30,7 +30,13 @@ class Notebook(ttk.Notebook):
         self.empty_tab = Tkinter.Frame(self)
         self.add(self.empty_tab, text="+")
 
-    def frameGenerator(self, parent, remove, disable):
+    def fillFrame(self):
+        self.frameGenerator(self.empty_tab).pack()
+        disable_var, textboxes, buttons = self.disable_vars[-1], self.textboxes[-1], self.buttons[-1]
+        MyWindows.newButtonFrame(self.empty_tab, ["Disable", "Delete"],
+                                 [lambda: self.disableButtonPressed(disable_var, textboxes, buttons), self.removeTab]).pack()
+
+    def frameGenerator(self, parent):
         raise NotImplementedError("frameGenerator not implemented!")
 
     def loadDefaultValues(self):
@@ -109,7 +115,7 @@ class Notebook(ttk.Notebook):
     def addTab(self):
         self.tab_count += 1
         self.addListElement()
-        self.frameGenerator(self.empty_tab, self.removeTab, self.disableButtonPressed).pack()
+        self.fillFrame()
         self.tab(self.tab_count, text=self.tab_count)
         self.addPlusTab()
         self.loadDefaultValues()

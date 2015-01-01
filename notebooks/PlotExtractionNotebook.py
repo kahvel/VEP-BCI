@@ -37,15 +37,13 @@ class PlotExtractionNotebook(Notebook.Notebook):
     def buttonFrame(self, frame, windows, buttons):
         raise NotImplementedError("buttonFrame not implemented!")
 
-    def frameGenerator(self, parent, remove, disable):
+    def frameGenerator(self, parent):
         frame = Tkinter.Frame(parent)
         windows, vars, textboxes, disable_var, checkboxes, buttons = \
             self.windows[-1], self.vars[-1], self.textboxes[-1], self.disable_vars[-1], self.checkboxes[-1], self.buttons[-1]
-        self.checkboxFrame(frame, vars, checkboxes).grid(columnspan=5)
-        self.buttonFrame(frame, windows, buttons)
-        self.optionsFrame(frame, vars, textboxes, checkboxes, buttons).grid(columnspan=5)
-        Tkinter.Button(frame, text="Disable", command=lambda: disable(disable_var, textboxes, buttons, checkboxes)).grid(column=0, row=6)
-        Tkinter.Button(frame, text="Delete", command=remove).grid(column=1, row=6)
+        self.checkboxFrame(frame, vars, checkboxes).pack()
+        self.buttonFrame(frame, windows, buttons).pack()
+        self.optionsFrame(frame, vars, textboxes, checkboxes, buttons).pack()
         return frame
 
     def createWindow(self, file, windows, object):

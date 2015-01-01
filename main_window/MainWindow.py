@@ -57,7 +57,7 @@ class MainWindow(MyWindows.TkWindow):
         frame = Tkinter.Frame(parent)
         self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start"))
         self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        MyWindows.initButtonFrame(frame, ["Save", "Load", "Exit"], [self.saveFile, self.askLoadFile, self.exit], 1)
+        MyWindows.newButtonFrame(frame, ["Save", "Load", "Exit"], [self.saveFile, self.askLoadFile, self.exit]).grid(row=0, column=1)
         return frame
 
     def loadValues(self, default_file_name):
@@ -108,7 +108,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def recordFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        MyWindows.initButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold])
+        MyWindows.newButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold]).grid()
         self.record_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 3)
         return frame
 
@@ -119,17 +119,17 @@ class MainWindow(MyWindows.TkWindow):
         self.test_textboxes["Max"] = MyWindows.newTextBox(frame, "Max", 4)
         self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[0]
         self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[0]
-        MyWindows.initButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction], start_row=2)
+        MyWindows.newButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction]).grid(columnspan=3)
         return frame
 
     def resultsFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        MyWindows.initButtonFrame(frame, ["Show", "Reset"], [self.showResults, self.resetResults])
+        MyWindows.newButtonFrame(frame, ["Show", "Reset"], [self.showResults, self.resetResults]).grid()
         return frame
 
     def gameFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        MyWindows.initButtonFrame(frame, ["Game"], [self.game])
+        MyWindows.newButtonFrame(frame, ["Game"], [self.game]).pack()
         return frame
 
     def initNotebook(self, notebook):
