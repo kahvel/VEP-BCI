@@ -81,8 +81,8 @@ class MainWindow(MyWindows.TkWindow):
 
     def windowFrame(self, parent):
         window_frame = Tkinter.Frame(parent)
-        self.background_textboxes["Width"] = MyWindows.newTextBox(window_frame, "Width")
-        self.background_textboxes["Height"] = MyWindows.newTextBox(window_frame, "Height", 2)
+        self.background_textboxes["Width"] = MyWindows.newTextBox(window_frame, "Width", allow_zero=False)
+        self.background_textboxes["Height"] = MyWindows.newTextBox(window_frame, "Height", 2, allow_zero=False)
         self.background_textboxes["Color"], self.background_color_buttons["Color"] = MyWindows.newColorButton(window_frame, "Color", 4)
         self.frequency_textbox = MyWindows.newTextBox(window_frame, "Freq", 2, 1)
         Tkinter.OptionMenu(window_frame, self.current_monitor, *self.monitor_names, command=lambda a:
@@ -109,14 +109,14 @@ class MainWindow(MyWindows.TkWindow):
     def recordFrame(self, parent):
         frame = Tkinter.Frame(parent)
         MyWindows.newButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold]).grid()
-        self.record_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 3)
+        self.record_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", 3, allow_zero=False)
         return frame
 
     def testFrame(self, parent):
         frame = Tkinter.Frame(parent)
-        self.test_textboxes["Length"] = MyWindows.newTextBox(frame, "Length")
-        self.test_textboxes["Min"] = MyWindows.newTextBox(frame, "Min", 2)
-        self.test_textboxes["Max"] = MyWindows.newTextBox(frame, "Max", 4)
+        self.test_textboxes["Length"] = MyWindows.newTextBox(frame, "Length", allow_zero=False)
+        self.test_textboxes["Min"] = MyWindows.newTextBox(frame, "Min", 2, allow_zero=False)
+        self.test_textboxes["Max"] = MyWindows.newTextBox(frame, "Max", 4, allow_zero=False)
         self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[0]
         self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[0]
         MyWindows.newButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction]).grid(columnspan=3)

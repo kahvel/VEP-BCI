@@ -32,14 +32,14 @@ class TargetNotebook(Notebook.Notebook):
     def frameGenerator(self, parent):
         frame = Tkinter.Frame(parent)
         textboxes, disable_var, buttons = self.textboxes[-1], self.disable_vars[-1], self.buttons[-1]
-        textboxes["Freq"] = MyWindows.newTextBox(frame, "Freq", validatecommand=self.validateFreq)
-        MyWindows.newButtonFrame(frame, [" -", "+"], [lambda: self.validateFreq(textboxes["Freq"], 1), lambda: self.validateFreq(textboxes["Freq"], -1)], buttons=buttons, padx=0).grid(row=0, column=2)
+        textboxes["Freq"] = MyWindows.newTextBox(frame, "Freq", validatecommand=self.validateFreq, allow_zero=False)
+        MyWindows.newButtonFrame(frame, [" -", "+"], [lambda: self.validateFreq(textboxes["Freq"], d=1), lambda: self.validateFreq(textboxes["Freq"], d=-1)], buttons=buttons, padx=0).grid(row=0, column=2)
         textboxes["Delay"] = MyWindows.newTextBox(frame, "Delay", 4)
-        textboxes["Width"] = MyWindows.newTextBox(frame, "Width", row=1)
-        textboxes["Height"] = MyWindows.newTextBox(frame, "Height", 2, 1)
+        textboxes["Width"] = MyWindows.newTextBox(frame, "Width", row=1, allow_zero=False)
+        textboxes["Height"] = MyWindows.newTextBox(frame, "Height", 2, 1, allow_zero=False)
         textboxes["Color1"], buttons["Color1"] = MyWindows.newColorButton(frame, "Color1", 4, 1)
-        textboxes["x"] = MyWindows.newTextBox(frame, "x", row=2)
-        textboxes["y"] = MyWindows.newTextBox(frame, "y", 2, 2)
+        textboxes["x"] = MyWindows.newTextBox(frame, "x", row=2, allow_negative=True)
+        textboxes["y"] = MyWindows.newTextBox(frame, "y", 2, 2, allow_negative=True)
         textboxes["Color2"], buttons["Color2"] = MyWindows.newColorButton(frame, "Color2", 4, 2)
         return frame
 
@@ -57,8 +57,8 @@ class TargetNotebook(Notebook.Notebook):
         for textbox in self.textboxes:
             self.validateFreq(textbox["Freq"])
 
-    def validateFreq(self, textbox, d=0):
-        return MyWindows.validate(textbox, lambda x: self.changeFreq(x, d))
+    def validateFreq(self, textbox, allow_negative=False, allow_zero=False, d=0):
+        return MyWindows.validate(textbox, lambda x: self.changeFreq(x, d), allow_negative, allow_zero)
 
     def loadValues(self, values):
         Notebook.Notebook.loadValues(self, values)

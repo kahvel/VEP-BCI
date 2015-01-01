@@ -33,8 +33,12 @@ class ToplevelWindow(AbstractWindow, Tkinter.Toplevel):
         AbstractWindow.__init__(self, title, width, height, color)
 
 
-def validate(textbox, function):
+def validate(textbox, function, allow_negative, allow_zero):
     try:
+        if not allow_negative:
+            assert float(textbox.get()) >= 0
+        if not allow_zero:
+            assert float(textbox.get()) != 0
         function(textbox)
         textbox.configure(background="#ffffff")
         return True
@@ -56,16 +60,16 @@ def saveColor(button, textbox):
     validateColor(button, textbox)
 
 
-def validateColor(button, textbox):
-    return validate(textbox, lambda x: button.configure(background=textbox.get()))
+def validateColor(button, textbox):  # if allow_negative is True, no assertion will be performed
+    return validate(textbox, lambda x: button.configure(background=textbox.get()), True, True)
 
 
-def validateInt(textbox):
-    return validate(textbox, lambda x: int(x.get()))
+def validateInt(textbox, allow_negative, allow_zero):
+    return validate(textbox, lambda x: int(x.get()), allow_negative, allow_zero)
 
 
-def validateFloat(textbox):
-    return validate(textbox, lambda x: float(x.get()))
+def validateFloat(textbox, allow_negative, allow_zero):
+    return validate(textbox, lambda x: float(x.get()), allow_negative, allow_zero)
 
 
 def newOptionMenu(frame, options, column=0, row=0, command=None, columnspan=2):
@@ -83,9 +87,9 @@ def newColorButton(frame, name, column=0, row=0):
     return textbox, button
 
 
-def newTextBox(frame, text, column=0, row=0, width=5, validatecommand=validateInt):
+def newTextBox(frame, text, column=0, row=0, width=5, validatecommand=validateInt, allow_negative=False, allow_zero=True):
     Tkinter.Label(frame, text=text+":").grid(column=column, row=row, padx=5, pady=5)
-    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox))
+    textbox = Tkinter.Entry(frame, width=width, validate="focusout", validatecommand=lambda: validatecommand(textbox, allow_negative, allow_zero))
     textbox.grid(column=column+1, row=row, padx=5, pady=5)
     return textbox
 
