@@ -2,6 +2,8 @@ __author__ = 'Anti'
 
 from main_window import MyWindows
 from notebooks import TargetNotebook, ExtractionNotebook, PlotNotebook
+from widgets import Widget
+from variables import Variable
 import Tkinter
 import tkFileDialog
 import multiprocessing
@@ -35,7 +37,7 @@ class MainWindow(MyWindows.TkWindow):
         }
         self.tabs = {
             "Window": WindowFrameTab(self.notebooks["Main"]),
-            "Extraction": NotebookTab(self.notebooks["Main"])
+            "Extraction": SameTabsNotebook(self.notebooks["Main"])
         }
 
         self.validate_commands = {
@@ -255,9 +257,8 @@ class MainWindow(MyWindows.TkWindow):
 
 
 class Tab(object):
-    def __init__(self, widget_options):
-        # Textbox: frame, name, command, column, row, padx, pady, columnspan, default_value
-        self.all_widgets = widget_options
+    def __init__(self):
+        self.frame_widgets = []
 
     def save(self, file):
         pass
@@ -272,13 +273,13 @@ class Tab(object):
         pass
 
 
-class NotebookTab(ttk.Notebook, Tab):
+class SameTabsNotebook(ttk.Notebook, Tab):
     def __init__(self, parent):
         ttk.Notebook.__init__(self, parent)
-        Tab.__init__(self, (()))
+        Tab.__init__(self)
         self.tabs = []
         self.tab_count = 0
-        self.default_tab_count = 6 #TODO
+        self.default_tab_count = 1
         self.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
         self.createFrame()
 
@@ -304,12 +305,12 @@ class NotebookTab(ttk.Notebook, Tab):
             self.addTab()
 
     def loadTab(self, tab_id, file):
-        self.tabs[tab_id].load(file) #TODO
+        self.tabs[tab_id].load(file)
 
     def save(self, file):
         file.write(str(self.tab_count)+"\n")
         for tab_id in range(self.tab_count-1) :
-            self.tabs[tab_id].save(file) #TODO
+            self.tabs[tab_id].save(file)
 
     def load(self, file):
         self.deleteAllTabs()
@@ -325,7 +326,7 @@ class NotebookTab(ttk.Notebook, Tab):
             while self.tab_count > 0:
                 self.deleteTab()
 
-    def deleteTab(self):
+    def deleteTab(self, var=None):
         current = self.index("current")
         if current != 0:
             self.tab_count -= 1
@@ -348,8 +349,8 @@ class NotebookTab(ttk.Notebook, Tab):
 
 
 class FrameTab(Tkinter.Frame, Tab):
-    def __init__(self, widget_options, parent):
-        Tab.__init__(self, widget_options)
+    def __init__(self, parent):
+        Tab.__init__(self)
         Tkinter.Frame.__init__(self, parent)
         self.buttons = {
             "Color": {},
@@ -363,29 +364,37 @@ class FrameTab(Tkinter.Frame, Tab):
             "Textboxes": {},
             "Variables": {}
         }
-        self.createFrame()
+
+    def getAllWidgets(self):
+        return (widgets for widgets in self.frame_widgets)
 
     def createFrame(self):
-        for frame_widgets in self.all_widgets:
+        for frame_widgets in self.getAllWidgets():
             frame = Tkinter.Frame(self)
             for options in frame_widgets:
-                if options[0] == "Textbox":
-                    self.textboxes[options[1]] = MyWindows.newTextBox(frame, *options[1:-1])
-                    self.default_values["Textboxes"][options[1]] = options[6]
-                elif options[0] == "Color":
-                    self.textboxes[options[1]], self.buttons["Color"][options[1]] = MyWindows.newColorButton(frame, *options[1:-1])
-                    self.default_values["Textboxes"][options[1]] = options[6]
-                elif options[0] == "Menu":
-                    self.menus[options[1]], self.variables[options[1]] = MyWindows.newOptionMenu(frame, *options[2:])
-                    self.default_values["Variables"][options[1]] = options[6][0]
-                elif options[0] == "Button":
-                    self.buttons["Other"][options[1]] = Tkinter.Button(frame, text=options[1], command=options[2])
-                    self.buttons["Other"][options[1]].grid(row=options[3], column=options[4], columnspan=options[5])
-                elif options[0] == "Check":
-                    self.checkboxes[options[1]], self.variables[options[1]] = MyWindows.newCheckbox(frame, *options[1:-1])
-                    self.default_values["Variables"][options[1]] = options[6]
+                if isinstance(options, Widget.Widget):
+                    options.create(frame)
+                    continue
+                name = options[1][0]
+                type = options[0]
+                default_value = options[2]
+                args = options[1]
+                if type == "Textbox":
+                    self.textboxes[name] = MyWindows.newTextBox(frame, *args)
+                    self.default_values["Textboxes"][name] = default_value
+                elif type == "Color":
+                    self.textboxes[name], self.buttons["Color"][name] = MyWindows.newColorButton(frame, *args)
+                    self.default_values["Textboxes"][name] = default_value
+                elif type == "Menu":
+                    self.menus[name], self.variables[name] = MyWindows.newOptionMenu(frame, *args[1:])  # First arg is name
+                    self.default_values["Variables"][name] = default_value
+                elif type == "Button":
+                    self.buttons["Other"][name] = MyWindows.newButton(frame, *args)
+                elif type == "Check":
+                    self.checkboxes[name], self.variables[name] = MyWindows.newCheckbox(frame, *args)
+                    self.default_values["Variables"][name] = default_value
                 else:
-                    print("Unknown type: "+options[0])
+                    print("Unknown type: "+type)
             frame.pack()
 
     def save(self, file):
@@ -407,48 +416,50 @@ class FrameTab(Tkinter.Frame, Tab):
             MyWindows.updateVar(self.variables[key], self.default_values["Variables"][key])
 
 
-class ExtractionTab(FrameTab):
+class ExtractionPlotTab(FrameTab):
     def __init__(self, parent, delete_tab):
-        self.disable_filter = lambda:   self.disableTextboxes(self.variables["Filter"], ["From", "To", "Taps"], 1)
-        self.disable_window = lambda x: self.disableTextboxes(self.variables["Window"], ["Beta"],               "Kaiser")
-        widget_options = (
-            (
-                ("Check", "AF3", None, 0, 0, 1, 0, 0, 0),
-                ("Check", "F7",  None, 0, 1, 1, 0, 0, 0),
-                ("Check", "F3",  None, 0, 2, 1, 0, 0, 0),
-                ("Check", "FC5", None, 0, 3, 1, 0, 0, 0),
-                ("Check", "T7",  None, 0, 4, 1, 0, 0, 0),
-                ("Check", "P7",  None, 0, 5, 1, 0, 0, 0),
-                ("Check", "O1",  None, 0, 6, 1, 1, 0, 0),
-                ("Check", "O2",  None, 1, 0, 1, 1, 0, 0),
-                ("Check", "P8",  None, 1, 1, 1, 0, 0, 0),
-                ("Check", "T8",  None, 1, 2, 1, 0, 0, 0),
-                ("Check", "FC6", None, 1, 3, 1, 0, 0, 0),
-                ("Check", "F4",  None, 1, 4, 1, 0, 0, 0),
-                ("Check", "F8",  None, 1, 5, 1, 0, 0, 0),
-                ("Check", "AF4", None, 1, 6, 1, 0, 0, 0)
-            ),
-            (
-                ("Check",   "Normalise", None,           0, 0, 2, 0),
-                ("Check",   "Detrend",   None,           0, 2, 2, 0),
-                ("Check",   "Filter",    self.disable_filter, 0, 4, 2, 0),
-                ("Textbox", "Step",      lambda textbox: MyWindows.validateInt(textbox, False, False), 1, 0, 1, 32),
-                ("Textbox", "Length",    lambda textbox: MyWindows.validateInt(textbox, False, False), 1, 2, 1, 512),
-                ("Menu",    "Window",    self.disable_window, 4, 0, 2, ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett")),
-                ("Textbox", "From",      lambda textbox: MyWindows.validateFloat(textbox, False, True), 3, 0, 1, 0),
-                ("Textbox", "To",        lambda textbox: MyWindows.validateFloat(textbox, False, True), 3, 2, 1, 0),
-                ("Textbox", "Taps",      lambda textbox: MyWindows.validateInt(textbox, False, True),   3, 4, 1, 0),
-                ("Textbox", "Beta",      lambda textbox: MyWindows.validateInt(textbox, False, True),   4, 2, 1, 0),
-                ("Textbox", "Break",     lambda textbox: MyWindows.validateInt(textbox, False, True),   4, 4, 1, 0)
-            ),
-            (
-                ("Button", "Disable", self.disableClicked, 0, 0, 1),
-                ("Button", "Delete",  delete_tab,          0, 1, 1)
-            )
-        )
-        FrameTab.__init__(self, widget_options, parent)
+        FrameTab.__init__(self, parent)
         self.disabled = None
         self.disabled_widgets = []
+        #self.disable_window = lambda x: self.disableTextboxes(self.variables["Window"], ["Beta"],               "Kaiser")
+        self.frame_widgets.append((
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "AF3", None, "disabled", Tkinter.BooleanVar(), 0, 0, 0, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "F7",  None, "disabled", Tkinter.BooleanVar(), 0, 0, 1, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "F3",  None, "disabled", Tkinter.BooleanVar(), 0, 0, 2, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "FC5", None, "disabled", Tkinter.BooleanVar(), 0, 0, 3, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "T7",  None, "disabled", Tkinter.BooleanVar(), 0, 0, 4, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "P7",  None, "disabled", Tkinter.BooleanVar(), 0, 0, 5, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "O1",  None, "disabled", Tkinter.BooleanVar(), 1, 0, 6, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "O2",  None, "disabled", Tkinter.BooleanVar(), 1, 1, 0, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "P8",  None, "disabled", Tkinter.BooleanVar(), 0, 1, 1, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "T8",  None, "disabled", Tkinter.BooleanVar(), 0, 1, 2, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "FC6", None, "disabled", Tkinter.BooleanVar(), 0, 1, 3, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "F4",  None, "disabled", Tkinter.BooleanVar(), 0, 1, 4, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "F8",  None, "disabled", Tkinter.BooleanVar(), 0, 1, 5, 1, 1, 0),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "AF4", None, "disabled", Tkinter.BooleanVar(), 0, 1, 6, 1, 1, 0)
+        ))
+        windows = ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett")
+        w1 = Widget.Textbox("From",      float, False, True, 0, 3, 0, 1)
+        w2 = Widget.Textbox("To",        float, False, True, 0, 3, 2, 1)
+        w3 = Widget.Textbox("Taps",      int, False, True,   0, 3, 4, 1)
+        self.disable_filter = lambda variable: self.disableTextboxes(variable, (w1, w2, w3), 1)
+        self.frame_widgets.append((
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "Normalise", None, "disabled", Tkinter.BooleanVar(), 0, 0, 0, 2),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "Detrend",   None, "disabled", Tkinter.BooleanVar(), 0, 0, 2, 2),
+            Widget.WidgetWithTkinterVariable(Tkinter.Checkbutton, "Filter",    self.disable_filter, "disabled", Tkinter.BooleanVar(), 0, 0, 4, 2),
+            Widget.Textbox("Step",      int, False, False, 32, 1, 0, 1),
+            Widget.Textbox("Length",    int, False, False, 512,1, 2, 1),
+            w1,
+            w2,
+            w3,
+            Widget.OptionMenu("Window", None, Tkinter.StringVar(), windows, windows[0], 4, 0, 2),
+            Widget.Textbox("Beta",      int, False, True,   0, 4, 2, 1),
+            Widget.Textbox("Break",     int, False, True,   0, 4, 4, 1),
+        ))
+        self.d1, self.d2 = Widget.SunkenButton("Disable", self.changeDisability, 0, 0, 1, 5, 5), Widget.Widget(Tkinter.Button, "Delete",  delete_tab, "disabled",  0, 1, 1, 5, 5)
+        self.frame_widgets.append((
+            self.d1, self.d2
+        ))
 
     def save(self, file):
         FrameTab.save(self, file)
@@ -456,58 +467,74 @@ class ExtractionTab(FrameTab):
 
     def load(self, file):
         FrameTab.load(self, file)
-        self.disable_filter()
-        self.disable_window(None)
+        #self.disable_filter()
+        #self.disable_window(None)
         self.disabled = bool(int(file.readline().split(":")[1]))
 
     def loadDefaultValues(self):
+        for frame in self.frame_widgets:
+            for widget in frame:
+                if isinstance(widget, Widget.Widget):
+                    widget.loadDefaultValue()
         FrameTab.loadDefaultValues(self)
-        self.disable_filter()
-        self.disable_window(None)
+        #self.disable_filter()
+        #self.disable_window(None)
         self.disabled = False
 
-    def disableTextbox(self, textbox):
-        textbox.config(state="readonly")
-        self.disabled_widgets.append(textbox)
+    def disableTextbox(self, widget):
+        widget.widget.config(state="readonly")
+        self.disabled_widgets.append(widget)
 
-    def enableTextbox(self, textbox):
-        textbox.config(state=Tkinter.NORMAL)
-        self.disabled_widgets.remove(textbox)
+    def enableTextbox(self, widget):
+        widget.widget.config(state=Tkinter.NORMAL)
+        self.disabled_widgets.remove(widget)
 
-    def disableTextboxes(self, var, keys, value):
-        function = self.enableTextbox if var.get() == value else self.disableTextbox
-        for key in keys:
-            function(self.textboxes[key])
+    def disableTextboxes(self, variable, widgets, value):
+        function = self.enableTextbox if variable.get() == value else self.disableTextbox
+        for widget in widgets:
+            function(widget)
 
-    def disableClicked(self):
-        self.disabled = not self.disabled
-        self.changeDisability()
+    def changeDisability(self, var):
+        for frame in self.frame_widgets:
+            for widget in frame:
+                if widget != self.d1 and widget != self.d2:
+                    if widget not in self.disabled_widgets:
+                        if var.get():
+                            widget.enable()
+                        else:
+                            print(widget)
+                            widget.disable()
 
-    def changeDisability(self):
-        self.disableDict(self.textboxes, "readonly" if self.disabled else Tkinter.NORMAL)
-        #self.disableDict(self.buttons["Other"], "disabled" if self.disabled else Tkinter.NORMAL)
-        self.disableDict(self.checkboxes, "disabled" if self.disabled else Tkinter.NORMAL)
-        self.disableDict(self.menus, "disabled" if self.disabled else Tkinter.NORMAL)
 
-    def disableDict(self, dict, state):
-        for key in dict:
-            if dict[key] not in self.disabled_widgets:
-                dict[key].config(state=state)
+
+class ExtractionTab(ExtractionPlotTab):
+    def __init__(self, parent, delete_tab):
+        ExtractionPlotTab.__init__(self, parent, delete_tab)
+        # self.frame_widgets.insert(1, (
+        #     ("Check", ("PSDA",     None, 0, 0, 1, 0, 0), 0),
+        #     ("Check", ("Sum PSDA", None, 0, 1, 1, 0, 0), 0),
+        #     ("Check", ("CCA",      None, 0, 2, 1, 0, 0), 0),
+        #     ("Check", ("Both",     None, 1, 0, 1, 0, 0), 0),
+        #     ("Check", ("Sum Both", None, 1, 1, 1, 0, 0), 0)
+        # ))
+        self.createFrame()
 
 
 class WindowFrameTab(FrameTab):
     def __init__(self, parent):
-        options = (
+        FrameTab.__init__(self, parent)
+        monitor_names = self.getMonitorNames()
+        self.frame_widgets.append(
             (
-                ("Textbox", "Width",   lambda textbox: MyWindows.validateInt(textbox, False, False),     0, 0, 1, 800),
-                ("Textbox", "Height",  lambda textbox: MyWindows.validateInt(textbox, False, False),     0, 2, 1, 600),
-                ("Color",   "Color",   lambda textbox, button: MyWindows.validateColor(textbox, button), 0, 4, 1, "#000000"),
-                ("Menu",    "Monitor", self.updateMonitorFreqTextbox,                                    1, 0, 2, self.getMonitorNames()),
-                ("Textbox", "Freq",    lambda textbox: MyWindows.validateInt(textbox, False, False),     1, 2, 1, self.getMonitorFrequency(self.getMonitorNames()[0])),
-                ("Button",  "Refresh", self.refreshMonitorNames,                                         1, 4, 1)
-            ),
+                ("Textbox", ("Width",   lambda textbox: MyWindows.validateInt(textbox, False, False),     0, 0, 1), 800),
+                ("Textbox", ("Height",  lambda textbox: MyWindows.validateInt(textbox, False, False),     0, 2, 1), 600),
+                ("Color",   ("Color",   lambda textbox, button: MyWindows.validateColor(textbox, button), 0, 4, 1), "#000000"),
+                ("Menu",    ("Monitor", self.updateMonitorFreqTextbox,    1, 0, 2, monitor_names),    monitor_names[0]),
+                ("Textbox", ("Freq",    lambda textbox: MyWindows.validateInt(textbox, False, False),     1, 2, 1), self.getMonitorFrequency(monitor_names[0])),
+                ("Button",  ("Refresh", self.refreshMonitorNames,                                         1, 4, 1), None)
+            )
         )
-        FrameTab.__init__(self, options, parent)
+        self.createFrame()
 
     def getMonitorNames(self):
         return [win32api.GetMonitorInfo(monitor[0])["Device"] for monitor in win32api.EnumDisplayMonitors()]

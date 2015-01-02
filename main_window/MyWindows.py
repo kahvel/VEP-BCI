@@ -102,6 +102,12 @@ def newCheckbox(frame, text, command=None, row=0, column=0, columnspan=2, padx=5
     return button, var
 
 
+def newButton(frame, text, command, row, column, columnspan, padx=5, pady=5):
+    button = Tkinter.Button(frame, text=text, command=command)
+    button.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady)
+    return button
+
+
 def updateTextbox(textbox, value):
     previous_state = textbox.config("state")[4]
     textbox.config(state=Tkinter.NORMAL)
