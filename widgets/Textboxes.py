@@ -16,6 +16,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
 
     def loadDefaultValue(self):
         self.updateValue(self.default_value)
+        self.validate()
         AbstractWidget.Widget.loadDefaultValue(self)
 
     def updateValue(self, value):
@@ -24,6 +25,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         self.widget.delete(0, Tkinter.END)
         self.widget.insert(0, value)
         self.widget.config(state=previous_state)
+        # Putting self.validate here makes UI very very slow, so we have to put validation after calling updateValue
 
     def createWidget(self, parent):
         self.createOtherWidget(parent)
@@ -34,7 +36,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
             self.validateOther()
             self.widget.configure(background="#ffffff")
             return True
-        except:
+        except Exception, e:
             self.widget.configure(background="#ff0000")
             return False
 
@@ -87,8 +89,8 @@ class PlusMinusFrame(Frame.Frame):
     def __init__(self, row, column, columnspan, padx, pady, increase, decrease):
         Frame.Frame.__init__(self, "PlusMinusTab", row, column, columnspan, padx, pady)
         self.addChildWidgets((
-            Buttons.Button(" -", 0, 0, decrease, padx=0, command_on_load=False),
-            Buttons.Button("+",  0, 1, increase, padx=0, command_on_load=False)
+            Buttons.Button(" -", 0, 0, decrease, padx=0),
+            Buttons.Button("+",  0, 1, increase, padx=0)
         ))
 
 
@@ -112,6 +114,5 @@ class ColorTextbox(Textbox):
             color = tkColorChooser.askcolor()[1]
         if color is None:
             color = previous
-        self.widget.delete(0, Tkinter.END)
-        self.widget.insert(0, color)
+        self.updateValue(color)
         self.validate()

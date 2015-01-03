@@ -35,7 +35,6 @@ class WindowTab(Frame.Frame):
         for monitor_name in self.getMonitorNames():
             widget["menu"].add_command(label=monitor_name, command=lambda x=monitor_name: (var.set(x), self.updateMonitorFreqTextbox(widget, var, textbox)))
         self.updateMonitorFreqTextbox(widget, var, textbox)
-        textbox.validate()
 
     def updateMonitorFreqTextbox(self, widget, var, textbox):
         monitor_names = self.getMonitorNames()
@@ -44,4 +43,5 @@ class WindowTab(Frame.Frame):
             self.refreshMonitorNames(widget, var, textbox)
         else:
             textbox.updateValue(self.getMonitorFrequency(var.get()))
+            textbox.validate()
         self.change_target_freqs()
