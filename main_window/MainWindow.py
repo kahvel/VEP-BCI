@@ -3,7 +3,6 @@ __author__ = 'Anti'
 from main_window import MyWindows
 from notebooks import TargetNotebook, ExtractionNotebook, PlotNotebook
 from widgets import Widget
-from variables import Variable
 import Tkinter
 import tkFileDialog
 import multiprocessing
@@ -431,7 +430,7 @@ class ExtractionPlotTab(FrameTab):
             Widget.LabelTextbox("Break", 4, 4, int, False, True),
         ))
         self.d1 = Widget.SunkenButton("Disable", 0, 0, self.changeDisability)
-        self.d2 = Widget.Button("Delete", 0, 1,  delete_tab)
+        self.d2 = Widget.Button("Delete", 0, 1,  delete_tab, command_on_load=False)
         self.frame_widgets.append((
             self.d1, self.d2
         ))
