@@ -1,38 +1,28 @@
 __author__ = 'Anti'
 
 from widgets import Checkbutton, Buttons, Frame, Textboxes, OptionMenu
+import SameTabsNotebookTab
 
 
-class ExtractionTab(Frame.Frame):
+class ExtractionTab(SameTabsNotebookTab.SameTabsNotebookTab):
     def __init__(self, row, column, columnspan, padx, pady, delete_tab):
-        Frame.Frame.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady)
-        disable_tab = lambda: self.changeState("Disable")
+        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady, delete_tab)
         self.setChildWidgets((
             SensorsFrame(0, 0, 1, 0, 0),
             ExtractionTabButtonFrame(1, 0, 1, 0, 0),
             OptionsFrame(2, 0, 1, 0, 0),
-            DisableDeleteFrame(3, 0, 1, 0, 0, delete_tab, disable_tab)
+            self.getDisableDeleteFrame(3, 0, 1, 0, 0)
         ))
 
 
-class PlotTab(Frame.Frame):
+class PlotTab(SameTabsNotebookTab.SameTabsNotebookTab):
     def __init__(self, row, column, columnspan, padx, pady, delete_tab):
-        Frame.Frame.__init__(self, "PlotTab", row, column, columnspan, padx, pady)
-        disable_tab = lambda: self.changeState("Disable")
+        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady, delete_tab)
         self.setChildWidgets((
             SensorsFrame(0, 0, 1, 0, 0),
             PlotTabButtonFrame(1, 0, 1, 0, 0),
             OptionsFrame(2, 0, 1, 0, 0),
-            DisableDeleteFrame(3, 0, 1, 0, 0, delete_tab, disable_tab)
-        ))
-
-
-class DisableDeleteFrame(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady, delete_tab, disable_tab):
-        Frame.Frame.__init__(self, "DisableDeleteFrame", row, column, columnspan, padx, pady)
-        self.setChildWidgets((
-            Buttons.SunkenButton("Disable", 0, 0, disable_tab, command_on_load=False, always_enabled=True),
-                  Buttons.Button("Delete",  0, 1, delete_tab,  command_on_load=False, always_enabled=True)
+            self.getDisableDeleteFrame(3, 0, 1, 0, 0)
         ))
 
 

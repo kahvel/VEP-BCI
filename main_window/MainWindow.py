@@ -2,13 +2,14 @@ __author__ = 'Anti'
 
 from main_window import MyWindows
 from notebooks import TargetNotebook, ExtractionNotebook, PlotNotebook, SameTabsNotebook
-from frames import ExtractionPlotTabs, WindowTab
+from frames import ExtractionPlotTabs, WindowTab, TargetsTab
 import Tkinter
 import tkFileDialog
 import multiprocessing
 import multiprocessing.reduction
 import Main
 import ttk
+import math
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -32,10 +33,12 @@ class MainWindow(MyWindows.TkWindow):
             "Extraction": ExtractionNotebook.ExctractionNotebook(self),
             "Plot": PlotNotebook.PlotNotebook(self)
         }
+        validate_freq = lambda textbox, d: self.changeFreq(self.tabs["Window"].widgets_dict["Freq"], textbox, d)
         self.tabs = {
             "Window":     WindowTab.WindowTab(0, 0, 1, 0, 0),
-            "Extraction": SameTabsNotebook.SameTabsNotebook("ExtractionNotebook", 0, 0, 1, 0, 0, ExtractionPlotTabs.ExtractionTab),
-            "Plot":       SameTabsNotebook.SameTabsNotebook("PlotNotebook", 0, 0, 1, 0, 0, ExtractionPlotTabs.PlotTab)
+            "Targets":    SameTabsNotebook.TargetNotebook(0, 0, 1, 0, 0, validate_freq),
+            "Extraction": SameTabsNotebook.ExtractionNotebook(0, 0, 1, 0, 0),
+            "Plot":       SameTabsNotebook.PlotNotebook(0, 0, 1, 0, 0)
         }
         for key in self.tabs:
             self.tabs[key].create(self.notebooks["Main"])
@@ -54,8 +57,8 @@ class MainWindow(MyWindows.TkWindow):
         self.loadValues(default_file_name)
         self.initBottomFrame(self).pack()
 
-        self.neutral_signal = None
-        self.target_signal = [None for _ in range(self.notebooks["Target"].tab_count)]
+        # self.neutral_signal = None
+        # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
 
         self.connection, post_office_to_main = multiprocessing.Pipe()
         multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
@@ -63,6 +66,15 @@ class MainWindow(MyWindows.TkWindow):
         self.newProcess(Main.runEmotiv, "Add emotiv", self.lock)
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
+
+    def changeFreq(self, monitor_freq_textbox, target_freq_textbox, d):
+        target_freq = float(target_freq_textbox.widget.get())
+        monitor_freq = int(monitor_freq_textbox.widget.get())
+        if target_freq > 0:
+            freq_on = math.floor(monitor_freq/target_freq/2)
+            freq_off = math.ceil(monitor_freq/target_freq/2)
+            if freq_on+freq_off+d != 0:
+                target_freq_textbox.updateValue(float(monitor_freq)/(freq_off+freq_on+d))
 
     def initBottomFrame(self, parent):
         frame = Tkinter.Frame(parent)
@@ -76,7 +88,7 @@ class MainWindow(MyWindows.TkWindow):
             file = open(default_file_name)
             self.loadFile(file)
         except IOError:
-            self.notebooks["Target"].loadDefaultNotebook()
+            self.tabs["Targets"].loadDefaultValue()
             self.tabs["Extraction"].loadDefaultValue()
             self.tabs["Plot"].loadDefaultValue()
             self.tabs["Window"].loadDefaultValue()
@@ -132,7 +144,7 @@ class MainWindow(MyWindows.TkWindow):
     def initNotebook(self, notebook):
         notebook.add(self.tabs["Window"].widget, text="Window")
         # frequency_textbox gets value from windowFrame and it is needed in TargetNotebook
-        notebook.add(self.notebooks["Target"], text="Targets")
+        notebook.add(self.tabs["Targets"].widget, text="Targets")
         notebook.add(self.tabs["Extraction"].widget, text="Extraction")
         notebook.add(self.tabs["Plot"].widget, text="Plot")
         notebook.add(self.recordFrame(self), text="Record")
@@ -235,7 +247,7 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.saveDict(self.textboxes["Test"], file)
             MyWindows.saveDict(self.test_vars, file)
             MyWindows.saveDict(self.textboxes["Record"], file)
-            self.notebooks["Target"].save(file)
+            self.tabs["Targets"].save(file)
             self.tabs["Extraction"].save(file)
             self.tabs["Plot"].save(file)
             file.close()
@@ -250,7 +262,7 @@ class MainWindow(MyWindows.TkWindow):
             MyWindows.updateDict(self.textboxes["Test"], file.readline().split(), MyWindows.updateTextbox)
             MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
             MyWindows.updateDict(self.textboxes["Record"], file.readline().split(), MyWindows.updateTextbox)
-            self.notebooks["Target"].load(file)
+            self.tabs["Targets"].load(file)
             self.tabs["Extraction"].load(file)
             self.tabs["Plot"].load(file)
             file.close()
