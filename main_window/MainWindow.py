@@ -391,7 +391,6 @@ class FrameTab(Tkinter.Frame, Tab):
 class ExtractionPlotTab(FrameTab):
     def __init__(self, parent, delete_tab):
         FrameTab.__init__(self, parent)
-        self.disabled = None
         self.disabled_widgets = []
         self.frame_widgets.append((
             Widget.Checkbutton("AF3", 0, 0, pady=0, padx=0),
@@ -437,13 +436,9 @@ class ExtractionPlotTab(FrameTab):
 
     def save(self, file):
         FrameTab.save(self, file)
-        file.write("Disable:"+str(int(self.disabled))+"\n")
 
     def load(self, file):
         FrameTab.load(self, file)
-        #self.disable_filter()
-        #self.disable_window(None)
-        self.disabled = bool(int(file.readline().split(":")[1]))
 
     def disableTextbox(self, widget):
         widget.widget.config(state="readonly")

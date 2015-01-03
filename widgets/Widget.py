@@ -5,7 +5,7 @@ import tkColorChooser
 
 
 class Widget(object):
-    def __init__(self, create_widget, name, command, disabled_state, row, column, columnspan=1, padx=5, pady=5, command_on_load=True):
+    def __init__(self, name, command, disabled_state, row, column, columnspan=1, padx=5, pady=5, command_on_load=True):
         self.row = row
         self.column = column
         self.columnspan = columnspan
@@ -13,7 +13,6 @@ class Widget(object):
         self.pady = pady
 
         self.widget = None
-        self.create_widget = create_widget
         self.name = name
         self.command = command
 
@@ -23,7 +22,7 @@ class Widget(object):
         self.command_on_load = command_on_load
 
     def createWidget(self, parent):
-        return self.create_widget(parent, text=self.name, command=self.command)
+        raise NotImplementedError("createWidget not implemented!")
 
     def create(self, parent):
         self.widget = self.createWidget(parent)
@@ -46,8 +45,8 @@ class Widget(object):
 
 
 class WidgetWithVariable(Widget):
-    def __init__(self, create_widget, name, command, disabled_state, variable, default_value, row, column, columnspan=1, padx=5, pady=5, command_on_load=True):
-        Widget.__init__(self, create_widget, name, self.variablesCommand, disabled_state, row, column, columnspan, padx, pady, command_on_load)
+    def __init__(self, name, command, disabled_state, variable, default_value, row, column, columnspan=1, padx=5, pady=5, command_on_load=True):
+        Widget.__init__(self, name, self.variablesCommand, disabled_state, row, column, columnspan, padx, pady, command_on_load)
         self.variable = variable
         self.default_value = default_value
         self.variables_command = command
@@ -61,27 +60,9 @@ class WidgetWithVariable(Widget):
             self.variables_command(self.widget, self.variable)
 
 
-class WidgetWithTkinterVariable(WidgetWithVariable):
-    def __init__(self, create_widget, name, command, disabled_state, variable, default_value, row, column, columnspan=1, padx=5, pady=5, command_on_load=True):
-        WidgetWithVariable.__init__(self, create_widget, name, command, disabled_state, variable, default_value, row, column, columnspan, padx, pady, command_on_load)
-
-    def createWidget(self, parent):
-        return self.create_widget(parent, text=self.name, command=self.command, variable=self.variable)
-
-
-class WidgetWithoutTkinterVariable(WidgetWithVariable):
-    def __init__(self, create_widget, name, command, disabled_state, variable, default_value, row, column, columnspan=1, padx=5, pady=5, command_on_load=True):
-        WidgetWithVariable.__init__(self, create_widget, name, self.variableChangeCommand, disabled_state, variable, default_value, row, column, columnspan, padx, pady, command_on_load)
-        self.without_variable_command = command
-
-    def variableChangeCommand(self, widget, variable):
-        variable.set(not variable.get())
-        self.without_variable_command()
-
-
 class Textbox(Widget):
     def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, width=5, default_value=0, command_on_load=True):
-        Widget.__init__(self, Tkinter.Entry, name, self.validate, "readonly", row, column+1, columnspan, padx, pady, command_on_load)
+        Widget.__init__(self, name, self.validate, "readonly", row, column+1, columnspan, padx, pady, command_on_load)
         self.default_value = default_value
         self.width = width
         self.other_validation = command
@@ -159,17 +140,23 @@ class ColorTextbox(Textbox):
 
 class Button(Widget):
     def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, command_on_load=True):
-        Widget.__init__(self, Tkinter.Button, name, command, "disabled", row, column, columnspan, padx, pady, command_on_load)
+        Widget.__init__(self, name, command, "disabled", row, column, columnspan, padx, pady, command_on_load)
+
+    def createWidget(self, parent):
+        return Tkinter.Button(parent, text=self.name, command=self.command)
 
 
-class Checkbutton(WidgetWithTkinterVariable):
+class Checkbutton(WidgetWithVariable):
     def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, default_value=0, command_on_load=True):
-        WidgetWithTkinterVariable.__init__(self, Tkinter.Checkbutton, name, command, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load)
+        WidgetWithVariable.__init__(self, name, command, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load)
+
+    def createWidget(self, parent):
+        return Tkinter.Checkbutton(parent, text=self.name, command=self.command, variable=self.variable)
 
 
-class OptionMenu(WidgetWithTkinterVariable):
+class OptionMenu(WidgetWithVariable):
     def __init__(self, name, row, column, command=None, values=None, columnspan=2, padx=5, pady=5, default_value=None, command_on_load=True):
-        WidgetWithTkinterVariable.__init__(self, Tkinter.OptionMenu, name, command, "disabled", Tkinter.StringVar(), self.getDefaultValue(default_value, values), row, column, columnspan, padx, pady, command_on_load)
+        WidgetWithVariable.__init__(self, name, command, "disabled", Tkinter.StringVar(), self.getDefaultValue(default_value, values), row, column, columnspan, padx, pady, command_on_load)
         self.values = values
 
     def getDefaultValue(self, value, values):
@@ -179,12 +166,16 @@ class OptionMenu(WidgetWithTkinterVariable):
         return Tkinter.OptionMenu(parent, self.variable, *self.values, command=lambda x: self.command())
 
 
-class SunkenButton(WidgetWithoutTkinterVariable):
+class SunkenButton(WidgetWithVariable):
     def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, default_value=0, command_on_load=True):
-        WidgetWithoutTkinterVariable.__init__(self, Tkinter.Button, name, self.sunkenButtonCommand, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load)
+        WidgetWithVariable.__init__(self, name, self.sunkenButtonCommand, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load)
         self.sunken_button_command = command
 
-    def sunkenButtonCommand(self):
-        self.widget.config(relief=Tkinter.RAISED) if self.variable.get() else self.widget.config(relief=Tkinter.SUNKEN)
+    def sunkenButtonCommand(self, widget, variable):
+        variable.set(not variable.get())
+        widget.config(relief=Tkinter.RAISED) if variable.get() else widget.config(relief=Tkinter.SUNKEN)
         if self.sunken_button_command is not None:
-            self.sunken_button_command(self.widget, self.variable)
+            self.sunken_button_command(widget, variable)
+
+    def createWidget(self, parent):
+        return Tkinter.Button(parent, text=self.name, command=self.command)
