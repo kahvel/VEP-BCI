@@ -8,7 +8,6 @@ import ttk
 class SameTabsNotebook(Frame.Frame):
     def __init__(self, name, row, column, columnspan, padx, pady):
         Frame.Frame.__init__(self, name, row, column, columnspan, padx, pady)
-        self.tabs = []
         self.tab_count = 0
         self.default_tab_count = 1
 
@@ -30,23 +29,23 @@ class SameTabsNotebook(Frame.Frame):
         raise NotImplementedError("newTab not implemented!")
 
     def addPlusTab(self):
-        self.tabs.append(self.newTab())
-        self.tabs[-1].create(self.widget)
-        self.widget.add(self.tabs[-1].widget, text="+")
+        self.widgets_list.append(self.newTab())
+        self.widgets_list[-1].create(self.widget)
+        self.widget.add(self.widgets_list[-1].widget, text="+")
 
     def loadDefaultValue(self):
         self.addInitialTabs()
-        self.tabs[0].loadDefaultValue()  # Default values to All tab
+        self.widgets_list[0].loadDefaultValue()  # Default values to All tab
         for _ in range(self.default_tab_count):
             self.addTab()
 
     def loadTab(self, tab_id, file):
-        self.tabs[tab_id].load(file)
+        self.widgets_list[tab_id].load(file)
 
     def save(self, file):
         file.write(str(self.tab_count)+"\n")
         for tab_id in range(self.tab_count-1) :
-            self.tabs[tab_id].save(file)
+            self.widgets_list[tab_id].save(file)
 
     def load(self, file):
         self.deleteAllTabs()
@@ -79,7 +78,7 @@ class SameTabsNotebook(Frame.Frame):
 
     def addTab(self):
         self.tab_count += 1
-        self.tabs[-1].loadDefaultValue()
+        self.widgets_list[-1].loadDefaultValue()
         self.widget.tab(self.tab_count, text=self.tab_count)
         self.addPlusTab()
 

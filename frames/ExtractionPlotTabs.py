@@ -7,7 +7,7 @@ import SameTabsNotebookTab
 class ExtractionTab(SameTabsNotebookTab.SameTabsNotebookTab):
     def __init__(self, row, column, columnspan, padx, pady, delete_tab):
         SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady, delete_tab)
-        self.setChildWidgets((
+        self.addChildWidgets((
             SensorsFrame(0, 0, 1, 0, 0),
             ExtractionTabButtonFrame(1, 0, 1, 0, 0),
             OptionsFrame(2, 0, 1, 0, 0),
@@ -18,7 +18,7 @@ class ExtractionTab(SameTabsNotebookTab.SameTabsNotebookTab):
 class PlotTab(SameTabsNotebookTab.SameTabsNotebookTab):
     def __init__(self, row, column, columnspan, padx, pady, delete_tab):
         SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady, delete_tab)
-        self.setChildWidgets((
+        self.addChildWidgets((
             SensorsFrame(0, 0, 1, 0, 0),
             PlotTabButtonFrame(1, 0, 1, 0, 0),
             OptionsFrame(2, 0, 1, 0, 0),
@@ -29,7 +29,7 @@ class PlotTab(SameTabsNotebookTab.SameTabsNotebookTab):
 class SensorsFrame(Frame.Frame):
     def __init__(self, row, column, columnspan, padx, pady):
         Frame.Frame.__init__(self, "SensorsFrame", row, column, columnspan, padx, pady)
-        self.setChildWidgets((
+        self.addChildWidgets((
             Checkbutton.Checkbutton("AF3", 0, 0, pady=0, padx=0),
             Checkbutton.Checkbutton("F7",  0, 1, pady=0, padx=0),
             Checkbutton.Checkbutton("F3",  0, 2, pady=0, padx=0),
@@ -63,7 +63,7 @@ class OptionsFrame(Frame.Frame):
                 self.widgets_dict["Taps"]
             ), 1
         )
-        self.setChildWidgets((
+        self.addChildWidgets((
             Checkbutton.Checkbutton("Normalise", 0, 0,                      columnspan=2),
             Checkbutton.Checkbutton("Detrend",   0, 2,                      columnspan=2),
             Checkbutton.Checkbutton("Filter",    0, 4, disable_filter, columnspan=2),
@@ -81,7 +81,7 @@ class OptionsFrame(Frame.Frame):
 class ExtractionTabButtonFrame(Frame.Frame):
     def __init__(self, row, column, columnspan, padx, pady):
         Frame.Frame.__init__(self, "ExtractionTabButtonFrame", row, column, columnspan, padx, pady)
-        self.setChildWidgets((
+        self.addChildWidgets((
             Buttons.SunkenButton("PSDA",     0, 0),
             Buttons.SunkenButton("Sum PSDA", 0, 1),
             Buttons.SunkenButton("CCA",      0, 2),
@@ -93,7 +93,7 @@ class ExtractionTabButtonFrame(Frame.Frame):
 class PlotTabButtonFrame(Frame.Frame):
     def __init__(self, row, column, columnspan, padx, pady):
         Frame.Frame.__init__(self, "PlotTabButtonFrame", row, column, columnspan, padx, pady)
-        self.setChildWidgets((
+        self.addChildWidgets((
             Buttons.SunkenButton("Signal",         0, 0),
             Buttons.SunkenButton("Sum signal",     0, 1),
             Buttons.SunkenButton("Avg signal",     0, 2),

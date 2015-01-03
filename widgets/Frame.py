@@ -7,12 +7,12 @@ import Tkinter
 class Frame(AbstractWidget.Widget):
     def __init__(self, name, row, column, columnspan=1, padx=5, pady=5):
         AbstractWidget.Widget.__init__(self, name, row, column, columnspan, padx, pady)
-        self.widgets_list = None
+        self.widgets_list = []
         self.widgets_dict = {}
 
-    def setChildWidgets(self, child_widgets):
-        self.widgets_list = child_widgets
+    def addChildWidgets(self, child_widgets):
         for widget in child_widgets:
+            self.widgets_list.append(widget)
             self.widgets_dict[widget.name] = widget
 
     def createWidget(self, parent):

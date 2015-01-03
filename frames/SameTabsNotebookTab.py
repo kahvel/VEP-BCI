@@ -16,7 +16,7 @@ class SameTabsNotebookTab(Frame.Frame):
 class DisableDeleteFrame(Frame.Frame):
     def __init__(self, row, column, columnspan, padx, pady, delete_tab, disable_tab):
         Frame.Frame.__init__(self, "DisableDeleteFrame", row, column, columnspan, padx, pady)
-        self.setChildWidgets((
+        self.addChildWidgets((
             Buttons.SunkenButton("Disable", 0, 0, disable_tab, command_on_load=False, always_enabled=True),
             Buttons.Button      ("Delete",  0, 1, delete_tab,  command_on_load=False, always_enabled=True)
         ))

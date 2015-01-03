@@ -1,8 +1,9 @@
 __author__ = 'Anti'
 
 from main_window import MyWindows
-from notebooks import TargetNotebook, ExtractionNotebook, PlotNotebook, SameTabsNotebook
-from frames import ExtractionPlotTabs, WindowTab, TargetsTab
+from notebooks import SameTabsNotebook
+from frames import WindowTab
+from widgets import Frame
 import Tkinter
 import tkFileDialog
 import multiprocessing
@@ -28,14 +29,12 @@ class MainWindow(MyWindows.TkWindow):
             "Frequency": None
         }
         self.notebooks = {
-            "Main": ttk.Notebook(self),
-            "Target": TargetNotebook.TargetNotebook(self),
-            "Extraction": ExtractionNotebook.ExctractionNotebook(self),
-            "Plot": PlotNotebook.PlotNotebook(self)
+            "Main": ttk.Notebook(self)
         }
         validate_freq = lambda textbox, d: self.changeFreq(self.tabs["Window"].widgets_dict["Freq"], textbox, d)
+        monitor_freq_changed = lambda: self.changeAllFreqs(self.tabs["Window"].widgets_dict["Freq"], self.tabs["Targets"])
         self.tabs = {
-            "Window":     WindowTab.WindowTab(0, 0, 1, 0, 0),
+            "Window":     WindowTab.WindowTab(0, 0, 1, 0, 0, monitor_freq_changed),
             "Targets":    SameTabsNotebook.TargetNotebook(0, 0, 1, 0, 0, validate_freq),
             "Extraction": SameTabsNotebook.ExtractionNotebook(0, 0, 1, 0, 0),
             "Plot":       SameTabsNotebook.PlotNotebook(0, 0, 1, 0, 0)
@@ -67,14 +66,21 @@ class MainWindow(MyWindows.TkWindow):
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
-    def changeFreq(self, monitor_freq_textbox, target_freq_textbox, d):
+    def changeAllFreqs(self, monitor_freq_textbox, widget):  # Recursively search for widgets named Freq
+        if widget.name == "Freq":
+            if widget.validate():
+                self.changeFreq(monitor_freq_textbox, widget)
+        elif isinstance(widget, Frame.Frame):
+            for child_widget in widget.widgets_list:
+                self.changeAllFreqs(monitor_freq_textbox, child_widget)
+
+    def changeFreq(self, monitor_freq_textbox, target_freq_textbox, d=0):
         target_freq = float(target_freq_textbox.widget.get())
         monitor_freq = int(monitor_freq_textbox.widget.get())
-        if target_freq > 0:
-            freq_on = math.floor(monitor_freq/target_freq/2)
-            freq_off = math.ceil(monitor_freq/target_freq/2)
-            if freq_on+freq_off+d != 0:
-                target_freq_textbox.updateValue(float(monitor_freq)/(freq_off+freq_on+d))
+        freq_on = math.floor(monitor_freq/target_freq/2)
+        freq_off = math.ceil(monitor_freq/target_freq/2)
+        if freq_off+freq_on+d != 0:
+            target_freq_textbox.updateValue(float(monitor_freq)/(freq_off+freq_on+d))
 
     def initBottomFrame(self, parent):
         frame = Tkinter.Frame(parent)

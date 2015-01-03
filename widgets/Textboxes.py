@@ -3,6 +3,8 @@ __author__ = 'Anti'
 import AbstractWidget
 import Tkinter
 import tkColorChooser
+import Frame
+import Buttons
 
 
 class Textbox(AbstractWidget.WidgetWithCommand):
@@ -59,6 +61,35 @@ class LabelTextbox(Textbox):
     def createOtherWidget(self, parent):
         label = Tkinter.Label(parent, text=self.name)
         label.grid(row=self.row, column=self.column-1, columnspan=self.columnspan, padx=self.padx, pady=self.pady)
+
+
+class PlusMinusTextbox(LabelTextbox):
+    def __init__(self, name, row, column, increase, decrease, command=None, allow_negative=False, allow_zero=False, columnspan=1, padx=5, pady=5, width=5, default_value=0, command_on_load=True):
+        LabelTextbox.__init__(self, name, row, column, command, allow_negative, allow_zero, columnspan, padx, pady, width, default_value, command_on_load)
+        self.increase_arg = increase
+        self.decrease_arg = decrease
+
+    def createOtherWidget(self, parent):
+        LabelTextbox.createOtherWidget(self, parent)
+        frame = PlusMinusFrame(self.row, self.column+1, self.columnspan, self.padx, self.pady, self.increase, self.decrease)
+        frame.create(parent)
+
+    def increase(self):
+        if self.validate():
+            self.increase_arg()
+
+    def decrease(self):
+        if self.validate():
+            self.decrease_arg()
+
+
+class PlusMinusFrame(Frame.Frame):
+    def __init__(self, row, column, columnspan, padx, pady, increase, decrease):
+        Frame.Frame.__init__(self, "PlusMinusTab", row, column, columnspan, padx, pady)
+        self.addChildWidgets((
+            Buttons.Button(" -", 0, 0, decrease, padx=0, command_on_load=False),
+            Buttons.Button("+",  0, 1, increase, padx=0, command_on_load=False)
+        ))
 
 
 class ColorTextbox(Textbox):
