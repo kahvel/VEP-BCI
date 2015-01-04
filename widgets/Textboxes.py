@@ -7,24 +7,25 @@ import tkColorChooser
 
 
 class Textbox(AbstractWidget.WidgetWithCommand):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, width=5, default_value=0, command_on_load=True):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, self.validate, "readonly", row, column+1, columnspan, padx, pady, command_on_load)
-        self.default_value = default_value
-        self.width = width
-        self.arg_command = command
+    def __init__(self, name, row, column, **kwargs):
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column+1, **self.updateKwargs(kwargs, {
+            "disabled_state": "readonly",
+            "default_value": 0
+        }))
+        self.width = kwargs.get("width", 5)
+        self.arg_command = kwargs.get("command", None)
 
-    def loadDefaultValue(self):
-        self.updateValue(self.default_value)
-        self.validate()
-        AbstractWidget.Widget.loadDefaultValue(self)
-
-    def updateValue(self, value):
+    def setValue(self, value):
         previous_state = self.widget.config("state")[4]
         self.widget.config(state=self.enabled_state)
         self.widget.delete(0, Tkinter.END)
+        print(value)
         self.widget.insert(0, value)
         self.widget.config(state=previous_state)
-        # Putting self.validate here makes UI very very slow, so we have to put validation after calling updateValue
+        # Putting self.validate here makes UI very very slow, so we have to put validation after calling setValue
+
+    def getValue(self):
+        return self.widget.get()
 
     def createWidget(self, parent):
         main_widget = Tkinter.Entry(parent, validate="focusout", validatecommand=self.validate, width=self.width)
@@ -37,6 +38,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
             self.widget.configure(background="#ffffff")
             return True
         except Exception, e:
+            print(e)
             self.widget.configure(background="#ff0000")
             return False
 
@@ -46,19 +48,12 @@ class Textbox(AbstractWidget.WidgetWithCommand):
     def createOtherWidget(self, parent):
         pass
 
-    def save(self, file):
-        file.write(self.widget.get()+"\n")
-
-    def load(self, file):
-        self.updateValue(file.readline().strip())
-        self.validate()
-
 
 class LabelTextbox(Textbox):
-    def __init__(self, name, row, column, command=None, allow_negative=False, allow_zero=False, columnspan=1, padx=5, pady=5, width=5, default_value=0, command_on_load=True):
-        Textbox.__init__(self, name, row, column, command, columnspan, padx, pady, width, default_value, command_on_load)
-        self.allow_negative = allow_negative
-        self.allow_zero = allow_zero
+    def __init__(self, name, row, column, **kwargs):
+        Textbox.__init__(self, name, row, column, **kwargs)
+        self.allow_negative = kwargs.get("allow_negative", False)
+        self.allow_zero = kwargs.get("allow_zero", False)
 
     def validateOther(self):
         if not self.allow_negative:
@@ -73,14 +68,14 @@ class LabelTextbox(Textbox):
 
 
 class PlusMinusTextbox(LabelTextbox):
-    def __init__(self, name, row, column, increase, decrease, command=None, allow_negative=False, allow_zero=False, columnspan=1, padx=5, pady=5, width=5, default_value=0, command_on_load=True):
-        LabelTextbox.__init__(self, name, row, column, command, allow_negative, allow_zero, columnspan, padx, pady, width, default_value, command_on_load)
+    def __init__(self, name, row, column, increase, decrease, **kwargs):
+        LabelTextbox.__init__(self, name, row, column, **kwargs)
         self.increase_arg = increase
         self.decrease_arg = decrease
 
     def createOtherWidget(self, parent):
         LabelTextbox.createOtherWidget(self, parent)
-        frame = PlusMinusFrame(self.row, self.column+1, self.columnspan, self.padx, self.pady, self.increase, self.decrease)
+        frame = PlusMinusFrame.PlusMinusFrame(self.row, self.column+1, self.increase, self.decrease)
         frame.create(parent)
 
     def increase(self):
@@ -93,8 +88,13 @@ class PlusMinusTextbox(LabelTextbox):
 
 
 class ColorTextbox(Textbox):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, width=7, default_value="#eeeeee", command_on_load=True):
-        Textbox.__init__(self, name, row, column, lambda color: self.button.configure(background=color), columnspan, padx, pady, width, default_value, command_on_load)
+    def __init__(self, name, row, column, **kwargs):
+        Textbox.__init__(self, name, row, column, **self.updateKwargs(kwargs, {
+            "disabled_state": "readonly",
+            "command": lambda color: self.button.configure(background=color),
+            "default_value": "#eeeeee",
+            "width": 7
+        }))
         self.button = None
 
     def createOtherWidget(self, parent):
@@ -112,5 +112,5 @@ class ColorTextbox(Textbox):
             color = tkColorChooser.askcolor()[1]
         if color is None:
             color = previous
-        self.updateValue(color)
+        self.setValue(color)
         self.validate()

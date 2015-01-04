@@ -5,29 +5,38 @@ import Tkinter
 
 
 class Button(AbstractWidget.WidgetWithCommand):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, command_on_load=True, always_enabled=False):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, command, "disabled", row, column, columnspan, padx, pady, command_on_load, always_enabled)
+    def __init__(self, name, row, column, **kwargs):
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
+        self.command = kwargs.get("command", None)
 
     def createWidget(self, parent):
         return Tkinter.Button(parent, text=self.name, command=self.command)
 
-    def save(self, file):
-        pass
+    def getValue(self):
+        return
 
-    def load(self, file):
-        pass
+    def setValue(self, value):
+        return
 
 
-class SunkenButton(AbstractWidget.WidgetWithVariable):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, default_value=1, command_on_load=True, always_enabled=False):
-        AbstractWidget.WidgetWithVariable.__init__(self, name, self.sunkenButtonCommand, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load, always_enabled)
-        self.sunken_button_command = command
+class SunkenButton(AbstractWidget.WidgetWithCommand):
+    def __init__(self, name, row, column, **kwargs):
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
+        self.command = kwargs.get("command", None)
+        self.variable = Tkinter.IntVar()
+
+    def getValue(self):
+        return self.variable.get()
+
+    def setValue(self, value):
+        self.variable.set(value)
 
     def sunkenButtonCommand(self):
         self.variable.set(not self.variable.get())
-        self.widget.config(relief=Tkinter.SUNKEN) if self.variable.get() else self.widget.config(relief=Tkinter.RAISED)
-        if self.sunken_button_command is not None:
-            self.sunken_button_command()
+        self.widget.config(relief=Tkinter.RAISED) if self.variable.get() else self.widget.config(relief=Tkinter.SUNKEN)
+        if self.command is not None:
+            self.command()
 
     def createWidget(self, parent):
-        return Tkinter.Button(parent, text=self.name, command=self.command)
+        return Tkinter.Button(parent, text=self.name, command=self.sunkenButtonCommand)
+

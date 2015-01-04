@@ -4,9 +4,17 @@ from widgets import AbstractWidget
 import Tkinter
 
 
-class Checkbutton(AbstractWidget.WidgetWithVariable):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, default_value=0, command_on_load=True):
-        AbstractWidget.WidgetWithVariable.__init__(self, name, command, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load)
+class Checkbutton(AbstractWidget.WidgetWithCommand):
+    def __init__(self, name, row, column, **kwargs):
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
+        self.command = kwargs.get("command", None)
+        self.variable = Tkinter.IntVar()
+
+    def getValue(self):
+        return self.variable.get()
+
+    def setValue(self, value):
+        self.variable.set(value)
 
     def createWidget(self, parent):
         return Tkinter.Checkbutton(parent, text=self.name, command=self.command, variable=self.variable)

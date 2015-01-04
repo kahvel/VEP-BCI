@@ -8,21 +8,21 @@ import Tkinter
 
 
 class WindowTab(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady, change_target_freqs):
-        Frame.Frame.__init__(self, "Window", row, column, columnspan, padx, pady)
-        self.change_target_freqs = change_target_freqs
+    def __init__(self, row, column, **kwargs):
+        Frame.Frame.__init__(self, "Window", row, column, **kwargs)
+        self.change_target_freqs = kwargs["change_target_freqs"]
 
         monitor_names = self.getMonitorNames()
         monitor_command = lambda: self.updateMonitorFreqTextbox(self.widgets_dict["Monitor"].widget, self.widgets_dict["Monitor"].variable, self.widgets_dict["Freq"])
         refresh_command = lambda:      self.refreshMonitorNames(self.widgets_dict["Monitor"].widget, self.widgets_dict["Monitor"].variable, self.widgets_dict["Freq"])
 
         self.addChildWidgets((
-            Textboxes.LabelTextbox("Width",   0, 0, int,   False, False, default_value=800),
-            Textboxes.LabelTextbox("Height",  0, 2, int,   False, False, default_value=600),
-            Textboxes.ColorTextbox("Color",   0, 4,                      default_value="#000000"),
-            Textboxes.LabelTextbox("Freq",    1, 0, float, False, False, default_value=self.getMonitorFrequency(monitor_names[0])),
-            Buttons.Button        ("Refresh", 1, 2, refresh_command),
-            OptionMenu.OptionMenu ("Monitor", 1, 3, monitor_command, monitor_names, columnspan=3)
+            Textboxes.LabelTextbox("Width",   0, 0, command=int,   default_value=800),
+            Textboxes.LabelTextbox("Height",  0, 2, command=int,   default_value=600),
+            Textboxes.ColorTextbox("Color",   0, 4,                default_value="#000000"),
+            Textboxes.LabelTextbox("Freq",    1, 0, command=float, default_value=self.getMonitorFrequency(monitor_names[0])),
+            Buttons.Button        ("Refresh", 1, 2, command=refresh_command),
+            OptionMenu.OptionMenu ("Monitor", 1, 3, command=monitor_command, values=monitor_names, columnspan=3)
         ))
 
     def getMonitorNames(self):
@@ -43,6 +43,6 @@ class WindowTab(Frame.Frame):
             var.set(monitor_names[0])
             self.refreshMonitorNames(widget, var, textbox)
         else:
-            textbox.updateValue(self.getMonitorFrequency(var.get()))
+            textbox.setValue(self.getMonitorFrequency(var.get()))
             textbox.validate()
         self.change_target_freqs()

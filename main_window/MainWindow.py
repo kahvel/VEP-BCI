@@ -117,9 +117,10 @@ class MainWindow(MyWindows.TkWindow):
         options = self.textboxes["Test"].update(self.test_vars)
         self.connection.send({key: int(options[key].get()) for key in options})
 
-    def start(self, message):
+    def start(self):
+        print(self.main_frame.validate())
         self.start_button.configure(text="Stop", command=lambda: self.stop())
-        self.connection.send(message)
+        #self.connection.send(message)
         self.sendOptions()
         self.connection.send((self.current_radio_button.get(),
                               self.getBackgroundData(),

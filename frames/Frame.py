@@ -5,8 +5,8 @@ import Tkinter
 
 
 class Frame(AbstractWidget.Widget):
-    def __init__(self, name, row, column, columnspan=1, padx=5, pady=5):
-        AbstractWidget.Widget.__init__(self, name, row, column, columnspan, padx, pady)
+    def __init__(self, name, row, column, **kwargs):
+        AbstractWidget.Widget.__init__(self, name, row, column, **kwargs)
         self.widgets_list = []
         self.widgets_dict = {}
 
@@ -61,3 +61,6 @@ class Frame(AbstractWidget.Widget):
     def load(self, file):
         for widget in self.widgets_list:
             widget.load(file)
+
+    def validate(self):
+        return all(map(lambda x: x.validate(), self.widgets_list))

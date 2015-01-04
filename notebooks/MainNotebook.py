@@ -8,18 +8,18 @@ import SameTabsNotebook
 
 
 class MainNotebook(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady):
-        Frame.Frame.__init__(self, "MainNotebook", row, column, columnspan, padx, pady)
+    def __init__(self, row, column, **kwargs):
+        Frame.Frame.__init__(self, "MainNotebook", row, column, **kwargs)
         validate_freq = lambda textbox, d: self.changeFreq(self.widgets_dict["Window"].widgets_dict["Freq"], textbox, d)
         monitor_freq_changed = lambda: self.changeAllFreqs(self.widgets_dict["Window"].widgets_dict["Freq"], self.widgets_dict["Targets"])
         self.addChildWidgets((
-            WindowTab.WindowTab(0, 0, 1, 0, 0, monitor_freq_changed),
-            SameTabsNotebook.TargetNotebook(0, 0, 1, 0, 0, validate_freq),
-            SameTabsNotebook.ExtractionNotebook(0, 0, 1, 0, 0),
-            SameTabsNotebook.PlotNotebook(0, 0, 1, 0, 0),
-            TestTab.TestTab(0, 0, 1, 0, 0),
-            RecordTab.RecordTab(0, 0, 1, 0, 0),
-            ResultsTab.ResultsTab(0, 0, 1, 0, 0)
+            WindowTab.WindowTab(0, 0, change_target_freqs=monitor_freq_changed),
+            SameTabsNotebook.TargetNotebook(0, 0, validate_freq=validate_freq),
+            SameTabsNotebook.ExtractionNotebook(0, 0),
+            SameTabsNotebook.PlotNotebook(0, 0),
+            TestTab.TestTab(0, 0),
+            RecordTab.RecordTab(0, 0),
+            ResultsTab.ResultsTab(0, 0)
         ))
 
     def createWidget(self, parent):
@@ -46,4 +46,4 @@ class MainNotebook(Frame.Frame):
         freq_on = math.floor(monitor_freq/target_freq/2)
         freq_off = math.ceil(monitor_freq/target_freq/2)
         if freq_off+freq_on+d != 0:
-            target_freq_textbox.updateValue(float(monitor_freq)/(freq_off+freq_on+d))
+            target_freq_textbox.setValue(float(monitor_freq)/(freq_off+freq_on+d))

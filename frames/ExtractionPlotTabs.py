@@ -5,30 +5,30 @@ from frames import Frame, SameTabsNotebookTab
 
 
 class ExtractionTab(SameTabsNotebookTab.SameTabsNotebookTab):
-    def __init__(self, row, column, columnspan, padx, pady, delete_tab):
-        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady, delete_tab)
+    def __init__(self, row, column, **kwargs):
+        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, **kwargs)
         self.addChildWidgets((
-            SensorsFrame(0, 0, 1, 0, 0),
-            ExtractionTabButtonFrame(1, 0, 1, 0, 0),
-            OptionsFrame(2, 0, 1, 0, 0),
-            self.getDisableDeleteFrame(3, 0, 1, 0, 0)
+            SensorsFrame(0, 0),
+            ExtractionTabButtonFrame(1, 0),
+            OptionsFrame(2, 0),
+            self.getDisableDeleteFrame(3, 0, delete_tab=kwargs["delete_tab"])
         ))
 
 
 class PlotTab(SameTabsNotebookTab.SameTabsNotebookTab):
-    def __init__(self, row, column, columnspan, padx, pady, delete_tab):
-        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "PlotTab", row, column, columnspan, padx, pady, delete_tab)
+    def __init__(self, row, column, **kwargs):
+        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "PlotTab", row, column, **kwargs)
         self.addChildWidgets((
-            SensorsFrame(0, 0, 1, 0, 0),
-            PlotTabButtonFrame(1, 0, 1, 0, 0),
-            OptionsFrame(2, 0, 1, 0, 0),
-            self.getDisableDeleteFrame(3, 0, 1, 0, 0)
+            SensorsFrame(0, 0),
+            PlotTabButtonFrame(1, 0),
+            OptionsFrame(2, 0),
+            self.getDisableDeleteFrame(3, 0, delete_tab=kwargs["delete_tab"])
         ))
 
 
 class SensorsFrame(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady):
-        Frame.Frame.__init__(self, "SensorsFrame", row, column, columnspan, padx, pady)
+    def __init__(self, row, column, **kwargs):
+        Frame.Frame.__init__(self, "SensorsFrame", row, column, **kwargs)
         self.addChildWidgets((
             Checkbutton.Checkbutton("AF3", 0, 0, pady=0, padx=0),
             Checkbutton.Checkbutton("F7",  0, 1, pady=0, padx=0),
@@ -48,8 +48,8 @@ class SensorsFrame(Frame.Frame):
 
 
 class OptionsFrame(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady):
-        Frame.Frame.__init__(self, "OptionsFrame", row, column, columnspan, padx, pady)
+    def __init__(self, row, column, **kwargs):
+        Frame.Frame.__init__(self, "OptionsFrame", row, column, **kwargs)
         windows = ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett")
         disable_window = lambda: self.conditionalDisabling(
             self.widgets_dict["Window"].variable, (
@@ -66,21 +66,21 @@ class OptionsFrame(Frame.Frame):
         self.addChildWidgets((
             Checkbutton.Checkbutton("Normalise", 0, 0,                      columnspan=2),
             Checkbutton.Checkbutton("Detrend",   0, 2,                      columnspan=2),
-            Checkbutton.Checkbutton("Filter",    0, 4, disable_filter, columnspan=2),
-             Textboxes.LabelTextbox("Step",      1, 0, int,   False, False, default_value=32),
-             Textboxes.LabelTextbox("Length",    1, 2, int,   False, False, default_value=512),
-             Textboxes.LabelTextbox("From",      3, 0, float, False, True),
-             Textboxes.LabelTextbox("To",        3, 2, float, False, True),
-             Textboxes.LabelTextbox("Taps",      3, 4, int,   False, True),
-             Textboxes.LabelTextbox("Beta",      4, 2, int,   False, True),
-              OptionMenu.OptionMenu("Window",    4, 0, disable_window, windows),
-             Textboxes.LabelTextbox("Break",     4, 4, int,   False, True)
+            Checkbutton.Checkbutton("Filter",    0, 4, command=disable_filter,      columnspan=2),
+             Textboxes.LabelTextbox("Step",      1, 0, command=int,    default_value=32),
+             Textboxes.LabelTextbox("Length",    1, 2, command=int,    default_value=512),
+             Textboxes.LabelTextbox("From",      3, 0, command=float, allow_zero=True),
+             Textboxes.LabelTextbox("To",        3, 2, command=float, allow_zero=True),
+             Textboxes.LabelTextbox("Taps",      3, 4, command=int,   allow_zero=True),
+             Textboxes.LabelTextbox("Beta",      4, 2, command=int,   allow_zero=True),
+              OptionMenu.OptionMenu("Window",    4, 0, command=disable_window, values=windows),
+             Textboxes.LabelTextbox("Break",     4, 4, command=int,   allow_zero=True)
         ))
 
 
 class ExtractionTabButtonFrame(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady):
-        Frame.Frame.__init__(self, "ExtractionTabButtonFrame", row, column, columnspan, padx, pady)
+    def __init__(self, row, column, **kwargs):
+        Frame.Frame.__init__(self, "ExtractionTabButtonFrame", row, column, **kwargs)
         self.addChildWidgets((
             Buttons.SunkenButton("PSDA",     0, 0),
             Buttons.SunkenButton("Sum PSDA", 0, 1),
