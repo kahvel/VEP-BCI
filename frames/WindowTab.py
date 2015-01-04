@@ -19,7 +19,7 @@ class WindowTab(Frame.Frame):
         self.addChildWidgets((
             Textboxes.LabelTextbox("Width",   0, 0, command=int,   default_value=800),
             Textboxes.LabelTextbox("Height",  0, 2, command=int,   default_value=600),
-            Textboxes.ColorTextbox("Color",   0, 4,                default_value="#000000"),
+            Textboxes.ColorTextboxFrame("Color",   0, 4,                default_value="#000000"),
             Textboxes.LabelTextbox("Freq",    1, 0, command=float, default_value=self.getMonitorFrequency(monitor_names[0])),
             Buttons.Button        ("Refresh", 1, 2, command=refresh_command),
             OptionMenu.OptionMenu ("Monitor", 1, 3, command=monitor_command, values=monitor_names, columnspan=3)

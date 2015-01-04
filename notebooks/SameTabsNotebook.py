@@ -1,8 +1,7 @@
 __author__ = 'Anti'
 
-import ttk
-
 from frames import ExtractionPlotTabs, TargetsTab, Frame
+import ttk
 
 
 class SameTabsNotebook(Frame.Frame):

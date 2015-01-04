@@ -47,3 +47,6 @@ class MainNotebook(Frame.Frame):
         freq_off = math.ceil(monitor_freq/target_freq/2)
         if freq_off+freq_on+d != 0:
             target_freq_textbox.setValue(float(monitor_freq)/(freq_off+freq_on+d))
+            return True
+        else:
+            return False
