@@ -22,7 +22,7 @@ class Button(AbstractWidget.WidgetWithCommand):
 class SunkenButton(AbstractWidget.WidgetWithCommand):
     def __init__(self, name, row, column, **kwargs):
         AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
-        self.command = kwargs.get("command", None)
+        self.command = kwargs.get("command", lambda: None)
         self.variable = Tkinter.IntVar()
 
     def getValue(self):
@@ -33,7 +33,7 @@ class SunkenButton(AbstractWidget.WidgetWithCommand):
 
     def sunkenButtonCommand(self):
         self.variable.set(not self.variable.get())
-        self.widget.config(relief=Tkinter.RAISED) if self.variable.get() else self.widget.config(relief=Tkinter.SUNKEN)
+        self.widget.config(relief=Tkinter.SUNKEN) if self.variable.get() else self.widget.config(relief=Tkinter.RAISED)
         if self.command is not None:
             self.command()
 

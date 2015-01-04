@@ -7,7 +7,6 @@ from frames import Frame
 class SameTabsNotebookTab(Frame.Frame):
     def __init__(self, name, row, column, **kwargs):
         Frame.Frame.__init__(self, name, row, column, **kwargs)
-        #self.delete_tab = kwargs["delete_tab"]
 
     def getDisableDeleteFrame(self, row, column, **kwargs):
         disable_tab = lambda: self.changeState("Disable")

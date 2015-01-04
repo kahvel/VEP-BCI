@@ -8,7 +8,7 @@ class TargetsTab(SameTabsNotebookTab.SameTabsNotebookTab):
     def __init__(self, row, column, **kwargs):
         SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "TargetsTab", row, column, **kwargs)
         self.addChildWidgets((
-            TargetFrame(0, 0, command=kwargs["validate_freq"]),
+            TargetFrame(0, 0, validate_freq=kwargs["validate_freq"]),
             self.getDisableDeleteFrame(1, 0, delete_tab=kwargs["delete_tab"])
         ))
 

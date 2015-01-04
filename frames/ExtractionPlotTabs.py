@@ -52,29 +52,29 @@ class OptionsFrame(Frame.Frame):
         Frame.Frame.__init__(self, "OptionsFrame", row, column, **kwargs)
         windows = ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett")
         disable_window = lambda: self.conditionalDisabling(
-            self.widgets_dict["Window"].variable, (
+            self.widgets_dict["Window"], "Kaiser", (
                 self.widgets_dict["Beta"],
-            ), "Kaiser"
+            )
         )
         disable_filter = lambda: self.conditionalDisabling(
-            self.widgets_dict["Filter"].variable, (
+            self.widgets_dict["Filter"], 1, (
                 self.widgets_dict["From"],
                 self.widgets_dict["To"],
                 self.widgets_dict["Taps"]
-            ), 1
+            )
         )
         self.addChildWidgets((
             Checkbutton.Checkbutton("Normalise", 0, 0,                      columnspan=2),
             Checkbutton.Checkbutton("Detrend",   0, 2,                      columnspan=2),
             Checkbutton.Checkbutton("Filter",    0, 4, command=disable_filter,      columnspan=2),
-             Textboxes.LabelTextbox("Step",      1, 0, command=int,    default_value=32),
-             Textboxes.LabelTextbox("Length",    1, 2, command=int,    default_value=512),
-             Textboxes.LabelTextbox("From",      3, 0, command=float, allow_zero=True),
-             Textboxes.LabelTextbox("To",        3, 2, command=float, allow_zero=True),
-             Textboxes.LabelTextbox("Taps",      3, 4, command=int,   allow_zero=True),
-             Textboxes.LabelTextbox("Beta",      4, 2, command=int,   allow_zero=True),
-              OptionMenu.OptionMenu("Window",    4, 0, command=disable_window, values=windows),
-             Textboxes.LabelTextbox("Break",     4, 4, command=int,   allow_zero=True)
+            Textboxes.LabelTextbox ("Step",      1, 0, command=int,    default_value=32),
+            Textboxes.LabelTextbox ("Length",    1, 2, command=int,    default_value=512),
+            Textboxes.LabelTextbox ("From",      3, 0, command=float, allow_zero=True, default_disability=True, default_disablers=["Filter"]),
+            Textboxes.LabelTextbox ("To",        3, 2, command=float, allow_zero=True, default_disability=True, default_disablers=["Filter"]),
+            Textboxes.LabelTextbox ("Taps",      3, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=["Filter"]),
+            Textboxes.LabelTextbox ("Beta",      4, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=["Window"]),
+            OptionMenu.OptionMenu  ("Window",    4, 0, command=disable_window, values=windows),
+            Textboxes.LabelTextbox ("Break",     4, 4, command=int,   allow_zero=True)
         ))
 
 
@@ -91,8 +91,8 @@ class ExtractionTabButtonFrame(Frame.Frame):
 
 
 class PlotTabButtonFrame(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady):
-        Frame.Frame.__init__(self, "PlotTabButtonFrame", row, column, columnspan, padx, pady)
+    def __init__(self, row, column, **kwargs):
+        Frame.Frame.__init__(self, "PlotTabButtonFrame", row, column, **kwargs)
         self.addChildWidgets((
             Buttons.SunkenButton("Signal",         0, 0),
             Buttons.SunkenButton("Sum signal",     0, 1),

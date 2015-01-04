@@ -9,8 +9,7 @@ import tkColorChooser
 class Textbox(AbstractWidget.WidgetWithCommand):
     def __init__(self, name, row, column, **kwargs):
         AbstractWidget.WidgetWithCommand.__init__(self, name, row, column+1, **self.updateKwargs(kwargs, {
-            "disabled_state": "readonly",
-            "default_value": 0
+            "disabled_state": "readonly"
         }))
         self.width = kwargs.get("width", 5)
         self.arg_command = kwargs.get("command", None)
@@ -19,7 +18,6 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         previous_state = self.widget.config("state")[4]
         self.widget.config(state=self.enabled_state)
         self.widget.delete(0, Tkinter.END)
-        print(value)
         self.widget.insert(0, value)
         self.widget.config(state=previous_state)
         # Putting self.validate here makes UI very very slow, so we have to put validation after calling setValue

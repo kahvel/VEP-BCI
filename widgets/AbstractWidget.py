@@ -50,7 +50,9 @@ class Widget(object):
 class WidgetWithCommand(Widget):
     def __init__(self, name, row, column, **kwargs):
         Widget.__init__(self, name, row, column, **kwargs)
-        self.default_value = kwargs.get("default_value", None)
+        self.default_value = kwargs.get("default_value", 0)
+        self.default_disability = kwargs.get("default_disability", False)
+        self.default_disablers = kwargs.get("default_disablers", [])
 
         self.disabled_state = kwargs.get("disabled_state", "disabled")
         self.enabled_state = Tkinter.NORMAL
@@ -60,10 +62,11 @@ class WidgetWithCommand(Widget):
         self.always_enabled = kwargs.get("always_enabled", False)
 
     def loadDefaultValue(self):
-        print(self.name, self.default_value)
         self.setValue(self.default_value)
-        self.disabled = False
-        self.disablers = []
+        self.disabled = self.default_disability
+        self.disablers = self.default_disablers
+        if self.disabled:
+            self.widget.config(state=self.disabled_state)
 
     def changeState(self, changer):
         self.disabled = not self.disabled
@@ -77,7 +80,8 @@ class WidgetWithCommand(Widget):
 
     def disable(self, disabler):
         if not self.always_enabled:
-            self.disablers.append(disabler)
+            if disabler not in self.disablers:
+                self.disablers.append(disabler)
             self.widget.config(state=self.disabled_state)
 
     def getValue(self):

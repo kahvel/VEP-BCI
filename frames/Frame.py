@@ -47,12 +47,12 @@ class Frame(AbstractWidget.Widget):
         for child in self.widgets_list:
             child.loadDefaultValue()
 
-    def conditionalDisabling(self, variable, widgets, value):
+    def conditionalDisabling(self, disabler, value, widgets):
         for widget in widgets:
-            if variable.get() == value:
-                widget.enable(self.name)
+            if disabler.variable.get() == value:
+                widget.enable(disabler.name)
             else:
-                widget.disable(self.name)
+                widget.disable(disabler.name)
 
     def save(self, file):
         for widget in self.widgets_list:
