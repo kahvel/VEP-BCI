@@ -1,15 +1,15 @@
 __author__ = 'Anti'
 
-from widgets import Frame
-from frames import WindowTab, TestTab, RecordTab, ResultsTab
-import SameTabsNotebook
 import ttk
 import math
 
+from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame
+import SameTabsNotebook
+
 
 class MainNotebook(Frame.Frame):
-    def __init__(self, name, row, column, columnspan, padx, pady):
-        Frame.Frame.__init__(self, name, row, column, columnspan, padx, pady)
+    def __init__(self, row, column, columnspan, padx, pady):
+        Frame.Frame.__init__(self, "MainNotebook", row, column, columnspan, padx, pady)
         validate_freq = lambda textbox, d: self.changeFreq(self.widgets_dict["Window"].widgets_dict["Freq"], textbox, d)
         monitor_freq_changed = lambda: self.changeAllFreqs(self.widgets_dict["Window"].widgets_dict["Freq"], self.widgets_dict["Targets"])
         self.addChildWidgets((

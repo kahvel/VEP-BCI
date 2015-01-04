@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
-from widgets import Textboxes, OptionMenu, Buttons, Frame
+from widgets import Textboxes, OptionMenu, Buttons
+from frames import Frame
 import win32api
 import win32con
 import Tkinter

@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
-from widgets import Frame, Textboxes, Buttons
+from widgets import Textboxes, Buttons
+from frames import Frame
 
 
 class RecordTab(Frame.Frame):

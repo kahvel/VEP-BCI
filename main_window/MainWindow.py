@@ -1,7 +1,7 @@
 __author__ = 'Anti'
 
 from main_window import MyWindows
-from notebooks import Notebook
+from frames import MainFrame
 import Tkinter
 import tkFileDialog
 import multiprocessing
@@ -18,10 +18,9 @@ class MainWindow(MyWindows.TkWindow):
         self.vep_type_var = Tkinter.StringVar()
         self.seed_textbox = None
 
-        self.notebook = Notebook.MainNotebook("MainNotebook", 0, 0, 1, 0, 0)
-        self.notebook.create(self)
+        self.main_frame = MainFrame.MainFrame(self.start, self.askSaveFile, self.askLoadFile, self.exit)
+        self.main_frame.create(self)
         self.loadValues(default_file_name)
-        self.initBottomFrame(self).grid()
 
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
@@ -33,18 +32,11 @@ class MainWindow(MyWindows.TkWindow):
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
-    def initBottomFrame(self, parent):
-        frame = Tkinter.Frame(parent)
-        self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start"))
-        self.start_button.grid(row=0, column=0, padx=5, pady=5)
-        MyWindows.newButtonFrame(frame, ["Save", "Load", "Exit"], [self.saveFile, self.askLoadFile, self.exit]).grid(row=0, column=1)
-        return frame
-
     def loadValues(self, default_file_name):
         try:
-            self.notebook.load(open(default_file_name))
+            self.main_frame.load(open(default_file_name))
         except IOError:
-            self.notebook.loadDefaultValue()
+            self.main_frame.loadDefaultValue()
 
     # def targetFrame(self, parent):
     #     frame = Tkinter.Frame(parent)
@@ -150,27 +142,18 @@ class MainWindow(MyWindows.TkWindow):
     def plotWindow(self):
         self.newProcess(Main.runPlotControl, "Add plot")
 
-    def saveFile(self):
-        file = tkFileDialog.asksaveasfile()
+    def askSaveFile(self):
+        self.saveFile(tkFileDialog.asksaveasfile())
+
+    def saveFile(self, file):
         if file is not None:
-            self.tabs["Window"].save(file)
-            self.tabs["Test"].save(file)
-            self.tabs["Record"].save(file)
-            self.tabs["Targets"].save(file)
-            self.tabs["Extraction"].save(file)
-            self.tabs["Plot"].save(file)
+            self.main_frame.save(file)
             file.close()
 
     def askLoadFile(self):
-        file = tkFileDialog.askopenfile()
-        self.loadFile(file)
+        self.loadFile(tkFileDialog.askopenfile())
 
     def loadFile(self, file):
         if file is not None:
-            self.tabs["Window"].load(file)
-            self.tabs["Test"].load(file)
-            self.tabs["Record"].load(file)
-            self.tabs["Targets"].load(file)
-            self.tabs["Extraction"].load(file)
-            self.tabs["Plot"].load(file)
+            self.main_frame.load(file)
             file.close()

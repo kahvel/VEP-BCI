@@ -1,8 +1,8 @@
 __author__ = 'Anti'
 
-from widgets import Frame
-from frames import ExtractionPlotTabs, TargetsTab
 import ttk
+
+from frames import ExtractionPlotTabs, TargetsTab, Frame
 
 
 class SameTabsNotebook(Frame.Frame):
@@ -18,6 +18,7 @@ class SameTabsNotebook(Frame.Frame):
     def createWidget(self, parent):
         self.widget = ttk.Notebook(parent)
         self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
+        self.addInitialTabs()
         return self.widget
 
     def addInitialTabs(self):
@@ -34,26 +35,22 @@ class SameTabsNotebook(Frame.Frame):
         self.widget.add(self.widgets_list[-1].widget, text="+")
 
     def loadDefaultValue(self):
-        self.addInitialTabs()
         self.widgets_list[0].loadDefaultValue()  # Default values to All tab
         for _ in range(self.default_tab_count):
             self.addTab()
 
-    def loadTab(self, tab_id, file):
-        self.widgets_list[tab_id].load(file)
-
     def save(self, file):
         file.write(str(self.tab_count)+"\n")
-        for tab_id in range(self.tab_count-1) :
-            self.widgets_list[tab_id].save(file)
+        for widget in self.widgets_list[:-1]:
+            widget.save(file)
 
     def load(self, file):
         self.deleteAllTabs()
         tab_count = int(file.readline())
-        self.loadTab(self.tab_count, file)  # Values to All tab
+        self.widgets_list[0].load(file)  # Values to All tab
         for i in range(tab_count):
             self.addTab()
-            self.loadTab(self.tab_count, file)
+            self.widgets_list[i+1].load(file)
 
     def deleteAllTabs(self):
         if self.tab_count != 0:

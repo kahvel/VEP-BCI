@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
-from widgets import Frame, Textboxes, Checkbutton
+from widgets import Textboxes, Checkbutton
+from frames import Frame
 
 
 class TestTab(Frame.Frame):

@@ -1,7 +1,7 @@
 __author__ = 'Anti'
 
-from widgets import Textboxes, Frame
-import SameTabsNotebookTab
+from widgets import Textboxes
+from frames import Frame, SameTabsNotebookTab
 
 
 class TargetsTab(SameTabsNotebookTab.SameTabsNotebookTab):

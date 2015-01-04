@@ -54,6 +54,9 @@ class WidgetWithCommand(Widget):
 
     def loadDefaultValue(self):
         Widget.loadDefaultValue(self)
+        self.executeCommand()
+
+    def executeCommand(self):
         if self.command is not None and self.command_on_load:
             self.command()
 
@@ -87,4 +90,5 @@ class WidgetWithVariable(WidgetWithCommand):
         file.write(str(self.variable.get())+"\n")
 
     def load(self, file):
-        self.variable.set(file.readline())
+        self.variable.set(file.readline().strip())
+        self.executeCommand()

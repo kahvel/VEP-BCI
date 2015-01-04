@@ -1,6 +1,6 @@
 __author__ = 'Anti'
 
-import AbstractWidget
+from widgets import AbstractWidget
 import Tkinter
 
 

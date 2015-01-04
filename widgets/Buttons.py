@@ -1,6 +1,6 @@
 __author__ = 'Anti'
 
-import AbstractWidget
+from widgets import AbstractWidget
 import Tkinter
 
 
@@ -11,15 +11,21 @@ class Button(AbstractWidget.WidgetWithCommand):
     def createWidget(self, parent):
         return Tkinter.Button(parent, text=self.name, command=self.command)
 
+    def save(self, file):
+        pass
+
+    def load(self, file):
+        pass
+
 
 class SunkenButton(AbstractWidget.WidgetWithVariable):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, default_value=0, command_on_load=True, always_enabled=False):
+    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, default_value=1, command_on_load=True, always_enabled=False):
         AbstractWidget.WidgetWithVariable.__init__(self, name, self.sunkenButtonCommand, "disabled", Tkinter.BooleanVar(), default_value, row, column, columnspan, padx, pady, command_on_load, always_enabled)
         self.sunken_button_command = command
 
     def sunkenButtonCommand(self):
         self.variable.set(not self.variable.get())
-        self.widget.config(relief=Tkinter.RAISED) if self.variable.get() else self.widget.config(relief=Tkinter.SUNKEN)
+        self.widget.config(relief=Tkinter.SUNKEN) if self.variable.get() else self.widget.config(relief=Tkinter.RAISED)
         if self.sunken_button_command is not None:
             self.sunken_button_command()
 

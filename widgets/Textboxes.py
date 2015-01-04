@@ -1,10 +1,9 @@
 __author__ = 'Anti'
 
-import AbstractWidget
+from frames import PlusMinusFrame
+from widgets import AbstractWidget
 import Tkinter
 import tkColorChooser
-import Frame
-import Buttons
 
 
 class Textbox(AbstractWidget.WidgetWithCommand):
@@ -12,7 +11,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         AbstractWidget.WidgetWithCommand.__init__(self, name, self.validate, "readonly", row, column+1, columnspan, padx, pady, command_on_load)
         self.default_value = default_value
         self.width = width
-        self.other_validation = command
+        self.arg_command = command
 
     def loadDefaultValue(self):
         self.updateValue(self.default_value)
@@ -47,6 +46,13 @@ class Textbox(AbstractWidget.WidgetWithCommand):
     def createOtherWidget(self, parent):
         pass
 
+    def save(self, file):
+        file.write(self.widget.get()+"\n")
+
+    def load(self, file):
+        self.updateValue(file.readline().strip())
+        self.validate()
+
 
 class LabelTextbox(Textbox):
     def __init__(self, name, row, column, command=None, allow_negative=False, allow_zero=False, columnspan=1, padx=5, pady=5, width=5, default_value=0, command_on_load=True):
@@ -59,7 +65,7 @@ class LabelTextbox(Textbox):
             assert float(self.widget.get()) >= 0
         if not self.allow_zero:
             assert float(self.widget.get()) != 0
-        self.other_validation(self.widget.get())
+        self.arg_command(self.widget.get())
 
     def createOtherWidget(self, parent):
         label = Tkinter.Label(parent, text=self.name)
@@ -86,18 +92,9 @@ class PlusMinusTextbox(LabelTextbox):
             self.decrease_arg()
 
 
-class PlusMinusFrame(Frame.Frame):
-    def __init__(self, row, column, columnspan, padx, pady, increase, decrease):
-        Frame.Frame.__init__(self, "PlusMinusTab", row, column, columnspan, padx, pady)
-        self.addChildWidgets((
-            Buttons.Button(" -", 0, 0, decrease, padx=0),
-            Buttons.Button("+",  0, 1, increase, padx=0)
-        ))
-
-
 class ColorTextbox(Textbox):
     def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, width=7, default_value="#eeeeee", command_on_load=True):
-        Textbox.__init__(self, name, row, column, command, columnspan, padx, pady, width, default_value, command_on_load)
+        Textbox.__init__(self, name, row, column, lambda color: self.button.configure(background=color), columnspan, padx, pady, width, default_value, command_on_load)
         self.button = None
 
     def createOtherWidget(self, parent):
@@ -105,7 +102,7 @@ class ColorTextbox(Textbox):
         self.button.grid(row=self.row, column=self.column-1, columnspan=self.columnspan, padx=self.padx, pady=self.pady)
 
     def validateOther(self):
-        self.button.configure(background=self.widget.get())
+        self.arg_command(self.widget.get())
 
     def chooseColor(self):
         previous = self.widget.get()

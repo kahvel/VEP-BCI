@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
-from widgets import Frame, Buttons
+from widgets import Buttons
+from frames import Frame
 
 
 class ResultsTab(Frame.Frame):

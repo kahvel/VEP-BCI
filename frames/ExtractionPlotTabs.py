@@ -1,7 +1,7 @@
 __author__ = 'Anti'
 
-from widgets import Checkbutton, Buttons, Frame, Textboxes, OptionMenu
-import SameTabsNotebookTab
+from widgets import Checkbutton, Buttons, Textboxes, OptionMenu
+from frames import Frame, SameTabsNotebookTab
 
 
 class ExtractionTab(SameTabsNotebookTab.SameTabsNotebookTab):
