@@ -28,9 +28,6 @@ class Widget(object):
     def createWidget(self, parent):
         raise NotImplementedError("createWidget not implemented!")
 
-    def changeState(self, changer):
-        raise NotImplementedError("changeState not implemented!")
-
     def enable(self, enabler):
         raise NotImplementedError("enable not implemented!")
 
@@ -65,23 +62,23 @@ class WidgetWithCommand(Widget):
         self.setValue(self.default_value)
         self.disabled = self.default_disability
         self.disablers = self.default_disablers
-        if self.disabled:
-            self.widget.config(state=self.disabled_state)
+        self.updateState()
 
-    def changeState(self, changer):
-        self.disabled = not self.disabled
-        self.disable(changer) if self.disabled else self.enable(changer)
+    def updateState(self):
+        self.widget.config(state=(self.disabled_state if self.disabled else self.enabled_state))
 
     def enable(self, enabler):
         if enabler in self.disablers:
             self.disablers.remove(enabler)
         if len(self.disablers) == 0:
+            self.disabled = False
             self.widget.config(state=self.enabled_state)
 
     def disable(self, disabler):
         if not self.always_enabled:
             if disabler not in self.disablers:
                 self.disablers.append(disabler)
+            self.disabled = True
             self.widget.config(state=self.disabled_state)
 
     def getValue(self):
@@ -96,8 +93,9 @@ class WidgetWithCommand(Widget):
     def load(self, file):
         name, value, disabled, disablers = file.readline().strip().split(";")
         self.setValue(value)
-        self.disabled = disabled
-        self.disablers = disablers.split(", ")
+        self.disabled = int(disabled)
+        self.disablers = disablers.split(", ") if disablers != "" else []
+        self.updateState()
 
 
 # class WidgetWithVariable(WidgetWithCommand):

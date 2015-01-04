@@ -39,10 +39,6 @@ class Frame(AbstractWidget.Widget):
         for child in self.widgets_list:
             child.disable(disabler)
 
-    def changeState(self, changer):
-        for child in self.widgets_list:
-            child.changeState(changer)
-
     def loadDefaultValue(self):
         for child in self.widgets_list:
             child.loadDefaultValue()
