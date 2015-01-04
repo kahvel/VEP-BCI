@@ -1,16 +1,12 @@
 __author__ = 'Anti'
 
 from main_window import MyWindows
-from notebooks import SameTabsNotebook
-from frames import WindowTab
-from widgets import Frame
+from notebooks import Notebook
 import Tkinter
 import tkFileDialog
 import multiprocessing
 import multiprocessing.reduction
 import Main
-import ttk
-import math
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -18,43 +14,14 @@ class MainWindow(MyWindows.TkWindow):
         MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
         default_file_name = "default.txt"
         self.start_button = None
-        self.background_color_buttons = {}
 
-        self.test_vars = {name: Tkinter.IntVar() for name in ["Random", "Standby"]}
         self.vep_type_var = Tkinter.StringVar()
         self.seed_textbox = None
-        self.textboxes = {
-            "Record": {},
-            "Test": {},
-            "Frequency": None
-        }
-        self.notebooks = {
-            "Main": ttk.Notebook(self)
-        }
-        validate_freq = lambda textbox, d: self.changeFreq(self.tabs["Window"].widgets_dict["Freq"], textbox, d)
-        monitor_freq_changed = lambda: self.changeAllFreqs(self.tabs["Window"].widgets_dict["Freq"], self.tabs["Targets"])
-        self.tabs = {
-            "Window":     WindowTab.WindowTab(0, 0, 1, 0, 0, monitor_freq_changed),
-            "Targets":    SameTabsNotebook.TargetNotebook(0, 0, 1, 0, 0, validate_freq),
-            "Extraction": SameTabsNotebook.ExtractionNotebook(0, 0, 1, 0, 0),
-            "Plot":       SameTabsNotebook.PlotNotebook(0, 0, 1, 0, 0)
-        }
-        for key in self.tabs:
-            self.tabs[key].create(self.notebooks["Main"])
 
-        self.validate_commands = {
-            "Record": {
-                "Length": lambda textbox: MyWindows.validateInt(textbox, False, False)
-            },
-            "Test": {
-                "Min": lambda textbox: MyWindows.validateInt(textbox, False, False),
-                "Max": lambda textbox: MyWindows.validateInt(textbox, False, False),
-                "Length": lambda textbox: MyWindows.validateInt(textbox, False, False)
-            }
-        }
-        self.initNotebook(self.notebooks["Main"])
+        self.notebook = Notebook.MainNotebook("MainNotebook", 0, 0, 1, 0, 0)
+        self.notebook.create(self)
         self.loadValues(default_file_name)
-        self.initBottomFrame(self).pack()
+        self.initBottomFrame(self).grid()
 
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
@@ -66,22 +33,6 @@ class MainWindow(MyWindows.TkWindow):
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
-    def changeAllFreqs(self, monitor_freq_textbox, widget):  # Recursively search for widgets named Freq
-        if widget.name == "Freq":
-            if widget.validate():
-                self.changeFreq(monitor_freq_textbox, widget)
-        elif isinstance(widget, Frame.Frame):
-            for child_widget in widget.widgets_list:
-                self.changeAllFreqs(monitor_freq_textbox, child_widget)
-
-    def changeFreq(self, monitor_freq_textbox, target_freq_textbox, d=0):
-        target_freq = float(target_freq_textbox.widget.get())
-        monitor_freq = int(monitor_freq_textbox.widget.get())
-        freq_on = math.floor(monitor_freq/target_freq/2)
-        freq_off = math.ceil(monitor_freq/target_freq/2)
-        if freq_off+freq_on+d != 0:
-            target_freq_textbox.updateValue(float(monitor_freq)/(freq_off+freq_on+d))
-
     def initBottomFrame(self, parent):
         frame = Tkinter.Frame(parent)
         self.start_button = Tkinter.Button(frame, text="Start", command=lambda: self.start("Start"))
@@ -91,19 +42,9 @@ class MainWindow(MyWindows.TkWindow):
 
     def loadValues(self, default_file_name):
         try:
-            file = open(default_file_name)
-            self.loadFile(file)
+            self.notebook.load(open(default_file_name))
         except IOError:
-            self.tabs["Targets"].loadDefaultValue()
-            self.tabs["Extraction"].loadDefaultValue()
-            self.tabs["Plot"].loadDefaultValue()
-            self.tabs["Window"].loadDefaultValue()
-            self.textboxes["Test"]["Length"].insert(0, 128*30)
-            self.textboxes["Test"]["Min"].insert(0, 128*2)
-            self.textboxes["Test"]["Max"].insert(0, 128*4)
-            self.textboxes["Record"]["Length"].insert(0, 128*8)
-            self.vep_type_var.set("removeListElement")
-            #self.vepTypeChange()
+            self.notebook.loadDefaultValue()
 
     # def targetFrame(self, parent):
     #     frame = Tkinter.Frame(parent)
@@ -120,43 +61,6 @@ class MainWindow(MyWindows.TkWindow):
             self.seed_textbox.config(state="readonly")
         else:
             self.seed_textbox.config(state=Tkinter.NORMAL)
-
-    def recordFrame(self, parent):
-        frame = Tkinter.Frame(parent)
-        MyWindows.newButtonFrame(frame, ["Neutral", "Target", "Threshold"], [self.recordNeutral, self.recordTarget, self.calculateThreshold]).grid()
-        self.textboxes["Record"]["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Record"]["Length"], column=3)
-        return frame
-
-    def testFrame(self, parent):
-        frame = Tkinter.Frame(parent)
-        self.textboxes["Test"]["Length"] = MyWindows.newTextBox(frame, "Length", self.validate_commands["Test"]["Length"])
-        self.textboxes["Test"]["Min"] = MyWindows.newTextBox(frame, "Min", self.validate_commands["Test"]["Min"], column=2)
-        self.textboxes["Test"]["Max"] = MyWindows.newTextBox(frame, "Max", self.validate_commands["Test"]["Max"], column=4)
-        self.test_vars["Random"] = MyWindows.newCheckbox(frame, "Random", row=1)[1]
-        self.test_vars["Standby"] = MyWindows.newCheckbox(frame, "Standby", row=1, column=2)[1]
-        MyWindows.newButtonFrame(frame, ["Targets", "Plots", "Extraction"], [self.targetsWindow, self.plotWindow, self.extraction]).grid(columnspan=3)
-        return frame
-
-    def resultsFrame(self, parent):
-        frame = Tkinter.Frame(parent)
-        MyWindows.newButtonFrame(frame, ["Show", "Reset"], [self.showResults, self.resetResults]).grid()
-        return frame
-
-    def gameFrame(self, parent):
-        frame = Tkinter.Frame(parent)
-        MyWindows.newButtonFrame(frame, ["Game"], [self.game]).pack()
-        return frame
-
-    def initNotebook(self, notebook):
-        notebook.add(self.tabs["Window"].widget, text="Window")
-        # frequency_textbox gets value from windowFrame and it is needed in TargetNotebook
-        notebook.add(self.tabs["Targets"].widget, text="Targets")
-        notebook.add(self.tabs["Extraction"].widget, text="Extraction")
-        notebook.add(self.tabs["Plot"].widget, text="Plot")
-        notebook.add(self.recordFrame(self), text="Record")
-        notebook.add(self.testFrame(self), text="Test")
-        notebook.add(self.resultsFrame(self), text="Results")
-        notebook.pack()
 
     def resetResults(self):
         self.connection.send("Reset results")
@@ -250,9 +154,8 @@ class MainWindow(MyWindows.TkWindow):
         file = tkFileDialog.asksaveasfile()
         if file is not None:
             self.tabs["Window"].save(file)
-            MyWindows.saveDict(self.textboxes["Test"], file)
-            MyWindows.saveDict(self.test_vars, file)
-            MyWindows.saveDict(self.textboxes["Record"], file)
+            self.tabs["Test"].save(file)
+            self.tabs["Record"].save(file)
             self.tabs["Targets"].save(file)
             self.tabs["Extraction"].save(file)
             self.tabs["Plot"].save(file)
@@ -265,9 +168,8 @@ class MainWindow(MyWindows.TkWindow):
     def loadFile(self, file):
         if file is not None:
             self.tabs["Window"].load(file)
-            MyWindows.updateDict(self.textboxes["Test"], file.readline().split(), MyWindows.updateTextbox)
-            MyWindows.updateDict(self.test_vars, file.readline().split(), MyWindows.updateVar)
-            MyWindows.updateDict(self.textboxes["Record"], file.readline().split(), MyWindows.updateTextbox)
+            self.tabs["Test"].load(file)
+            self.tabs["Record"].load(file)
             self.tabs["Targets"].load(file)
             self.tabs["Extraction"].load(file)
             self.tabs["Plot"].load(file)

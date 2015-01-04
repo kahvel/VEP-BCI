@@ -33,6 +33,12 @@ class Widget(object):
     def disable(self, disabler):
         raise NotImplementedError("disable not implemented!")
 
+    def save(self, file):
+        raise NotImplementedError("save not implemented!")
+
+    def load(self, file):
+        raise NotImplementedError("load not implemented!")
+
 
 class WidgetWithCommand(Widget):
     def __init__(self, name, command, disabled_state, row, column, columnspan=1, padx=5, pady=5, command_on_load=True, always_enabled=False):
@@ -76,3 +82,9 @@ class WidgetWithVariable(WidgetWithCommand):
     def loadDefaultValue(self):
         self.variable.set(self.default_value)
         WidgetWithCommand.loadDefaultValue(self)
+
+    def save(self, file):
+        file.write(str(self.variable.get())+"\n")
+
+    def load(self, file):
+        self.variable.set(file.readline())

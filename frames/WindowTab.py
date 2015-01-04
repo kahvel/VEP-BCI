@@ -8,7 +8,7 @@ import Tkinter
 
 class WindowTab(Frame.Frame):
     def __init__(self, row, column, columnspan, padx, pady, change_target_freqs):
-        Frame.Frame.__init__(self, "WindowTab", row, column, columnspan, padx, pady)
+        Frame.Frame.__init__(self, "Window", row, column, columnspan, padx, pady)
         self.change_target_freqs = change_target_freqs
 
         monitor_names = self.getMonitorNames()
@@ -19,9 +19,9 @@ class WindowTab(Frame.Frame):
             Textboxes.LabelTextbox("Width",   0, 0, int,   False, False, default_value=800),
             Textboxes.LabelTextbox("Height",  0, 2, int,   False, False, default_value=600),
             Textboxes.ColorTextbox("Color",   0, 4,                      default_value="#000000"),
-            OptionMenu.OptionMenu ("Monitor", 1, 0, monitor_command, monitor_names),
-            Textboxes.LabelTextbox("Freq",    1, 2, float, False, False, default_value=self.getMonitorFrequency(monitor_names[0])),
-            Buttons.Button        ("Refresh", 1, 4, refresh_command)
+            Textboxes.LabelTextbox("Freq",    1, 0, float, False, False, default_value=self.getMonitorFrequency(monitor_names[0])),
+            Buttons.Button        ("Refresh", 1, 2, refresh_command),
+            OptionMenu.OptionMenu ("Monitor", 1, 3, monitor_command, monitor_names, columnspan=3)
         ))
 
     def getMonitorNames(self):

@@ -17,7 +17,7 @@ class ExtractionTab(SameTabsNotebookTab.SameTabsNotebookTab):
 
 class PlotTab(SameTabsNotebookTab.SameTabsNotebookTab):
     def __init__(self, row, column, columnspan, padx, pady, delete_tab):
-        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "ExtractionTab", row, column, columnspan, padx, pady, delete_tab)
+        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, "PlotTab", row, column, columnspan, padx, pady, delete_tab)
         self.addChildWidgets((
             SensorsFrame(0, 0, 1, 0, 0),
             PlotTabButtonFrame(1, 0, 1, 0, 0),

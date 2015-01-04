@@ -28,8 +28,9 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         # Putting self.validate here makes UI very very slow, so we have to put validation after calling updateValue
 
     def createWidget(self, parent):
+        main_widget = Tkinter.Entry(parent, validate="focusout", validatecommand=self.validate, width=self.width)
         self.createOtherWidget(parent)
-        return Tkinter.Entry(parent, validate="focusout", validatecommand=self.validate, width=self.width)
+        return main_widget
 
     def validate(self):
         try:
@@ -95,7 +96,7 @@ class PlusMinusFrame(Frame.Frame):
 
 
 class ColorTextbox(Textbox):
-    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, width=5, default_value="#eeeeee", command_on_load=True):
+    def __init__(self, name, row, column, command=None, columnspan=1, padx=5, pady=5, width=7, default_value="#eeeeee", command_on_load=True):
         Textbox.__init__(self, name, row, column, command, columnspan, padx, pady, width, default_value, command_on_load)
         self.button = None
 

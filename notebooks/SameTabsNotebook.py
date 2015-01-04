@@ -22,7 +22,7 @@ class SameTabsNotebook(Frame.Frame):
 
     def addInitialTabs(self):
         self.addPlusTab()
-        self.widget.tab(self.tab_count, text="All")
+        self.widget.tab(0, text="All")
         self.addPlusTab()
 
     def newTab(self):
@@ -64,6 +64,7 @@ class SameTabsNotebook(Frame.Frame):
     def deleteTab(self):
         current = self.widget.index("current")
         if current != 0:
+            del self.widgets_list[current]
             self.tab_count -= 1
             self.changeActiveTab(current)
             self.widget.forget(current)
@@ -85,7 +86,7 @@ class SameTabsNotebook(Frame.Frame):
 
 class ExtractionNotebook(SameTabsNotebook):
     def __init__(self, row, column, columnspan, padx, pady):
-        SameTabsNotebook.__init__(self, "ExtractionNotebook", row, column, columnspan, padx, pady)
+        SameTabsNotebook.__init__(self, "Extraction", row, column, columnspan, padx, pady)
 
     def newTab(self):
         return ExtractionPlotTabs.ExtractionTab(0, 0, 1, 0, 0, self.deleteTab)
@@ -93,7 +94,7 @@ class ExtractionNotebook(SameTabsNotebook):
 
 class PlotNotebook(SameTabsNotebook):
     def __init__(self, row, column, columnspan, padx, pady):
-        SameTabsNotebook.__init__(self, "PlotNotebook", row, column, columnspan, padx, pady)
+        SameTabsNotebook.__init__(self, "Plot", row, column, columnspan, padx, pady)
 
     def newTab(self):
         return ExtractionPlotTabs.ExtractionTab(0, 0, 1, 0, 0, self.deleteTab)
@@ -101,7 +102,7 @@ class PlotNotebook(SameTabsNotebook):
 
 class TargetNotebook(SameTabsNotebook):
     def __init__(self, row, column, columnspan, padx, pady, validate_freq):
-        SameTabsNotebook.__init__(self, "TargetNotebook", row, column, columnspan, padx, pady)
+        SameTabsNotebook.__init__(self, "Targets", row, column, columnspan, padx, pady)
         self.validate_freq = validate_freq
 
     def newTab(self):

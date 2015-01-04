@@ -12,8 +12,15 @@ class Frame(AbstractWidget.Widget):
 
     def addChildWidgets(self, child_widgets):
         for widget in child_widgets:
-            self.widgets_list.append(widget)
-            self.widgets_dict[widget.name] = widget
+            self.addWidget(widget)
+
+    def addWidget(self, widget):
+        self.widgets_list.append(widget)
+        self.widgets_dict[widget.name] = widget
+
+    def removeWidget(self, widget):
+        self.widgets_list.remove(widget)
+        del self.widgets_dict[widget.name]
 
     def createWidget(self, parent):
         widget = Tkinter.Frame(parent)
@@ -47,7 +54,10 @@ class Frame(AbstractWidget.Widget):
             else:
                 widget.disable(self.name)
 
+    def save(self, file):
+        for widget in self.widgets_list:
+            widget.save(file)
 
-class NotebookFrame(Frame):
-    def __init__(self, name, row, column, columnspan, padx, pady):
-        Frame.__init__(self, name, row, column, columnspan, padx, pady)
+    def load(self, file):
+        for widget in self.widgets_list:
+            widget.load(file)
