@@ -13,7 +13,7 @@ class Widget(object):
         self.widget = None
         self.name = name
 
-    def updateKwargs(self, kwargs, default_values):
+    def setDefaultKwargs(self, kwargs, default_values):
         for key in default_values:
             kwargs.setdefault(key, default_values[key])
         return kwargs
@@ -39,6 +39,16 @@ class Widget(object):
 
     def load(self, file):
         raise NotImplementedError("load not implemented!")
+
+    def getValue(self):
+        raise NotImplementedError("getValue not implemented!")
+
+    def setValue(self, value):
+        raise NotImplementedError("setValue not implemented!")
+
+    def getNotValidated(self):
+        if not self.validate():
+            return self.getValue()
 
     def validate(self):
         return True
@@ -80,12 +90,6 @@ class WidgetWithCommand(Widget):
                 self.disablers.append(disabler)
             self.disabled = True
             self.widget.config(state=self.disabled_state)
-
-    def getValue(self):
-        raise NotImplementedError("getValue not implemented!")
-
-    def setValue(self, value):
-        raise NotImplementedError("setValue not implemented!")
 
     def save(self, file):
         file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")

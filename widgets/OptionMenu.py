@@ -6,7 +6,7 @@ import Tkinter
 
 class OptionMenu(AbstractWidget.WidgetWithCommand):
     def __init__(self, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.updateKwargs(kwargs, {
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.setDefaultKwargs(kwargs, {
             "default_value": self.getDefaultValue(kwargs),
             "columnspan": kwargs.get("columnspan", 2)
         }))

@@ -60,3 +60,15 @@ class Frame(AbstractWidget.Widget):
 
     def validate(self):
         return all(map(lambda x: x.validate(), self.widgets_list))
+
+    def getNotValidated(self):
+        if len(self.widgets_dict) != 0:
+            return {key: self.widgets_dict[key].getNotValidated() for key in self.widgets_dict if not self.widgets_dict[key].validate()}
+        else:
+            return {index: self.widgets_list[index].getNotValidated() for index in range(len(self.widgets_list)) if not self.widgets_list[index].validate()}
+
+    def getValue(self):
+        if len(self.widgets_dict) != 0:
+            return {key: self.widgets_dict[key].getValue() for key in self.widgets_dict}
+        else:
+            return {index: self.widgets_list[index].getValue() for index in range(len(self.widgets_list))}

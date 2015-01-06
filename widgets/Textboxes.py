@@ -8,7 +8,7 @@ import tkColorChooser
 
 class Textbox(AbstractWidget.WidgetWithCommand):
     def __init__(self, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column+1, **self.updateKwargs(kwargs, {
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column+1, **self.setDefaultKwargs(kwargs, {
             "disabled_state": "readonly"
         }))
         self.width = kwargs.get("width", 5)
@@ -32,15 +32,17 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         return main_widget
 
     def validate(self):
-        print("asd")
-        try:
-            self.validateOther()
-            self.widget.configure(background="#ffffff")
+        if not self.disabled:
+            try:
+                self.validateOther()
+                self.widget.configure(background="#ffffff")
+                return True
+            except Exception, e:
+                print("validation", self.name, e)
+                self.widget.configure(background="#ff0000")
+                return False
+        else:
             return True
-        except Exception, e:
-            print("validation", e)
-            self.widget.configure(background="#ff0000")
-            return False
 
     def validateOther(self):
         self.arg_command(self.widget.get())
@@ -69,7 +71,7 @@ class LabelTextbox(Textbox):
 
 class PlusMinusTextboxFrame(Frame.Frame):
     def __init__(self, name, row, column, increase, decrease, **kwargs):
-        Frame.Frame.__init__(self, "PlusMinusTextboxFrame", row, column, **self.updateKwargs(kwargs, {
+        Frame.Frame.__init__(self, "PlusMinusTextboxFrame", row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 3
         }))
         increase_command = lambda: increase() if self.widgets_dict[name].validate() else None
@@ -82,7 +84,7 @@ class PlusMinusTextboxFrame(Frame.Frame):
 
 class ColorTextboxFrame(Frame.Frame):
     def __init__(self, name, row, column, **kwargs):
-        Frame.Frame.__init__(self, "ColorTextboxFrame", row, column, **self.updateKwargs(kwargs, {
+        Frame.Frame.__init__(self, "ColorTextboxFrame", row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 2
         }))
         button_command = lambda: self.chooseColor(self.widgets_dict["Textbox"])

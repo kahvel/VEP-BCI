@@ -113,23 +113,22 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send(int(self.textboxes["Record"]["Length"].get()))
         self.connection.send(self.current_radio_button.get())
 
-    def sendOptions(self):
-        options = self.textboxes["Test"].update(self.test_vars)
-        self.connection.send({key: int(options[key].get()) for key in options})
-
     def start(self):
-        print(self.main_frame.validate())
-        self.start_button.configure(text="Stop", command=lambda: self.stop())
-        #self.connection.send(message)
-        self.sendOptions()
-        self.connection.send((self.current_radio_button.get(),
-                              self.getBackgroundData(),
-                              self.getEnabledTargets(),
-                              self.getChosenFreq()))
+        not_validated = self.main_frame.getNotValidated()
+        if len(not_validated) != 0:
+            print(not_validated)
+        else:
+            #print(self.main_frame.getValue())
+            self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Stop", command=self.stop)
+            #self.connection.send(message)
+            # self.connection.send((self.current_radio_button.get(),
+            #                       self.getBackgroundData(),
+            #                       self.getEnabledTargets(),
+            #                       self.getChosenFreq()))
 
     def stop(self):
-        self.start_button.configure(text="Start", command=lambda: self.start("Start"))
-        self.connection.send("Stop")
+        self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Start", command=self.start)
+        # self.connection.send("Stop")
 
     def newProcess(self, func, message, *args):
         new_to_post_office, post_office_to_new = multiprocessing.Pipe()
