@@ -253,7 +253,8 @@ class ControlWindow(MyWindows.TkWindow):
     def setOptions(self, options_textboxes, variables):
         self.options["Length"] = int(options_textboxes["Length"].get())
         self.options["Step"] = int(options_textboxes["Step"].get())
-        self.options["sLength"] = int(options_textboxes["sLength"].get())
+        if "sLength" in options_textboxes:
+            self.options["sLength"] = int(options_textboxes["sLength"].get())
         self.setWindowFunction(options_textboxes, variables)
         self.setFilter(options_textboxes, variables)
         self.setNormalisation(variables)
