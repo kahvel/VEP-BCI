@@ -26,8 +26,6 @@ class SameTabsNotebook(Frame.AbstractFrame):
 
     def addTab(self, text):
         tab = self.newTab(0, 0, delete_tab=self.deleteTab)
-        #tab.create(self.widget)
-        print(self.widget, tab.widget)
         self.widget.add(tab.widget, text=text)
         return tab
 
@@ -96,10 +94,24 @@ class PlotNotebook(SameTabsNotebook):
 
 
 class TargetNotebook(SameTabsNotebook):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, row, column, targetAdded, targetRemoved, **kwargs):
         SameTabsNotebook.__init__(self, parent, "Targets", row, column, **kwargs)
         self.validate_freq = kwargs["validate_freq"]
+        self.targetAdded = targetAdded
+        self.targetRemoved = targetRemoved
         self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
         return TargetsTab.TargetsTab(self.widget, row, column, validate_freq=self.validate_freq, **kwargs)
+
+    def addTab(self, text):  # Updates OptionMenu in Test tab
+        self.targetAdded()
+        return SameTabsNotebook.addTab(self, text)
+
+    def deleteTab(self):  # Updates OptionMenu in Test tab
+        SameTabsNotebook.deleteTab(self)
+        self.targetRemoved()
+
+    def addInitialTabs(self):  # Does not update for initial tabs
+        self.widgets_list.append(SameTabsNotebook.addTab(self, "All"))
+        self.last_tab = SameTabsNotebook.addTab(self, "+")

@@ -2,7 +2,6 @@ __author__ = 'Anti'
 
 import ttk
 import math
-
 from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame
 import SameTabsNotebook
 
@@ -13,13 +12,13 @@ class MainNotebook(Frame.AbstractFrame):
         validate_freq = lambda textbox, d: self.changeFreq(self.widgets_dict["Window"].widgets_dict["Freq"], textbox, d)
         monitor_freq_changed = lambda: self.changeAllFreqs(self.widgets_dict["Window"].widgets_dict["Freq"], self.widgets_dict["Targets"])
         self.create(ttk.Notebook(parent))
-        target_notebook = SameTabsNotebook.TargetNotebook(self.widget, 0, 0, validate_freq=validate_freq)
+        self.test_tab = TestTab.TestTab(self.widget, 0, 0)
         self.addChildWidgets((
             WindowTab.WindowTab(self.widget, 0, 0, change_target_freqs=monitor_freq_changed),
-            target_notebook,
+            SameTabsNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, validate_freq=validate_freq),
             SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0),
             SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
-            TestTab.TestTab(self.widget, 0, 0, target_notebook),
+            self.test_tab,
             RecordTab.RecordTab(self.widget, 0, 0),
             ResultsTab.ResultsTab(self.widget, 0, 0)
         ))
@@ -47,3 +46,9 @@ class MainNotebook(Frame.AbstractFrame):
             return True
         else:
             return False
+
+    def targetAdded(self):
+        self.test_tab.targetAdded()
+
+    def targetRemoved(self):
+        self.test_tab.targetRemoved()

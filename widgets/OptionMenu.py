@@ -12,7 +12,7 @@ class OptionMenu(AbstractWidget.WidgetWithCommand):
         }))
         self.values = kwargs.get("values", [])
         self.variable = Tkinter.StringVar()
-        self.command = kwargs.get("command", None)
+        self.command = kwargs.get("command", lambda: None)
         self.create(Tkinter.OptionMenu(parent, self.variable, *self.values, command=lambda x: self.command()))
 
     def getValue(self):
