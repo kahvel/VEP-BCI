@@ -2,7 +2,6 @@ __author__ = 'Anti'
 
 from main_window import MyWindows
 from frames import MainFrame
-import Tkinter
 import tkFileDialog
 import multiprocessing
 import multiprocessing.reduction
@@ -15,10 +14,27 @@ class MainWindow(MyWindows.TkWindow):
         default_file_name = "default.txt"
         self.start_button = None
 
-        self.vep_type_var = Tkinter.StringVar()
-        self.seed_textbox = None
-
-        self.main_frame = MainFrame.MainFrame(self.start, self.askSaveFile, self.askLoadFile, self.exit)
+        self.main_frame = MainFrame.MainFrame(
+            # (
+                self.start,
+                self.askSaveFile,
+                self.askLoadFile,
+                self.exit
+            # ),
+            # (
+            #     self.showResults,
+            #     self.resetResults
+            # ),
+            # (
+            #     self.addGame,
+            # ),
+            # (
+            #     self.calculateThreshold,
+            # ),
+            # (
+            #     self.addE
+            # )
+        )
         self.main_frame.create(self)
         self.loadValues(default_file_name)
 
@@ -38,22 +54,6 @@ class MainWindow(MyWindows.TkWindow):
         except IOError:
             self.main_frame.loadDefaultValue()
 
-    # def targetFrame(self, parent):
-    #     frame = Tkinter.Frame(parent)
-    #     Tkinter.Button(frame, text="- ").grid(row=0, column=0)
-    #     Tkinter.Button(frame, text="+").grid(row=0, column=1)
-    #     Tkinter.Radiobutton(frame, text="removeListElement-VEP", variable=self.vep_type_var, value="removeListElement", command=self.vepTypeChange).grid(row=0, column=2)
-    #     Tkinter.Radiobutton(frame, text="c-VEP", variable=self.vep_type_var, value="c", command=self.vepTypeChange).grid(row=0, column=3)
-    #     self.seed_textbox = MyWindows.newTextBox(frame, "Seed", 4, 0, 10)
-    #     self.targetNotebookFrame(frame).grid(row=1, columnspan=6)
-    #     return frame
-
-    def vepTypeChange(self):
-        if self.vep_type_var.get() == "removeListElement":
-            self.seed_textbox.config(state="readonly")
-        else:
-            self.seed_textbox.config(state=Tkinter.NORMAL)
-
     def resetResults(self):
         self.connection.send("Reset results")
 
@@ -72,16 +72,16 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.send("Exit")
         self.destroy()
 
-    def extraction(self):
+    def addExtraction(self):
         self.newProcess(Main.runExtractionControl, "Add extraction")
 
-    def getEnabledTargets(self, targets_data):
-        targets = []
-        for key in range(len(targets_data)):
+    def removeDisabledData(self, data, filter_function, frame_key):
+        result = []
+        for key in range(len(data)):
             if key != 0:
-                if not self.disabled(targets_data[key]):
-                    targets.append(self.filterTargetData(targets_data[key]["TargetFrame"]))
-        return targets
+                if not self.disabled(data[key]):
+                    result.append(filter_function(data[key], frame_key))
+        return result
 
     def getFrequencies(self, enabled_targets):
         frequencies = []
@@ -106,47 +106,51 @@ class MainWindow(MyWindows.TkWindow):
     def getPlusMinusValue(self, data):
         return data["PlusMinusTextboxFrame"]["Freq"]
 
-    def filterTargetData(self, target_data):
-        result = self.filterColoredData(target_data, ("PlusMinusTextboxFrame",))
-        result["Freq"] = self.getPlusMinusValue(target_data)
+    def filterTargetData(self, target_data, key):
+        result = self.filterColoredData(target_data[key], ("PlusMinusTextboxFrame",))
+        result["Freq"] = self.getPlusMinusValue(target_data[key])
         return result
+
+    def getTargetData(self, data):
+        return self.removeDisabledData(data, self.filterTargetData, "TargetFrame")
 
     def getBackgroundData(self, window_data):
         return self.filterColoredData(window_data, ("Monitor", "Refresh"))
 
-    def recordTarget(self):
-        length = int(self.textboxes["Record"]["Length"].get())
-        if self.current_radio_button.get() == 0:
-            print("Choose target")
-        else:
-            self.connection.send("Record target")
-            # self.connection.send(self.getEnabledTargets())
-            self.connection.send(self.getBackgroundData())
-            self.connection.send([self.targets[self.current_radio_button.get()]])
-            self.connection.send(length)
-            self.connection.send(self.current_radio_button.get())
+    def getEnabledData(self, data):
+        return [key for key in data if data[key] != 0]
 
-    def recordNeutral(self):
-        self.connection.send("Record neutral")
-        self.connection.send(int(self.textboxes["Record"]["Length"].get()))
-        self.connection.send(self.current_radio_button.get())
+    def getOptions(self, data, key):
+        return {
+            "Sensors": self.getEnabledData(data["SensorsFrame"]),
+            "Options": self.filterData(data["OptionsFrame"], ("Window",)),
+            "Methods": self.getEnabledData(data[key])
+        }
+
+    def getPlotData(self, data):
+        return self.removeDisabledData(data, self.getOptions, "PlotTabButtonFrame")
+
+    def getExtractionData(self, data):
+        return self.removeDisabledData(data, self.getOptions, "ExtractionTabButtonFrame")
+
+    def getData(self, all_data):
+        target_data = self.getTargetData(all_data["Targets"])
+        return {
+            "Background": self.getBackgroundData(all_data["Window"]),
+            "Targets": target_data,
+            "Freqs": self.getFrequencies(target_data),
+            "Plots": self.getPlotData(all_data["Plot"]),
+            "Extraction": self.getExtractionData(all_data["Extraction"])
+        }
 
     def start(self):
         not_validated = self.main_frame.getNotValidated()
         if len(not_validated) != 0:
             print(not_validated)
         else:
-            all_data = self.main_frame.getValue()["MainNotebook"]
-            print(all_data)
-            print(self.getBackgroundData(all_data["Window"]))
-            print(self.getEnabledTargets(all_data["Targets"]))
-            print(self.getFrequencies(self.getEnabledTargets(all_data["Targets"])))
             self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Stop", command=self.stop)
-            #self.connection.send(message)
-            # self.connection.send((self.current_radio_button.get(),
-            #                       self.getBackgroundData(),
-            #                       self.getEnabledTargets(),
-            #                       self.getChosenFreq()))
+            self.connection.send("Start")
+            self.connection.send(self.getData(self.main_frame.getValue()["MainNotebook"]))
 
     def stop(self):
         self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Start", command=self.start)
@@ -179,3 +183,20 @@ class MainWindow(MyWindows.TkWindow):
         if file is not None:
             self.main_frame.load(file)
             file.close()
+
+    def recordTarget(self):
+        length = int(self.textboxes["Record"]["Length"].get())
+        if self.current_radio_button.get() == 0:
+            print("Choose target")
+        else:
+            self.connection.send("Record target")
+            # self.connection.send(self.removeDisabledData())
+            self.connection.send(self.getBackgroundData())
+            self.connection.send([self.targets[self.current_radio_button.get()]])
+            self.connection.send(length)
+            self.connection.send(self.current_radio_button.get())
+
+    def recordNeutral(self):
+        self.connection.send("Record neutral")
+        self.connection.send(int(self.textboxes["Record"]["Length"].get()))
+        self.connection.send(self.current_radio_button.get())

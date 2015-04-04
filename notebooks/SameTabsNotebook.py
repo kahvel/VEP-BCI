@@ -93,7 +93,7 @@ class PlotNotebook(SameTabsNotebook):
         SameTabsNotebook.__init__(self, "Plot", row, column, **kwargs)
 
     def newTab(self, row, column, **kwargs):
-        return ExtractionPlotTabs.ExtractionTab(row, column, **kwargs)
+        return ExtractionPlotTabs.PlotTab(row, column, **kwargs)
 
 
 class TargetNotebook(SameTabsNotebook):
