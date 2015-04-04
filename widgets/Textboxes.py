@@ -4,7 +4,7 @@ from frames import PlusMinusFrame, Frame
 from widgets import AbstractWidget, Buttons
 import Tkinter
 import tkColorChooser
-import Constants as c
+import constants as c
 
 
 class Textbox(AbstractWidget.WidgetWithCommand):

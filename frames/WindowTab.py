@@ -5,7 +5,7 @@ from frames import Frame
 import win32api
 import win32con
 import Tkinter
-import Constants as c
+import constants as c
 
 
 class WindowTab(Frame.Frame):

@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 from frames import Frame
 from widgets import Buttons
-import Constants as c
+import constants as c
 
 
 class PlusMinusFrame(Frame.Frame):

@@ -3,7 +3,7 @@ __author__ = 'Anti'
 from frames import Frame
 from notebooks import MainNotebook
 from widgets import Buttons
-import Constants as c
+import constants as c
 
 
 class MainFrame(Frame.Frame):

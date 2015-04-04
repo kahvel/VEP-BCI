@@ -3,7 +3,7 @@ __author__ = 'Anti'
 from widgets import Textboxes, Checkbutton, OptionMenu
 from frames import Frame
 import Tkinter
-import Constants as c
+import constants as c
 
 
 class TestTab(Frame.Frame):

@@ -4,7 +4,7 @@ import ttk
 import math
 from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame
 import SameTabsNotebook
-import Constants as c
+import constants as c
 
 
 class MainNotebook(Frame.AbstractFrame):

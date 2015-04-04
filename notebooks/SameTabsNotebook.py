@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 from frames import ExtractionPlotTabs, TargetsTab, Frame
 import ttk
-import Constants as c
+import constants as c
 
 
 class SameTabsNotebook(Frame.AbstractFrame):

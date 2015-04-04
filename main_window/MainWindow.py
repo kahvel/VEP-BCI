@@ -6,7 +6,7 @@ import tkFileDialog
 import multiprocessing
 import multiprocessing.reduction
 import Main
-import Constants as c
+import constants as c
 
 
 class MainWindow(MyWindows.TkWindow):

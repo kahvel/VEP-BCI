@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 from widgets import Textboxes, Buttons
 from frames import Frame
-import Constants as c
+import constants as c
 
 
 class RecordTab(Frame.Frame):
