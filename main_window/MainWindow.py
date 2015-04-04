@@ -75,26 +75,44 @@ class MainWindow(MyWindows.TkWindow):
     def extraction(self):
         self.newProcess(Main.runExtractionControl, "Add extraction")
 
-    def getEnabledTargets(self):
+    def getEnabledTargets(self, targets_data):
         targets = []
-        for target in self.targets[1:]:
-            if int(target["Disable"]) == 0:
-                targets.append(target)
+        for key in range(len(targets_data)):
+            if key != 0:
+                if not self.disabled(targets_data[key]):
+                    targets.append(self.filterTargetData(targets_data[key]["TargetFrame"]))
         return targets
 
-    def getChosenFreq(self):
-        freq = []
-        for i in range(1, len(self.targets)):
-            if int(self.targets[i]["Disable"]) == 0:
-                freq.append(float(self.targets[i]["Freq"]))
-        return freq
+    def getFrequencies(self, enabled_targets):
+        frequencies = []
+        for i in range(len(enabled_targets)):
+            frequencies.append(float(enabled_targets[i]["Freq"]))
+        return frequencies
 
-    def getBackgroundData(self):
-        self.saveValues(self.current_radio_button.get())
-        bk = {}
-        for key in self.textboxes["Window"]:
-            bk[key] = self.textboxes["Window"][key].get()
-        return bk
+    def disabled(self, data):
+        return data["DisableDeleteFrame"]["Disable"] == 1
+
+    def getColor(self, data):
+        return data["ColorTextboxFrame"]["Textbox"]
+
+    def filterData(self, data, filter):
+        return {key: float(data[key]) for key in data if key not in filter}
+
+    def filterColoredData(self, data, filter):
+        result = self.filterData(data, filter+("ColorTextboxFrame",))
+        result["Color"] = self.getColor(data)
+        return result
+
+    def getPlusMinusValue(self, data):
+        return data["PlusMinusTextboxFrame"]["Freq"]
+
+    def filterTargetData(self, target_data):
+        result = self.filterColoredData(target_data, ("PlusMinusTextboxFrame",))
+        result["Freq"] = self.getPlusMinusValue(target_data)
+        return result
+
+    def getBackgroundData(self, window_data):
+        return self.filterColoredData(window_data, ("Monitor", "Refresh"))
 
     def recordTarget(self):
         length = int(self.textboxes["Record"]["Length"].get())
@@ -118,7 +136,11 @@ class MainWindow(MyWindows.TkWindow):
         if len(not_validated) != 0:
             print(not_validated)
         else:
-            #print(self.main_frame.getValue())
+            all_data = self.main_frame.getValue()["MainNotebook"]
+            print(all_data)
+            print(self.getBackgroundData(all_data["Window"]))
+            print(self.getEnabledTargets(all_data["Targets"]))
+            print(self.getFrequencies(self.getEnabledTargets(all_data["Targets"])))
             self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Stop", command=self.stop)
             #self.connection.send(message)
             # self.connection.send((self.current_radio_button.get(),
