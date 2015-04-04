@@ -6,20 +6,20 @@ from widgets import Buttons
 
 
 class MainFrame(Frame.Frame):
-    def __init__(self, start, save, load, exit, row=0, column=0, **kwargs):
-        Frame.Frame.__init__(self, "MainFrame", row, column, **kwargs)
+    def __init__(self, parent, start, save, load, exit, row=0, column=0, **kwargs):
+        Frame.Frame.__init__(self, parent, "MainFrame", row, column, **kwargs)
         self.addChildWidgets((
-            MainNotebook.MainNotebook(0, 0),
-            BottomFrame(start, save, load, exit, 1, 0)
+            MainNotebook.MainNotebook(self.widget, 0, 0),
+            BottomFrame(self.widget, start, save, load, exit, 1, 0)
         ))
 
 
 class BottomFrame(Frame.Frame):
-    def __init__(self, start, save, load, exit, row, column, **kwargs):
-        Frame.Frame.__init__(self, "BottomFrame", row, column, **kwargs)
+    def __init__(self, parent, start, save, load, exit, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, "BottomFrame", row, column, **kwargs)
         self.addChildWidgets((
-            Buttons.Button("Start", 0, 0, command=start),
-            Buttons.Button("Save",  0, 1, command=save),
-            Buttons.Button("Load",  0, 2, command=load),
-            Buttons.Button("Exit",  0, 3, command=exit)
+            Buttons.Button(self.widget, "Start", 0, 0, command=start),
+            Buttons.Button(self.widget, "Save",  0, 1, command=save),
+            Buttons.Button(self.widget, "Load",  0, 2, command=load),
+            Buttons.Button(self.widget, "Exit",  0, 3, command=exit)
         ))

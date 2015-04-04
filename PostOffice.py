@@ -212,8 +212,6 @@ class PostOffice(object):
             if str(self.target_freqs) not in self.results[key]:
                 self.results[key][str(self.target_freqs)] = \
                     {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(-1, len(self.target_freqs))}
-            else:
-                break
 
     def printResults(self):
         for method in self.results:

@@ -7,30 +7,27 @@ from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame
 import SameTabsNotebook
 
 
-class MainNotebook(Frame.Frame):
-    def __init__(self, row, column, **kwargs):
-        Frame.Frame.__init__(self, "MainNotebook", row, column, **kwargs)
+class MainNotebook(Frame.AbstractFrame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.AbstractFrame.__init__(self, parent, "MainNotebook", row, column, **kwargs)
         validate_freq = lambda textbox, d: self.changeFreq(self.widgets_dict["Window"].widgets_dict["Freq"], textbox, d)
         monitor_freq_changed = lambda: self.changeAllFreqs(self.widgets_dict["Window"].widgets_dict["Freq"], self.widgets_dict["Targets"])
+        self.create(ttk.Notebook(parent))
+        target_notebook = SameTabsNotebook.TargetNotebook(self.widget, 0, 0, validate_freq=validate_freq)
         self.addChildWidgets((
-            WindowTab.WindowTab(0, 0, change_target_freqs=monitor_freq_changed),
-            SameTabsNotebook.TargetNotebook(0, 0, validate_freq=validate_freq),
-            SameTabsNotebook.ExtractionNotebook(0, 0),
-            SameTabsNotebook.PlotNotebook(0, 0),
-            TestTab.TestTab(0, 0),
-            RecordTab.RecordTab(0, 0),
-            ResultsTab.ResultsTab(0, 0)
+            WindowTab.WindowTab(self.widget, 0, 0, change_target_freqs=monitor_freq_changed),
+            target_notebook,
+            SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0),
+            SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
+            TestTab.TestTab(self.widget, 0, 0, target_notebook),
+            RecordTab.RecordTab(self.widget, 0, 0),
+            ResultsTab.ResultsTab(self.widget, 0, 0)
         ))
+        self.createChildWidgets()
 
-    def createWidget(self, parent):
-        widget = ttk.Notebook(parent)
-        self.createChildWidgets(widget)
-        return widget
-
-    def createChildWidgets(self, notebook):
-        Frame.Frame.createChildWidgets(self, notebook)
+    def createChildWidgets(self):
         for widget in self.widgets_list:
-            notebook.add(widget.widget, text=widget.name)
+            self.widget.add(widget.widget, text=widget.name)
 
     def changeAllFreqs(self, monitor_freq_textbox, widget):  # Recursively search for widgets named Freq
         if widget.name == "Freq":

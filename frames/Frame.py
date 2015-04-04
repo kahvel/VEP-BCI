@@ -4,8 +4,8 @@ from widgets import AbstractWidget
 import Tkinter
 
 
-class Frame(AbstractWidget.Widget):
-    def __init__(self, name, row, column, **kwargs):
+class AbstractFrame(AbstractWidget.Widget):
+    def __init__(self, parent, name, row, column, **kwargs):
         AbstractWidget.Widget.__init__(self, name, row, column, **kwargs)
         self.widgets_list = []
         self.widgets_dict = {}
@@ -21,15 +21,6 @@ class Frame(AbstractWidget.Widget):
     def removeWidget(self, widget):
         self.widgets_list.remove(widget)
         del self.widgets_dict[widget.name]
-
-    def createWidget(self, parent):
-        widget = Tkinter.Frame(parent)
-        self.createChildWidgets(widget)
-        return widget
-
-    def createChildWidgets(self, parent):
-        for child in self.widgets_list:
-            child.create(parent)
 
     def enable(self, enabler):
         for child in self.widgets_list:
@@ -72,3 +63,9 @@ class Frame(AbstractWidget.Widget):
             return {key: self.widgets_dict[key].getValue() for key in self.widgets_dict}
         else:
             return {index: self.widgets_list[index].getValue() for index in range(len(self.widgets_list))}
+
+
+class Frame(AbstractFrame):
+    def __init__(self, parent, name, row, column, **kwargs):
+        AbstractFrame.__init__(self, parent, name, row, column, **kwargs)
+        self.create(Tkinter.Frame(parent))

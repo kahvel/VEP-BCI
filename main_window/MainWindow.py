@@ -14,7 +14,7 @@ class MainWindow(MyWindows.TkWindow):
         default_file_name = "default.txt"
         self.start_button = None
 
-        self.main_frame = MainFrame.MainFrame(
+        self.main_frame = MainFrame.MainFrame(self,
             # (
                 self.start,
                 self.askSaveFile,
@@ -35,7 +35,6 @@ class MainWindow(MyWindows.TkWindow):
             #     self.addE
             # )
         )
-        self.main_frame.create(self)
         self.loadValues(default_file_name)
 
         # self.neutral_signal = None

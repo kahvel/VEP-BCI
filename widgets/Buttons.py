@@ -5,12 +5,10 @@ import Tkinter
 
 
 class Button(AbstractWidget.WidgetWithCommand):
-    def __init__(self, name, row, column, **kwargs):
+    def __init__(self, parent, name, row, column, **kwargs):
         AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
         self.command = kwargs.get("command", None)
-
-    def createWidget(self, parent):
-        return Tkinter.Button(parent, text=self.name, command=self.command)
+        self.create(Tkinter.Button(parent, text=self.name, command=self.command))
 
     def getValue(self):
         return
@@ -20,9 +18,10 @@ class Button(AbstractWidget.WidgetWithCommand):
 
 
 class SunkenButton(AbstractWidget.WidgetWithCommand):
-    def __init__(self, name, row, column, **kwargs):
+    def __init__(self, parent, name, row, column, **kwargs):
         AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
         self.variable = Tkinter.IntVar()
+        self.create(Tkinter.Button(parent, text=self.name, command=self.sunkenButtonCommand))
 
     def getValue(self):
         return self.variable.get()
@@ -41,13 +40,10 @@ class SunkenButton(AbstractWidget.WidgetWithCommand):
         self.variable.set(not self.variable.get())
         self.updateRelief()
 
-    def createWidget(self, parent):
-        return Tkinter.Button(parent, text=self.name, command=self.sunkenButtonCommand)
-
 
 class DisableButton(SunkenButton):
-    def __init__(self, name, row, column, **kwargs):
-        SunkenButton.__init__(self, name, row, column, **kwargs)
+    def __init__(self, parent, name, row, column, **kwargs):
+        SunkenButton.__init__(self, parent, name, row, column, **kwargs)
         self.enable_command = kwargs.get("enable", lambda: None)
         self.disable_command = kwargs.get("disable", lambda: None)
 

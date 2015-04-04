@@ -5,9 +5,9 @@ from frames import Frame
 
 
 class ResultsTab(Frame.Frame):
-    def __init__(self, row, column, **kwargs):
-        Frame.Frame.__init__(self, "Results", row, column, **kwargs)
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, "Results", row, column, **kwargs)
         self.addChildWidgets((
-            Buttons.Button("Show",  0, 0),
-            Buttons.Button("Reset", 0, 1)
+            Buttons.Button(self.widget, "Show",  0, 0),
+            Buttons.Button(self.widget, "Reset", 0, 1)
         ))

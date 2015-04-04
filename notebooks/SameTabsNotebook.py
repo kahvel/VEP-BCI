@@ -4,22 +4,18 @@ from frames import ExtractionPlotTabs, TargetsTab, Frame
 import ttk
 
 
-class SameTabsNotebook(Frame.Frame):
-    def __init__(self, name, row, column, **kwargs):
-        Frame.Frame.__init__(self, name, row, column, **kwargs)
+class SameTabsNotebook(Frame.AbstractFrame):
+    def __init__(self, parent, name, row, column, **kwargs):
+        Frame.AbstractFrame.__init__(self, parent, name, row, column, **kwargs)
         self.tab_count = 0
         self.default_tab_count = 1
         self.last_tab = None
+        self.create(ttk.Notebook(parent))
+        self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
     def tabChangedEvent(self, event):
         if event.widget.index("current") == self.tab_count+1:
             self.plusTabClicked()
-
-    def createWidget(self, parent):
-        self.widget = ttk.Notebook(parent)
-        self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
-        self.addInitialTabs()
-        return self.widget
 
     def addInitialTabs(self):
         self.widgets_list.append(self.addTab("All"))
@@ -30,7 +26,8 @@ class SameTabsNotebook(Frame.Frame):
 
     def addTab(self, text):
         tab = self.newTab(0, 0, delete_tab=self.deleteTab)
-        tab.create(self.widget)
+        #tab.create(self.widget)
+        print(self.widget, tab.widget)
         self.widget.add(tab.widget, text=text)
         return tab
 
@@ -81,25 +78,28 @@ class SameTabsNotebook(Frame.Frame):
 
 
 class ExtractionNotebook(SameTabsNotebook):
-    def __init__(self, row, column, **kwargs):
-        SameTabsNotebook.__init__(self, "Extraction", row, column, **kwargs)
+    def __init__(self, parent, row, column, **kwargs):
+        SameTabsNotebook.__init__(self, parent, "Extraction", row, column, **kwargs)
+        self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
-        return ExtractionPlotTabs.ExtractionTab(row, column, **kwargs)
+        return ExtractionPlotTabs.ExtractionTab(self.widget, row, column, **kwargs)
 
 
 class PlotNotebook(SameTabsNotebook):
-    def __init__(self, row, column, **kwargs):
-        SameTabsNotebook.__init__(self, "Plot", row, column, **kwargs)
+    def __init__(self, parent, row, column, **kwargs):
+        SameTabsNotebook.__init__(self, parent, "Plot", row, column, **kwargs)
+        self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
-        return ExtractionPlotTabs.PlotTab(row, column, **kwargs)
+        return ExtractionPlotTabs.PlotTab(self.widget, row, column, **kwargs)
 
 
 class TargetNotebook(SameTabsNotebook):
-    def __init__(self, row, column, **kwargs):
-        SameTabsNotebook.__init__(self, "Targets", row, column, **kwargs)
+    def __init__(self, parent, row, column, **kwargs):
+        SameTabsNotebook.__init__(self, parent, "Targets", row, column, **kwargs)
         self.validate_freq = kwargs["validate_freq"]
+        self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
-        return TargetsTab.TargetsTab(row, column, validate_freq=self.validate_freq, **kwargs)
+        return TargetsTab.TargetsTab(self.widget, row, column, validate_freq=self.validate_freq, **kwargs)

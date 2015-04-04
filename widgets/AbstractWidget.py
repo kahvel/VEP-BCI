@@ -21,8 +21,8 @@ class Widget(object):
     def loadDefaultValue(self):
         raise NotImplementedError("loadDefaultValue not implemented!")
 
-    def create(self, parent):
-        self.widget = self.createWidget(parent)
+    def create(self, widget):
+        self.widget = widget
         self.widget.grid(row=self.row, column=self.column, columnspan=self.columnspan, padx=self.padx, pady=self.pady)
 
     def createWidget(self, parent):
@@ -100,14 +100,3 @@ class WidgetWithCommand(Widget):
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []
         self.updateState()
-
-
-# class WidgetWithVariable(WidgetWithCommand):
-#     def __init__(self, name, disabled_state, variable, default_value, row, column, columnspan=1, padx=5, pady=5,  always_enabled=False):
-#         WidgetWithCommand.__init__(self, name, disabled_state, row, column, columnspan, padx, pady, always_enabled)
-#         self.variable = variable
-#         self.default_value = default_value
-#
-#     def loadDefaultValue(self):
-#         self.variable.set(self.default_value)
-#         WidgetWithCommand.loadDefaultValue(self)
