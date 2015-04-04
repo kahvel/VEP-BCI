@@ -6,6 +6,7 @@ import tkFileDialog
 import multiprocessing
 import multiprocessing.reduction
 import Main
+import Constants as c
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -89,71 +90,75 @@ class MainWindow(MyWindows.TkWindow):
         return frequencies
 
     def disabled(self, data):
-        return data["DisableDeleteFrame"]["Disable"] == 1
+        return data[c.DISABLE_DELETE_FRAME][c.DISABLE] == 1
 
     def getColor(self, data):
-        return data["ColorTextboxFrame"]["Textbox"]
+        return data[c.COLOR_TEXTBOX_FRAME][c.TEXTBOX]
 
     def filterData(self, data, filter):
         return {key: float(data[key]) for key in data if key not in filter}
 
     def filterColoredData(self, data, filter):
-        result = self.filterData(data, filter+("ColorTextboxFrame",))
+        result = self.filterData(data, filter+(c.COLOR_TEXTBOX_FRAME,))
         result["Color"] = self.getColor(data)
         return result
 
     def getPlusMinusValue(self, data):
-        return data["PlusMinusTextboxFrame"]["Freq"]
+        return data[c.PLUS_MINUS_TEXTOX_FRAME][c.TARGET_FREQ]
 
     def filterTargetData(self, target_data, key):
-        result = self.filterColoredData(target_data[key], ("PlusMinusTextboxFrame",))
+        result = self.filterColoredData(target_data[key], (c.PLUS_MINUS_TEXTOX_FRAME,))
         result["Freq"] = self.getPlusMinusValue(target_data[key])
         return result
 
     def getTargetData(self, data):
-        return self.removeDisabledData(data, self.filterTargetData, "TargetFrame")
+        return self.removeDisabledData(data, self.filterTargetData, c.TARGET_FRAME)
 
     def getBackgroundData(self, window_data):
-        return self.filterColoredData(window_data, ("Monitor", "Refresh"))
+        return self.filterColoredData(window_data, (c.WINDOW_MONITOR, c.WINDOW_REFRESH))
 
     def getEnabledData(self, data):
         return [key for key in data if data[key] != 0]
 
     def getOptions(self, data, key):
         return {
-            "Sensors": self.getEnabledData(data["SensorsFrame"]),
-            "Options": self.filterData(data["OptionsFrame"], ("Window",)),
+            "Sensors": self.getEnabledData(data[c.SENSORS_FRAME]),
+            "Options": self.filterData(data[c.OPTIONS_FRAME], (c.OPTIONS_WINDOW,)),
             "Methods": self.getEnabledData(data[key])
         }
 
     def getPlotData(self, data):
-        return self.removeDisabledData(data, self.getOptions, "PlotTabButtonFrame")
+        return self.removeDisabledData(data, self.getOptions, c.PLOT_TAB_BUTTON_FRAME)
 
     def getExtractionData(self, data):
-        return self.removeDisabledData(data, self.getOptions, "ExtractionTabButtonFrame")
+        return self.removeDisabledData(data, self.getOptions, c.EXTRACTION_TAB_BUTTON_FRAME)
 
     def getData(self, all_data):
-        target_data = self.getTargetData(all_data["Targets"])
+        target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
         return {
-            "Background": self.getBackgroundData(all_data["Window"]),
+            "Background": self.getBackgroundData(all_data[c.WINDOW_TAB]),
             "Targets": target_data,
             "Freqs": self.getFrequencies(target_data),
-            "Plots": self.getPlotData(all_data["Plot"]),
-            "Extraction": self.getExtractionData(all_data["Extraction"])
+            "Plots": self.getPlotData(all_data[c.PLOT_NOTEBOOK]),
+            "Extraction": self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
+            "Test": self.getTestData(all_data[c.TEST_TAB])
         }
+
+    def getTestData(self, data):
+        return self.filterData(data, (c.TEST_TARGET,))
 
     def start(self):
         not_validated = self.main_frame.getNotValidated()
         if len(not_validated) != 0:
             print(not_validated)
         else:
-            self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Stop", command=self.stop)
+            self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.STOP_BUTTON, command=self.stop)
             self.connection.send("Start")
-            self.connection.send(self.getData(self.main_frame.getValue()["MainNotebook"]))
+            self.connection.send(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
 
     def stop(self):
-        self.main_frame.widgets_dict["BottomFrame"].widgets_dict["Start"].widget.configure(text="Start", command=self.start)
-        # self.connection.send("Stop")
+        self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.START_BUTTON, command=self.start)
+        self.connection.send("Stop")
 
     def newProcess(self, func, message, *args):
         new_to_post_office, post_office_to_new = multiprocessing.Pipe()
@@ -166,6 +171,8 @@ class MainWindow(MyWindows.TkWindow):
 
     def plotWindow(self):
         self.newProcess(Main.runPlotControl, "Add plot")
+
+    # Save and Load
 
     def askSaveFile(self):
         self.saveFile(tkFileDialog.asksaveasfile())
@@ -182,6 +189,8 @@ class MainWindow(MyWindows.TkWindow):
         if file is not None:
             self.main_frame.load(file)
             file.close()
+
+    # Recording (currently not working)
 
     def recordTarget(self):
         length = int(self.textboxes["Record"]["Length"].get())

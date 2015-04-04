@@ -5,24 +5,25 @@ from frames import Frame
 import win32api
 import win32con
 import Tkinter
+import Constants as c
 
 
 class WindowTab(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, "Window", row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.WINDOW_TAB, row, column, **kwargs)
         self.change_target_freqs = kwargs["change_target_freqs"]
 
         monitor_names = self.getMonitorNames()
-        monitor_command = lambda: self.updateMonitorFreqTextbox(self.widgets_dict["Monitor"].widget, self.widgets_dict["Monitor"].variable, self.widgets_dict["Freq"])
-        refresh_command = lambda:      self.refreshMonitorNames(self.widgets_dict["Monitor"].widget, self.widgets_dict["Monitor"].variable, self.widgets_dict["Freq"])
+        monitor_command = lambda: self.updateMonitorFreqTextbox(self.widgets_dict[c.WINDOW_MONITOR].widget, self.widgets_dict[c.WINDOW_MONITOR].variable, self.widgets_dict[c.WINDOW_FREQ])
+        refresh_command = lambda:      self.refreshMonitorNames(self.widgets_dict[c.WINDOW_MONITOR].widget, self.widgets_dict[c.WINDOW_MONITOR].variable, self.widgets_dict[c.WINDOW_FREQ])
 
         self.addChildWidgets((
-            Textboxes.LabelTextbox(self.widget, "Width",   0, 0, command=int,   default_value=800),
-            Textboxes.LabelTextbox(self.widget, "Height",  0, 2, command=int,   default_value=600),
-            Textboxes.ColorTextboxFrame(self.widget, "Color",   0, 4,                default_value="#000000"),
-            Textboxes.LabelTextbox(self.widget, "Freq",    1, 0, command=float, default_value=self.getMonitorFrequency(monitor_names[0])),
-            Buttons.Button        (self.widget, "Refresh", 1, 2, command=refresh_command),
-            OptionMenu.OptionMenu (self.widget, "Monitor", 1, 3, command=monitor_command, values=monitor_names, columnspan=3)
+            Textboxes.LabelTextbox     (self.widget, c.WINDOW_WIDTH,   0, 0, command=int,   default_value=800),
+            Textboxes.LabelTextbox     (self.widget, c.WINDOW_HEIGHT,  0, 2, command=int,   default_value=600),
+            Textboxes.ColorTextboxFrame(self.widget, c.WINDOW_COLOR,   0, 4,                default_value="#000000"),
+            Textboxes.LabelTextbox     (self.widget, c.WINDOW_FREQ,    1, 0, command=float, default_value=self.getMonitorFrequency(monitor_names[0])),
+            Buttons.Button             (self.widget, c.WINDOW_REFRESH, 1, 2, command=refresh_command),
+            OptionMenu.OptionMenu      (self.widget, c.WINDOW_MONITOR, 1, 3, command=monitor_command, values=monitor_names, columnspan=3)
         ))
 
     def getMonitorNames(self):

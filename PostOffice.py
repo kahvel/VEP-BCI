@@ -257,6 +257,7 @@ class PostOffice(object):
 
     def start(self):
         options = self.main_connection.recv()
+        print(options)
         self.current_target, background_data, targets_data, self.target_freqs = self.main_connection.recv()
         self.current_target -= 1
         self.sendStartMessages(background_data, targets_data)

@@ -2,11 +2,12 @@ __author__ = 'Anti'
 
 from frames import ExtractionPlotTabs, TargetsTab, Frame
 import ttk
+import Constants as c
 
 
 class SameTabsNotebook(Frame.AbstractFrame):
     def __init__(self, parent, name, row, column, **kwargs):
-        Frame.AbstractFrame.__init__(self, parent, name, row, column, **kwargs)
+        Frame.AbstractFrame.__init__(self, name, row, column, **kwargs)
         self.tab_count = 0
         self.default_tab_count = 1
         self.last_tab = None
@@ -18,7 +19,7 @@ class SameTabsNotebook(Frame.AbstractFrame):
             self.plusTabClicked()
 
     def addInitialTabs(self):
-        self.widgets_list.append(self.addTab("All"))
+        self.widgets_list.append(self.addTab(c.ALL_TAB))
         self.last_tab = self.addTab("+")
 
     def newTab(self, row, column, **kwargs):
@@ -72,12 +73,12 @@ class SameTabsNotebook(Frame.AbstractFrame):
         self.widgets_list.append(self.last_tab)
         self.widgets_list[-1].loadDefaultValue()
         self.widget.tab(self.tab_count, text=self.tab_count)
-        self.last_tab = self.addTab("+")
+        self.last_tab = self.addTab(c.PLUS_TAB)
 
 
 class ExtractionNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
-        SameTabsNotebook.__init__(self, parent, "Extraction", row, column, **kwargs)
+        SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
         self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
@@ -86,7 +87,7 @@ class ExtractionNotebook(SameTabsNotebook):
 
 class PlotNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
-        SameTabsNotebook.__init__(self, parent, "Plot", row, column, **kwargs)
+        SameTabsNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
         self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
@@ -95,7 +96,7 @@ class PlotNotebook(SameTabsNotebook):
 
 class TargetNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, targetAdded, targetRemoved, **kwargs):
-        SameTabsNotebook.__init__(self, parent, "Targets", row, column, **kwargs)
+        SameTabsNotebook.__init__(self, parent, c.TARGETS_NOTEBOOK, row, column, **kwargs)
         self.validate_freq = kwargs["validate_freq"]
         self.targetAdded = targetAdded
         self.targetRemoved = targetRemoved
@@ -113,5 +114,5 @@ class TargetNotebook(SameTabsNotebook):
         self.targetRemoved()
 
     def addInitialTabs(self):  # Does not update for initial tabs
-        self.widgets_list.append(SameTabsNotebook.addTab(self, "All"))
-        self.last_tab = SameTabsNotebook.addTab(self, "+")
+        self.widgets_list.append(SameTabsNotebook.addTab(self, c.ALL_TAB))
+        self.last_tab = SameTabsNotebook.addTab(self, c.PLUS_TAB)

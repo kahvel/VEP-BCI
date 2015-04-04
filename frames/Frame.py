@@ -5,7 +5,7 @@ import Tkinter
 
 
 class AbstractFrame(AbstractWidget.Widget):
-    def __init__(self, parent, name, row, column, **kwargs):
+    def __init__(self, name, row, column, **kwargs):
         AbstractWidget.Widget.__init__(self, name, row, column, **kwargs)
         self.widgets_list = []
         self.widgets_dict = {}
@@ -67,5 +67,5 @@ class AbstractFrame(AbstractWidget.Widget):
 
 class Frame(AbstractFrame):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractFrame.__init__(self, parent, name, row, column, **kwargs)
+        AbstractFrame.__init__(self, name, row, column, **kwargs)
         self.create(Tkinter.Frame(parent))

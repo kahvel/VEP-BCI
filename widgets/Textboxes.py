@@ -4,6 +4,7 @@ from frames import PlusMinusFrame, Frame
 from widgets import AbstractWidget, Buttons
 import Tkinter
 import tkColorChooser
+import Constants as c
 
 
 class Textbox(AbstractWidget.WidgetWithCommand):
@@ -63,7 +64,7 @@ class LabelTextbox(Textbox):
 
 class PlusMinusTextboxFrame(Frame.Frame):
     def __init__(self, parent, name, row, column, increase, decrease, **kwargs):
-        Frame.Frame.__init__(self, parent, "PlusMinusTextboxFrame", row, column, **self.setDefaultKwargs(kwargs, {
+        Frame.Frame.__init__(self, parent, c.PLUS_MINUS_TEXTOX_FRAME, row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 3
         }))
         increase_command = lambda: increase() if self.widgets_dict[name].validate() else None
@@ -76,15 +77,15 @@ class PlusMinusTextboxFrame(Frame.Frame):
 
 class ColorTextboxFrame(Frame.Frame):
     def __init__(self, parent, name, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, "ColorTextboxFrame", row, column, **self.setDefaultKwargs(kwargs, {
+        Frame.Frame.__init__(self, parent, c.COLOR_TEXTBOX_FRAME, row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 2
         }))
-        button_command = lambda: self.chooseColor(self.widgets_dict["Textbox"])
+        button_command = lambda: self.chooseColor(self.widgets_dict[c.TEXTBOX])
         textbox_command = lambda color: self.widgets_dict[name].widget.configure(background=color)
         default_value = kwargs.get("default_value", "#eeeeee")
         self.addChildWidgets((
             Buttons.Button(self.widget, name, 0, 0, command=button_command),
-            Textbox(self.widget, "Textbox", 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7)
+            Textbox(self.widget, c.TEXTBOX, 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7)
         ))
 
     def chooseColor(self, textbox):
