@@ -51,33 +51,39 @@ class OptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, "OptionsFrame", row, column, **kwargs)
         windows = ("None", "Hanning", "Hamming", "Blackman", "Kaiser", "Bartlett")
-        disable_window = lambda: self.conditionalDisabling(
-            self.widgets_dict["Window"],
-            "Kaiser",
-            (
-                self.widgets_dict["Beta"],
-            )
-        )
-        disable_filter = lambda: self.conditionalDisabling(
-            self.widgets_dict["Filter"], 1, (
-                self.widgets_dict["From"],
-                self.widgets_dict["To"],
-                self.widgets_dict["Taps"]
-            )
-        )
         self.addChildWidgets((
             Checkbutton.Checkbutton(self.widget, "Normalise", 0, 0,                      columnspan=2),
             Checkbutton.Checkbutton(self.widget, "Detrend",   0, 2,                      columnspan=2),
-            Checkbutton.Checkbutton(self.widget, "Filter",    0, 4, command=disable_filter,      columnspan=2),
+            Checkbutton.Checkbutton(self.widget, "Filter",    0, 4, command=self.disableFilter,      columnspan=2),
             Textboxes.LabelTextbox (self.widget, "Step",      1, 0, command=int,    default_value=32),
             Textboxes.LabelTextbox (self.widget, "Length",    1, 2, command=int,    default_value=512),
             Textboxes.LabelTextbox (self.widget, "From",      3, 0, command=float, allow_zero=True, default_disability=True, default_disablers=["Filter"]),
             Textboxes.LabelTextbox (self.widget, "To",        3, 2, command=float, allow_zero=True, default_disability=True, default_disablers=["Filter"]),
             Textboxes.LabelTextbox (self.widget, "Taps",      3, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=["Filter"]),
             Textboxes.LabelTextbox (self.widget, "Beta",      4, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=["Window"]),
-            OptionMenu.OptionMenu  (self.widget, "Window",    4, 0, command=disable_window, values=windows),
+            OptionMenu.OptionMenu  (self.widget, "Window",    4, 0, command=self.disableWindow, values=windows),
             Textboxes.LabelTextbox (self.widget, "Break",     4, 4, command=int,   allow_zero=True)
         ))
+
+    def disableFilter(self):
+        self.conditionalDisabling(
+            self.widgets_dict["Filter"],
+            1,
+            (
+                self.widgets_dict["From"],
+                self.widgets_dict["To"],
+                self.widgets_dict["Taps"]
+            )
+        )
+
+    def disableWindow(self):
+        self.conditionalDisabling(
+            self.widgets_dict["Window"],
+            "Kaiser",
+            (
+                self.widgets_dict["Beta"],
+            )
+        )
 
 
 class ExtractionTabButtonFrame(Frame.Frame):

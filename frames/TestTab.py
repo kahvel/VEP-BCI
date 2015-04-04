@@ -10,13 +10,30 @@ class TestTab(Frame.Frame):
         Frame.Frame.__init__(self, parent, "Test", row, column, **kwargs)
         self.target_count = 0
         self.addChildWidgets((
-            Textboxes.LabelTextbox (self.widget, "Length",  0, 0, command=int, default_value=1),
-            Textboxes.LabelTextbox (self.widget, "Min",     0, 2, command=int, default_value=1),
-            Textboxes.LabelTextbox (self.widget, "Max",     0, 4, command=int, default_value=1),
-            Checkbutton.Checkbutton(self.widget, "Random",  1, 0, columnspan=2),
-            Checkbutton.Checkbutton(self.widget, "Standby", 1, 2, columnspan=2),
-            OptionMenu.OptionMenu  (self.widget, "Test target", 2, 0, columnspan=2, values=("None", "Random"))
+            Textboxes.LabelTextbox (self.widget, "Time",        0, 0, command=int, default_value=1),
+            Textboxes.LabelTextbox (self.widget, "Min",         0, 2, command=int, default_value=1, default_disability=True, default_disablers=["Test target"]),
+            Textboxes.LabelTextbox (self.widget, "Max",         0, 4, command=int, default_value=1, default_disability=True, default_disablers=["Test target"]),
+            Checkbutton.Checkbutton(self.widget, "Standby",     1, 2, columnspan=2),
+            OptionMenu.OptionMenu  (self.widget, "Test target", 1, 0, columnspan=2, values=("None", "Random"), command=self.disableRange),
+            Checkbutton.Checkbutton(self.widget, "Unlimited",   1, 4, columnspan=2, command=self.disableTime)
         ))
+
+    def disableTime(self):
+        self.conditionalDisabling(
+            self.widgets_dict["Unlimited"],
+            0,
+            (self.widgets_dict["Time"],)
+        )
+
+    def disableRange(self):
+        self.conditionalDisabling(
+            self.widgets_dict["Test target"],
+            "Random",
+            (
+                self.widgets_dict["Min"],
+                self.widgets_dict["Max"]
+            )
+        )
 
     def addOption(self, option):
         variable = self.widgets_dict["Test target"].variable

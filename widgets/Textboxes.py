@@ -31,7 +31,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
     def validate(self):
         if not self.disabled:
             try:
-                self.validateOther()
+                self.validationFunction()
                 self.widget.configure(background="#ffffff")
                 return True
             except Exception, e:
@@ -41,7 +41,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         else:
             return True
 
-    def validateOther(self):
+    def validationFunction(self):
         self.arg_command(self.widget.get())
 
 
@@ -53,7 +53,7 @@ class LabelTextbox(Textbox):
         label = Tkinter.Label(parent, text=self.name)
         label.grid(row=self.row, column=self.column-1, columnspan=self.columnspan, padx=self.padx, pady=self.pady)
 
-    def validateOther(self):
+    def validationFunction(self):
         if not self.allow_negative:
             assert float(self.widget.get()) >= 0
         if not self.allow_zero:
