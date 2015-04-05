@@ -2,13 +2,13 @@ __author__ = 'Anti'
 
 
 if __name__ == "__main__":
-    from main_window import MainWindow
-    MainWindow.MainWindow()
-
-
-def runPostOffice(connection):
     import PostOffice
-    PostOffice.PostOffice(connection)
+    PostOffice.PostOffice()
+
+
+def runMainWindow(connection):
+    from main_window import MainWindow
+    MainWindow.MainWindow(connection)
 
 
 def runPlotControl(connection, args):

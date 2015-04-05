@@ -3,17 +3,18 @@ __author__ = 'Anti'
 import multiprocessing.reduction
 import random
 import numpy as np
+import constants as c
+import Main
 
 
 class PostOffice(object):
-    def __init__(self, main_connection):
-        self.main_connection = main_connection
+    def __init__(self):
+        self.main_connection = SingleConnection(Main.runMainWindow)
         self.emotiv_connection = []
         self.psychopy_connection = []
         self.plot_connection = []
         self.extraction_connection = []
         self.game_connection = []
-        self.method_names = ["CCA", "PSDA", "CCAPSDA", "shortCCAPSDA"]
         self.results = None
         self.resetResults()
         self.target_freqs = None
@@ -30,8 +31,8 @@ class PostOffice(object):
 
     def waitConnections(self):
         while True:
-            if self.main_connection.poll(0.1):
-                message = self.main_connection.recv()
+            message = self.main_connection.receiveMessagePoll(0.1)
+            if message is not None:
                 if message == "Add emotiv":
                     self.addConnection(self.emotiv_connection, "emotiv")
                 elif message == "Add psychopy":
@@ -42,16 +43,16 @@ class PostOffice(object):
                     self.addConnection(self.extraction_connection, "extraction")
                 elif message == "Add game":
                     self.addConnection(self.game_connection, "game")
-                elif message == "Start":
+                elif message == c.START_MESSAGE:
                     self.start()
                 elif message == "Threshold":
                     self.calculateThreshold()
-                elif message == "Exit":
-                    self.sendMessage(self.emotiv_connection, "Exit")
-                    self.sendMessage(self.psychopy_connection, "Exit")
-                    self.sendMessage(self.plot_connection, "Exit")
-                    self.sendMessage(self.extraction_connection, "Exit")
-                    self.sendMessage(self.game_connection, "Exit")
+                elif message == c.EXIT_MESSAGE:
+                    self.sendMessage(self.emotiv_connection, c.EXIT_MESSAGE)
+                    self.sendMessage(self.psychopy_connection, c.EXIT_MESSAGE)
+                    self.sendMessage(self.plot_connection, c.EXIT_MESSAGE)
+                    self.sendMessage(self.extraction_connection, c.EXIT_MESSAGE)
+                    self.sendMessage(self.game_connection, c.EXIT_MESSAGE)
                     while True:  # wait until all connections are closed
                         self.getMessages(self.psychopy_connection, "Psychopy")
                         self.getMessages(self.plot_connection, "Plot")
@@ -77,9 +78,6 @@ class PostOffice(object):
                     self.printResults()
                 else:
                     print "Unknown message:", message
-
-    def resetResults(self):
-        self.results = {name: {} for name in self.method_names}
 
     def calculateThreshold(self):
         self.target_freqs = self.main_connection.recv()
@@ -207,11 +205,14 @@ class PostOffice(object):
         else:
             return self.normalSequence(options)
 
+    def resetResults(self):
+        self.results = {name: {} for name in c.EXTRACTION_METHOD_NAMES}
+
     def setupResults(self):
         for key in self.results:
             if str(self.target_freqs) not in self.results[key]:
                 self.results[key][str(self.target_freqs)] = \
-                    {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(-1, len(self.target_freqs))}
+                    {i: {freq2: 0 for freq2 in self.target_freqs} for i in range(len(self.target_freqs))}
 
     def printResults(self):
         for method in self.results:
@@ -238,29 +239,40 @@ class PostOffice(object):
         return message
 
     def sendStartMessages(self, background_data, targets_data):
-        self.sendMessage(self.psychopy_connection, "Start")
-        self.sendMessage(self.plot_connection, "Start")
-        self.sendMessage(self.extraction_connection, "Start")
-        self.sendMessage(self.game_connection, "Start")
-        self.sendMessage(self.psychopy_connection, background_data)
-        self.sendMessage(self.psychopy_connection, targets_data)
+        self.sendMessage(self.psychopy_connection,   c.START_MESSAGE)
+        self.sendMessage(self.plot_connection,       c.START_MESSAGE)
+        self.sendMessage(self.extraction_connection, c.START_MESSAGE)
+        self.sendMessage(self.game_connection,       c.START_MESSAGE)
+        self.sendMessage(self.psychopy_connection,   background_data)
+        self.sendMessage(self.psychopy_connection,   targets_data)
         self.sendMessage(self.extraction_connection, self.target_freqs)
-        self.sendMessage(self.game_connection, self.target_freqs)
-        self.sendMessage(self.emotiv_connection, "Start")
+        self.sendMessage(self.game_connection,       self.target_freqs)
+        self.sendMessage(self.emotiv_connection,     c.START_MESSAGE)
 
     def sendStopMessages(self):
-        self.sendMessage(self.emotiv_connection, "Stop")
-        self.sendMessage(self.psychopy_connection, "Stop")
-        self.sendMessage(self.plot_connection, "Stop")
-        self.sendMessage(self.extraction_connection, "Stop")
-        self.sendMessage(self.game_connection, "Stop")
+        self.sendMessage(self.emotiv_connection,     c.STOP_MESSAGE)
+        self.sendMessage(self.psychopy_connection,   c.STOP_MESSAGE)
+        self.sendMessage(self.plot_connection,       c.STOP_MESSAGE)
+        self.sendMessage(self.extraction_connection, c.STOP_MESSAGE)
+        self.sendMessage(self.game_connection,       c.STOP_MESSAGE)
+
+    # def newProcess(self, func, *args):
+    #     new_to_post_office, post_office_to_new = multiprocessing.Pipe()
+    #     multiprocessing.Process(target=func, args=(new_to_post_office, args)).start()
+    #
+    #
+    # def setupExtraction(self, options):
+    #     for tab in options:
+
 
     def start(self):
-        options = self.main_connection.recv()
+        options = self.main_connection.receiveMessageBlock()
         print(options)
-        self.current_target, background_data, targets_data, self.target_freqs = self.main_connection.recv()
-        self.current_target -= 1
-        self.sendStartMessages(background_data, targets_data)
+        self.current_target = options[c.DATA_TEST][c.TEST_TARGET]
+        self.target_freqs = options[c.DATA_FREQS]
+        # self.setupExtraction(options[c.DATA_EXTRACTION])
+
+        self.sendStartMessages(options[c.DATA_BACKGROUND], options[c.DATA_TARGETS])
         self.setupResults()
         message = self.mainSendingLoop(options)
         self.sendStopMessages()
@@ -286,11 +298,67 @@ class PostOffice(object):
         self.standby_freq = self.target_freqs[-1]
         self.sendStandbyMessage(no_standby)
         while count < length:
-            if self.main_connection.poll():
-                return self.main_connection.recv()
+            main_message = self.main_connection.receiveMessageInstant()
+            if main_message is not None:
+                return main_message
             count += self.handleEmotivMessages(no_standby)
             self.getMessages(self.plot_connection, "Plot")
             self.handleFreqMessages(self.getMessages(self.extraction_connection, "Extraction"), no_standby)
         # Wait for the last result
         self.handleFreqMessages(self.getMessages(self.extraction_connection, "Extraction", poll=lambda x: x.poll(True)),
                                 no_standby)
+
+
+class AbstractConnection(object):
+    def __init__(self, function):
+        self.func = function
+
+    def newProcess(self, *args):
+        from_process, to_process = multiprocessing.Pipe()
+        multiprocessing.Process(target=self.func, args=(from_process,)).start()
+        return to_process
+
+    def sendMessage(self, message):
+        raise NotImplementedError("sendMessage not implemented!")
+
+    def sendStartMessage(self):
+        self.sendMessage(c.START_MESSAGE)
+
+    def sendStopMessage(self):
+        self.sendMessage(c.STOP_MESSAGE)
+
+
+class SingleConnection(AbstractConnection):
+    def __init__(self, function, *args):
+        AbstractConnection.__init__(self, function)
+        self.connection = self.newProcess(args)
+
+    def sendMessage(self, message):
+        self.connection.send(message)
+
+    def receiveMessageInstant(self):
+        if self.connection.poll():  # If no timeout, returns immediately. If None, timeout is infinite.
+            return self.connection.recv()
+
+    def receiveMessagePoll(self, timeout):
+        if self.connection.poll(timeout):
+            return self.connection.recv()
+
+    def receiveMessageBlock(self):
+        if self.connection.poll(None):
+            return self.connection.recv()
+        else:
+            print("Warning! Infinite poll returned False.")
+
+
+class MultipleConnections(AbstractConnection):
+    def __init__(self, function):
+        AbstractConnection.__init__(self, function)
+        self.connections = []
+
+    def sendMessage(self, message):
+        for connection in self.connections:
+            connection.send(message)
+
+    def addProcess(self, *args):
+        self.connections.append(self.newProcess(args))

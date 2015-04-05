@@ -10,9 +10,8 @@ import constants as c
 
 
 class MainWindow(MyWindows.TkWindow):
-    def __init__(self):
+    def __init__(self, connection):
         MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
-        default_file_name = "default.txt"
         self.start_button = None
 
         self.main_frame = MainFrame.MainFrame(self,
@@ -36,15 +35,17 @@ class MainWindow(MyWindows.TkWindow):
             #     self.addE
             # )
         )
-        self.loadValues(default_file_name)
+        self.loadValues(c.DEFAULT_FILE)
 
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
 
-        self.connection, post_office_to_main = multiprocessing.Pipe()
-        multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
-        self.lock = multiprocessing.Lock()
-        self.newProcess(Main.runEmotiv, "Add emotiv", self.lock)
+        # self.connection, post_office_to_main = multiprocessing.Pipe()
+        # multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
+        # self.lock = multiprocessing.Lock()
+        # self.newProcess(Main.runEmotiv, "Add emotiv", self.lock)
+        self.connection = connection
+
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -69,7 +70,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def exit(self):
         print("Exiting main window")
-        self.connection.send("Exit")
+        self.connection.send(c.EXIT_MESSAGE)
         self.destroy()
 
     def addExtraction(self):
@@ -86,7 +87,7 @@ class MainWindow(MyWindows.TkWindow):
     def getFrequencies(self, enabled_targets):
         frequencies = []
         for i in range(len(enabled_targets)):
-            frequencies.append(float(enabled_targets[i]["Freq"]))
+            frequencies.append(float(enabled_targets[i][c.DATA_FREQ]))
         return frequencies
 
     def disabled(self, data):
@@ -100,7 +101,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def filterColoredData(self, data, filter):
         result = self.filterData(data, filter+(c.COLOR_TEXTBOX_FRAME,))
-        result["Color"] = self.getColor(data)
+        result[c.DATA_COLOR] = self.getColor(data)
         return result
 
     def getPlusMinusValue(self, data):
@@ -108,7 +109,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def filterTargetData(self, target_data, key):
         result = self.filterColoredData(target_data[key], (c.PLUS_MINUS_TEXTOX_FRAME,))
-        result["Freq"] = self.getPlusMinusValue(target_data[key])
+        result[c.DATA_FREQ] = self.getPlusMinusValue(target_data[key])
         return result
 
     def getTargetData(self, data):
@@ -122,9 +123,9 @@ class MainWindow(MyWindows.TkWindow):
 
     def getOptions(self, data, key):
         return {
-            "Sensors": self.getEnabledData(data[c.SENSORS_FRAME]),
-            "Options": self.filterData(data[c.OPTIONS_FRAME], (c.OPTIONS_WINDOW,)),
-            "Methods": self.getEnabledData(data[key])
+            c.DATA_SENSORS: self.getEnabledData(data[c.SENSORS_FRAME]),
+            c.DATA_OPTIONS: self.filterData(data[c.OPTIONS_FRAME], (c.OPTIONS_WINDOW,)),
+            c.DATA_METHODS: self.getEnabledData(data[key])
         }
 
     def getPlotData(self, data):
@@ -136,12 +137,12 @@ class MainWindow(MyWindows.TkWindow):
     def getData(self, all_data):
         target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
         return {
-            "Background": self.getBackgroundData(all_data[c.WINDOW_TAB]),
-            "Targets": target_data,
-            "Freqs": self.getFrequencies(target_data),
-            "Plots": self.getPlotData(all_data[c.PLOT_NOTEBOOK]),
-            "Extraction": self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
-            "Test": self.getTestData(all_data[c.TEST_TAB])
+            c.DATA_BACKGROUND: self.getBackgroundData(all_data[c.WINDOW_TAB]),
+            c.DATA_TARGETS: target_data,
+            c.DATA_FREQS: self.getFrequencies(target_data),
+            c.DATA_PLOTS: self.getPlotData(all_data[c.PLOT_NOTEBOOK]),
+            c.DATA_EXTRACTION: self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
+            c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB])
         }
 
     def getTestData(self, data):
@@ -153,12 +154,12 @@ class MainWindow(MyWindows.TkWindow):
             print(not_validated)
         else:
             self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.STOP_BUTTON, command=self.stop)
-            self.connection.send("Start")
+            self.connection.send(c.START_MESSAGE)
             self.connection.send(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
 
     def stop(self):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.START_BUTTON, command=self.start)
-        self.connection.send("Stop")
+        self.connection.send(c.STOP_MESSAGE)
 
     def newProcess(self, func, message, *args):
         new_to_post_office, post_office_to_new = multiprocessing.Pipe()
