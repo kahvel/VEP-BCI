@@ -96,8 +96,19 @@ class MainWindow(MyWindows.TkWindow):
     def getColor(self, data):
         return data[c.COLOR_TEXTBOX_FRAME][c.TEXTBOX]
 
-    def filterData(self, data, filter):
-        return {key: float(data[key]) for key in data if key not in filter}
+    def filterData(self, data, filter=tuple()):
+        result = {}
+        for key in data:
+            if key not in filter:
+                try:
+                    result[key] = int(data[key])
+                except ValueError:
+                    try:
+                        result[key] = float(data[key])
+                    except ValueError:
+                        result[key] = data[key]
+        return result
+        #return {key: float(data[key]) for key in data if key not in filter}
 
     def filterColoredData(self, data, filter):
         result = self.filterData(data, filter+(c.COLOR_TEXTBOX_FRAME,))
@@ -105,7 +116,7 @@ class MainWindow(MyWindows.TkWindow):
         return result
 
     def getPlusMinusValue(self, data):
-        return data[c.PLUS_MINUS_TEXTOX_FRAME][c.TARGET_FREQ]
+        return float(data[c.PLUS_MINUS_TEXTOX_FRAME][c.TARGET_FREQ])
 
     def filterTargetData(self, target_data, key):
         result = self.filterColoredData(target_data[key], (c.PLUS_MINUS_TEXTOX_FRAME,))
@@ -124,7 +135,7 @@ class MainWindow(MyWindows.TkWindow):
     def getOptions(self, data, key):
         return {
             c.DATA_SENSORS: self.getEnabledData(data[c.SENSORS_FRAME]),
-            c.DATA_OPTIONS: self.filterData(data[c.OPTIONS_FRAME], (c.OPTIONS_WINDOW,)),
+            c.DATA_OPTIONS: self.filterData(data[c.OPTIONS_FRAME]),
             c.DATA_METHODS: self.getEnabledData(data[key])
         }
 
@@ -146,7 +157,7 @@ class MainWindow(MyWindows.TkWindow):
         }
 
     def getTestData(self, data):
-        return self.filterData(data, (c.TEST_TARGET,))
+        return self.filterData(data)
 
     def start(self):
         not_validated = self.main_frame.getNotValidated()

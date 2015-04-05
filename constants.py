@@ -140,6 +140,7 @@ SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F
 START_MESSAGE = "Start"
 STOP_MESSAGE = "Stop"
 EXIT_MESSAGE = "Exit"
+CLOSE_MESSAGE = "Close"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"
@@ -159,3 +160,9 @@ DATA_FREQ = "Freq"
 DATA_COLOR = "Color"
 
 EXTRACTION_METHOD_NAMES = ("CCA", "PSDA", "CCAPSDA", "shortCCAPSDA") # Why is it missing one?
+
+CONNECTION_EMOTIV = "Emotiv"
+CONNECTION_PSYCHOPY = "Psychopy"
+CONNECTION_GAME = "Game"
+CONNECTION_PLOT = "Plot"
+CONNECTION_EXTRACTION = "Extraction"

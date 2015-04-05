@@ -11,26 +11,26 @@ def runMainWindow(connection):
     MainWindow.MainWindow(connection)
 
 
-def runPlotControl(connection, args):
+def runPlotControl(connection):
     from control_windows import PlotControlWindow
-    PlotControlWindow.Window(connection, args)
+    PlotControlWindow.Window(connection)
 
 
-def runEmotiv(connection, args):
+def runEmotiv(connection):
     import MyEmotiv
-    MyEmotiv.myEmotiv(connection, args)
+    MyEmotiv.myEmotiv(connection)
 
 
-def runPsychopy(connection, args):
+def runPsychopy(connection):
     import TargetsWindow
-    TargetsWindow.TargetsWindow(connection, args)
+    TargetsWindow.TargetsWindow(connection)
 
 
-def runExtractionControl(connection, args):
+def runExtractionControl(connection):
     from control_windows import ExtractionControlWindow
-    ExtractionControlWindow.Window(connection, args)
+    ExtractionControlWindow.Window(connection)
 
 
-def runGame(connection, args):
+def runGame(connection):
     import Game
     Game.Game(connection)

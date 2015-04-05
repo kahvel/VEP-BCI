@@ -6,9 +6,9 @@ from Crypto import Random
 
 
 class myEmotiv(emokit.emotiv.Emotiv):
-    def __init__(self, connection, args):
-        self.lock = args[0]
-        self.lock.acquire()
+    def __init__(self, connection):
+        # self.lock = args[0]
+        # self.lock.acquire()
         self.connection = connection
         self.devices = []
         self.serialNum = None
@@ -24,7 +24,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
             if message == "Start":
                 print "Starting emotiv"
                 message = self.run()
-                self.lock.acquire()
+                # self.lock.acquire()
                 self.cleanUp()
                 if message == "Stop":
                     print "Emotiv stopped"
@@ -130,7 +130,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         #     return "Stop"
 
         # Mainloop
-        self.lock.release()  # synchronising with psychopy
+        # self.lock.release()  # synchronising with psychopy
         while True:
             try:
                 task = self.packets.get(True, 0.01)

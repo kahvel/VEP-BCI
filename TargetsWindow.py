@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
 from psychopy import visual, core, logging, event
+import constants as c
 
 # To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
 
@@ -39,17 +40,16 @@ class Target(object):
 
 
 class TargetsWindow(object):
-    def __init__(self, connection, args):
+    def __init__(self, connection):
         logging.console.setLevel(logging.WARNING)
         self.connection = connection
+        """ @type : Connection """
         self.targets = None
         self.generators = None
-        background_data = args[0]
-        self.lock = args[1]
-        self.window = visual.Window([int(background_data["Width"]),
-                                     int(background_data["Height"])],
-                                    units="pix", color=background_data["Color"])
-        self.monitor_frequency = background_data["Freq"]
+        # background_data = args[0]
+        # self.lock = args[1]
+        self.window = None
+        self.monitor_frequency = None
         self.MyMainloop()
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
@@ -57,7 +57,7 @@ class TargetsWindow(object):
 
     def recvPacket(self):
         while True:
-            self.window.flip()
+            self.updateWindow()
             if self.connection.poll():
                 message = self.connection.recv()
                 return message
@@ -67,26 +67,42 @@ class TargetsWindow(object):
     def MyMainloop(self):
         while True:
             message = self.recvPacket()
-            if message == "Start":
-                print "Starting targets"
-                self.setFreq(self.connection.recv())
+            if message == c.START_MESSAGE:
+                print("Starting targets")
+                self.setBackground(self.connection.recv())
                 self.setTargets(self.connection.recv())
-                self.lock.acquire()
-                message = self.run()
-                self.lock.release()
-            if message == "Stop":
-                print "Targets stopped"
-            if message == "Exit":
-                print "Exiting targets"
+                standby = self.connection.recv()
+                # self.lock.acquire()
+                message = self.run(standby)
+                # self.lock.release()
+            if message == c.STOP_MESSAGE:
+                print("Targets stopped")
+            if message == c.EXIT_MESSAGE:
+                print("Exiting targets")
                 break
-        self.connection.send("Close")
+        self.connection.send(c.CLOSE_MESSAGE)
         self.connection.close()
         self.window.close()
 
-    def setFreq(self, background_data):
+    def updateWindow(self):
+        if self.window is not None:
+            self.window.flip()
+
+    def setBackground(self, background_data):
+        self.window = visual.Window(
+            [
+                background_data[c.WINDOW_WIDTH],
+                background_data[c.WINDOW_HEIGHT]
+            ],
+            units="pix",
+            color=background_data[c.WINDOW_COLOR]
+        )
+        self.monitor_frequency = background_data[c.WINDOW_FREQ]
+
+    def setFreq(self, background_data):  # NOT USING THIS
         # self.window.size = (int(background_data["Width"]), int(background_data["Height"]))
         # self.window.color = background_data["Color"]
-        self.monitor_frequency = background_data["Freq"]
+        self.monitor_frequency = background_data[c.WINDOW_FREQ]
 
     def setTargets(self, targets):
         self.targets = []
@@ -97,9 +113,8 @@ class TargetsWindow(object):
             self.generators[-1].send(None)
         self.targets[-1].standby_target = True
 
-    def run(self):
+    def run(self, standby):
         prev_rect = self.targets[0].current_rect
-        standby = True
         while True:
             if self.connection.poll():
                 message = self.connection.recv()
