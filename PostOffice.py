@@ -21,6 +21,10 @@ class PostOffice(object):
         """
         @type : dict[str, AbstractConnection]
         """
+        self.connection_options_key = {
+            c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
+            c.CONNECTION_PLOT: c.DATA_PLOTS,
+        }
         self.results = None
         self.resetResults()
         self.standby = None
@@ -206,6 +210,8 @@ class PostOffice(object):
     def getSequence(self, options):
         if options[c.TEST_TARGET] == c.TEST_RANDOM:
             return self.randomSequence(options[c.TEST_TIME], options[c.TEST_MIN], options[c.TEST_MAX], options[c.DATA_FREQS])
+        elif c.TEST_UNLIMITED:
+            return self.normalSequence(options[c.TEST_TARGET], float("inf"))
         else:
             return self.normalSequence(options[c.TEST_TARGET], options[c.TEST_TIME])
 
@@ -236,7 +242,7 @@ class PostOffice(object):
                 break
         return message
 
-    def sendStartMessages(self, background_data, targets_data):
+    def sendStartMessages(self):
         for key in self.connections:
             self.connections[key].sendStartMessage()
 
@@ -244,16 +250,27 @@ class PostOffice(object):
         for key in self.connections:
             self.connections[key].sendStopMessage()
 
-    def setup(self, options):
+    def addConnections(self, options):
         for key in self.connections:
-            self.connections[key].setup(options)
+            self.connections[key].addConnections(self.getConnectionCount(key, options))
+
+    def getConnectionCount(self, key, options):
+        if key in self.connection_options_key:
+            return len(options[self.connection_options_key[key]])
+        else:
+            return 1
+
+    def sendOptions(self, options):
+        for key in self.connections:
+            self.connections[key].sendOptions(options)
 
     def start(self):
         options = self.main_connection.receiveMessageBlock()
         print(options)
-        self.setup(options)
+        self.addConnections(options)
+        self.sendStartMessages()
+        self.sendOptions(options)
         self.setupResults(options[c.DATA_FREQS])
-        self.sendStartMessages(options[c.DATA_BACKGROUND], options[c.DATA_TARGETS])
         message = self.mainSendingLoop(
             self.getSequence(options[c.DATA_TEST]),
             options[c.DATA_FREQS],
@@ -264,9 +281,9 @@ class PostOffice(object):
         return message
 
     def handleEmotivMessages(self, no_standby):
-        message = self.connections[c.CONNECTION_EMOTIV].receiveMessageInstant()
+        message = self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.007)
         if message is not None:
-            self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
+            # self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
             self.connections[c.CONNECTION_PLOT].sendMessage(message)
             if not self.standby or no_standby:
                 return 1
@@ -281,7 +298,7 @@ class PostOffice(object):
             if main_message is not None:
                 return main_message
             count += self.handleEmotivMessages(no_standby)
-            self.connections[c.CONNECTION_PLOT].getMessageInstant()
+            # self.connections[c.CONNECTION_PLOT].getMessageInstant()
             self.handleFreqMessages(
                 self.connections[c.CONNECTION_EXTRACTION].getMessageInstant(),
                 no_standby,

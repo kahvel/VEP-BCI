@@ -11,12 +11,12 @@ class TestTab(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.target_count = 0
         self.addChildWidgets((
-            Textboxes.LabelTextbox (self.widget, c.TEST_TIME,      0, 0, command=int, default_value=1),
+            Textboxes.LabelTextbox (self.widget, c.TEST_TIME,      0, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
             Textboxes.LabelTextbox (self.widget, c.TEST_MIN,       0, 2, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET]),
             Textboxes.LabelTextbox (self.widget, c.TEST_MAX,       0, 4, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET]),
             Checkbutton.Checkbutton(self.widget, c.TEST_STANDBY,   1, 2, columnspan=2),
             OptionMenu.OptionMenu  (self.widget, c.TEST_TARGET,    1, 0, columnspan=2, values=(c.TEST_NONE, c.TEST_RANDOM), command=self.disableRange),
-            Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 1, 4, columnspan=2, command=self.disableTime)
+            Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 1, 4, columnspan=2, command=self.disableTime, default_value=1)
         ))
 
     def disableTime(self):

@@ -12,8 +12,10 @@ def runMainWindow(connection):
 
 
 def runPlotControl(connection):
-    from control_windows import PlotControlWindow
-    PlotControlWindow.Window(connection)
+    # from control_windows import PlotControlWindow
+    # PlotControlWindow.Window(connection)
+    import Plot
+    Plot.Plot(connection)
 
 
 def runEmotiv(connection):
@@ -22,15 +24,16 @@ def runEmotiv(connection):
 
 
 def runPsychopy(connection):
-    import TargetsWindow
-    TargetsWindow.TargetsWindow(connection)
-
+    # import TargetsWindow
+    # TargetsWindow.TargetsWindow(connection)
+    pass
 
 def runExtractionControl(connection):
-    from control_windows import ExtractionControlWindow
-    ExtractionControlWindow.Window(connection)
-
+    # from control_windows import ExtractionControlWindow
+    # ExtractionControlWindow.Window(connection)
+    pass
 
 def runGame(connection):
-    import Game
-    Game.Game(connection)
+    # import Game
+    # Game.Game(connection)
+    pass

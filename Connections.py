@@ -25,11 +25,11 @@ class AbstractConnection(object):
     def sendOptions(self, options):
         pass
 
-    def setup(self, options):
-        raise NotImplementedError("setup not implemented!")
+    def addConnections(self, n):
+        raise NotImplementedError("addConnections not implemented!")
 
     def getMessage(self, function):
-        raise NotImplementedError("setup not implemented!")
+        raise NotImplementedError("getMessage not implemented!")
 
 
 class SingleConnection(AbstractConnection):
@@ -54,10 +54,9 @@ class SingleConnection(AbstractConnection):
         else:
             print("Warning! Infinite poll returned False.")
 
-    def setup(self, options):
+    def addConnections(self, n):
         if self.connection is None:
             self.connection = self.newProcess()
-        self.sendOptions(options)
 
     def getMessageInstant(self):
         return self.getMessage(self.receiveMessageInstant)
@@ -88,10 +87,9 @@ class MultipleConnections(AbstractConnection):
     def addProcess(self):
         self.connections.append(SingleConnection(self.func, make_process=True))
 
-    def setup(self, options):
-        while len(self.connections) < len(options[self.options_key]):
+    def addConnections(self, n):
+        while len(self.connections) < n:
             self.addProcess()
-        self.sendOptions(options)
 
     def getMessageInstant(self):
         return self.getMessage(lambda x: x.getMessageInstant())
@@ -116,7 +114,7 @@ class PsychopyConnection(SingleConnection):
 
     def sendOptions(self, options):
         self.connection.send(options[c.DATA_BACKGROUND])
-        self.connection.send(options[c.DATA_FREQS])
+        self.connection.send(options[c.DATA_TARGETS])
         self.connection.send(options[c.DATA_TEST][c.TEST_STANDBY])
 
     def sendCurrentTarget(self, target):
@@ -127,7 +125,6 @@ class PsychopyConnection(SingleConnection):
 class ExtractionConnection(MultipleConnections):
     def __init__(self, function):
         MultipleConnections.__init__(self, function)
-        self.options_key = c.DATA_EXTRACTION
 
     def sendOptions(self, options):
         for i, message in enumerate(options[c.DATA_EXTRACTION]):
@@ -138,7 +135,6 @@ class ExtractionConnection(MultipleConnections):
 class PlotConnection(MultipleConnections):
     def __init__(self, function):
         MultipleConnections.__init__(self, function)
-        self.options_key = c.DATA_PLOTS
 
     def sendOptions(self, options):
         for i, message in enumerate(options[c.DATA_PLOTS]):

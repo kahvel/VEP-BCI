@@ -9,25 +9,42 @@ import constants as c
 class Target(object):
     def __init__(self, target, window, monitor_frequency):
         self.standby_target = False
-        self.color = target["Color1"]
-        self.rect = visual.Rect(window, width=int(target["Width"]), height=int(target["Height"]),
-                                pos=(int(target["x"]), int(target["y"])), autoLog=False, fillColor=self.color)
+        self.color = target[c.DATA_COLOR]
+        self.rect = visual.Rect(
+            window,
+            width=target[c.TARGET_WIDTH],
+            height=target[c.TARGET_HEIGHT],
+            pos=(target[c.TARGET_X], target[c.TARGET_Y]),
+            autoLog=False,
+            fillColor=self.color
+        )
         # self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
         # self.fixation.setAutoDraw(True)
-        self.detected_rect = visual.Rect(window, width=10, height=10, fillColor="#00ff00",
-                                         pos=(int(target["x"]), int(target["y"])+int(target["Width"])+20))
-        self.current_rect = visual.Rect(window, width=10, height=10, fillColor="#00ff00",
-                                        pos=(int(target["x"]), int(target["y"])-int(target["Height"])+20))
-        self.freq = float(target["Freq"])
+        self.detected_rect = visual.Rect(
+            window,
+            width=10,
+            height=10,
+            fillColor="#00ff00",
+            pos=(target[c.TARGET_X], target[c.TARGET_Y]+target[c.TARGET_WIDTH]+20)
+        )
+        self.current_rect = visual.Rect(
+            window,
+            width=10,
+            height=10,
+            fillColor="#00ff00",
+            pos=(target["x"], target["y"]-target["Height"]+20)
+        )
+        self.freq = float(target[c.DATA_FREQ])
         self.sequence = "01"
         monitor_frequency = int(monitor_frequency)
         self.freq_on = int(monitor_frequency/self.freq//2)
         self.freq_off = int(monitor_frequency/self.freq/2.0+0.5)
-        print "Frequency: " + str(float(monitor_frequency)/(self.freq_off+self.freq_on)), self.freq_on, self.freq_off
+        print("Frequency: " + str(float(monitor_frequency)/(self.freq_off+self.freq_on)), str(self.freq_on), self.freq_off)
 
     def generator(self):
         while True:
             for c in self.sequence:
+                print(c)
                 if c == "1":
                     for _ in range(self.freq_on):
                         standby = yield
@@ -46,7 +63,6 @@ class TargetsWindow(object):
         """ @type : Connection """
         self.targets = None
         self.generators = None
-        # background_data = args[0]
         # self.lock = args[1]
         self.window = None
         self.monitor_frequency = None
@@ -61,14 +77,13 @@ class TargetsWindow(object):
             if self.connection.poll():
                 message = self.connection.recv()
                 return message
-            if len(event.getKeys()) > 0:
-                return "Exit"
 
     def MyMainloop(self):
         while True:
             message = self.recvPacket()
             if message == c.START_MESSAGE:
                 print("Starting targets")
+                self.closeWindow()
                 self.setBackground(self.connection.recv())
                 self.setTargets(self.connection.recv())
                 standby = self.connection.recv()
@@ -82,7 +97,12 @@ class TargetsWindow(object):
                 break
         self.connection.send(c.CLOSE_MESSAGE)
         self.connection.close()
-        self.window.close()
+        self.closeWindow()
+        core.quit()
+
+    def closeWindow(self):
+        if self.window is not None:
+            self.window.close()
 
     def updateWindow(self):
         if self.window is not None:
@@ -136,6 +156,3 @@ class TargetsWindow(object):
             for i in range(len(self.targets)):
                 self.generators[i].send(standby)
             self.window.flip()
-            if len(event.getKeys()) > 0:
-                return "Exit"
-            event.clearEvents()
