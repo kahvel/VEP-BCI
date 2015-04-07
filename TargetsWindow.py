@@ -60,43 +60,27 @@ class TargetsWindow(object):
     def __init__(self, connection):
         logging.console.setLevel(logging.WARNING)
         self.connection = connection
-        """ @type : Connection """
+        """ @type : ConnectionProcessEnd.PsychopyConnection """
         self.targets = None
         self.generators = None
         # self.lock = args[1]
         self.window = None
         self.monitor_frequency = None
-        self.MyMainloop()
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
         #self.window.setRecordFrameIntervals(True)
+        self.connection.waitMessages(self.start, lambda: None, self.updateWindow)
 
-    def recvPacket(self):
-        while True:
-            self.updateWindow()
-            if self.connection.poll():
-                message = self.connection.recv()
-                return message
+    def start(self):
+        background_data, targets_data, standby = self.connection.receiveOptions()
+        self.setBackground(background_data)
+        self.setTargets(targets_data)
+        # self.lock.acquire()
+        message = self.run(standby)
+        # self.lock.release()
 
-    def MyMainloop(self):
-        while True:
-            message = self.recvPacket()
-            if message == c.START_MESSAGE:
-                print("Starting targets")
-                self.closeWindow()
-                self.setBackground(self.connection.recv())
-                self.setTargets(self.connection.recv())
-                standby = self.connection.recv()
-                # self.lock.acquire()
-                message = self.run(standby)
-                # self.lock.release()
-            if message == c.STOP_MESSAGE:
-                print("Targets stopped")
-            if message == c.EXIT_MESSAGE:
-                print("Exiting targets")
-                break
-        self.connection.send(c.CLOSE_MESSAGE)
-        self.connection.close()
+    def exit(self):
+        self.connection.closeConnection()
         self.closeWindow()
         core.quit()
 
@@ -109,6 +93,7 @@ class TargetsWindow(object):
             self.window.flip()
 
     def setBackground(self, background_data):
+        self.closeWindow()
         self.window = visual.Window(
             [
                 background_data[c.WINDOW_WIDTH],
@@ -136,8 +121,10 @@ class TargetsWindow(object):
     def run(self, standby):
         prev_rect = self.targets[0].current_rect
         while True:
-            if self.connection.poll():
-                message = self.connection.recv()
+            self.updateWindow()
+            message = self.connection.receiveMessageInstant()
+            print("Psychopy received: " + str(message))
+            if message is not None:
                 if isinstance(message, bool):
                     standby = message
                     continue
@@ -155,4 +142,3 @@ class TargetsWindow(object):
                         break
             for i in range(len(self.targets)):
                 self.generators[i].send(standby)
-            self.window.flip()

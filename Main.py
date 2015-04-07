@@ -24,14 +24,15 @@ def runEmotiv(connection):
 
 
 def runPsychopy(connection):
-    # import TargetsWindow
-    # TargetsWindow.TargetsWindow(connection)
-    pass
+    import TargetsWindow
+    TargetsWindow.TargetsWindow(connection)
+
 
 def runExtractionControl(connection):
     # from control_windows import ExtractionControlWindow
     # ExtractionControlWindow.Window(connection)
     pass
+
 
 def runGame(connection):
     # import Game

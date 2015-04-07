@@ -4,22 +4,21 @@ import multiprocessing.reduction
 import random
 import numpy as np
 import constants as c
-import Main
-import Connections
+from connections import ConnectionPostOfficeEnd
 
 
 class PostOffice(object):
     def __init__(self):
-        self.main_connection = Connections.MainConnection(Main.runMainWindow)
+        self.main_connection = ConnectionPostOfficeEnd.MainConnection()
         self.connections = {
-                c.CONNECTION_EMOTIV:     Connections.EmotivConnection(Main.runEmotiv),
-                c.CONNECTION_PSYCHOPY:   Connections.PsychopyConnection(Main.runPsychopy),
-                c.CONNECTION_EXTRACTION: Connections.ExtractionConnection(Main.runExtractionControl),
-                c.CONNECTION_PLOT:       Connections.PlotConnection(Main.runPlotControl),
-                c.CONNECTION_GAME:       Connections.GameConnection(Main.runGame)
+            c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
+            c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
+            c.CONNECTION_EXTRACTION: ConnectionPostOfficeEnd.MultipleExtractionConnections(),
+            c.CONNECTION_PLOT:       ConnectionPostOfficeEnd.MultiplePlotConnections(),
+            c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
         """
-        @type : dict[str, AbstractConnection]
+        @type : dict[str, ConnectionPostOfficeEnd.Connection | ConnectionPostOfficeEnd.MultipleConnections]
         """
         self.connection_options_key = {
             c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
@@ -171,15 +170,16 @@ class PostOffice(object):
 
     def handleFreqMessages(self, messages, no_standby, target_freqs, current_target):
         for result in messages:
-            for freq, class_name in result:
-                self.results[class_name][str(target_freqs)][current_target][freq] += 1
-                if freq == self.standby_freq:
-                    self.sendMessage(self.psychopy_connection, self.standby and not no_standby)
-                    self.standby = not self.standby
-                if not self.standby or no_standby:
-                    if not "short" in class_name:
-                        self.sendMessage(self.psychopy_connection, freq)
-                        self.sendMessage(self.game_connection, freq)
+            if result is not None:
+                for freq, class_name in result:
+                    self.results[class_name][str(target_freqs)][current_target][freq] += 1
+                    if freq == self.standby_freq:
+                        self.sendMessage(self.psychopy_connection, self.standby and not no_standby)
+                        self.standby = not self.standby
+                    if not self.standby or no_standby:
+                        if not "short" in class_name:
+                            self.sendMessage(self.psychopy_connection, freq)
+                            self.sendMessage(self.game_connection, freq)
 
     def sendMessage(self, connections, message):
         for i in range(len(connections)-1, -1, -1):
@@ -250,11 +250,11 @@ class PostOffice(object):
         for key in self.connections:
             self.connections[key].sendStopMessage()
 
-    def addConnections(self, options):
+    def addProcesses(self, options):
         for key in self.connections:
-            self.connections[key].addConnections(self.getConnectionCount(key, options))
+            self.connections[key].addProcesses(self.getProcessCount(key, options))
 
-    def getConnectionCount(self, key, options):
+    def getProcessCount(self, key, options):
         if key in self.connection_options_key:
             return len(options[self.connection_options_key[key]])
         else:
@@ -267,7 +267,7 @@ class PostOffice(object):
     def start(self):
         options = self.main_connection.receiveMessageBlock()
         print(options)
-        self.addConnections(options)
+        self.addProcesses(options)
         self.sendStartMessages()
         self.sendOptions(options)
         self.setupResults(options[c.DATA_FREQS])
@@ -300,14 +300,14 @@ class PostOffice(object):
             count += self.handleEmotivMessages(no_standby)
             # self.connections[c.CONNECTION_PLOT].getMessageInstant()
             self.handleFreqMessages(
-                self.connections[c.CONNECTION_EXTRACTION].getMessageInstant(),
+                self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant(),
                 no_standby,
                 target_freqs,
                 current_target
             )
         # Wait for the last result
         self.handleFreqMessages(
-            self.connections[c.CONNECTION_EXTRACTION].getMessageBlock(),
+            self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),
             no_standby,
             target_freqs,
             current_target

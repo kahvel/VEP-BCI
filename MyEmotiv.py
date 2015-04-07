@@ -3,6 +3,7 @@ __author__ = 'Anti'
 import emokit.emotiv
 from Crypto.Cipher import AES
 from Crypto import Random
+import constants as c
 
 
 class myEmotiv(emokit.emotiv.Emotiv):
@@ -10,27 +11,12 @@ class myEmotiv(emokit.emotiv.Emotiv):
         # self.lock = args[0]
         # self.lock.acquire()
         self.connection = connection
+        """ @type : ConnectionProcessEnd.Connection """
         self.devices = []
         self.serialNum = None
         emokit.emotiv.Emotiv.__init__(self)
         self.cipher = None
-        self.myMainloop()
-
-    def myMainloop(self):
-        while True:
-            while not self.connection.poll(1):
-                pass
-            message = self.connection.recv()
-            if message == "Start":
-                print "Starting emotiv"
-                message = self.run()
-                # self.lock.acquire()
-                self.cleanUp()
-                if message == "Stop":
-                    print "Emotiv stopped"
-            if message == "Exit":
-                print "Exiting emotiv"
-                break
+        self.connection.waitMessages(self.run, lambda: None, lambda: None)
 
     def setupWin(self):
         for device in emokit.emotiv.hid.find_all_hid_devices():

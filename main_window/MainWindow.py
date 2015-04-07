@@ -45,7 +45,7 @@ class MainWindow(MyWindows.TkWindow):
         # self.lock = multiprocessing.Lock()
         # self.newProcess(Main.runEmotiv, "Add emotiv", self.lock)
         self.connection = connection
-
+        """ @type : ConnectionProcessEnd.MainConnection """
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
@@ -70,7 +70,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def exit(self):
         print("Exiting main window")
-        self.connection.send(c.EXIT_MESSAGE)
+        self.connection.sendExitMessage()
         self.destroy()
 
     def addExtraction(self):
@@ -165,12 +165,12 @@ class MainWindow(MyWindows.TkWindow):
             print(not_validated)
         else:
             self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.STOP_BUTTON, command=self.stop)
-            self.connection.send(c.START_MESSAGE)
-            self.connection.send(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
+            self.connection.sendStartMessage()
+            self.connection.sendMessage(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
 
     def stop(self):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.START_BUTTON, command=self.start)
-        self.connection.send(c.STOP_MESSAGE)
+        self.connection.sendStopMessage()
 
     def newProcess(self, func, message, *args):
         new_to_post_office, post_office_to_new = multiprocessing.Pipe()
