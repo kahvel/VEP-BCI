@@ -17,6 +17,7 @@ class MainWindow(MyWindows.TkWindow):
         self.main_frame = MainFrame.MainFrame(self,
             # (
                 self.start,
+                self.setup,
                 self.askSaveFile,
                 self.askLoadFile,
                 self.exit
@@ -61,20 +62,9 @@ class MainWindow(MyWindows.TkWindow):
     def showResults(self):
         self.connection.send("Show results")
 
-    def game(self):
-        self.newProcess(Main.runGame, "Add game")
-
     def calculateThreshold(self):
         self.connection.send("Threshold")
         self.connection.send(self.getChosenFreq())
-
-    def exit(self):
-        print("Exiting main window")
-        self.connection.sendExitMessage()
-        self.destroy()
-
-    def addExtraction(self):
-        self.newProcess(Main.runExtractionControl, "Add extraction")
 
     def removeDisabledData(self, data, filter_function, frame_key):
         result = []
@@ -93,9 +83,6 @@ class MainWindow(MyWindows.TkWindow):
     def disabled(self, data):
         return data[c.DISABLE_DELETE_FRAME][c.DISABLE] == 1
 
-    def getColor(self, data):
-        return data[c.COLOR_TEXTBOX_FRAME][c.TEXTBOX]
-
     def filterData(self, data, filter=tuple()):
         result = {}
         for key in data:
@@ -110,24 +97,37 @@ class MainWindow(MyWindows.TkWindow):
         return result
         #return {key: float(data[key]) for key in data if key not in filter}
 
-    def filterColoredData(self, data, filter):
-        result = self.filterData(data, filter+(c.COLOR_TEXTBOX_FRAME,))
-        result[c.DATA_COLOR] = self.getColor(data)
-        return result
-
     def getPlusMinusValue(self, data):
         return float(data[c.PLUS_MINUS_TEXTOX_FRAME][c.TARGET_FREQ])
 
     def filterTargetData(self, target_data, key):
-        result = self.filterColoredData(target_data[key], (c.PLUS_MINUS_TEXTOX_FRAME,))
+        result = self.filterData(
+            target_data[key],
+            (
+                c.TARGET_COLOR1_FRAME,
+                c.TARGET_COLOR2_FRAME,
+                c.PLUS_MINUS_TEXTOX_FRAME
+            )
+        )
+        result[c.TARGET_COLOR1] = target_data[key][c.TARGET_COLOR1_FRAME][c.TEXTBOX]
+        result[c.TARGET_COLOR2] = target_data[key][c.TARGET_COLOR2_FRAME][c.TEXTBOX]
         result[c.DATA_FREQ] = self.getPlusMinusValue(target_data[key])
         return result
 
     def getTargetData(self, data):
         return self.removeDisabledData(data, self.filterTargetData, c.TARGET_FRAME)
 
-    def getBackgroundData(self, window_data):
-        return self.filterColoredData(window_data, (c.WINDOW_MONITOR, c.WINDOW_REFRESH))
+    def getBackgroundData(self, data):
+        result = self.filterData(
+            data,
+            (
+                c.WINDOW_COLOR_FRAME,
+                c.WINDOW_MONITOR,
+                c.WINDOW_REFRESH
+            )
+        )
+        result[c.WINDOW_COLOR] = data[c.WINDOW_COLOR_FRAME][c.TEXTBOX]
+        return result
 
     def getEnabledData(self, data):
         return [key for key in data if data[key] != 0]
@@ -159,14 +159,22 @@ class MainWindow(MyWindows.TkWindow):
     def getTestData(self, data):
         return self.filterData(data)
 
-    def start(self):
+    def exit(self):
+        print("Exiting main window")
+        self.connection.sendExitMessage()
+        self.destroy()
+
+    def setup(self):
         not_validated = self.main_frame.getNotValidated()
         if len(not_validated) != 0:
             print(not_validated)
         else:
-            self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.STOP_BUTTON, command=self.stop)
-            self.connection.sendStartMessage()
+            self.connection.sendSetupMessage()
             self.connection.sendMessage(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
+
+    def start(self):
+        self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.STOP_BUTTON, command=self.stop)
+        self.connection.sendStartMessage()
 
     def stop(self):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.START_BUTTON, command=self.start)

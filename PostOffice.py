@@ -1,6 +1,5 @@
 __author__ = 'Anti'
 
-import multiprocessing.reduction
 import random
 import numpy as np
 import constants as c
@@ -24,6 +23,7 @@ class PostOffice(object):
             c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
             c.CONNECTION_PLOT: c.DATA_PLOTS,
         }
+        self.options = None
         self.results = None
         self.resetResults()
         self.standby = None
@@ -31,42 +31,16 @@ class PostOffice(object):
         self.recorded_signals = [None for _ in range(7)]
         self.waitConnections()
 
-    def addConnection(self, connections_list, title):
-        print "Adding pipe to", title
-        connection = multiprocessing.reduction.rebuild_pipe_connection(*self.main_connection.recv()[1])
-        connections_list.append(connection)
-
     def waitConnections(self):
         while True:
             message = self.main_connection.receiveMessagePoll(0.1)
             if message is not None:
-                if message == "Add emotiv":
-                    self.addConnection(self.emotiv_connection, "emotiv")
-                elif message == "Add psychopy":
-                    self.addConnection(self.psychopy_connection, "psychopy")
-                elif message == "Add plot":
-                    self.addConnection(self.plot_connection, "plot")
-                elif message == "Add extraction":
-                    self.addConnection(self.extraction_connection, "extraction")
-                elif message == "Add game":
-                    self.addConnection(self.game_connection, "game")
-                elif message == c.START_MESSAGE:
-                    self.start()
+                if message == c.START_MESSAGE:
+                    message = self.start()
+                elif message == c.SETUP_MESSAGE:
+                    self.setup()
                 elif message == "Threshold":
                     self.calculateThreshold()
-                elif message == c.EXIT_MESSAGE:
-                    self.sendMessage(self.emotiv_connection, c.EXIT_MESSAGE)
-                    self.sendMessage(self.psychopy_connection, c.EXIT_MESSAGE)
-                    self.sendMessage(self.plot_connection, c.EXIT_MESSAGE)
-                    self.sendMessage(self.extraction_connection, c.EXIT_MESSAGE)
-                    self.sendMessage(self.game_connection, c.EXIT_MESSAGE)
-                    while True:  # wait until all connections are closed
-                        self.getMessages(self.psychopy_connection, "Psychopy")
-                        self.getMessages(self.plot_connection, "Plot")
-                        self.getMessages(self.extraction_connection, "Extraction")
-                        self.getMessages(self.game_connection, "Game")
-                        if len(self.psychopy_connection)+len(self.plot_connection)+len(self.extraction_connection) == 0:
-                            return
                 elif message == "Record neutral":
                     self.sendMessage(self.emotiv_connection, "Start")
                     self.recordSignal(self.main_connection.recv(), self.main_connection.recv())
@@ -83,8 +57,173 @@ class PostOffice(object):
                     self.resetResults()
                 elif message == "Show results":
                     self.printResults()
-                else:
+                elif message != c.EXIT_MESSAGE:
                     print "Unknown message:", message
+                if message == c.EXIT_MESSAGE:
+                    self.exit()
+                    return
+
+    def handleFreqMessages(self, messages, no_standby, target_freqs, current_target):
+        for result in messages:
+            if result is not None:
+                for freq, class_name in result:
+                    self.results[class_name][str(target_freqs)][current_target][freq] += 1
+                    if freq == self.standby_freq:
+                        self.sendMessage(self.psychopy_connection, self.standby and not no_standby)
+                        self.standby = not self.standby
+                    if not self.standby or no_standby:
+                        if not "short" in class_name:
+                            self.sendMessage(self.psychopy_connection, freq)
+                            self.sendMessage(self.game_connection, freq)
+
+    def sendMessage(self, connections, message):
+        for i in range(len(connections)-1, -1, -1):
+            connections[i].send(message)
+
+    def randomSequence(self, total, min_value, max_value, target_freqs):
+        data = []
+        initial_values = {i: total for i in range(len(target_freqs))}
+        while True:
+            target = random.choice(initial_values.keys())
+            time = random.randint(min_value, max_value)
+            if initial_values[target] - time < min_value:
+                time = initial_values[target]
+            initial_values[target] = initial_values[target]-time
+            if len(data) > 0 and data[-1][0] == target:
+                data[-1][1] += time
+            else:
+                data.append([target, time])
+            if initial_values[target] == 0:
+                del initial_values[target]
+                if initial_values == {}:
+                    break
+        return data
+
+    def normalSequence(self, target, time):
+        return [[target, time]]
+
+    def getSequence(self, options):
+        if options[c.TEST_TARGET] == c.TEST_RANDOM:
+            return self.randomSequence(options[c.TEST_TIME], options[c.TEST_MIN], options[c.TEST_MAX], options[c.DATA_FREQS])
+        elif c.TEST_UNLIMITED:
+            return self.normalSequence(options[c.TEST_TARGET], float("inf"))
+        else:
+            return self.normalSequence(options[c.TEST_TARGET], options[c.TEST_TIME])
+
+    def resetResults(self):
+        self.results = {name: {} for name in c.EXTRACTION_METHOD_NAMES}
+
+    def setupResults(self, target_freqs):
+        for key in self.results:
+            if str(target_freqs) not in self.results[key]:
+                self.results[key][str(target_freqs)] = \
+                    {i: {freq2: 0 for freq2 in target_freqs} for i in range(len(target_freqs))}
+
+    def printResults(self):
+        for method in self.results:
+            print method
+            for freqs in self.results[method]:
+                print freqs
+                for row in sorted(self.results[method][freqs]):
+                    print row, self.results[method][freqs][row]
+
+    def targetChangingLoop(self, sequence, target_freqs, no_standby):
+        print(sequence)
+        message = None
+        for target, time in sequence:
+            self.connections[c.CONNECTION_PSYCHOPY].sendCurrentTarget(target)
+            message = self.startPacketSending(time, no_standby, target_freqs, target)
+            if message is not None:
+                break
+        return message
+
+    def sendStartMessages(self):
+        for key in self.connections:
+            self.connections[key].sendStartMessage()
+
+    def sendStopMessages(self):
+        for key in self.connections:
+            self.connections[key].sendStopMessage()
+
+    def addProcesses(self, options):
+        for key in self.connections:
+            self.connections[key].addProcesses(self.getProcessCount(key, options))
+
+    def getProcessCount(self, key, options):
+        if key in self.connection_options_key:
+            return len(options[self.connection_options_key[key]])
+        else:
+            return 1
+
+    def sendOptions(self, options):
+        for key in self.connections:
+            self.connections[key].sendOptions(options)
+
+    def setup(self):
+        self.options = self.main_connection.receiveMessageBlock()
+        self.addProcesses(self.options)
+        for key in self.connections:
+            self.connections[key].sendSetupMessage()
+        self.sendOptions(self.options)
+        self.setupResults(self.options[c.DATA_FREQS])
+
+    def exit(self):
+        for key in self.connections:
+            if not self.connections[key].isClosed():
+                self.connections[key].sendExitMessage()
+        while True:  # wait until all connections are closed
+            i = 0
+            for key in self.connections:
+                if self.connections[key].isClosed():
+                    i += 1
+            if i == len(self.connections):
+                break
+
+    def start(self):
+        self.sendStartMessages()
+        message = self.targetChangingLoop(
+            self.getSequence(self.options[c.DATA_TEST]),
+            self.options[c.DATA_FREQS],
+            not self.options[c.DATA_TEST][c.TEST_STANDBY]
+        )
+        self.sendStopMessages()
+        return message
+
+    def handleEmotivMessages(self, no_standby):
+        message = self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.007)
+        if message is not None:
+            # self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
+            self.connections[c.CONNECTION_PLOT].sendMessage(message)
+            if not self.standby or no_standby:
+                return 1
+        return 0
+
+    def startPacketSending(self, length, no_standby, target_freqs, current_target):
+        count = 0
+        self.standby = True
+        self.standby_freq = target_freqs[-1]
+        while count < length:
+            main_message = self.main_connection.receiveMessageInstant()
+            if main_message is not None:
+                return main_message
+            count += self.handleEmotivMessages(no_standby)
+            # self.connections[c.CONNECTION_PLOT].getMessageInstant()
+            self.handleFreqMessages(
+                self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant(),
+                no_standby,
+                target_freqs,
+                current_target
+            )
+        # Wait for the last result
+        self.handleFreqMessages(
+            self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),
+            no_standby,
+            target_freqs,
+            current_target
+        )
+
+
+
 
     def calculateThreshold(self):
         target_freqs = self.main_connection.recv()
@@ -167,148 +306,3 @@ class PostOffice(object):
                 else:  # elif isinstanse(message, list)
                     ret.append(message)
         return ret
-
-    def handleFreqMessages(self, messages, no_standby, target_freqs, current_target):
-        for result in messages:
-            if result is not None:
-                for freq, class_name in result:
-                    self.results[class_name][str(target_freqs)][current_target][freq] += 1
-                    if freq == self.standby_freq:
-                        self.sendMessage(self.psychopy_connection, self.standby and not no_standby)
-                        self.standby = not self.standby
-                    if not self.standby or no_standby:
-                        if not "short" in class_name:
-                            self.sendMessage(self.psychopy_connection, freq)
-                            self.sendMessage(self.game_connection, freq)
-
-    def sendMessage(self, connections, message):
-        for i in range(len(connections)-1, -1, -1):
-            connections[i].send(message)
-
-    def randomSequence(self, total, min_value, max_value, target_freqs):
-        data = []
-        initial_values = {i: total for i in range(len(target_freqs))}
-        while True:
-            target = random.choice(initial_values.keys())
-            time = random.randint(min_value, max_value)
-            if initial_values[target] - time < min_value:
-                time = initial_values[target]
-            initial_values[target] = initial_values[target]-time
-            if len(data) > 0 and data[-1][0] == target:
-                data[-1][1] += time
-            else:
-                data.append([target, time])
-            if initial_values[target] == 0:
-                del initial_values[target]
-                if initial_values == {}:
-                    break
-        return data
-
-    def normalSequence(self, target, time):
-        return [[target, time]]
-
-    def getSequence(self, options):
-        if options[c.TEST_TARGET] == c.TEST_RANDOM:
-            return self.randomSequence(options[c.TEST_TIME], options[c.TEST_MIN], options[c.TEST_MAX], options[c.DATA_FREQS])
-        elif c.TEST_UNLIMITED:
-            return self.normalSequence(options[c.TEST_TARGET], float("inf"))
-        else:
-            return self.normalSequence(options[c.TEST_TARGET], options[c.TEST_TIME])
-
-    def resetResults(self):
-        self.results = {name: {} for name in c.EXTRACTION_METHOD_NAMES}
-
-    def setupResults(self, target_freqs):
-        for key in self.results:
-            if str(target_freqs) not in self.results[key]:
-                self.results[key][str(target_freqs)] = \
-                    {i: {freq2: 0 for freq2 in target_freqs} for i in range(len(target_freqs))}
-
-    def printResults(self):
-        for method in self.results:
-            print method
-            for freqs in self.results[method]:
-                print freqs
-                for row in sorted(self.results[method][freqs]):
-                    print row, self.results[method][freqs][row]
-
-    def mainSendingLoop(self, sequence, target_freqs, no_standby):
-        print(sequence)
-        message = None
-        for target, time in sequence:
-            self.connections[c.CONNECTION_PSYCHOPY].sendCurrentTarget(target)
-            message = self.startPacketSending(time, no_standby, target_freqs, target)
-            if message is not None:
-                break
-        return message
-
-    def sendStartMessages(self):
-        for key in self.connections:
-            self.connections[key].sendStartMessage()
-
-    def sendStopMessages(self):
-        for key in self.connections:
-            self.connections[key].sendStopMessage()
-
-    def addProcesses(self, options):
-        for key in self.connections:
-            self.connections[key].addProcesses(self.getProcessCount(key, options))
-
-    def getProcessCount(self, key, options):
-        if key in self.connection_options_key:
-            return len(options[self.connection_options_key[key]])
-        else:
-            return 1
-
-    def sendOptions(self, options):
-        for key in self.connections:
-            self.connections[key].sendOptions(options)
-
-    def start(self):
-        options = self.main_connection.receiveMessageBlock()
-        print(options)
-        self.addProcesses(options)
-        self.sendStartMessages()
-        self.sendOptions(options)
-        self.setupResults(options[c.DATA_FREQS])
-        message = self.mainSendingLoop(
-            self.getSequence(options[c.DATA_TEST]),
-            options[c.DATA_FREQS],
-            not options[c.DATA_TEST][c.TEST_STANDBY]
-        )
-        self.sendStopMessages()
-        self.printResults()
-        return message
-
-    def handleEmotivMessages(self, no_standby):
-        message = self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.007)
-        if message is not None:
-            # self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
-            self.connections[c.CONNECTION_PLOT].sendMessage(message)
-            if not self.standby or no_standby:
-                return 1
-        return 0
-
-    def startPacketSending(self, length, no_standby, target_freqs, current_target):
-        count = 0
-        self.standby = True
-        self.standby_freq = target_freqs[-1]
-        while count < length:
-            main_message = self.main_connection.receiveMessageInstant()
-            if main_message is not None:
-                return main_message
-            count += self.handleEmotivMessages(no_standby)
-            # self.connections[c.CONNECTION_PLOT].getMessageInstant()
-            self.handleFreqMessages(
-                self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant(),
-                no_standby,
-                target_freqs,
-                current_target
-            )
-        # Wait for the last result
-        self.handleFreqMessages(
-            self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),
-            no_standby,
-            target_freqs,
-            current_target
-        )

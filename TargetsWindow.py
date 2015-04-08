@@ -9,7 +9,7 @@ import constants as c
 class Target(object):
     def __init__(self, target, window, monitor_frequency):
         self.standby_target = False
-        self.color = target[c.DATA_COLOR]
+        self.color = target[c.TARGET_COLOR1]
         self.rect = visual.Rect(
             window,
             width=target[c.TARGET_WIDTH],
@@ -44,7 +44,6 @@ class Target(object):
     def generator(self):
         while True:
             for c in self.sequence:
-                print(c)
                 if c == "1":
                     for _ in range(self.freq_on):
                         standby = yield
@@ -69,15 +68,12 @@ class TargetsWindow(object):
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
         #self.window.setRecordFrameIntervals(True)
-        self.connection.waitMessages(self.start, lambda: None, self.updateWindow)
+        self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
 
-    def start(self):
+    def setup(self):
         background_data, targets_data, standby = self.connection.receiveOptions()
         self.setBackground(background_data)
         self.setTargets(targets_data)
-        # self.lock.acquire()
-        message = self.run(standby)
-        # self.lock.release()
 
     def exit(self):
         self.connection.closeConnection()
@@ -118,13 +114,12 @@ class TargetsWindow(object):
             self.generators[-1].send(None)
         self.targets[-1].standby_target = True
 
-    def run(self, standby):
+    def start(self, standby):
         prev_rect = self.targets[0].current_rect
         while True:
             self.updateWindow()
             message = self.connection.receiveMessageInstant()
-            print("Psychopy received: " + str(message))
-            if message is not None:
+            if message is not None and message != "None":
                 if isinstance(message, bool):
                     standby = message
                     continue

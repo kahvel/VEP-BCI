@@ -16,7 +16,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.serialNum = None
         emokit.emotiv.Emotiv.__init__(self)
         self.cipher = None
-        self.connection.waitMessages(self.run, lambda: None, lambda: None)
+        self.connection.waitMessages(self.start, self.cleanUp, lambda: None, self.connectionSetup)
 
     def setupWin(self):
         for device in emokit.emotiv.hid.find_all_hid_devices():
@@ -95,7 +95,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         iv = Random.new().read(AES.block_size)
         self.cipher = AES.new(key, AES.MODE_ECB, iv)
 
-    def run(self):
+    def connectionSetup(self):
         # Clean up possible previous packets from the queue
         while True:
             try:
@@ -106,7 +106,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         # Make sure we get packets
         self.setupWin()
         if self.serialNum is None:
-            print "USB not connected"
+            print("Emotiv USB receiver not found")
             return "Stop"
         self.setupCrypto(self.serialNum)
         # try:
@@ -115,6 +115,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         #     print "Turn on headset"
         #     return "Stop"
 
+    def start(self):
         # Mainloop
         # self.lock.release()  # synchronising with psychopy
         while True:

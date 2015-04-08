@@ -76,15 +76,15 @@ class PlusMinusTextboxFrame(Frame.Frame):
 
 
 class ColorTextboxFrame(Frame.Frame):
-    def __init__(self, parent, name, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.COLOR_TEXTBOX_FRAME, row, column, **self.setDefaultKwargs(kwargs, {
+    def __init__(self, parent, button_name, frame_name, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, frame_name, row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 2
         }))
         button_command = lambda: self.chooseColor(self.widgets_dict[c.TEXTBOX])
-        textbox_command = lambda color: self.widgets_dict[name].widget.configure(background=color)
+        textbox_command = lambda color: self.widgets_dict[button_name].widget.configure(background=color)
         default_value = kwargs.get("default_value", "#eeeeee")
         self.addChildWidgets((
-            Buttons.Button(self.widget, name, 0, 0, command=button_command),
+            Buttons.Button(self.widget, button_name, 0, 0, command=button_command),
             Textbox(self.widget, c.TEXTBOX, 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7)
         ))
 

@@ -40,6 +40,9 @@ class Connection(AbstractConnection):
         multiprocessing.Process(target=self.run_function, args=(self.connection_class(from_process),)).start()
         return to_process
 
+    def isClosed(self):
+        return self.connection is None
+
 
 class MultipleConnections(AbstractConnection):
     def __init__(self, connection_class):
@@ -80,6 +83,9 @@ class MultipleConnections(AbstractConnection):
     def sendOptions(self, options):
         for connection, option in zip(self.connections, options):
             connection.sendOptions(option)
+
+    def isClosed(self):
+        return all(connection.isClosed() for connection in self.connections)
 
     # def getMessageInstant(self):
     #     return self.getMessage(lambda x: x.getMessageInstant())
@@ -126,9 +132,8 @@ class PlotConnection(Connection):
         Connection.__init__(self, Main.runPlotControl, ConnectionProcessEnd.PlotConnection)
 
     def sendOptions(self, options):
-        pass
-        # self.connection.sendMessage(options)
-        # self.connection.sendMessage(options[c.DATA_FREQS])
+        self.connection.sendMessage(options)
+        self.connection.sendMessage(options[c.DATA_FREQS])
 
 
 class MultipleExtractionConnections(MultipleConnections):
@@ -145,10 +150,10 @@ class MultiplePlotConnections(MultipleConnections):
     def __init__(self):
         MultipleConnections.__init__(self, PlotConnection)
 
-    # def sendOptions(self, options):
-    #     for i, message in enumerate(options[c.DATA_PLOTS]):
-    #         self.connections[i].sendMessage(message)
-    #         self.connections[i].sendMessage(options[c.DATA_FREQS])
+    def sendOptions(self, options):
+        for i, message in enumerate(options[c.DATA_PLOTS]):
+            self.connections[i].sendMessage(message)
+            self.connections[i].sendMessage(options[c.DATA_FREQS])
 
 
 class GameConnection(Connection):

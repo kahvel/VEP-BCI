@@ -76,8 +76,11 @@ BOTTOM_FRAME = "BottomFrame"
 
 PLUS_MINUS_FRAME = "PlusMinusFrame"
 PLUS_MINUS_TEXTOX_FRAME = "PlusMinusTextboxFrame"
-COLOR_TEXTBOX_FRAME = "ColorTextboxFrame"
 DISABLE_DELETE_FRAME = "DisableDeleteFrame"
+
+TARGET_COLOR1_FRAME = "Color1TextboxFrame"
+TARGET_COLOR2_FRAME = "Color2TextboxFrame"
+WINDOW_COLOR_FRAME = "ColorTextboxFrame"
 
 TARGET_FRAME = "TargetFrame"
 
@@ -108,6 +111,7 @@ STOP_BUTTON = "Stop"
 SAVE_BUTTON = "Save"
 LOAD_BUTTON = "Load"
 EXIT_BUTTON = "Exit"
+SETUP_BUTTON = "Setup"
 
 # Extraction method buttons
 PSDA = "PSDA"
@@ -141,6 +145,7 @@ START_MESSAGE = "Start"
 STOP_MESSAGE = "Stop"
 EXIT_MESSAGE = "Exit"
 CLOSE_MESSAGE = "Close"
+SETUP_MESSAGE = "Setup"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"
@@ -157,7 +162,6 @@ DATA_OPTIONS = "Options"
 DATA_METHODS = "Methods"
 
 DATA_FREQ = "Freq"
-DATA_COLOR = "Color"
 
 EXTRACTION_METHOD_NAMES = ("CCA", "PSDA", "CCAPSDA", "shortCCAPSDA") # Why is it missing one?
 

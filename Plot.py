@@ -10,11 +10,12 @@ class Plot(object):
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = pg.plot()
         self.values = [0 for _ in range(100)]
-        self.connection.waitMessages(self.loop, lambda: None, lambda: None)
+        self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
 
-    def loop(self):
+    def start(self):
         i = 0
         while True:
+            self.updateWindow()
             message = self.connection.receiveMessagePoll(0.1)
             if message is not None:
                 print("Plot received: " + str(message))
@@ -29,9 +30,14 @@ class Plot(object):
                     if i % 10 == 0:
                         self.pw.plot(self.values, clear=True)
                         i = 0
-            pg.QtGui.QApplication.processEvents()
 
-    def quit(self):
-        self.root.quit()     # stops mainloop
-        self.root.destroy()  # this is necessary on Windows to prevent
-                             # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+    def setup(self):
+        options, target_freqs = self.connection.receiveOptions()
+        print("Plot options: ", options, target_freqs)
+
+    def updateWindow(self):
+        pg.QtGui.QApplication.processEvents()
+
+    def exit(self):
+        self.connection.closeConnection()
+        self.pw.close()

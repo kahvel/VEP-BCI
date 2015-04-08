@@ -25,8 +25,8 @@ class TargetFrame(Frame.Frame):
             Textboxes.LabelTextbox         (self.widget, c.TARGET_DELAY,  0, 4, command=int, allow_zero=True),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  1, 0, command=int, default_value=150),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 1, 2, command=int, default_value=150),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, 1, 4, default_value="#ffffff"),
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, c.TARGET_COLOR1_FRAME, 1, 4, default_value="#ffffff"),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_X,      2, 0, command=int, allow_negative=True, allow_zero=True),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      2, 2, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR2, 2, 4, default_value="#000000"),
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR2, c.TARGET_COLOR2_FRAME, 2, 4, default_value="#000000"),
         ))

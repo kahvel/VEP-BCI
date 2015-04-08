@@ -19,6 +19,9 @@ class AbstractConnection(object):
     def sendExitMessage(self):
         self.sendMessage(c.EXIT_MESSAGE)
 
+    def sendSetupMessage(self):
+        self.sendMessage(c.SETUP_MESSAGE)
+
     def sendOptions(self, options):
         pass
 
