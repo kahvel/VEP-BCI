@@ -12,17 +12,13 @@ class PostOffice(object):
         self.connections = {
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
-            c.CONNECTION_EXTRACTION: ConnectionPostOfficeEnd.MultipleExtractionConnections(),
-            c.CONNECTION_PLOT:       ConnectionPostOfficeEnd.MultiplePlotConnections(),
-            c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
+            # c.CONNECTION_EXTRACTION: ConnectionPostOfficeEnd.MultipleExtractionConnections(),
+            c.CONNECTION_PLOT:       ConnectionPostOfficeEnd.MultiplePlotConnections()
+            # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
         """
         @type : dict[str, ConnectionPostOfficeEnd.Connection | ConnectionPostOfficeEnd.MultipleConnections]
         """
-        self.connection_options_key = {
-            c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
-            c.CONNECTION_PLOT: c.DATA_PLOTS,
-        }
         self.options = None
         self.results = None
         self.resetResults()
@@ -32,13 +28,23 @@ class PostOffice(object):
         self.waitConnections()
 
     def waitConnections(self):
+        setup_successful = False
         while True:
             message = self.main_connection.receiveMessagePoll(0.1)
             if message is not None:
                 if message == c.START_MESSAGE:
-                    message = self.start()
+                    if setup_successful:
+                        message = self.start()
+                    else:
+                        print("Setup was not successful!")
                 elif message == c.SETUP_MESSAGE:
-                    self.setup()
+                    if self.setup() == c.SUCCESS_MESSAGE:
+                        setup_successful = True
+                    else:
+                        setup_successful = False
+                        print("Setup failed!")
+                elif message == c.STOP_MESSAGE:
+                    print("PostOffice received stop message, but is already in standby mode")
                 elif message == "Threshold":
                     self.calculateThreshold()
                 elif message == "Record neutral":
@@ -128,7 +134,7 @@ class PostOffice(object):
                     print row, self.results[method][freqs][row]
 
     def targetChangingLoop(self, sequence, target_freqs, no_standby):
-        print(sequence)
+        # print(sequence)
         message = None
         for target, time in sequence:
             self.connections[c.CONNECTION_PSYCHOPY].sendCurrentTarget(target)
@@ -145,15 +151,14 @@ class PostOffice(object):
         for key in self.connections:
             self.connections[key].sendStopMessage()
 
-    def addProcesses(self, options):
+    def setupPostOfficeEnd(self, options):
         for key in self.connections:
-            self.connections[key].addProcesses(self.getProcessCount(key, options))
+            self.connections[key].addProcesses(options)
 
-    def getProcessCount(self, key, options):
-        if key in self.connection_options_key:
-            return len(options[self.connection_options_key[key]])
-        else:
-            return 1
+    def setupProcessEnd(self, options):
+        for key in self.connections:
+            self.connections[key].sendSetupMessage()
+        self.sendOptions(options)
 
     def sendOptions(self, options):
         for key in self.connections:
@@ -161,23 +166,28 @@ class PostOffice(object):
 
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
-        self.addProcesses(self.options)
+        self.setupPostOfficeEnd(self.options)
+        self.setupProcessEnd(self.options)
         for key in self.connections:
-            self.connections[key].sendSetupMessage()
-        self.sendOptions(self.options)
+            if not self.connections[key].isClosed():
+                message = self.connections[key].receiveMessageBlock()
+                if message == c.FAIL_MESSAGE:
+                    return message
         self.setupResults(self.options[c.DATA_FREQS])
+        return c.SUCCESS_MESSAGE
 
     def exit(self):
         for key in self.connections:
             if not self.connections[key].isClosed():
                 self.connections[key].sendExitMessage()
-        while True:  # wait until all connections are closed
-            i = 0
-            for key in self.connections:
-                if self.connections[key].isClosed():
-                    i += 1
-            if i == len(self.connections):
-                break
+            self.connections[key].receiveMessageBlock()  # wait until all connections are closed
+        # while True:
+        #     i = 0
+        #     for key in self.connections:
+        #         if self.connections[key].isClosed():
+        #             i += 1
+        #     if i == len(self.connections):
+        #         break
 
     def start(self):
         self.sendStartMessages()

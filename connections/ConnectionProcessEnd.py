@@ -8,6 +8,7 @@ class Connection(Connections.AbstractConnection):
     def __init__(self, connection, name):
         Connections.AbstractConnection.__init__(self)
         self.connection = connection
+        """ @type : multiprocessing.Connection """
         self.name = name
 
     def waitMessages(self, start_function, exit_function, update_function, setup_function):  # wait for start or exit message
@@ -23,7 +24,8 @@ class Connection(Connections.AbstractConnection):
                 elif message == c.STOP_MESSAGE:
                     print(self.name + " received stop message, but is already in standby mode")
                 elif message == c.SETUP_MESSAGE:
-                    setup_function()
+                    message = setup_function()
+                    self.sendMessage(message)
                 elif message != c.EXIT_MESSAGE:
                     print("Unknown message in " + self.name + ": " + message)
                 if message == c.EXIT_MESSAGE:
@@ -40,6 +42,7 @@ class Connection(Connections.AbstractConnection):
     def closeConnection(self):
         self.sendMessage(c.CLOSE_MESSAGE)
         self.connection.close()
+        self.connection = None
 
     def receiveOptions(self):
         raise NotImplementedError("receiveOptions not implemented!")

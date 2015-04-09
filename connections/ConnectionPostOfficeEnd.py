@@ -12,7 +12,7 @@ class AbstractConnection(Connections.AbstractConnection):
         Connections.AbstractConnection.__init__(self)
 
     def addProcesses(self, n):
-        raise NotImplementedError("addProcesses not implemented!")
+        raise NotImplementedError("setupPostOfficeEnd not implemented!")
 
 
 class Connection(AbstractConnection):
@@ -31,7 +31,7 @@ class Connection(AbstractConnection):
             self.connection = None
         return message
 
-    def addProcesses(self, n=None):
+    def addProcesses(self, options=None):
         if self.connection is None:
             self.connection = self.newProcess()
 
@@ -49,7 +49,7 @@ class MultipleConnections(AbstractConnection):
         AbstractConnection.__init__(self)
         self.connections = []
         """ @type : list[Connection] """
-        self.options_key = None
+        self.methods_key = None
         self.connection_class = connection_class
 
     def sendMessage(self, message):
@@ -58,13 +58,6 @@ class MultipleConnections(AbstractConnection):
 
     def addProcess(self):
         self.connections.append(self.connection_class())
-
-    def addProcesses(self, n):
-        self.removeClosedConnections()
-        while len(self.connections) < n:
-            self.addProcess()
-        for connection in self.connections:
-            connection.addProcesses()
 
     def receiveMessageInstant(self):
         return [connection.receiveMessageInstant() for connection in self.connections]
@@ -80,9 +73,9 @@ class MultipleConnections(AbstractConnection):
             if self.connections[i] is None:
                 del self.connections[i]
 
-    def sendOptions(self, options):
-        for connection, option in zip(self.connections, options):
-            connection.sendOptions(option)
+    # def sendOptions(self, options):
+    #     for connection, option in zip(self.connections, options):
+    #         connection.sendOptions(option)
 
     def isClosed(self):
         return all(connection.isClosed() for connection in self.connections)
@@ -146,14 +139,32 @@ class MultipleExtractionConnections(MultipleConnections):
     #         self.connections[i].sendMessage(options[c.DATA_FREQS])
 
 
-class MultiplePlotConnections(MultipleConnections):
+class Level2PlotConnection(MultipleConnections):
     def __init__(self):
         MultipleConnections.__init__(self, PlotConnection)
 
+    def addProcesses(self, options):
+        for key in options:
+            self.addProcess()
+        for connection in self.connections:
+            connection.addProcesses()
+
+
+class MultiplePlotConnections(MultipleConnections):
+    def __init__(self):
+        MultipleConnections.__init__(self, Level2PlotConnection)
+
     def sendOptions(self, options):
-        for i, message in enumerate(options[c.DATA_PLOTS]):
-            self.connections[i].sendMessage(message)
-            self.connections[i].sendMessage(options[c.DATA_FREQS])
+        for connection, message in zip(self.connections, options[c.DATA_PLOTS]):
+            connection.sendMessage(message)
+            connection.sendMessage(options[c.DATA_FREQS])
+
+    def addProcesses(self, options):
+        self.removeClosedConnections()
+        while len(self.connections) < len(options[c.DATA_PLOTS]):
+            self.addProcess()
+        for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
+            connection.addProcesses(option[c.DATA_METHODS])
 
 
 class GameConnection(Connection):

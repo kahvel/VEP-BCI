@@ -3,9 +3,6 @@ __author__ = 'Anti'
 from main_window import MyWindows
 from frames import MainFrame
 import tkFileDialog
-import multiprocessing
-import multiprocessing.reduction
-import Main
 import constants as c
 
 
@@ -27,24 +24,14 @@ class MainWindow(MyWindows.TkWindow):
             #     self.resetResults
             # ),
             # (
-            #     self.addGame,
-            # ),
-            # (
             #     self.calculateThreshold,
             # ),
-            # (
-            #     self.addE
-            # )
         )
         self.loadValues(c.DEFAULT_FILE)
 
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
 
-        # self.connection, post_office_to_main = multiprocessing.Pipe()
-        # multiprocessing.Process(target=Main.runPostOffice, args=(post_office_to_main,)).start()
-        # self.lock = multiprocessing.Lock()
-        # self.newProcess(Main.runEmotiv, "Add emotiv", self.lock)
         self.connection = connection
         """ @type : ConnectionProcessEnd.MainConnection """
         self.protocol("WM_DELETE_WINDOW", self.exit)
@@ -83,19 +70,24 @@ class MainWindow(MyWindows.TkWindow):
     def disabled(self, data):
         return data[c.DISABLE_DELETE_FRAME][c.DISABLE] == 1
 
+    def toFloat(self, value):  # Try to convert to float. If fails, return value itself.
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+    def toInt(self, value):  # Try to convert to int. If fails, try to convert to float.
+        try:
+            return int(value)
+        except ValueError:
+            return self.toFloat(value)
+
     def filterData(self, data, filter=tuple()):
         result = {}
         for key in data:
             if key not in filter:
-                try:
-                    result[key] = int(data[key])
-                except ValueError:
-                    try:
-                        result[key] = float(data[key])
-                    except ValueError:
-                        result[key] = data[key]
+                result[key] = self.toInt(data[key])
         return result
-        #return {key: float(data[key]) for key in data if key not in filter}
 
     def getPlusMinusValue(self, data):
         return float(data[c.PLUS_MINUS_TEXTOX_FRAME][c.TARGET_FREQ])
@@ -179,18 +171,6 @@ class MainWindow(MyWindows.TkWindow):
     def stop(self):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.START_BUTTON, command=self.start)
         self.connection.sendStopMessage()
-
-    def newProcess(self, func, message, *args):
-        new_to_post_office, post_office_to_new = multiprocessing.Pipe()
-        multiprocessing.Process(target=func, args=(new_to_post_office, args)).start()
-        self.connection.send(message)
-        self.connection.send(multiprocessing.reduction.reduce_connection(post_office_to_new))
-
-    def targetsWindow(self):
-        self.newProcess(Main.runPsychopy, "Add psychopy", self.getBackgroundData(), self.lock)
-
-    def plotWindow(self):
-        self.newProcess(Main.runPlotControl, "Add plot")
 
     # Save and Load
 

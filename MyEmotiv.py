@@ -55,6 +55,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
     def cleanUp(self):
         self._goOn = False
         self.closeDevices()
+        self.connection.closeConnection()
 
     def setupCrypto(self, sn):
         type = 0 # feature[5]
@@ -107,13 +108,15 @@ class myEmotiv(emokit.emotiv.Emotiv):
         self.setupWin()
         if self.serialNum is None:
             print("Emotiv USB receiver not found")
-            return "Stop"
+            self.closeDevices()
+            return c.FAIL_MESSAGE
         self.setupCrypto(self.serialNum)
         # try:
         #     task = self.packets.get(True, 0.1)
         # except:
         #     print "Turn on headset"
         #     return "Stop"
+        return c.SUCCESS_MESSAGE
 
     def start(self):
         # Mainloop

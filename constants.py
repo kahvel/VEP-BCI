@@ -49,11 +49,22 @@ RECORD_THRESHOLD = "Threshold"
 
 # Window function names
 WINDOW_NONE = "None"
-WINDOW_HANNING = "Hanning"
+WINDOW_HANNING = "Hann"
 WINDOW_HAMMING = "Hamming"
 WINDOW_BLACKMAN = "Blackman"
 WINDOW_KAISER = "Kaiser"
 WINDOW_BARTLETT = "Bartlett"
+
+# Arguments for sgipy.signal.get_window()
+# boxcar, triang, blackman, hamming, hann, bartlett, flattop, parzen,
+# bohman, blackmanharris, nuttall, barthann, kaiser (needs beta), gaussian (needs std),
+# general_gaussian (needs power, width), slepian (needs width), chebwin (needs attenuation)
+
+SCIPY_WINDOW_HANNING = "hann"
+SCIPY_WINDOW_HAMMING = "hamming"
+SCIPY_WINDOW_BLACKMAN = "blackmanharris"
+SCIPY_WINDOW_KAISER = "kaiser"
+SCIPY_WINDOW_BARTLETT = "bartlett"
 
 # Plot and Extraction tab options frame buttons
 OPTIONS_NORMALISE = "Normalise"
@@ -130,6 +141,12 @@ SUM_POWER = "Sum power"
 AVG_POWER = "Avg power"
 SUM_AVG_POWER = "Sum avg power"
 
+# Names of the classes
+MULTIPLE_REGULAR = "MultipleRegular"
+MULTIPLE_AVERAGE = "MultipleAverage"
+SINGLE_REGULAR = "SingleRegular"
+SINGLE_AVERAGE = "SingleAverage"
+
 # Same tab notebook tab initial buttons
 ALL_TAB = "All"
 PLUS_TAB = "+"
@@ -140,12 +157,16 @@ OPTIONS_FRAME = "OptionsFrame"
 # Sensor names in Plot and Extraction tab
 SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
 
+HEADSET_FREQ = 128
+
 # Messages to PostOffice
 START_MESSAGE = "Start"
 STOP_MESSAGE = "Stop"
 EXIT_MESSAGE = "Exit"
 CLOSE_MESSAGE = "Close"
 SETUP_MESSAGE = "Setup"
+FAIL_MESSAGE = "Fail"
+SUCCESS_MESSAGE = "Success"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"
