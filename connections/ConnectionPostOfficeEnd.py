@@ -11,7 +11,7 @@ class AbstractConnection(Connections.AbstractConnection):
     def __init__(self):
         Connections.AbstractConnection.__init__(self)
 
-    def addProcesses(self, n):
+    def setup(self, options):
         raise NotImplementedError("setupPostOfficeEnd not implemented!")
 
 
@@ -31,7 +31,7 @@ class Connection(AbstractConnection):
             self.connection = None
         return message
 
-    def addProcesses(self, options=None):
+    def setup(self, options=None):
         if self.connection is None:
             self.connection = self.newProcess()
 
@@ -42,6 +42,9 @@ class Connection(AbstractConnection):
 
     def isClosed(self):
         return self.connection is None
+
+    def removeClosedConnections(self):
+        pass
 
 
 class MultipleConnections(AbstractConnection):
@@ -64,10 +67,15 @@ class MultipleConnections(AbstractConnection):
     def receiveMessageBlock(self):
         return [connection.receiveMessageBlock() for connection in self.connections]
 
-    def removeClosedConnections(self, connections):  # Is it necessary?
+    def removeConnections(self, arg=None):
+        connections = arg if arg is not None else self.connections
         for i in range(len(connections)-1, -1, -1):
-            if connections[i] is None:
-                del connections[i]
+            self.closeConnection(connections[i])
+            del connections[i]
+
+    def closeConnection(self, connection):
+        connection.sendExitMessage()
+        connection.receiveMessageBlock()
 
     # def sendOptions(self, options):
     #     for connection, option in zip(self.connections, options):
@@ -123,6 +131,10 @@ class PlotConnection(Connection):
     def sendOptions(self, options_tuple):
         self.sendMessage(options_tuple)
 
+    def setup(self, options=None):
+        if self.connection is None:
+            self.connection = self.newProcess()
+
 
 class MultipleExtractionConnections(MultipleConnections):
     def __init__(self):
@@ -144,12 +156,12 @@ class Level2PlotConnection(MultipleConnections):
             options[c.DATA_SENSOR] = sensor
             connection.sendOptions((options, freqs))
 
-    def addProcesses(self, sensors):
-        self.removeClosedConnections(self.connections)
+    def setup(self, sensors):
+        self.removeConnections()
         while len(self.connections) < len(sensors):
             self.addProcess()
         for connection in self.connections:
-            connection.addProcesses()
+            connection.setup()
 
     def addProcess(self):
         self.connections.append(PlotConnection())
@@ -173,19 +185,20 @@ class Level3PlotConnection(MultipleConnections):
     def addMultipleProcess(self):
         self.multiple_connections.append(Level2PlotConnection())
 
-    def addProcesses(self, options):
+    def setup(self, options):
         methods, sensors = options
-        self.removeClosedConnections(self.connections)
-        self.removeClosedConnections(self.single_connections)
-        self.removeClosedConnections(self.multiple_connections)
-        for option in methods:
-            if "Sum" in option:
-                self.addSingleProcess()
-            else:
-                self.addMultipleProcess()
+        self.removeConnections()
+        self.removeConnections(self.single_connections)
+        self.removeConnections(self.multiple_connections)
+        single_methods = [method for method in methods if "Sum" in method]
+        multiple_method = [method for method in methods if "Sum" not in method]
+        while len(self.single_connections) < len(single_methods):
+            self.addSingleProcess()
+        while len(self.multiple_connections) < len(multiple_method):
+            self.addMultipleProcess()
         self.connections = self.single_connections+self.multiple_connections
         for connection in self.connections:
-            connection.addProcesses(sensors)
+            connection.setup(sensors)
 
 
 class MultiplePlotConnections(MultipleConnections):
@@ -196,14 +209,14 @@ class MultiplePlotConnections(MultipleConnections):
         for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
             connection.sendOptions((option, options[c.DATA_FREQS]))
 
-    def addProcesses(self, options):
+    def setup(self, options):
         # freqs = options_arg[c.DATA_FREQS]
         # options = options_arg[c.DATA_PLOTS]
-        self.removeClosedConnections(self.connections)
+        self.removeConnections()
         while len(self.connections) < len(options[c.DATA_PLOTS]):
             self.addProcess()
         for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
-            connection.addProcesses((option[c.DATA_METHODS], option[c.DATA_SENSORS]))
+            connection.setup((option[c.DATA_METHODS], option[c.DATA_SENSORS]))
 
     def addProcess(self):
         self.connections.append(Level3PlotConnection())

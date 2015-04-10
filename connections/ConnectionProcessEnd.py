@@ -34,7 +34,8 @@ class Connection(Connections.AbstractConnection):
                     return
 
     def sendMessage(self, message):
-        self.connection.send(message)
+        if not self.connection.closed:  # Without it TargetWindow tries to send message through closed pipe when exiting
+            self.connection.send(message)
 
     def receiveMessage(self):
         return self.connection.recv()

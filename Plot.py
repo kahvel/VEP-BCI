@@ -22,7 +22,9 @@ class Plot(object):
             c.AVG_POWER:      c.MULTIPLE_AVERAGE,
             c.SUM_AVG_POWER:  c.SINGLE_AVERAGE
         }
-        self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
+        self.close_connections = True
+        pg.QtGui.QMainWindow.closeEvent = self.exit
+        self.connection.waitMessages(self.start, lambda: self.exit(None), self.updateWindow, self.setup)
 
     def example(self, index):
         coordinates_generator = Signal.MultipleRegular()
@@ -61,7 +63,6 @@ class Plot(object):
         self.closeWindow()
         self.newWindow()
         options, target_freqs = self.connection.receiveOptions()
-        print("Plot options: ", options, target_freqs)
         self.setupGenerator(options)
         return c.SUCCESS_MESSAGE
 
@@ -84,9 +85,12 @@ class Plot(object):
     def closeWindow(self):
         if self.pw is not None:
             self.pw.close()
-            pg.QtGui.QApplication.closeAllWindows()
+            self.pw = None
+            self.close_connections = False
+            pg.QtGui.QApplication.closeAllWindows()  # Also calls closeEvent!!!
+            self.close_connections = True
 
-    def exit(self):
-        self.connection.closeConnection()
-        self.closeWindow()
-
+    def exit(self, event):
+        if self.close_connections:
+            self.connection.closeConnection()
+            self.closeWindow()

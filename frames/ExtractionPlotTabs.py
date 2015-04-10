@@ -61,7 +61,7 @@ class OptionsFrame(Frame.Frame):
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_FROM,      3, 0, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_TO,        3, 2, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_TAPS,      3, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,      4, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,       4, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
             OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,    4, 0, command=self.disableWindow, values=windows),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_BREAK,     4, 4, command=int,   allow_zero=True)
         ))
@@ -103,7 +103,7 @@ class PlotTabButtonFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.PLOT_TAB_BUTTON_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            Buttons.SunkenButton(self.widget, c.SIGNAL,         0, 0),
+            Buttons.SunkenButton(self.widget, c.SIGNAL,         0, 0, default_value=1),
             Buttons.SunkenButton(self.widget, c.SUM_SIGNAL,     0, 1),
             Buttons.SunkenButton(self.widget, c.AVG_SIGNAL,     0, 2),
             Buttons.SunkenButton(self.widget, c.SUM_AVG_SIGNAL, 0, 3),

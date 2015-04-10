@@ -153,7 +153,7 @@ class PostOffice(object):
 
     def setupPostOfficeEnd(self, options):
         for key in self.connections:
-            self.connections[key].addProcesses(options)
+            self.connections[key].setup(options)
 
     def setupProcessEnd(self, options):
         for key in self.connections:
@@ -180,14 +180,7 @@ class PostOffice(object):
         for key in self.connections:
             if not self.connections[key].isClosed():
                 self.connections[key].sendExitMessage()
-            self.connections[key].receiveMessageBlock()  # wait until all connections are closed
-        # while True:
-        #     i = 0
-        #     for key in self.connections:
-        #         if self.connections[key].isClosed():
-        #             i += 1
-        #     if i == len(self.connections):
-        #         break
+                self.connections[key].receiveMessageBlock()  # wait until all connections are closed
 
     def start(self):
         self.sendStartMessages()
