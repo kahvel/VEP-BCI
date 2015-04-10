@@ -4,9 +4,10 @@ import emokit.emotiv
 from Crypto.Cipher import AES
 from Crypto import Random
 import constants as c
+import Queue
 
 
-class myEmotiv(emokit.emotiv.Emotiv):
+class myEmotiv(object):
     def __init__(self, connection):
         # self.lock = args[0]
         # self.lock.acquire()
@@ -14,8 +15,27 @@ class myEmotiv(emokit.emotiv.Emotiv):
         """ @type : ConnectionProcessEnd.Connection """
         self.devices = []
         self.serialNum = None
-        emokit.emotiv.Emotiv.__init__(self)
+        self.packets = Queue.Queue()
         self.cipher = None
+        self.sensors = {
+            'F3': {'value': 0, 'quality': 0},
+            'FC6': {'value': 0, 'quality': 0},
+            'P7': {'value': 0, 'quality': 0},
+            'T8': {'value': 0, 'quality': 0},
+            'F7': {'value': 0, 'quality': 0},
+            'F8': {'value': 0, 'quality': 0},
+            'T7': {'value': 0, 'quality': 0},
+            'P8': {'value': 0, 'quality': 0},
+            'AF4': {'value': 0, 'quality': 0},
+            'F4': {'value': 0, 'quality': 0},
+            'AF3': {'value': 0, 'quality': 0},
+            'O2': {'value': 0, 'quality': 0},
+            'O1': {'value': 0, 'quality': 0},
+            'FC5': {'value': 0, 'quality': 0},
+            'X': {'value': 0, 'quality': 0},
+            'Y': {'value': 0, 'quality': 0},
+            'Unknown': {'value': 0, 'quality': 0}
+        }
         self.connection.waitMessages(self.start, self.cleanUp, lambda: None, self.connectionSetup)
 
     def setupWin(self):
@@ -44,8 +64,9 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 device.set_raw_data_handler(self.handler)
 
     def closeDevices(self):
-        for device in self.devices:
-            device.close()
+        for i in range(len(self.devices)-1, -1, -1):
+            self.devices[i].close()
+            del self.devices[i]
 
     def handler(self, data):
         assert data[0] == 0
@@ -53,7 +74,6 @@ class myEmotiv(emokit.emotiv.Emotiv):
         return True
 
     def cleanUp(self):
-        self._goOn = False
         self.closeDevices()
         self.connection.closeConnection()
 
@@ -103,8 +123,9 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 self.packets.get(False)
             except:
                 break
+        return c.SUCCESS_MESSAGE
 
-        # Make sure we get packets
+    def start(self):
         self.setupWin()
         if self.serialNum is None:
             print("Emotiv USB receiver not found")
@@ -116,9 +137,7 @@ class myEmotiv(emokit.emotiv.Emotiv):
         # except:
         #     print "Turn on headset"
         #     return "Stop"
-        return c.SUCCESS_MESSAGE
 
-    def start(self):
         # Mainloop
         # self.lock.release()  # synchronising with psychopy
         while True:
@@ -126,11 +145,14 @@ class myEmotiv(emokit.emotiv.Emotiv):
                 task = self.packets.get(True, 0.01)
                 data = self.cipher.decrypt(task[:16]) + self.cipher.decrypt(task[16:])
                 packet = emokit.emotiv.EmotivPacket(data, self.sensors)
-                self.connection.send(packet)
+                self.connection.sendMessage(packet)
                 # print "Emotiv " + str(packet)
                 if self.packets.qsize() > 6:
-                    print self.packets.qsize(), "packets in queue."
-            except:
-                print "No packet"
-            if self.connection.poll():
-                return self.connection.recv()
+                    print(str(self.packets.qsize()) + " packets in queue.")
+            except Queue.Empty:
+                pass
+                #print("No packet")
+            message = self.connection.receiveMessageInstant()
+            if message is not None:
+                self.closeDevices()
+                return message

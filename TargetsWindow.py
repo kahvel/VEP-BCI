@@ -114,7 +114,7 @@ class TargetsWindow(object):
             self.generators[-1].send(None)
         self.targets[-1].standby_target = True
 
-    def start(self, standby):
+    def start(self, standby=False):
         prev_rect = self.targets[0].current_rect
         while True:
             self.updateWindow()

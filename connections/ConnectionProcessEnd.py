@@ -27,15 +27,17 @@ class Connection(Connections.AbstractConnection):
                     message = setup_function()
                     self.sendMessage(message)
                 elif message != c.EXIT_MESSAGE:
-                    print("Unknown message in " + self.name + ": " + message)
+                    print("Unknown message in " + self.name + ": " + str(message))
                 if message == c.EXIT_MESSAGE:
                     print("Exit " + self.name)
                     exit_function()
                     return
 
     def sendMessage(self, message):
-        if not self.connection.closed:  # Without it TargetWindow tries to send message through closed pipe when exiting
+        try:  # Without it TargetWindow tries to send message through closed pipe when exiting
             self.connection.send(message)
+        except IOError, e:
+            print(e)
 
     def receiveMessage(self):
         return self.connection.recv()

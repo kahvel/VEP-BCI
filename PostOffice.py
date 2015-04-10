@@ -171,6 +171,7 @@ class PostOffice(object):
         for key in self.connections:
             if not self.connections[key].isClosed():
                 message = self.connections[key].receiveMessageBlock()
+                print(key, message)
                 if message == c.FAIL_MESSAGE:
                     return message
         self.setupResults(self.options[c.DATA_FREQS])
@@ -211,12 +212,12 @@ class PostOffice(object):
                 return main_message
             count += self.handleEmotivMessages(no_standby)
             # self.connections[c.CONNECTION_PLOT].getMessageInstant()
-            self.handleFreqMessages(
-                self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant(),
-                no_standby,
-                target_freqs,
-                current_target
-            )
+            # self.handleFreqMessages(
+            #     self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant(),
+            #     no_standby,
+            #     target_freqs,
+            #     current_target
+            # )
         # Wait for the last result
         self.handleFreqMessages(
             self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),

@@ -90,7 +90,7 @@ class SingleAverage(Signal):
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        channel_count = self.channel_count
+        channel_count = len(self.channels)
         result = []
         coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
         segment = [[0 for _ in range(step)] for _ in range(channel_count)]
@@ -137,7 +137,7 @@ class SingleRegular(Signal):
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        channel_count = self.channel_count
+        channel_count = len(self.channels)
         result = []
         coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
         segment = [[0 for _ in range(step)] for _ in range(channel_count)]

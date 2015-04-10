@@ -131,10 +131,6 @@ class PlotConnection(Connection):
     def sendOptions(self, options_tuple):
         self.sendMessage(options_tuple)
 
-    def setup(self, options=None):
-        if self.connection is None:
-            self.connection = self.newProcess()
-
 
 class MultipleExtractionConnections(MultipleConnections):
     def __init__(self):

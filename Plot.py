@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 import constants as c
 import pyqtgraph as pg
-from signal_processing import Signal
+from signal_processing import Signal, FFT
 
 
 class Plot(object):
@@ -23,56 +23,47 @@ class Plot(object):
             c.SUM_AVG_POWER:  c.SINGLE_AVERAGE
         }
         self.close_connections = True
+        self.multiple_channels = None
+        self.sensor = None
+        self.sensors = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
         self.connection.waitMessages(self.start, lambda: self.exit(None), self.updateWindow, self.setup)
 
-    def example(self, index):
-        coordinates_generator = Signal.MultipleRegular()
-        try:
-            coordinates_generator.send(None)
-            while True:
-                y = yield
-                coordinates = coordinates_generator.send(y)
-                if coordinates is not None:
-                    scaled_avg = self.scale(coordinates, index)
-                    coordinates_generator.next()
-        finally:
-            print("Closing generator")
-            coordinates_generator.close()
-
     def start(self):
-        i = 0
         while True:
             self.updateWindow()
             message = self.connection.receiveMessagePoll(0.1)
+            if isinstance(message, basestring):
+                print("stardist valja " + str(message))
+                return message
             if message is not None:
-                # print("Plot received: " + str(message))
-                if isinstance(message, basestring):
-                    return message
+                if self.multiple_channels:
+                    for sensor in self.sensors:
+                        coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 else:
-                    i += 1
-                    message = message.sensors["O1"]["value"]
-                    self.values.append(message)
-                    if len(self.values) > 512:
-                        del self.values[0]
-                    if i % 10 == 0:
-                        self.pw.plot(self.values, clear=True)
-                        i = 0
+                    coordinates = self.coordinates_generator.send(message.sensors[self.sensor]["value"])
+                # scale
+                if coordinates is not None:
+                    self.pw.plot(coordinates, clear=True)
 
     def setup(self):
         self.closeWindow()
         self.newWindow()
         options, target_freqs = self.connection.receiveOptions()
+        self.multiple_channels = "Sum" in options[c.DATA_METHOD]
+        if c.DATA_SENSOR in options:
+            self.sensor = options[c.DATA_SENSOR]
+        self.sensors = options[c.DATA_SENSORS]
         self.setupGenerator(options)
         return c.SUCCESS_MESSAGE
 
     def setupGenerator(self, options):
         generator_class = getattr(
-            Signal,
+            Signal if "signal" in options[c.DATA_METHOD].lower() else FFT,
             self.button_key_to_class_key[options[c.DATA_METHOD]]
         )()
         """ @type : Signal.Signal | FFT.FFT """
-        generator_class.setup(options[c.DATA_OPTIONS])
+        generator_class.setup(options)
         self.coordinates_generator = generator_class.coordinates_generator()
         self.coordinates_generator.send(None)
 

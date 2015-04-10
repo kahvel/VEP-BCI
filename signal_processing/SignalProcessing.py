@@ -7,7 +7,7 @@ import constants as c
 class SignalProcessing(object):
     def __init__(self):
         self.options = None
-        self.channel_count = None
+        self.channels = None
         self.window_function = None
         self.filter_coefficients = None
         self.breakpoints = None
@@ -20,10 +20,11 @@ class SignalProcessing(object):
         }
 
     def setup(self, options):
-        self.window_function = self.getWindowFunction(options)
-        self.filter_coefficients = self.getFilter(options)
-        self.breakpoints = self.getBreakpoints(options)
-        self.options = options
+        self.window_function = self.getWindowFunction(options[c.DATA_OPTIONS])
+        self.filter_coefficients = self.getFilter(options[c.DATA_OPTIONS])
+        self.breakpoints = self.getBreakpoints(options[c.DATA_OPTIONS])
+        self.options = options[c.DATA_OPTIONS]
+        self.channels = options[c.DATA_SENSORS]
 
     def getWindowWithArgs(self, options):
         if options[c.OPTIONS_WINDOW] == c.WINDOW_KAISER:
@@ -76,7 +77,7 @@ class SignalProcessing(object):
             return scipy.signal.detrend(signal, type="constant")
 
     def windowSignal(self, signal, window):
-        if self.options["Window"]:
+        if self.options["Window"] != "None":
             return signal*window
         else:
             return signal

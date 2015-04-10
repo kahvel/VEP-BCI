@@ -5,8 +5,8 @@ import numpy as np
 
 
 class FFT(SignalProcessing.SignalProcessing):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        SignalProcessing.SignalProcessing.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        SignalProcessing.SignalProcessing.__init__(self)
 
     def normaliseSpectrum(self, fft):
         if self.options["Normalise"]:
@@ -50,8 +50,8 @@ class FFT(SignalProcessing.SignalProcessing):
 
 
 class MultipleRegular(FFT):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        FFT.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
@@ -81,8 +81,8 @@ class MultipleRegular(FFT):
 
 
 class MultipleAverage(FFT):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        FFT.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
@@ -116,13 +116,13 @@ class MultipleAverage(FFT):
 
 
 class SingleAverage(FFT):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        FFT.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        channel_count = self.channel_count
+        channel_count = len(self.channels)
         # average = []
         k = 1
         coordinates = [[] for _ in range(channel_count)]
@@ -170,13 +170,13 @@ class SingleAverage(FFT):
 
 
 class SingleRegular(FFT):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        FFT.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        FFT.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
         length = self.options["Length"]
-        channel_count = self.channel_count
+        channel_count = len(self.channels)
         # average = []
         coordinates = [[] for _ in range(channel_count)]
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
