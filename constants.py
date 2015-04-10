@@ -182,6 +182,9 @@ DATA_SENSORS = "Sensors"
 DATA_OPTIONS = "Options"
 DATA_METHODS = "Methods"
 
+DATA_METHOD = "Method"
+DATA_SENSOR = "Sensor"
+
 DATA_FREQ = "Freq"
 
 EXTRACTION_METHOD_NAMES = ("CCA", "PSDA", "CCAPSDA", "shortCCAPSDA") # Why is it missing one?

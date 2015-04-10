@@ -75,7 +75,7 @@ class PlotConnection(Connection):
         Connection.__init__(self, connection, c.CONNECTION_PLOT_NAME)
 
     def receiveOptions(self):
-        return self.receiveMessageBlock(), self.receiveMessageBlock()
+        return self.receiveMessageBlock()
 
 
 class GameConnection(Connection):

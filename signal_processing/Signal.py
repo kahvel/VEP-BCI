@@ -1,12 +1,11 @@
 __author__ = 'Anti'
 
 from signal_processing import SignalProcessing
-import numpy as np
 
 
 class Signal(SignalProcessing.SignalProcessing):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        SignalProcessing.SignalProcessing.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        SignalProcessing.SignalProcessing.__init__(self)
 
     def getSegment(self, array, i):
         if array is not None:
@@ -22,10 +21,13 @@ class Signal(SignalProcessing.SignalProcessing):
         windowed_signal = self.windowSignal(filtered_signal, window_segment)
         return windowed_signal, filter_prev_state
 
+    def coordinates_generator(self):
+        raise NotImplementedError("coordinates_generator not implemented!")
+
 
 class MultipleAverage(Signal):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        Signal.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        Signal.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
@@ -54,8 +56,8 @@ class MultipleAverage(Signal):
 
 
 class MultipleRegular(Signal):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        Signal.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        Signal.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
@@ -82,8 +84,8 @@ class MultipleRegular(Signal):
 
 
 class SingleAverage(Signal):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        Signal.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        Signal.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
@@ -129,8 +131,8 @@ class SingleAverage(Signal):
 
 
 class SingleRegular(Signal):
-    def __init__(self, options, window_function, channel_count, filter_coefficients):
-        Signal.__init__(self, options, window_function, channel_count, filter_coefficients)
+    def __init__(self):
+        Signal.__init__(self)
 
     def coordinates_generator(self):
         step = self.options["Step"]
