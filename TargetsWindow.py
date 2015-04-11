@@ -57,7 +57,7 @@ class Target(object):
 
 class TargetsWindow(object):
     def __init__(self, connection):
-        logging.console.setLevel(logging.WARNING)
+        logging.console.setLevel(logging.ERROR)
         self.connection = connection
         """ @type : ConnectionProcessEnd.PsychopyConnection """
         self.targets = None
@@ -74,6 +74,7 @@ class TargetsWindow(object):
         background_data, targets_data, standby = self.connection.receiveOptions()
         self.setBackground(background_data)
         self.setTargets(targets_data)
+        return c.SUCCESS_MESSAGE
 
     def exit(self):
         self.connection.closeConnection()

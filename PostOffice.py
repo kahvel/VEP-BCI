@@ -3,22 +3,13 @@ __author__ = 'Anti'
 import random
 import numpy as np
 import constants as c
-from connections import ConnectionPostOfficeEnd
+from connections import MasterConnection, ConnectionPostOfficeEnd
 
 
 class PostOffice(object):
     def __init__(self):
         self.main_connection = ConnectionPostOfficeEnd.MainConnection()
-        self.connections = {
-            c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
-            c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
-            # c.CONNECTION_EXTRACTION: ConnectionPostOfficeEnd.MultipleExtractionConnections(),
-            c.CONNECTION_PLOT:       ConnectionPostOfficeEnd.MultiplePlotConnections()
-            # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
-        }
-        """
-        @type : dict[str, ConnectionPostOfficeEnd.Connection | ConnectionPostOfficeEnd.MultipleConnections]
-        """
+        self.connections = MasterConnection.MasterConnection()
         self.options = None
         self.results = None
         self.resetResults()
@@ -29,12 +20,13 @@ class PostOffice(object):
 
     def waitConnections(self):
         setup_successful = False
+        message = None
         while True:
-            message = self.main_connection.receiveMessagePoll(0.1)
             if message is not None:
                 if message == c.START_MESSAGE:
                     if setup_successful:
                         message = self.start()
+                        continue
                     else:
                         print("Setup was not successful!")
                 elif message == c.SETUP_MESSAGE:
@@ -44,7 +36,7 @@ class PostOffice(object):
                         setup_successful = False
                         print("Setup failed!")
                 elif message == c.STOP_MESSAGE:
-                    print("PostOffice received stop message, but is already in standby mode")
+                    print("Stop PostOffice")
                 elif message == "Threshold":
                     self.calculateThreshold()
                 elif message == "Record neutral":
@@ -63,11 +55,12 @@ class PostOffice(object):
                     self.resetResults()
                 elif message == "Show results":
                     self.printResults()
-                elif message != c.EXIT_MESSAGE:
-                    print "Unknown message:", message
-                if message == c.EXIT_MESSAGE:
+                elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return
+                else:
+                    print("Unknown message in PostOffice: " + str(message))
+            message = self.main_connection.receiveMessagePoll(0.1)
 
     def handleFreqMessages(self, messages, no_standby, target_freqs, current_target):
         for result in messages:
@@ -137,67 +130,40 @@ class PostOffice(object):
         # print(sequence)
         message = None
         for target, time in sequence:
-            self.connections[c.CONNECTION_PSYCHOPY].sendCurrentTarget(target)
+            self.connections.sendCurrentTarget(target)
             message = self.startPacketSending(time, no_standby, target_freqs, target)
             if message is not None:
                 break
         return message
 
-    def sendStartMessages(self):
-        for key in self.connections:
-            self.connections[key].sendStartMessage()
-
-    def sendStopMessages(self):
-        for key in self.connections:
-            self.connections[key].sendStopMessage()
-
-    def setupPostOfficeEnd(self, options):
-        for key in self.connections:
-            self.connections[key].setup(options)
-
-    def setupProcessEnd(self, options):
-        for key in self.connections:
-            self.connections[key].sendSetupMessage()
-        self.sendOptions(options)
-
-    def sendOptions(self, options):
-        for key in self.connections:
-            self.connections[key].sendOptions(options)
-
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
-        self.setupPostOfficeEnd(self.options)
-        self.setupProcessEnd(self.options)
-        for key in self.connections:
-            if not self.connections[key].isClosed():
-                message = self.connections[key].receiveMessageBlock()
-                print(key, message)
-                if message == c.FAIL_MESSAGE:
-                    return message
-        self.setupResults(self.options[c.DATA_FREQS])
-        return c.SUCCESS_MESSAGE
+        self.connections.setup(self.options)
+        self.connections.setupOtherEnd(self.options)
+        if self.connections.setupSuccessful():
+            self.setupResults(self.options[c.DATA_FREQS])
+            return c.SUCCESS_MESSAGE
+        else:
+            return c.FAIL_MESSAGE
 
     def exit(self):
-        for key in self.connections:
-            if not self.connections[key].isClosed():
-                self.connections[key].sendExitMessage()
-                self.connections[key].receiveMessageBlock()  # wait until all connections are closed
+        self.connections.close()
 
     def start(self):
-        self.sendStartMessages()
+        self.connections.sendStartMessage()
         message = self.targetChangingLoop(
             self.getSequence(self.options[c.DATA_TEST]),
             self.options[c.DATA_FREQS],
             not self.options[c.DATA_TEST][c.TEST_STANDBY]
         )
-        self.sendStopMessages()
+        self.connections.sendStopMessage()
         return message
 
     def handleEmotivMessages(self, no_standby):
-        message = self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.007)
+        message = self.connections.receiveEmotivMessage()
         if message is not None:
-            # self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
-            self.connections[c.CONNECTION_PLOT].sendMessage(message)
+            # self.connections.sendExtractionMessage(message)
+            self.connections.sendPlotMessage(message)
             if not self.standby or no_standby:
                 return 1
         return 0
@@ -219,12 +185,12 @@ class PostOffice(object):
             #     current_target
             # )
         # Wait for the last result
-        self.handleFreqMessages(
-            self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),
-            no_standby,
-            target_freqs,
-            current_target
-        )
+        # self.handleFreqMessages(
+        #     self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),
+        #     no_standby,
+        #     target_freqs,
+        #     current_target
+        # )
 
 
 

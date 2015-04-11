@@ -12,26 +12,26 @@ class Connection(Connections.AbstractConnection):
         self.name = name
 
     def waitMessages(self, start_function, exit_function, update_function, setup_function):  # wait for start or exit message
+        message = None
         while True:
             update_function()
-            message = self.receiveMessagePoll(0.1)
             if message is not None:
                 if message == c.START_MESSAGE:
                     print("Start " + self.name)
                     message = start_function()
-                    if message == c.STOP_MESSAGE:
-                        print("Stop " + self.name)
+                    continue
                 elif message == c.STOP_MESSAGE:
-                    print(self.name + " received stop message, but is already in standby mode")
+                    print("Stop " + self.name)
                 elif message == c.SETUP_MESSAGE:
                     message = setup_function()
                     self.sendMessage(message)
-                elif message != c.EXIT_MESSAGE:
-                    print("Unknown message in " + self.name + ": " + str(message))
-                if message == c.EXIT_MESSAGE:
+                elif message == c.EXIT_MESSAGE:
                     print("Exit " + self.name)
                     exit_function()
                     return
+                else:
+                    print("Unknown message in " + self.name + ": " + str(message))
+            message = self.receiveMessagePoll(0.1)
 
     def sendMessage(self, message):
         try:  # Without it TargetWindow tries to send message through closed pipe when exiting

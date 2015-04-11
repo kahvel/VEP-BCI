@@ -34,7 +34,6 @@ class Plot(object):
             self.updateWindow()
             message = self.connection.receiveMessagePoll(0.1)
             if isinstance(message, basestring):
-                print("stardist valja " + str(message))
                 return message
             if message is not None:
                 if self.multiple_channels:
@@ -42,7 +41,7 @@ class Plot(object):
                         coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 else:
                     coordinates = self.coordinates_generator.send(message.sensors[self.sensor]["value"])
-                # scale
+                # scale?
                 if coordinates is not None:
                     self.pw.plot(coordinates, clear=True)
 
