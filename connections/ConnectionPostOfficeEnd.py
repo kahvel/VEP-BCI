@@ -78,10 +78,15 @@ class Level3PlotConnection(Connections.MultipleConnections):
         Connections.MultipleConnections.__init__(self)
         self.single_connections = []
         self.multiple_connections = []
+        self.single_methods = []
+        self.multiple_methods = []
 
     def sendOptions(self, *options_tuple):
         options, freqs = options_tuple
-        for connection, method in zip(self.connections, options[c.DATA_METHODS]):
+        for connection, method in zip(self.single_connections, self.single_methods):
+            options[c.DATA_METHOD] = method
+            connection.sendOptions(options, freqs)
+        for connection, method in zip(self.multiple_connections, self.multiple_methods):
             options[c.DATA_METHOD] = method
             connection.sendOptions(options, freqs)
 
@@ -96,15 +101,18 @@ class Level3PlotConnection(Connections.MultipleConnections):
         self.close()
         self.close(self.single_connections)
         self.close(self.multiple_connections)
-        single_methods = [method for method in methods if "Sum" in method]
-        multiple_method = [method for method in methods if "Sum" not in method]
-        while len(self.single_connections) < len(single_methods):
+        self.single_methods = [method for method in methods if self.isSingleGenerator(method)]
+        self.multiple_methods = [method for method in methods if not self.isSingleGenerator(method)]
+        while len(self.single_connections) < len(self.single_methods):
             self.addSingleProcess()
-        while len(self.multiple_connections) < len(multiple_method):
+        while len(self.multiple_connections) < len(self.multiple_methods):
             self.addMultipleProcess()
         self.connections = self.single_connections+self.multiple_connections
         for connection in self.connections:
             connection.setup(sensors, options_other_end)
+
+    def isSingleGenerator(self, method):
+        return method == c.SUM_SIGNAL or method == c.SUM_AVG_SIGNAL
 
 
 class MultiplePlotConnections(Connections.MultipleConnections):

@@ -23,7 +23,7 @@ class Plot(object):
             c.SUM_AVG_POWER:  c.SINGLE_AVERAGE
         }
         self.want_to_exit = True
-        self.multiple_channels = None
+        self.single_generator = None
         self.sensor = None
         self.sensors = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
@@ -36,7 +36,7 @@ class Plot(object):
             if isinstance(message, basestring):
                 return message
             if message is not None:
-                if self.multiple_channels:
+                if self.single_generator:
                     for sensor in self.sensors:
                         coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 else:
@@ -45,10 +45,10 @@ class Plot(object):
                     self.pw.plot(coordinates, clear=True)
 
     def setup(self):
-        self.closeWindow()
-        self.newWindow()
         options, target_freqs = self.connection.receiveOptions()
-        self.multiple_channels = "Sum" in options[c.DATA_METHOD]
+        self.single_generator = self.isSingleGenerator(options)
+        self.closeWindow()
+        self.newWindow(self.getTitle(options))
         if c.DATA_SENSOR in options:
             self.sensor = options[c.DATA_SENSOR]
         self.sensors = options[c.DATA_SENSORS]
@@ -56,17 +56,33 @@ class Plot(object):
         return c.SUCCESS_MESSAGE
 
     def setupGenerator(self, options):
-        generator_class = getattr(
-            Signal if "signal" in options[c.DATA_METHOD].lower() else FFT,
-            self.button_key_to_class_key[options[c.DATA_METHOD]]
-        )()
+        generator_class = self.getGeneratorClass(options)
         """ @type : Signal.Signal | FFT.FFT """
         generator_class.setup(options)
         self.coordinates_generator = generator_class.coordinates_generator()
         self.coordinates_generator.send(None)
 
-    def newWindow(self):
-        self.pw = pg.plot(title="tere")
+    def getGeneratorClass(self, options):
+        return getattr(
+            Signal if self.isSignalPlot(options[c.DATA_METHOD]) else FFT,
+            self.button_key_to_class_key[options[c.DATA_METHOD]]
+        )()
+
+    def isSignalPlot(self, method):
+        return method in [c.SIGNAL, c.SUM_SIGNAL, c.AVG_SIGNAL, c.SUM_AVG_SIGNAL]
+
+    def isSingleGenerator(self, options):
+        return options[c.DATA_METHOD] == c.SUM_SIGNAL or options[c.DATA_METHOD] == c.SUM_AVG_SIGNAL
+
+    def getTitle(self, options):
+        print(options)
+        if self.isSingleGenerator(options):
+            return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
+        else:
+            return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSOR])
+
+    def newWindow(self, title):
+        self.pw = pg.plot(title=title)
 
     def updateWindow(self):
         pg.QtGui.QApplication.processEvents()
@@ -75,7 +91,7 @@ class Plot(object):
         # if self.pw is not None:
         #     self.pw.close()
         #     self.pw = None
-        pg.QtGui.QApplication.closeAllWindows()  # Also calls closeEvent!!!
+        pg.QtGui.QApplication.closeAllWindows()  # Also calls exit!!!
 
     def exit(self, event=None):
         if event is None:
