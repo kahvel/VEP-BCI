@@ -66,11 +66,12 @@ class Connection(AbstractConnection):
         self.connection.send(message)
 
     def receiveMessage(self):
-        message = self.connection.recv()
-        if message == c.CLOSE_MESSAGE:
-            self.connection.close()
-            self.connection = None
-        return message
+        return self.connection.recv()
+        # message = self.connection.recv()
+        # if message == c.CLOSE_MESSAGE:
+        #     self.connection.close()
+        #     self.connection = None
+        # return message
 
     def setup(self, *options):
         if self.connection is None:

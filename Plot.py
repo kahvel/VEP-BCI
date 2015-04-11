@@ -22,12 +22,12 @@ class Plot(object):
             c.AVG_POWER:      c.MULTIPLE_AVERAGE,
             c.SUM_AVG_POWER:  c.SINGLE_AVERAGE
         }
-        self.close_connections = True
+        self.want_to_exit = True
         self.multiple_channels = None
         self.sensor = None
         self.sensors = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
-        self.connection.waitMessages(self.start, lambda: self.exit(None), self.updateWindow, self.setup)
+        self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
 
     def start(self):
         while True:
@@ -41,7 +41,6 @@ class Plot(object):
                         coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 else:
                     coordinates = self.coordinates_generator.send(message.sensors[self.sensor]["value"])
-                # scale?
                 if coordinates is not None:
                     self.pw.plot(coordinates, clear=True)
 
@@ -67,20 +66,20 @@ class Plot(object):
         self.coordinates_generator.send(None)
 
     def newWindow(self):
-        self.pw = pg.plot()
+        self.pw = pg.plot(title="tere")
 
     def updateWindow(self):
         pg.QtGui.QApplication.processEvents()
 
     def closeWindow(self):
-        if self.pw is not None:
-            self.pw.close()
-            self.pw = None
-            self.close_connections = False
-            pg.QtGui.QApplication.closeAllWindows()  # Also calls closeEvent!!!
-            self.close_connections = True
+        # if self.pw is not None:
+        #     self.pw.close()
+        #     self.pw = None
+        pg.QtGui.QApplication.closeAllWindows()  # Also calls closeEvent!!!
 
-    def exit(self, event):
-        if self.close_connections:
+    def exit(self, event=None):
+        if event is None:
             self.connection.closeConnection()
             self.closeWindow()
+        else:
+            event.ignore()
