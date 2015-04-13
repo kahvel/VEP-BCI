@@ -162,7 +162,7 @@ class PostOffice(object):
     def handleEmotivMessages(self, no_standby):
         message = self.connections.receiveEmotivMessage()
         if message is not None:
-            # self.connections.sendExtractionMessage(message)
+            self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
             if not self.standby or no_standby:
                 return 1

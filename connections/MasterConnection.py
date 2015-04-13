@@ -12,8 +12,8 @@ class MasterConnection(Connections.MultipleConnections):
         self.connections = {
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
-            # c.CONNECTION_EXTRACTION: ConnectionPostOfficeEnd.MultipleExtractionConnections(),
-            c.CONNECTION_PLOT:       PlotConnection.TabConnection()
+            c.CONNECTION_EXTRACTION: PlotConnection.PlotTabConnection(),
+            c.CONNECTION_PLOT:       PlotConnection.ExtractionTabConnection()
             # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
 

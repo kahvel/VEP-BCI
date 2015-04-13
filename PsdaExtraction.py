@@ -11,8 +11,6 @@ class PsdaExtraction(object):
         self.connection = connection
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
-        self.values = [0 for _ in range(100)]
-        self.coordinates_generator = None
         self.button_key_to_class_key = {
             c.PSDA:     c.MULTIPLE_REGULAR,
             c.SUM_PSDA: c.SINGLE_REGULAR,
@@ -21,6 +19,7 @@ class PsdaExtraction(object):
             c.SUM_BOTH: c.MULTIPLE_REGULAR#?
         }
         self.sensors = None
+        self.main_generator = None
         self.connection.waitMessages(self.start, lambda: None, lambda: None, self.setup)
 
     def start(self):
@@ -30,9 +29,8 @@ class PsdaExtraction(object):
                 return message
             if message is not None:
                 for sensor in self.sensors:
-                    result = self.coordinates_generator.send(message.sensors[sensor]["value"])
+                    result = self.main_generator.send(message.sensors[sensor]["value"])
                 if result is not None:
-                    print(result)
                     self.connection.sendMessage(result)
                     self.connection.sendMessage("PSDA")
                     self.main_generator.next()
@@ -41,7 +39,8 @@ class PsdaExtraction(object):
         options, target_freqs = self.connection.receiveOptions()
         self.sensors = self.getSensors(options)
         coordinates_generator = [self.setupGenerator(options) for _ in range(len(self.sensors))]
-        self.main_generator = self.setupMainGenerator(options, coordinates_generator, target_freqs)
+        self.main_generator = self.setupMainGenerator(options[c.DATA_OPTIONS], coordinates_generator, target_freqs)
+        self.main_generator.send(None)
         return c.SUCCESS_MESSAGE
 
     def setupGenerator(self, options):
@@ -71,7 +70,7 @@ class PsdaExtraction(object):
         raise NotImplementedError("getSensors not implemented!")
 
 
-class MultipleChannelPsda(PsdaExtraction):
+class MultipleChannel(PsdaExtraction):
     def __init__(self, connection):
         PsdaExtraction.__init__(self, connection)
 
@@ -79,7 +78,7 @@ class MultipleChannelPsda(PsdaExtraction):
         return [options[c.DATA_SENSOR]]
 
 
-class SingleChannelPsda(PsdaExtraction):
+class SingleChannel(PsdaExtraction):
     def __init__(self, connection):
         PsdaExtraction.__init__(self, connection)
 
@@ -117,8 +116,6 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
     coord_gen_count = len(coordinates_generators)
     coordinates = [None for _ in range(coord_gen_count)]
     calculate_indices = True
-    for generator in coordinates_generators:
-        generator.send(None)
     while True:
         max_freqs = [0 for _ in range(len(target_freqs))]
         j = 0
@@ -146,18 +143,6 @@ def mainGenerator(length, step, sampling_freq, coordinates_generators, target_fr
             # if sum(coordinates[channel])/len(coordinates[channel])*2+1 < actual_max:
             #     max_freqs[max_index] += 1
             max_freqs[max_index] += 1
-            # textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(actual_max)+"  ")
-            # maximum, max_index = getMax(getMagnitude, 2, 2, interpolation_fun, target_freqs)
-            # textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"  ")
-            # maximum, max_index = getMax(getMagnitude, 3, 3, interpolation_fun, target_freqs)
-            # textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"\n")
-            # maximum, max_index = getMax(getSNR, 1, 1, interpolation_fun, target_freqs)
-            # textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"  ")
-            # maximum, max_index = getMax(getSNR, 2, 2, interpolation_fun, target_freqs)
-            # textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"  ")
-            # maximum, max_index = getMax(getSNR, 3, 3, interpolation_fun, target_freqs)
-            # textbox.insert(Tkinter.END, str(target_freqs[max_index])+" "+str(maximum)+"\n\n")
-            # textbox.yview(Tkinter.END)
         for i in range(len(max_freqs)):
             if max_freqs[i] >= coord_gen_count:
                 yield target_freqs[i]

@@ -25,10 +25,10 @@ class PsychopyConnection(Connections.Connection):
 
 
 class ExtractionConnection(Connections.Connection):
-    def __init__(self):
-        Connections.Connection.__init__(self, Extraction.Extraction, ConnectionProcessEnd.ExtractionConnection)
+    def __init__(self, process):
+        Connections.Connection.__init__(self, process, ConnectionProcessEnd.ExtractionConnection)
 
-    def sendOptions(self, options):
+    def sendOptions(self, *options):
         self.connection.send(options)
         #self.connection.send(options[c.DATA_FREQS])
 

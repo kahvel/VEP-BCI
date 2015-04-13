@@ -4,6 +4,7 @@ import Connections
 import ConnectionPostOfficeEnd
 import constants as c
 import Plot
+import PsdaExtraction
 
 
 class SensorConnection(Connections.MultipleConnections):
@@ -25,7 +26,7 @@ class SensorConnection(Connections.MultipleConnections):
             connection.setup(options_other_end)
 
     def addProcess(self):
-        self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SingleChannelPlot))
+        raise NotImplementedError("addProcess not implemented!")
 
 
 class MethodConnection(Connections.MultipleConnections):
@@ -46,10 +47,10 @@ class MethodConnection(Connections.MultipleConnections):
             connection.sendOptions(options, freqs)
 
     def addSingleProcess(self):
-        self.single_connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.MultipleChannelPlot))
+        raise NotImplementedError("addSingleProcess not implemented!")
 
     def addMultipleProcess(self):
-        self.multiple_connections.append(SensorConnection())
+        raise NotImplementedError("addMultipleProcess not implemented!")
 
     def setup(self, *options):
         methods, sensors, options_other_end = options
@@ -67,25 +68,92 @@ class MethodConnection(Connections.MultipleConnections):
             connection.setup(sensors, options_other_end)
 
     def isSingleChannel(self, method):
-        return method == c.SUM_SIGNAL or method == c.SUM_AVG_SIGNAL
+        raise NotImplementedError("isSingleChannel not implemented!")
 
 
 class TabConnection(Connections.MultipleConnections):
-    def __init__(self):
+    def __init__(self, options_key):
         Connections.MultipleConnections.__init__(self)
+        self.options_key = options_key
 
     def sendOptions(self, *options):
         options = options[0]
-        for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
+        for connection, option in zip(self.connections, options[self.options_key]):
             connection.sendOptions(option, options[c.DATA_FREQS])
 
     def setup(self, *options):
         options = options[0]
         self.close()
-        while len(self.connections) < len(options[c.DATA_PLOTS]):
+        while len(self.connections) < len(options[self.options_key]):
             self.addProcess()
-        for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
+        for connection, option in zip(self.connections, options[self.options_key]):
             connection.setup(option[c.DATA_METHODS], option[c.DATA_SENSORS], options)
 
     def addProcess(self):
-        self.connections.append(MethodConnection())
+        raise NotImplementedError("addProcess not implemented!")
+
+
+class PlotTabConnection(TabConnection):
+    def __init__(self):
+        TabConnection.__init__(self, c.DATA_PLOTS)
+
+    def addProcess(self):
+        self.connections.append(PlotMethodConnection())
+
+
+class ExtractionTabConnection(TabConnection):
+    def __init__(self):
+        TabConnection.__init__(self, c.DATA_EXTRACTION)
+
+    def addProcess(self):
+        self.connections.append(ExtractionMethodConnection())
+
+
+class PlotMethodConnection(MethodConnection):
+    def __init__(self):
+        MethodConnection.__init__(self)
+
+    def addProcess(self):
+        self.connections.append(PlotSensorConnection())
+
+    def isSingleChannel(self, method):
+        return method == c.SUM_SIGNAL or method == c.SUM_AVG_SIGNAL
+
+    def addSingleProcess(self):
+        self.single_connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.MultipleChannel))
+
+    def addMultipleProcess(self):
+        self.multiple_connections.append(PlotSensorConnection())
+
+
+class ExtractionMethodConnection(MethodConnection):
+    def __init__(self):
+        MethodConnection.__init__(self)
+
+    def addProcess(self):
+        self.connections.append(ExtractionSensorConnection())
+
+    def isSingleChannel(self, method):
+        return method == c.SUM_PSDA or method == c.SUM_BOTH
+
+    def addSingleProcess(self):
+        self.single_connections.append(ConnectionPostOfficeEnd.ExtractionConnection(PsdaExtraction.MultipleChannel))
+
+    def addMultipleProcess(self):
+        self.multiple_connections.append(ExtractionSensorConnection())
+
+
+class PlotSensorConnection(SensorConnection):
+    def __init__(self):
+        SensorConnection.__init__(self)
+
+    def addProcess(self):
+        self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SingleChannel))
+
+
+class ExtractionSensorConnection(SensorConnection):
+    def __init__(self):
+        SensorConnection.__init__(self)
+
+    def addProcess(self):
+        self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(PsdaExtraction.SingleChannel))

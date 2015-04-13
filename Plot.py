@@ -87,7 +87,7 @@ class Plot(object):
             event.ignore()
 
 
-class MultipleChannelPlot(Plot):
+class MultipleChannel(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 
@@ -98,7 +98,7 @@ class MultipleChannelPlot(Plot):
         return options[c.DATA_SENSORS]
 
 
-class SingleChannelPlot(Plot):
+class SingleChannel(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 

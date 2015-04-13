@@ -67,10 +67,8 @@ class ExtractionConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_EMOTIV_NAME)
 
-    def sendOptions(self, options):
-        for i, message in enumerate(options[c.DATA_EXTRACTION]):
-            self.connections[i].sendMessage(message)
-            self.connections[i].sendMessage(options[c.DATA_FREQS])
+    def receiveOptions(self):
+        return self.receiveMessageBlock()
 
 
 class PlotConnection(Connection):
