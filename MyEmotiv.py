@@ -7,7 +7,7 @@ import constants as c
 import Queue
 
 
-class myEmotiv(object):
+class MyEmotiv(object):
     def __init__(self, connection):
         # self.lock = args[0]
         # self.lock.acquire()

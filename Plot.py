@@ -10,7 +10,6 @@ class Plot(object):
         self.connection = connection
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
-        self.values = [0 for _ in range(100)]
         self.coordinates_generator = None
         self.button_key_to_class_key = {
             c.SIGNAL:         c.MULTIPLE_REGULAR,
@@ -22,9 +21,6 @@ class Plot(object):
             c.AVG_POWER:      c.MULTIPLE_AVERAGE,
             c.SUM_AVG_POWER:  c.SINGLE_AVERAGE
         }
-        self.want_to_exit = True
-        self.single_generator = None
-        self.sensor = None
         self.sensors = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
         self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
@@ -36,22 +32,16 @@ class Plot(object):
             if isinstance(message, basestring):
                 return message
             if message is not None:
-                if self.single_generator:
-                    for sensor in self.sensors:
-                        coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
-                else:
-                    coordinates = self.coordinates_generator.send(message.sensors[self.sensor]["value"])
+                for sensor in self.sensors:
+                    coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 if coordinates is not None:
                     self.pw.plot(coordinates, clear=True)
 
     def setup(self):
         options, target_freqs = self.connection.receiveOptions()
-        self.single_generator = self.isSingleGenerator(options)
         self.closeWindow()
         self.newWindow(self.getTitle(options))
-        if c.DATA_SENSOR in options:
-            self.sensor = options[c.DATA_SENSOR]
-        self.sensors = options[c.DATA_SENSORS]
+        self.sensors = self.getSensors(options)
         self.setupGenerator(options)
         return c.SUCCESS_MESSAGE
 
@@ -71,15 +61,11 @@ class Plot(object):
     def isSignalPlot(self, method):
         return method in [c.SIGNAL, c.SUM_SIGNAL, c.AVG_SIGNAL, c.SUM_AVG_SIGNAL]
 
-    def isSingleGenerator(self, options):
-        return options[c.DATA_METHOD] == c.SUM_SIGNAL or options[c.DATA_METHOD] == c.SUM_AVG_SIGNAL
-
     def getTitle(self, options):
-        print(options)
-        if self.isSingleGenerator(options):
-            return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
-        else:
-            return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSOR])
+        raise NotImplementedError("getTitle not implemented!")
+
+    def getSensors(self, options):
+        raise NotImplementedError("getSensors not implemented!")
 
     def newWindow(self, title):
         self.pw = pg.plot(title=title)
@@ -99,3 +85,25 @@ class Plot(object):
             self.closeWindow()
         else:
             event.ignore()
+
+
+class MultipleChannelPlot(Plot):
+    def __init__(self, connection):
+        Plot.__init__(self, connection)
+
+    def getTitle(self, options):
+        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
+
+    def getSensors(self, options):
+        return options[c.DATA_SENSORS]
+
+
+class SingleChannelPlot(Plot):
+    def __init__(self, connection):
+        Plot.__init__(self, connection)
+
+    def getTitle(self, options):
+        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSOR])
+
+    def getSensors(self, options):
+        return [options[c.DATA_SENSOR]]

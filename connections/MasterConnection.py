@@ -3,6 +3,7 @@ __author__ = 'Anti'
 import Connections
 import constants as c
 import ConnectionPostOfficeEnd
+import PlotConnection
 
 
 class MasterConnection(Connections.MultipleConnections):
@@ -12,7 +13,7 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
             # c.CONNECTION_EXTRACTION: ConnectionPostOfficeEnd.MultipleExtractionConnections(),
-            c.CONNECTION_PLOT:       ConnectionPostOfficeEnd.MultiplePlotConnections()
+            c.CONNECTION_PLOT:       PlotConnection.TabConnection()
             # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
 

@@ -57,10 +57,10 @@ class AbstractConnection(object):
 
 
 class Connection(AbstractConnection):
-    def __init__(self, run_function, connection_class):
+    def __init__(self, process, connection_other_end):
         AbstractConnection.__init__(self)
-        self.run_function = run_function
-        self.connection_class = connection_class
+        self.process = process
+        self.connection_other_end = connection_other_end
 
     def sendMessage(self, message):
         self.connection.send(message)
@@ -79,7 +79,7 @@ class Connection(AbstractConnection):
 
     def newProcess(self):
         from_process, to_process = multiprocessing.Pipe()
-        multiprocessing.Process(target=self.run_function, args=(self.connection_class(from_process),)).start()
+        multiprocessing.Process(target=self.process, args=(self.connection_other_end(from_process),)).start()
         return to_process
 
     def isClosed(self):
@@ -100,13 +100,18 @@ class Connection(AbstractConnection):
         self.receiveMessageBlock()
         self.connection = None
 
+    def getRunFunction(self, connection):
+        raise NotImplementedError("getRunFunction not implemented!")
+
+    def getOtherEndInstance(self, connection):
+        raise NotImplementedError("getOtherEndInstance not implemented!")
+
 
 class MultipleConnections(AbstractConnection):
     def __init__(self):
         AbstractConnection.__init__(self)
         self.connections = []
         """ @type : list[Connection] """
-        self.methods_key = None
 
     def sendMessage(self, message):
         for connection in self.connections:

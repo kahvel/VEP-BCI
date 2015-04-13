@@ -2,13 +2,17 @@ __author__ = 'Anti'
 
 import Connections
 import constants as c
-import Main
 import ConnectionProcessEnd
+# import Extraction
+import TargetsWindow
+import MyEmotiv
+import Game
+from main_window import MainWindow
 
 
 class PsychopyConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, Main.runPsychopy, ConnectionProcessEnd.PsychopyConnection)
+        Connections.Connection.__init__(self, TargetsWindow.TargetsWindow, ConnectionProcessEnd.PsychopyConnection)
 
     def sendOptions(self, options):
         self.connection.send(options[c.DATA_BACKGROUND])
@@ -22,7 +26,7 @@ class PsychopyConnection(Connections.Connection):
 
 class ExtractionConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, Main.runExtractionControl, ConnectionProcessEnd.ExtractionConnection)
+        Connections.Connection.__init__(self, Extraction.Extraction, ConnectionProcessEnd.ExtractionConnection)
 
     def sendOptions(self, options):
         self.connection.send(options)
@@ -30,8 +34,8 @@ class ExtractionConnection(Connections.Connection):
 
 
 class PlotConnection(Connections.Connection):
-    def __init__(self):
-        Connections.Connection.__init__(self, Main.runPlotControl, ConnectionProcessEnd.PlotConnection)
+    def __init__(self, process):
+        Connections.Connection.__init__(self, process, ConnectionProcessEnd.PlotConnection)
 
     def sendOptions(self, *options_tuple):
         self.sendMessage(options_tuple)
@@ -41,104 +45,9 @@ class PlotConnection(Connections.Connection):
             self.connection = self.newProcess()
 
 
-class MultipleExtractionConnections(Connections.MultipleConnections):
-    def __init__(self):
-        Connections.MultipleConnections.__init__(self, ExtractionConnection)
-
-    # def sendOptions(self, options):
-    #     for i, message in enumerate(options[c.DATA_EXTRACTION]):
-    #         self.connections[i].sendMessage(message)
-    #         self.connections[i].sendMessage(options[c.DATA_FREQS])
-
-
-class Level2PlotConnection(Connections.MultipleConnections):
-    def __init__(self):
-        Connections.MultipleConnections.__init__(self)
-
-    def sendOptions(self, *options_tuple):
-        options, freqs = options_tuple
-        for connection, sensor in zip(self.connections, options[c.DATA_SENSORS]):
-            options[c.DATA_SENSOR] = sensor
-            connection.sendOptions(options, freqs)
-
-    def setup(self, *options):
-        sensors, options_other_end = options
-        self.close()
-        while len(self.connections) < len(sensors):
-            self.addProcess()
-        for connection in self.connections:
-            connection.setup(options_other_end)
-
-    def addProcess(self):
-        self.connections.append(PlotConnection())
-
-
-class Level3PlotConnection(Connections.MultipleConnections):
-    def __init__(self):
-        Connections.MultipleConnections.__init__(self)
-        self.single_connections = []
-        self.multiple_connections = []
-        self.single_methods = []
-        self.multiple_methods = []
-
-    def sendOptions(self, *options_tuple):
-        options, freqs = options_tuple
-        for connection, method in zip(self.single_connections, self.single_methods):
-            options[c.DATA_METHOD] = method
-            connection.sendOptions(options, freqs)
-        for connection, method in zip(self.multiple_connections, self.multiple_methods):
-            options[c.DATA_METHOD] = method
-            connection.sendOptions(options, freqs)
-
-    def addSingleProcess(self):
-        self.single_connections.append(PlotConnection())
-
-    def addMultipleProcess(self):
-        self.multiple_connections.append(Level2PlotConnection())
-
-    def setup(self, *options):
-        methods, sensors, options_other_end = options
-        self.close()
-        self.close(self.single_connections)
-        self.close(self.multiple_connections)
-        self.single_methods = [method for method in methods if self.isSingleGenerator(method)]
-        self.multiple_methods = [method for method in methods if not self.isSingleGenerator(method)]
-        while len(self.single_connections) < len(self.single_methods):
-            self.addSingleProcess()
-        while len(self.multiple_connections) < len(self.multiple_methods):
-            self.addMultipleProcess()
-        self.connections = self.single_connections+self.multiple_connections
-        for connection in self.connections:
-            connection.setup(sensors, options_other_end)
-
-    def isSingleGenerator(self, method):
-        return method == c.SUM_SIGNAL or method == c.SUM_AVG_SIGNAL
-
-
-class MultiplePlotConnections(Connections.MultipleConnections):
-    def __init__(self):
-        Connections.MultipleConnections.__init__(self)
-
-    def sendOptions(self, *options):
-        options = options[0]
-        for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
-            connection.sendOptions(option, options[c.DATA_FREQS])
-
-    def setup(self, *options):
-        options = options[0]
-        self.close()
-        while len(self.connections) < len(options[c.DATA_PLOTS]):
-            self.addProcess()
-        for connection, option in zip(self.connections, options[c.DATA_PLOTS]):
-            connection.setup(option[c.DATA_METHODS], option[c.DATA_SENSORS], options)
-
-    def addProcess(self):
-        self.connections.append(Level3PlotConnection())
-
-
 class GameConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, Main.runGame, ConnectionProcessEnd.GameConnection)
+        Connections.Connection.__init__(self, Game.Game, ConnectionProcessEnd.GameConnection)
 
     def sendOptions(self, options):
         self.connection.send(options[c.DATA_FREQS])
@@ -146,11 +55,11 @@ class GameConnection(Connections.Connection):
 
 class MainConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, Main.runMainWindow, ConnectionProcessEnd.MainConnection)
+        Connections.Connection.__init__(self, MainWindow.MainWindow, ConnectionProcessEnd.MainConnection)
         self.connection = self.newProcess()
 
 
 class EmotivConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, Main.runEmotiv, ConnectionProcessEnd.EmotivConnection)
+        Connections.Connection.__init__(self, MyEmotiv.MyEmotiv, ConnectionProcessEnd.EmotivConnection)
         self.connection = self.newProcess()
