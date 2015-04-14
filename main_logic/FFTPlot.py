@@ -22,7 +22,7 @@ class MultipleRegular(Abstract.Multiple, FFTPlot):
         FFTPlot.__init__(self, "Power Spectrums")
 
     def getCoordGenerator(self):
-        return FFT.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class MultipleAverage(Abstract.Multiple, FFTPlot):
@@ -31,7 +31,7 @@ class MultipleAverage(Abstract.Multiple, FFTPlot):
         FFTPlot.__init__(self, "Average Power Spectrums")
 
     def getCoordGenerator(self):
-        return FFT.MultipleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.SumAvg(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleAverage(Abstract.Single, FFTPlot):
@@ -40,7 +40,7 @@ class SingleAverage(Abstract.Single, FFTPlot):
         FFTPlot.__init__(self, "Sum of Average Power Spectrums")
 
     def getCoordGenerator(self):
-        return FFT.SingleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.NotSumAvg(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleRegular(Abstract.Single, FFTPlot):
@@ -49,4 +49,4 @@ class SingleRegular(Abstract.Single, FFTPlot):
         FFTPlot.__init__(self, "Sum of Power Spectrums")
 
     def getCoordGenerator(self):
-        return FFT.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.NotSum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()

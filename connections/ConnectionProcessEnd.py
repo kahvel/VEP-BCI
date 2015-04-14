@@ -65,7 +65,7 @@ class PsychopyConnection(Connection):
 
 class ExtractionConnection(Connection):
     def __init__(self, connection):
-        Connection.__init__(self, connection, c.CONNECTION_EMOTIV_NAME)
+        Connection.__init__(self, connection, c.CONNECTION_EXTRACTION_NAME)
 
     def receiveOptions(self):
         return self.receiveMessageBlock()

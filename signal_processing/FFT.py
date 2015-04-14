@@ -49,7 +49,7 @@ class FFT(SignalProcessing.SignalProcessing):
         return amplitude_spectrum
 
 
-class MultipleRegular(FFT):
+class Sum(FFT):
     def __init__(self):
         FFT.__init__(self)
 
@@ -80,7 +80,7 @@ class MultipleRegular(FFT):
                 yield self.normaliseSpectrum(spectrum)
 
 
-class MultipleAverage(FFT):
+class SumAvg(FFT):
     def __init__(self):
         FFT.__init__(self)
 
@@ -115,7 +115,7 @@ class MultipleAverage(FFT):
                 yield self.normaliseSpectrum(average)
 
 
-class SingleAverage(FFT):
+class NotSumAvg(FFT):
     def __init__(self):
         FFT.__init__(self)
 
@@ -169,7 +169,7 @@ class SingleAverage(FFT):
                 yield self.normaliseSpectrum(average)
 
 
-class SingleRegular(FFT):
+class NotSum(FFT):
     def __init__(self):
         FFT.__init__(self)
 

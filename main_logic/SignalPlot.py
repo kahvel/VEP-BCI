@@ -22,7 +22,7 @@ class MultipleRegular(Abstract.Multiple, SignalPlot):
         SignalPlot.__init__(self, "Signals")
 
     def getCoordGenerator(self):
-        return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return Signal.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleRegular(Abstract.Single, SignalPlot):
@@ -31,7 +31,7 @@ class SingleRegular(Abstract.Single, SignalPlot):
         SignalPlot.__init__(self, "Sum of signals")
 
     def getCoordGenerator(self):
-        return Signal.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return Signal.NotSum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class MultipleAverage(Abstract.Multiple, SignalPlot):
@@ -39,7 +39,7 @@ class MultipleAverage(Abstract.Multiple, SignalPlot):
         SignalPlot.__init__(self, "Average signals")
 
     def getCoordGenerator(self):
-        return Signal.MultipleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return Signal.SumAvg(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class SingleAverage(Abstract.Single, SignalPlot):
@@ -48,4 +48,4 @@ class SingleAverage(Abstract.Single, SignalPlot):
         SignalPlot.__init__(self, "Sum of average signals")
 
     def getCoordGenerator(self):
-        return Signal.SingleAverage(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return Signal.NotSumAvg(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()

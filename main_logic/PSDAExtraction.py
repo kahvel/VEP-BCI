@@ -118,7 +118,7 @@ class Single(Abstract.Single, PSDAExtraction):
         return 1
 
     def getCoordGenerator(self):
-        return FFT.SingleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.NotSum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class Multiple(Abstract.Single, PSDAExtraction):
@@ -130,4 +130,4 @@ class Multiple(Abstract.Single, PSDAExtraction):
         return self.channel_count
 
     def getCoordGenerator(self):
-        return FFT.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()

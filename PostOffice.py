@@ -139,7 +139,6 @@ class PostOffice(object):
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
         self.connections.setup(self.options)
-        self.connections.setupOtherEnd(self.options)
         if self.connections.setupSuccessful():
             self.setupResults(self.options[c.DATA_FREQS])
             return c.SUCCESS_MESSAGE

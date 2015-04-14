@@ -11,16 +11,6 @@ class Plot(object):
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
         self.coordinates_generator = None
-        self.button_key_to_class_key = {
-            c.SIGNAL:         c.MULTIPLE_REGULAR,
-            c.SUM_SIGNAL:     c.SINGLE_REGULAR,
-            c.AVG_SIGNAL:     c.MULTIPLE_AVERAGE,
-            c.SUM_AVG_SIGNAL: c.SINGLE_AVERAGE,
-            c.POWER:          c.MULTIPLE_REGULAR,
-            c.SUM_POWER:      c.SINGLE_REGULAR,
-            c.AVG_POWER:      c.MULTIPLE_AVERAGE,
-            c.SUM_AVG_POWER:  c.SINGLE_AVERAGE
-        }
         self.sensors = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
         self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
@@ -38,10 +28,9 @@ class Plot(object):
                     self.pw.plot(coordinates, clear=True)
 
     def setup(self):
-        options, target_freqs = self.connection.receiveOptions()
+        self.sensors, options, target_freqs = self.connection.receiveOptions()
         self.closeWindow()
         self.newWindow(self.getTitle(options))
-        self.sensors = self.getSensors(options)
         self.setupGenerator(options)
         return c.SUCCESS_MESSAGE
 
@@ -53,19 +42,10 @@ class Plot(object):
         self.coordinates_generator.send(None)
 
     def getGeneratorClass(self, options):
-        return getattr(
-            Signal if self.isSignalPlot(options[c.DATA_METHOD]) else FFT,
-            self.button_key_to_class_key[options[c.DATA_METHOD]]
-        )()
-
-    def isSignalPlot(self, method):
-        return method in [c.SIGNAL, c.SUM_SIGNAL, c.AVG_SIGNAL, c.SUM_AVG_SIGNAL]
+        raise NotImplementedError("getGeneratorClass not implemented!")
 
     def getTitle(self, options):
         raise NotImplementedError("getTitle not implemented!")
-
-    def getSensors(self, options):
-        raise NotImplementedError("getSensors not implemented!")
 
     def newWindow(self, title):
         self.pw = pg.plot(title=title)
@@ -87,23 +67,81 @@ class Plot(object):
             event.ignore()
 
 
-class MultipleChannel(Plot):
-    def __init__(self, connection):
-        Plot.__init__(self, connection)
-
-    def getTitle(self, options):
-        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
-
-    def getSensors(self, options):
-        return options[c.DATA_SENSORS]
-
-
-class SingleChannel(Plot):
+class Sum(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 
     def getTitle(self, options):
         return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSOR])
 
-    def getSensors(self, options):
-        return [options[c.DATA_SENSOR]]
+
+class NotSum(Plot):
+    def __init__(self, connection):
+        Plot.__init__(self, connection)
+
+    def getTitle(self, options):
+        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
+
+
+class NotSumSignal(NotSum):
+    def __init__(self, connection):
+        NotSum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return Signal.NotSum()
+
+
+class SumSignal(Sum):
+    def __init__(self, connection):
+        Sum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return Signal.Sum()
+
+
+class NotSumPower(NotSum):
+    def __init__(self, connection):
+        NotSum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return FFT.NotSum()
+
+
+class SumPower(Sum):
+    def __init__(self, connection):
+        Sum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return FFT.Sum()
+
+
+class NotSumAvgSignal(NotSum):
+    def __init__(self, connection):
+        NotSum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return Signal.NotSumAvg()
+
+
+class SumAvgSignal(Sum):
+    def __init__(self, connection):
+        Sum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return Signal.SumAvg()
+
+
+class NotSumAvgPower(NotSum):
+    def __init__(self, connection):
+        NotSum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return FFT.NotSumAvg()
+
+
+class SumAvgPower(Sum):
+    def __init__(self, connection):
+        Sum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return FFT.SumAvg()

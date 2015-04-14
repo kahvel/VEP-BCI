@@ -14,7 +14,7 @@ class AbstractConnection(object):
     def receiveMessage(self):
         raise NotImplementedError("receiveMessage not implemented!")
 
-    def sendOptions(self, options):
+    def sendOptions(self, *options):
         pass
 
     def setupSuccessful(self):
@@ -76,6 +76,7 @@ class Connection(AbstractConnection):
     def setup(self, *options):
         if self.connection is None:
             self.connection = self.newProcess()
+        self.sendOptions(*options)
 
     def newProcess(self):
         from_process, to_process = multiprocessing.Pipe()

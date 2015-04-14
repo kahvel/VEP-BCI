@@ -29,7 +29,7 @@ class CCAExtraction(ExtractionWindow.ExtractionWindow):
                 main_generator.next()
 
     def getCoordGenerator(self):
-        return Signal.MultipleRegular(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return Signal.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 def mainGenerator(length, step, sampling_freq, coordinates_generators, target_freqs, textbox, max_list=None):

@@ -4,6 +4,7 @@ import Connections
 import constants as c
 import ConnectionPostOfficeEnd
 import PlotConnection
+import ExtractionConnection
 
 
 class MasterConnection(Connections.MultipleConnections):
@@ -13,7 +14,7 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
             c.CONNECTION_EXTRACTION: PlotConnection.PlotTabConnection(),
-            c.CONNECTION_PLOT:       PlotConnection.ExtractionTabConnection()
+            c.CONNECTION_PLOT:       ExtractionConnection.ExtractionTabConnection()
             # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
 
@@ -59,20 +60,3 @@ class MasterConnection(Connections.MultipleConnections):
         for key in self.connections:
             # if not self.connections[key].isClosed():
             self.connections[key].close()
-
-    def setupOtherEnd(self, options):
-        self.sendSetupMessage()
-        self.sendOptions(options)
-        # for key in self.connections:
-        #     self.connections[key].sendSetupMessage()
-        #     self.connections[key].sendOptions()
-        #     if not self.connections[key].setupSuccessful():
-        #         return c.FAIL_MESSAGE
-        #     # while True:
-        #     #     message = self.connections[key].receiveMessageBlock()
-        #     #     print(key, message)
-        #     #     if message == c.FAIL_MESSAGE:
-        #     #         return message
-        #     #     elif message == c.SUCCESS_MESSAGE:
-        #     #         break
-        # return c.SUCCESS_MESSAGE

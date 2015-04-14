@@ -3,7 +3,6 @@ __author__ = 'Anti'
 import Connections
 import constants as c
 import ConnectionProcessEnd
-# import Extraction
 import TargetsWindow
 import MyEmotiv
 import Game
@@ -15,6 +14,7 @@ class PsychopyConnection(Connections.Connection):
         Connections.Connection.__init__(self, TargetsWindow.TargetsWindow, ConnectionProcessEnd.PsychopyConnection)
 
     def sendOptions(self, options):
+        self.sendSetupMessage()
         self.connection.send(options[c.DATA_BACKGROUND])
         self.connection.send(options[c.DATA_TARGETS])
         self.connection.send(options[c.DATA_TEST][c.TEST_STANDBY])
@@ -28,21 +28,18 @@ class ExtractionConnection(Connections.Connection):
     def __init__(self, process):
         Connections.Connection.__init__(self, process, ConnectionProcessEnd.ExtractionConnection)
 
-    def sendOptions(self, *options):
-        self.connection.send(options)
-        #self.connection.send(options[c.DATA_FREQS])
+    def sendOptions(self, sensors, options, target_freqs):
+        self.sendSetupMessage()
+        self.connection.send((sensors, options, target_freqs))
 
 
 class PlotConnection(Connections.Connection):
     def __init__(self, process):
         Connections.Connection.__init__(self, process, ConnectionProcessEnd.PlotConnection)
 
-    def sendOptions(self, *options_tuple):
-        self.sendMessage(options_tuple)
-
-    def setup(self, *options_other_end):
-        if self.connection is None:
-            self.connection = self.newProcess()
+    def sendOptions(self, sensors, options, target_freqs):
+        self.sendSetupMessage()
+        self.sendMessage((sensors, options, target_freqs))
 
 
 class GameConnection(Connections.Connection):
@@ -63,3 +60,6 @@ class EmotivConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, MyEmotiv.MyEmotiv, ConnectionProcessEnd.EmotivConnection)
         self.connection = self.newProcess()
+
+    def sendOptions(self, *options):
+        self.sendSetupMessage()
