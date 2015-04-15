@@ -23,21 +23,12 @@ class ExtractionMethodConnection(MultipleConnections.MethodConnection):
 
     def addProcess(self, method):
         if method == c.SUM_PSDA:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumPsdaExtraction))
-        elif method == c.SUM_BOTH:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaPsdaExtraction))
-        elif method in [c.PSDA, c.BOTH, c.CCA]:
-            self.connections.append(ExtractionSensorConnection())
-
-
-class ExtractionSensorConnection(MultipleConnections.SensorConnection):
-    def __init__(self):
-        MultipleConnections.SensorConnection.__init__(self)
-
-    def addProcess(self, method):
-        if method == c.PSDA:
             self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsdaExtraction))
-        elif method == c.BOTH:
+        elif method == c.SUM_BOTH:
             self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumCcaPsdaExtraction))
+        elif method == c.PSDA:
+            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumPsdaExtraction))
+        elif method == c.BOTH:
+            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaPsdaExtraction))
         elif method == c.CCA:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumCcaExtraction))
+            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaExtraction))

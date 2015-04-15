@@ -19,23 +19,6 @@ class PlotMethodConnection(MultipleConnections.MethodConnection):
         MultipleConnections.MethodConnection.__init__(self)
 
     def addProcess(self, method):
-        if method == c.SIGNAL:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumSignal))
-        elif method == c.POWER:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumPower))
-        elif method == c.AVG_SIGNAL:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgSignal))
-        elif method == c.AVG_POWER:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgPower))
-        elif method in [c.SUM_SIGNAL, c.SUM_POWER, c.SUM_AVG_SIGNAL, c.SUM_AVG_POWER]:
-            self.connections.append(PlotSensorConnection())
-
-
-class PlotSensorConnection(MultipleConnections.SensorConnection):
-    def __init__(self):
-        MultipleConnections.SensorConnection.__init__(self)
-
-    def addProcess(self, method):
         if method == c.SUM_SIGNAL:
             self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumSignal))
         elif method == c.SUM_POWER:
@@ -44,3 +27,20 @@ class PlotSensorConnection(MultipleConnections.SensorConnection):
             self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumAvgSignal))
         elif method == c.SUM_AVG_POWER:
             self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumAvgPower))
+        elif method in [c.SIGNAL, c.POWER, c.AVG_SIGNAL, c.AVG_POWER]:
+            self.connections.append(PlotSensorConnection())
+
+
+class PlotSensorConnection(MultipleConnections.SensorConnection):
+    def __init__(self):
+        MultipleConnections.SensorConnection.__init__(self)
+
+    def addProcess(self, method):
+        if method == c.SIGNAL:
+            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumSignal))
+        elif method == c.POWER:
+            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumPower))
+        elif method == c.AVG_SIGNAL:
+            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgSignal))
+        elif method == c.AVG_POWER:
+            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgPower))

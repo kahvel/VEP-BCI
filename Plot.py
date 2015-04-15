@@ -67,7 +67,7 @@ class Plot(object):
             event.ignore()
 
 
-class Sum(Plot):
+class NotSum(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 
@@ -75,20 +75,12 @@ class Sum(Plot):
         return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSOR])
 
 
-class NotSum(Plot):
+class Sum(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 
     def getTitle(self, options):
         return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
-
-
-class NotSumSignal(NotSum):
-    def __init__(self, connection):
-        NotSum.__init__(self, connection)
-
-    def getGeneratorClass(self, options):
-        return Signal.NotSum()
 
 
 class SumSignal(Sum):
@@ -99,12 +91,12 @@ class SumSignal(Sum):
         return Signal.Sum()
 
 
-class NotSumPower(NotSum):
+class NotSumSignal(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return FFT.NotSum()
+        return Signal.NotSum()
 
 
 class SumPower(Sum):
@@ -115,12 +107,12 @@ class SumPower(Sum):
         return FFT.Sum()
 
 
-class NotSumAvgSignal(NotSum):
+class NotSumPower(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return Signal.NotSumAvg()
+        return FFT.NotSum()
 
 
 class SumAvgSignal(Sum):
@@ -131,12 +123,12 @@ class SumAvgSignal(Sum):
         return Signal.SumAvg()
 
 
-class NotSumAvgPower(NotSum):
+class NotSumAvgSignal(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return FFT.NotSumAvg()
+        return Signal.NotSumAvg()
 
 
 class SumAvgPower(Sum):
@@ -145,3 +137,11 @@ class SumAvgPower(Sum):
 
     def getGeneratorClass(self, options):
         return FFT.SumAvg()
+
+
+class NotSumAvgPower(NotSum):
+    def __init__(self, connection):
+        NotSum.__init__(self, connection)
+
+    def getGeneratorClass(self, options):
+        return FFT.NotSumAvg()

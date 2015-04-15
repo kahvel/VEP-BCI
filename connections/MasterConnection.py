@@ -58,5 +58,5 @@ class MasterConnection(Connections.MultipleConnections):
 
     def close(self, arg=None):
         for key in self.connections:
-            # if not self.connections[key].isClosed():
-            self.connections[key].close()
+            if not self.connections[key].isClosed():
+                self.connections[key].close()

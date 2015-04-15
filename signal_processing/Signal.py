@@ -25,7 +25,7 @@ class Signal(SignalProcessing.SignalProcessing):
         raise NotImplementedError("coordinates_generator not implemented!")
 
 
-class SumAvg(Signal):
+class NotSumAvg(Signal):
     def __init__(self):
         Signal.__init__(self)
 
@@ -55,7 +55,7 @@ class SumAvg(Signal):
                 yield result
 
 
-class Sum(Signal):
+class NotSum(Signal):
     def __init__(self):
         Signal.__init__(self)
 
@@ -83,7 +83,7 @@ class Sum(Signal):
                 yield result
 
 
-class NotSumAvg(Signal):
+class SumAvg(Signal):
     def __init__(self):
         Signal.__init__(self)
 
@@ -130,7 +130,7 @@ class NotSumAvg(Signal):
                 yield result
 
 
-class NotSum(Signal):
+class Sum(Signal):
     def __init__(self):
         Signal.__init__(self)
 

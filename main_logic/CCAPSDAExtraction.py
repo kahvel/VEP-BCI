@@ -20,7 +20,7 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
 
     def generator(self, index):
         self.result_lists = {"CCA": [], "PSDA": [], "short CCA": [], "short PSDA": []}
-        coordinates_generators = [Signal.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
+        coordinates_generators = [Signal.NotSum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
         cca_generator = CCAExtraction.mainGenerator(self.options["Length"], self.options["Step"], self.headset_freq,
                                                     coordinates_generators, self.freq_points, self.canvas,
                                                     self.result_lists["CCA"])
@@ -32,7 +32,7 @@ class CCAPSDAExtraction(ExtractionWindow.ExtractionWindow):
         psda_generator.send(None)
         short_length = self.options["sLength"]
         options = self.copyDict(short_length)
-        coordinates_generators = [Signal.Sum(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
+        coordinates_generators = [Signal.NotSum(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator() for _ in range(self.channel_count)]
         short_cca_generator = CCAExtraction.mainGenerator(options["Length"], self.options["Step"], self.headset_freq,
                                                           coordinates_generators, self.freq_points, self.canvas,
                                                           self.result_lists["short CCA"])
@@ -112,11 +112,11 @@ class Single(Abstract.Single, CCAPSDAExtraction):
         return 1
 
     def getCoordGenerator(self):
-        return FFT.NotSum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
     def getShortCoordGenerator(self, length):
         options = self.copyDict(length)
-        return FFT.NotSum(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.Sum(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
 
 class Multiple(Abstract.Single, CCAPSDAExtraction):
@@ -128,8 +128,8 @@ class Multiple(Abstract.Single, CCAPSDAExtraction):
         return self.channel_count
 
     def getCoordGenerator(self):
-        return FFT.Sum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.NotSum(self.options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
 
     def getShortCoordGenerator(self, length):
         options = self.copyDict(length)
-        return FFT.NotSum(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
+        return FFT.Sum(options, self.window_function, self.channel_count, self.filter_coefficients).coordinates_generator()
