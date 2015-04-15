@@ -50,8 +50,8 @@ class Extraction(object):
         coordinates_generator.send(None)
         return coordinates_generator
 
-    def setupMainGenerator(self, options, target_freqs):
-        generator = self.mainGenerator(options[c.OPTIONS_LENGTH], target_freqs)
+    def setupMainGenerator(self, options, target_freqs, sensor_count):
+        generator = self.mainGenerator(options, target_freqs, sensor_count)
         generator.send(None)
         return generator
 
@@ -76,7 +76,7 @@ class NotSum(Extraction):
         return [self.setupGenerator(options) for _ in range(sensor_count)]
 
     def getMainGenerator(self, options, target_freqs, sensor_count):
-        return [self.setupMainGenerator(options, target_freqs) for _ in range(sensor_count)]
+        return [self.setupMainGenerator(options, target_freqs, sensor_count) for _ in range(sensor_count)]
 
 
 class Sum(Extraction):
@@ -88,7 +88,7 @@ class Sum(Extraction):
         return [generator for _ in range(sensor_count)]
 
     def getMainGenerator(self, options, target_freqs, sensor_count):
-        generator = self.setupMainGenerator(options, target_freqs)
+        generator = self.setupMainGenerator(options, target_freqs, sensor_count)
         return [generator for _ in range(sensor_count)]
 
 
@@ -99,8 +99,8 @@ class SumPsdaExtraction(Sum):
     def getGeneratorClass(self, options):
         return FFT.Sum()
 
-    def mainGenerator(self, length, target_freqs):
-        return PsdaExtraction.mainGenerator(length, target_freqs)
+    def mainGenerator(self, options, target_freqs, generator_count):
+        return PsdaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], target_freqs)
 
 
 class NotSumPsdaExtraction(NotSum):
@@ -110,19 +110,26 @@ class NotSumPsdaExtraction(NotSum):
     def getGeneratorClass(self, options):
         return FFT.NotSum()
 
-    def mainGenerator(self, length, target_freqs):
-        return PsdaExtraction.mainGenerator(length, target_freqs)
+    def mainGenerator(self, options, target_freqs, generator_count):
+        return PsdaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], target_freqs)
 
 
-class NotSumCcaExtraction(NotSum):
+class NotSumCcaExtraction(Extraction):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        Extraction.__init__(self, connection)
 
     def getGeneratorClass(self, options):
         return Signal.NotSum()
 
-    def mainGenerator(self, length, step, headset_freq, coordinates_generators, target_freqs):
-        return CcaExtraction.mainGenerator(length, step, headset_freq, coordinates_generators, target_freqs)
+    def mainGenerator(self, options, target_freqs, generator_count):
+        return CcaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], options[c.OPTIONS_STEP], target_freqs, generator_count)
+
+    def getMainGenerator(self, options, target_freqs, sensor_count):
+        generator = self.setupMainGenerator(options, target_freqs, sensor_count)
+        return [generator for _ in range(sensor_count)]
+
+    def getCoordinatesGenerators(self, options, sensor_count):
+        return [self.setupGenerator(options) for _ in range(sensor_count)]
 
 
 class NotSumCcaPsdaExtraction(NotSum):
