@@ -33,7 +33,8 @@ class Extraction(object):
                             main_generator.next()
 
     def setup(self):
-        self.sensors, options, target_freqs = self.connection.receiveOptions()
+        sensors, options, target_freqs = self.connection.receiveOptions()
+        self.sensors = self.getSensors(sensors)
         self.coordinates_generators = self.getCoordinatesGenerators(options, len(self.sensors))
         self.main_generators = self.getMainGenerator(
             options[c.DATA_OPTIONS],
@@ -42,20 +43,16 @@ class Extraction(object):
         )
         return c.SUCCESS_MESSAGE
 
-    def setupGenerator(self, options):
-        generator_class = self.getGeneratorClass(options)
-        """ @type : Signal.Signal | FFT.FFT """
+    def setupCoordinatesGenerator(self, options, generator_class):
         generator_class.setup(options)
         coordinates_generator = generator_class.coordinates_generator()
-        coordinates_generator.send(None)
-        return coordinates_generator
+        return self.setupGenerator(coordinates_generator)
 
-    def setupMainGenerator(self, options, target_freqs, sensor_count):
-        generator = self.mainGenerator(options, target_freqs, sensor_count)
+    def setupGenerator(self, generator):
         generator.send(None)
         return generator
 
-    def getGeneratorClass(self, options):
+    def getGeneratorClass(self):
         raise NotImplementedError("getGeneratorClass not implemented!")
 
     def mainGenerator(self, *args):
@@ -67,16 +64,19 @@ class Extraction(object):
     def getMainGenerator(self, options, target_freqs, sensor_count):
         raise NotImplementedError("getMainGenerator not implemented!")
 
+    def getSensors(self, sensors):
+        return sensors
+
 
 class NotSum(Extraction):
     def __init__(self, connection):
         Extraction.__init__(self, connection)
 
     def getCoordinatesGenerators(self, options, sensor_count):
-        return [self.setupGenerator(options) for _ in range(sensor_count)]
+        return [self.setupCoordinatesGenerator(options, self.getGeneratorClass()) for _ in range(sensor_count)]
 
     def getMainGenerator(self, options, target_freqs, sensor_count):
-        return [self.setupMainGenerator(options, target_freqs, sensor_count) for _ in range(sensor_count)]
+        return [self.setupGenerator(self.mainGenerator(options, target_freqs, sensor_count)) for _ in range(sensor_count)]
 
 
 class Sum(Extraction):
@@ -84,11 +84,11 @@ class Sum(Extraction):
         Extraction.__init__(self, connection)
 
     def getCoordinatesGenerators(self, options, sensor_count):
-        generator = self.setupGenerator(options)
+        generator = self.setupCoordinatesGenerator(options, self.getGeneratorClass())
         return [generator for _ in range(sensor_count)]
 
     def getMainGenerator(self, options, target_freqs, sensor_count):
-        generator = self.setupMainGenerator(options, target_freqs, sensor_count)
+        generator = self.setupGenerator(self.mainGenerator(options, target_freqs, sensor_count))
         return [generator for _ in range(sensor_count)]
 
 
@@ -96,7 +96,7 @@ class SumPsdaExtraction(Sum):
     def __init__(self, connection):
         Sum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
+    def getGeneratorClass(self):
         return FFT.Sum()
 
     def mainGenerator(self, options, target_freqs, generator_count):
@@ -107,7 +107,7 @@ class NotSumPsdaExtraction(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
+    def getGeneratorClass(self):
         return FFT.NotSum()
 
     def mainGenerator(self, options, target_freqs, generator_count):
@@ -118,31 +118,51 @@ class NotSumCcaExtraction(Extraction):
     def __init__(self, connection):
         Extraction.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return Signal.NotSum()
-
     def mainGenerator(self, options, target_freqs, generator_count):
         return CcaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], options[c.OPTIONS_STEP], target_freqs, generator_count)
 
     def getMainGenerator(self, options, target_freqs, sensor_count):
-        generator = self.setupMainGenerator(options, target_freqs, sensor_count)
+        generator = self.setupGenerator(self.mainGenerator(options, target_freqs, sensor_count))
         return [generator for _ in range(sensor_count)]
 
     def getCoordinatesGenerators(self, options, sensor_count):
-        return [self.setupGenerator(options) for _ in range(sensor_count)]
+        return [self.setupCoordinatesGenerator(options, Signal.NotSum()) for _ in range(sensor_count)]
 
 
-class NotSumCcaPsdaExtraction(NotSum):
+class CcaPsdaExtraction(Extraction):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        Extraction.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return Both.NotSum()
+    def getCcaGenerator(self, options, target_freqs, generator_count):
+        return CcaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], options[c.OPTIONS_STEP], target_freqs, generator_count)
+
+    def getPsdaGenerator(self, options, target_freqs):
+        return PsdaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], target_freqs)
+
+    def getMainGenerator(self, options, target_freqs, generator_count):
+        cca_generator = self.setupGenerator(self.getCcaGenerator(options, target_freqs, generator_count))
+        return [cca_generator for _ in range(generator_count)]+\
+               [self.setupGenerator(self.getPsdaGenerator(options, target_freqs)) for _ in range(generator_count)]
+
+    def getCoordinatesGenerators(self, options, sensor_count):
+        return [self.setupCoordinatesGenerator(options, Signal.NotSum()) for _ in range(sensor_count)]+\
+               [self.setupCoordinatesGenerator(options, self.getGeneratorClass()) for _ in range(sensor_count)]
+
+    def getSensors(self, sensors):
+        return sensors*2
 
 
-class SumCcaPsdaExtraction(NotSum):
+class SumCcaPsdaExtraction(CcaPsdaExtraction):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        Extraction.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return Both.Sum()
+    def getGeneratorClass(self):
+        return FFT.Sum()
+
+
+class NotSumCcaPsdaExtraction(CcaPsdaExtraction):
+    def __init__(self, connection):
+        Extraction.__init__(self, connection)
+
+    def getGeneratorClass(self):
+        return FFT.NotSum()

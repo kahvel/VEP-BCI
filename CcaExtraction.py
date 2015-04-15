@@ -9,7 +9,7 @@ def mainGenerator(length, step, target_freqs, generator_count):
     get_segment = True
     h = 3  # number of harmonics
     reference_signals = []
-    t = np.arange(0, length)
+    t = np.arange(0, length)  # TODO???
     for freq in target_freqs:
         reference_signals.append([])
         for harmonic in range(1, h+1):
