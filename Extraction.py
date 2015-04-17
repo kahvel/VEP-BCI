@@ -4,6 +4,7 @@ import constants as c
 from signal_processing import Signal, FFT
 import PsdaExtraction
 import CcaExtraction
+import pyqtgraph as pg
 
 
 class Extraction(object):
@@ -15,10 +16,19 @@ class Extraction(object):
         self.sensors = None
         self.main_generators = None
         self.coordinates_generators = None
-        self.connection.waitMessages(self.start, lambda: None, lambda: None, self.setup)
+        self.target_freqs = None
+        self.pw = pg.plot()
+        self.connection.waitMessages(self.start, self.exit, self.update, self.setup)
+
+    def exit(self):
+        self.connection.closeConnection()
+
+    def update(self):
+        pg.QtGui.QApplication.processEvents()
 
     def start(self):
         while True:
+            self.update()
             message = self.connection.receiveMessagePoll(0.1)
             if isinstance(message, basestring):
                 return message
@@ -27,13 +37,14 @@ class Extraction(object):
                 for sensor, coordinates_generator, main_generator in zip(self.sensors, self.coordinates_generators, self.main_generators):
                     coordinates = coordinates_generator.send(message.sensors[sensor]["value"])
                     if coordinates is not None:
+                        self.pw.plot(coordinates, clear=True)
                         coordinates_generator.next()
                         result = main_generator.send(coordinates)
                         if result is not None:
                             results[result] += 1
                             main_generator.next()
                 max_result = max(results.items(), key=lambda x: x[1])
-                if max_result[1] >= len(self.main_generators):
+                if max_result[1] >= len(set(self.main_generators)):
                     self.connection.sendMessage((max_result[0], self.name))
 
     def setup(self):

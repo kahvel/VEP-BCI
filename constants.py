@@ -131,6 +131,8 @@ CCA = "CCA"
 BOTH = "Both"
 SUM_BOTH = "Sum Both"
 
+EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, CCA, BOTH, SUM_BOTH, "shortCCAPSDA")
+
 # Plot type buttons
 SIGNAL = "Signal"
 SUM_SIGNAL = "Sum signal"
@@ -186,8 +188,6 @@ DATA_METHOD = "Method"
 DATA_SENSOR = "Sensor"
 
 DATA_FREQ = "Freq"
-
-EXTRACTION_METHOD_NAMES = ("CCA", "PSDA", "CCAPSDA", "shortCCAPSDA") # Why is it missing one?
 
 CONNECTION_EMOTIV = "Emotiv"
 CONNECTION_PSYCHOPY = "Psychopy"

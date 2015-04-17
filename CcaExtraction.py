@@ -29,9 +29,11 @@ def mainGenerator(length, step, target_freqs, generator_count):
                     signal_segment = np.array([reference_signals[i][j][:len(coordinates[0])] for j in range(len(reference_signals[i]))]).T
                     if len(coordinates) == length:
                         get_segment = False
-                    res_x, res_y = cca.fit_transform(np.array(coordinates).T, signal_segment)
+                    cca.fit(np.array(coordinates).T, signal_segment)
+                    res_x, res_y = cca.transform(np.array(coordinates).T, signal_segment)
                 else:
-                    res_x, res_y = cca.fit_transform(np.array(coordinates).T, reference_signals[i].T)
+                    cca.fit(np.array(coordinates).T, reference_signals[i].T)
+                    res_x, res_y = cca.transform(np.array(coordinates).T, reference_signals[i].T)
                 corr = np.corrcoef(res_x.T, res_y.T)[0][1]
                 if corr > maximum:
                     maximum = corr

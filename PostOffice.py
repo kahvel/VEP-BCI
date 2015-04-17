@@ -68,7 +68,6 @@ class PostOffice(object):
                 if extraction_message is not None:
                     freq, method = extraction_message
                     if freq is not None:
-                        print(self.results)
                         self.results[method][str(target_freqs)][current_target][freq] += 1
                         if freq == self.standby_freq:
                             # self.connections.sendPlotMessage(self.standby and not no_standby)
@@ -100,10 +99,10 @@ class PostOffice(object):
     def normalSequence(self, target, time):
         return [[target, time]]
 
-    def getSequence(self, options):
+    def getSequence(self, options, target_freqs):
         if options[c.TEST_TARGET] == c.TEST_RANDOM:
-            return self.randomSequence(options[c.TEST_TIME], options[c.TEST_MIN], options[c.TEST_MAX], options[c.DATA_FREQS])
-        elif c.TEST_UNLIMITED:
+            return self.randomSequence(options[c.TEST_TIME], options[c.TEST_MIN], options[c.TEST_MAX], target_freqs)
+        elif options[c.TEST_UNLIMITED]:
             return self.normalSequence(options[c.TEST_TARGET], float("inf"))
         else:
             return self.normalSequence(options[c.TEST_TARGET], options[c.TEST_TIME])
@@ -151,7 +150,7 @@ class PostOffice(object):
     def start(self):
         self.connections.sendStartMessage()
         message = self.targetChangingLoop(
-            self.getSequence(self.options[c.DATA_TEST]),
+            self.getSequence(self.options[c.DATA_TEST], self.options[c.DATA_FREQS]),
             self.options[c.DATA_FREQS],
             not self.options[c.DATA_TEST][c.TEST_STANDBY]
         )

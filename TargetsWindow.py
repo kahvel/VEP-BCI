@@ -126,7 +126,7 @@ class TargetsWindow(object):
                     if message == self.targets[i].freq and isinstance(message, float):
                         self.targets[i].detected_rect.draw()
                         break
-                    elif message == i and isinstance(message, int):
+                    elif message == i+1 and isinstance(message, int):
                         prev_rect.setAutoDraw(False)
                         self.targets[i].current_rect.setAutoDraw(True)
                         prev_rect = self.targets[i].current_rect

@@ -16,17 +16,19 @@ class Connection(Connections.AbstractConnection):
         while True:
             update_function()
             if message is not None:
+                # print(message, self)
                 if message == c.START_MESSAGE:
-                    print("Start " + self.name)
+                    print("Start", self.name)
                     message = start_function()
                     continue
                 elif message == c.STOP_MESSAGE:
-                    print("Stop " + self.name)
+                    print("Stop", self.name)
+                    pass
                 elif message == c.SETUP_MESSAGE:
                     message = setup_function()
                     self.sendMessage(message)
                 elif message == c.EXIT_MESSAGE:
-                    print("Exit " + self.name)
+                    print("Exit", self.name)
                     exit_function()
                     return
                 else:
