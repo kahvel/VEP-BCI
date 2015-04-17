@@ -57,7 +57,7 @@ class Target(object):
 
 class TargetsWindow(object):
     def __init__(self, connection):
-        logging.console.setLevel(logging.ERROR)
+        logging.console.setLevel(logging.ERROR )
         self.connection = connection
         """ @type : ConnectionProcessEnd.PsychopyConnection """
         self.targets = None
@@ -99,11 +99,6 @@ class TargetsWindow(object):
             units="pix",
             color=background_data[c.WINDOW_COLOR]
         )
-        self.monitor_frequency = background_data[c.WINDOW_FREQ]
-
-    def setFreq(self, background_data):  # NOT USING THIS
-        # self.window.size = (int(background_data["Width"]), int(background_data["Height"]))
-        # self.window.color = background_data["Color"]
         self.monitor_frequency = background_data[c.WINDOW_FREQ]
 
     def setTargets(self, targets):

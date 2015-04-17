@@ -7,8 +7,9 @@ import CcaExtraction
 
 
 class Extraction(object):
-    def __init__(self, connection):
+    def __init__(self, connection, name):
         self.connection = connection
+        self.name = name
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
         self.sensors = None
@@ -22,23 +23,26 @@ class Extraction(object):
             if isinstance(message, basestring):
                 return message
             if message is not None:
+                results = {freq: 0 for freq in self.target_freqs}
                 for sensor, coordinates_generator, main_generator in zip(self.sensors, self.coordinates_generators, self.main_generators):
                     coordinates = coordinates_generator.send(message.sensors[sensor]["value"])
                     if coordinates is not None:
                         coordinates_generator.next()
                         result = main_generator.send(coordinates)
                         if result is not None:
-                            self.connection.sendMessage(result)
-                            self.connection.sendMessage("PSDA")
+                            results[result] += 1
                             main_generator.next()
+                max_result = max(results.items(), key=lambda x: x[1])
+                if max_result[1] >= len(self.main_generators):
+                    self.connection.sendMessage((max_result[0], self.name))
 
     def setup(self):
-        sensors, options, target_freqs = self.connection.receiveOptions()
+        sensors, options, self.target_freqs = self.connection.receiveOptions()
         self.sensors = self.getSensors(sensors)
         self.coordinates_generators = self.getCoordinatesGenerators(options, len(self.sensors))
         self.main_generators = self.getMainGenerator(
             options[c.DATA_OPTIONS],
-            target_freqs,
+            self.target_freqs,
             len(self.sensors)
         )
         return c.SUCCESS_MESSAGE
@@ -69,8 +73,8 @@ class Extraction(object):
 
 
 class NotSum(Extraction):
-    def __init__(self, connection):
-        Extraction.__init__(self, connection)
+    def __init__(self, connection, name):
+        Extraction.__init__(self, connection, name)
 
     def getCoordinatesGenerators(self, options, sensor_count):
         return [self.setupCoordinatesGenerator(options, self.getGeneratorClass()) for _ in range(sensor_count)]
@@ -80,8 +84,8 @@ class NotSum(Extraction):
 
 
 class Sum(Extraction):
-    def __init__(self, connection):
-        Extraction.__init__(self, connection)
+    def __init__(self, connection, name):
+        Extraction.__init__(self, connection, name)
 
     def getCoordinatesGenerators(self, options, sensor_count):
         generator = self.setupCoordinatesGenerator(options, self.getGeneratorClass())
@@ -94,7 +98,7 @@ class Sum(Extraction):
 
 class SumPsdaExtraction(Sum):
     def __init__(self, connection):
-        Sum.__init__(self, connection)
+        Sum.__init__(self, connection, c.SUM_PSDA)
 
     def getGeneratorClass(self):
         return FFT.Sum()
@@ -105,7 +109,7 @@ class SumPsdaExtraction(Sum):
 
 class NotSumPsdaExtraction(NotSum):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        NotSum.__init__(self, connection, c.PSDA)
 
     def getGeneratorClass(self):
         return FFT.NotSum()
@@ -116,7 +120,7 @@ class NotSumPsdaExtraction(NotSum):
 
 class NotSumCcaExtraction(Extraction):
     def __init__(self, connection):
-        Extraction.__init__(self, connection)
+        Extraction.__init__(self, connection, c.CCA)
 
     def mainGenerator(self, options, target_freqs, generator_count):
         return CcaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], options[c.OPTIONS_STEP], target_freqs, generator_count)
@@ -130,8 +134,8 @@ class NotSumCcaExtraction(Extraction):
 
 
 class CcaPsdaExtraction(Extraction):
-    def __init__(self, connection):
-        Extraction.__init__(self, connection)
+    def __init__(self, connection, name):
+        Extraction.__init__(self, connection, name)
 
     def getCcaGenerator(self, options, target_freqs, generator_count):
         return CcaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], options[c.OPTIONS_STEP], target_freqs, generator_count)
@@ -154,7 +158,7 @@ class CcaPsdaExtraction(Extraction):
 
 class SumCcaPsdaExtraction(CcaPsdaExtraction):
     def __init__(self, connection):
-        Extraction.__init__(self, connection)
+        Extraction.__init__(self, connection, c.SUM_BOTH)
 
     def getGeneratorClass(self):
         return FFT.Sum()
@@ -162,7 +166,7 @@ class SumCcaPsdaExtraction(CcaPsdaExtraction):
 
 class NotSumCcaPsdaExtraction(CcaPsdaExtraction):
     def __init__(self, connection):
-        Extraction.__init__(self, connection)
+        Extraction.__init__(self, connection, c.BOTH)
 
     def getGeneratorClass(self):
         return FFT.NotSum()

@@ -62,22 +62,21 @@ class PostOffice(object):
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)
 
-    def handleFreqMessages(self, messages, no_standby, target_freqs, current_target):
-        for result in messages:
-            if result is not None:
-                for freq, class_name in result:
-                    self.results[class_name][str(target_freqs)][current_target][freq] += 1
-                    if freq == self.standby_freq:
-                        self.sendMessage(self.psychopy_connection, self.standby and not no_standby)
-                        self.standby = not self.standby
-                    if not self.standby or no_standby:
-                        if not "short" in class_name:
-                            self.sendMessage(self.psychopy_connection, freq)
-                            self.sendMessage(self.game_connection, freq)
-
-    def sendMessage(self, connections, message):
-        for i in range(len(connections)-1, -1, -1):
-            connections[i].send(message)
+    def handleFreqMessages(self, tab_message, no_standby, target_freqs, current_target):
+        for i, method_message in enumerate(tab_message):
+            for extraction_message in method_message:
+                if extraction_message is not None:
+                    freq, method = extraction_message
+                    if freq is not None:
+                        print(self.results)
+                        self.results[method][str(target_freqs)][current_target][freq] += 1
+                        if freq == self.standby_freq:
+                            # self.connections.sendPlotMessage(self.standby and not no_standby)
+                            self.standby = not self.standby
+                        if not self.standby or no_standby:
+                            # if not "short" in method:
+                            self.connections.sendTargetMessage(freq)
+                            # self.connections.sendGameMessage(freq)
 
     def randomSequence(self, total, min_value, max_value, target_freqs):
         data = []
@@ -116,7 +115,8 @@ class PostOffice(object):
         for key in self.results:
             if str(target_freqs) not in self.results[key]:
                 self.results[key][str(target_freqs)] = \
-                    {i: {freq2: 0 for freq2 in target_freqs} for i in range(len(target_freqs))}
+                    {i+1: {freq: 0 for freq in target_freqs} for i in range(len(target_freqs))}
+                self.results[key][str(target_freqs)]["None"] = {freq: 0 for freq in target_freqs}
 
     def printResults(self):
         for method in self.results:
@@ -130,7 +130,7 @@ class PostOffice(object):
         # print(sequence)
         message = None
         for target, time in sequence:
-            self.connections.sendCurrentTarget(target)
+            self.connections.sendTargetMessage(target)
             message = self.startPacketSending(time, no_standby, target_freqs, target)
             if message is not None:
                 break
@@ -176,13 +176,12 @@ class PostOffice(object):
             if main_message is not None:
                 return main_message
             count += self.handleEmotivMessages(no_standby)
-            # self.connections[c.CONNECTION_PLOT].getMessageInstant()
-            # self.handleFreqMessages(
-            #     self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant(),
-            #     no_standby,
-            #     target_freqs,
-            #     current_target
-            # )
+            self.handleFreqMessages(
+                self.connections.receiveExtractionMessage(),
+                no_standby,
+                target_freqs,
+                current_target
+            )
         # Wait for the last result
         # self.handleFreqMessages(
         #     self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),

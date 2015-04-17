@@ -19,9 +19,9 @@ class PsychopyConnection(Connections.Connection):
         self.connection.send(options[c.DATA_TARGETS])
         self.connection.send(options[c.DATA_TEST][c.TEST_STANDBY])
 
-    def sendCurrentTarget(self, target):
-        if target != 0:
-            self.sendMessage(target)
+    # def sendTargetMessage(self, target):
+    #     if target != 0:
+    #         self.sendMessage(target)
 
 
 class ExtractionConnection(Connections.Connection):
@@ -31,6 +31,11 @@ class ExtractionConnection(Connections.Connection):
     def sendOptions(self, sensors, options, target_freqs):
         self.sendSetupMessage()
         self.connection.send((sensors, options, target_freqs))
+
+    # def receiveMessageInstant(self):
+    #     a = Connections.Connection.receiveMessageInstant(self)
+    #     print(a)
+    #     return a
 
 
 class PlotConnection(Connections.Connection):

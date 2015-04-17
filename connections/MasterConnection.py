@@ -13,13 +13,13 @@ class MasterConnection(Connections.MultipleConnections):
         self.connections = {
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
-            c.CONNECTION_EXTRACTION: PlotConnection.PlotTabConnection(),
-            c.CONNECTION_PLOT:       ExtractionConnection.ExtractionTabConnection()
+            c.CONNECTION_PLOT:       PlotConnection.PlotTabConnection(),
+            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection()
             # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
 
-    def sendCurrentTarget(self, target):
-        self.connections[c.CONNECTION_PSYCHOPY].sendCurrentTarget(target)
+    def sendTargetMessage(self, message):
+        self.connections[c.CONNECTION_PSYCHOPY].sendMessage(message)
 
     def receiveEmotivMessage(self):
         return self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.1)
@@ -27,8 +27,14 @@ class MasterConnection(Connections.MultipleConnections):
     def sendPlotMessage(self, message):
         self.connections[c.CONNECTION_PLOT].sendMessage(message)
 
+    def sendGameMessage(self, message):
+        self.connections[c.CONNECTION_GAME].sendMessage(message)
+
     def sendExtractionMessage(self, message):
         self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
+
+    def receiveExtractionMessage(self):
+        return self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant()
 
     def sendStartMessage(self):
         for key in self.connections:
