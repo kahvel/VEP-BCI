@@ -5,64 +5,6 @@ from signal_processing import Signal, FFT
 import PsdaExtraction
 import CcaExtraction
 import pyqtgraph as pg
-from connections import Connections, ConnectionProcessEnd
-import multiprocessing
-
-
-# class MultipleExtraction(Connections.MultipleConnections):
-#     def __init__(self, connection, process):
-#         Connections.MultipleConnections.__init__(self)
-#         self.connection = connection
-#         """ @type : ConnectionProcessEnd.ExtractionConnection """
-#         self.process = process
-#         self.connections.append(self.newProcess())
-#         self.connections.append(self.newProcess())
-#         self.connection.waitMessages(self.start, lambda: None, lambda: None, self.setup)
-#
-#     def newProcess(self):
-#         from_process, to_process = multiprocessing.Pipe()
-#         multiprocessing.Process(target=self.process, args=(ConnectionProcessEnd.ExtractionConnection(from_process),)).start()
-#         return ConnectionProcessEnd.ExtractionConnection(to_process)
-#
-#     def exit(self):
-#         pass  # TODO
-#
-#     def start(self):
-#         self.sendStartMessage()
-#         while True:
-#             postoffice_message = self.connection.receiveMessagePoll(0.1)
-#             if isinstance(postoffice_message, basestring):
-#                 self.sendMessage(postoffice_message)
-#                 return postoffice_message
-#             if postoffice_message is not None:
-#                 self.sendMessage(postoffice_message)
-#             extraction_message = self.receiveMessageInstant()
-#             print(extraction_message)
-#
-#     def setup(self):
-#         print("setup")
-#         sensors, options, target_freqs = self.connection.receiveOptions()
-#         self.sendSetupMessage()
-#         print("asddsa")
-#         self.connections[0].sendMessage((sensors, options, target_freqs))
-#         print("aaaaa")
-#         options[c.OPTIONS_LENGTH] /= 2
-#         print("trallal")
-#         self.connections[1].sendMessage((sensors, options, target_freqs))
-#         print("enne")
-#         if self.setupSuccessful():
-#             return c.SUCCESS_MESSAGE
-#         else:
-#             return c.FAIL_MESSAGE
-#
-#     def setupSuccessful(self):
-#         print("sees")
-#         if self.connections[0].receiveMessageBlock() == c.SUCCESS_MESSAGE and self.connections[1].receiveMessageBlock() == c.SUCCESS_MESSAGE:
-#             print("true")
-#             return True
-#         else:
-#             print("false")
-#             return False
 
 
 class Extraction(object):
