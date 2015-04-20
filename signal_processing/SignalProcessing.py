@@ -65,25 +65,25 @@ class SignalProcessing(object):
                 return breakpoints_list
 
     def filterSignal(self, signal, filter_prev_state):
-        if self.options["Filter"]:
+        if self.options[c.OPTIONS_FILTER]:
             return scipy.signal.lfilter(self.filter_coefficients, 1.0, signal, zi=filter_prev_state)
         else:
             return signal, None
 
     def detrendSignal(self, signal):
-        if self.options["Detrend"]:
-            return scipy.signal.detrend(signal, bp=self.options["Breakpoints"])
+        if self.options[c.OPTIONS_DETREND]:
+            return scipy.signal.detrend(signal, type="linear", bp=self.options[c.OPTIONS_BREAK])
         else:
-            return scipy.signal.detrend(signal, type="constant")
+            return scipy.signal.detrend(signal, type="constant", bp=self.options[c.OPTIONS_BREAK])
 
     def windowSignal(self, signal, window):
-        if self.options["Window"] != "None":
+        if self.options[c.OPTIONS_WINDOW] != c.WINDOW_NONE:
             return signal*window
         else:
             return signal
 
     def filterPrevState(self, prev_coordinates):
-        if self.options["Filter"]:
+        if self.options[c.OPTIONS_FILTER]:
             return scipy.signal.lfiltic(1.0, self.filter_coefficients, prev_coordinates)
         else:
             return None

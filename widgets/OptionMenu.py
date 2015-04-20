@@ -13,8 +13,8 @@ class OptionMenu(AbstractWidget.WidgetWithCommand):
         self.values = kwargs.get("values", [])
         self.variable = Tkinter.StringVar()
         self.command = kwargs.get("command", lambda: None)
-        # label = Tkinter.Label(parent, text=self.name)
-        # label.grid(row=self.row, column=self.column-1, padx=self.padx, pady=self.pady)
+        label = Tkinter.Label(parent, text=self.name)
+        label.grid(row=self.row, column=self.column-1, padx=self.padx, pady=self.pady)
         self.create(Tkinter.OptionMenu(parent, self.variable, *self.values, command=lambda x: self.command()))
 
     def getValue(self):

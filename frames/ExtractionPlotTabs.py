@@ -52,18 +52,25 @@ class OptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.OPTIONS_FRAME, row, column, **kwargs)
         windows = (c.WINDOW_NONE, c.WINDOW_HANNING, c.WINDOW_HAMMING, c.WINDOW_BLACKMAN, c.WINDOW_KAISER, c.WINDOW_BARTLETT)
+        detrends = (c.CONSTANT_DETREND, c.LINEAR_DETREND)
         self.addChildWidgets((
-            Checkbutton.Checkbutton(self.widget, c.OPTIONS_NORMALISE, 0, 0,                      columnspan=2),
-            Checkbutton.Checkbutton(self.widget, c.OPTIONS_DETREND,   0, 2,                      columnspan=2),
-            Checkbutton.Checkbutton(self.widget, c.OPTIONS_FILTER,    0, 4, command=self.disableFilter,      columnspan=2),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_STEP,      1, 0, command=int,    default_value=32),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_LENGTH,    1, 2, command=int,    default_value=512),
+            # Checkbutton.Checkbutton(self.widget, c.OPTIONS_DETREND,   0, 2,                      columnspan=2),
+
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_STEP,      0, 0, command=int,    default_value=32),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_LENGTH,    0, 2, command=int,    default_value=512),
+            Checkbutton.Checkbutton(self.widget, c.OPTIONS_NORMALISE, 0, 4,                      columnspan=2),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,   1, 1, values=detrends),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_BREAK,     1, 3, command=int,   allow_zero=True),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,    2, 1, command=self.disableWindow, values=windows),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,       2, 3, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
+
+
+            Checkbutton.Checkbutton(self.widget, c.OPTIONS_FILTER,    5, 4, command=self.disableFilter,      columnspan=2),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_FROM,      3, 0, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_TO,        3, 2, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_TAPS,      3, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,       4, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,    4, 0, command=self.disableWindow, values=windows),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_BREAK,     4, 4, command=int,   allow_zero=True)
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_TAPS,      3, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER])
+
+
         ))
 
     def disableFilter(self):

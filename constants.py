@@ -87,6 +87,7 @@ BOTTOM_FRAME = "BottomFrame"
 
 PLUS_MINUS_FRAME = "PlusMinusFrame"
 PLUS_MINUS_TEXTOX_FRAME = "PlusMinusTextboxFrame"
+RADIOBUTTON_FRAME = "RadiobuttonFrame"
 DISABLE_DELETE_FRAME = "DisableDeleteFrame"
 
 TARGET_COLOR1_FRAME = "Color1TextboxFrame"
@@ -107,6 +108,10 @@ TARGET_COLOR1 = "Color1"
 TARGET_X = "x"
 TARGET_Y = "y"
 TARGET_COLOR2 = "Color2"
+
+# Radiobutton frame button names
+CONSTANT_DETREND = "Constant"
+LINEAR_DETREND = "Linear"
 
 # Plus minus frame buttons
 PLUS = "+"
