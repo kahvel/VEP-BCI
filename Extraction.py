@@ -5,30 +5,87 @@ from signal_processing import Signal, FFT
 import PsdaExtraction
 import CcaExtraction
 import pyqtgraph as pg
+from connections import Connections, ConnectionProcessEnd
+import multiprocessing
+
+
+# class MultipleExtraction(Connections.MultipleConnections):
+#     def __init__(self, connection, process):
+#         Connections.MultipleConnections.__init__(self)
+#         self.connection = connection
+#         """ @type : ConnectionProcessEnd.ExtractionConnection """
+#         self.process = process
+#         self.connections.append(self.newProcess())
+#         self.connections.append(self.newProcess())
+#         self.connection.waitMessages(self.start, lambda: None, lambda: None, self.setup)
+#
+#     def newProcess(self):
+#         from_process, to_process = multiprocessing.Pipe()
+#         multiprocessing.Process(target=self.process, args=(ConnectionProcessEnd.ExtractionConnection(from_process),)).start()
+#         return ConnectionProcessEnd.ExtractionConnection(to_process)
+#
+#     def exit(self):
+#         pass  # TODO
+#
+#     def start(self):
+#         self.sendStartMessage()
+#         while True:
+#             postoffice_message = self.connection.receiveMessagePoll(0.1)
+#             if isinstance(postoffice_message, basestring):
+#                 self.sendMessage(postoffice_message)
+#                 return postoffice_message
+#             if postoffice_message is not None:
+#                 self.sendMessage(postoffice_message)
+#             extraction_message = self.receiveMessageInstant()
+#             print(extraction_message)
+#
+#     def setup(self):
+#         print("setup")
+#         sensors, options, target_freqs = self.connection.receiveOptions()
+#         self.sendSetupMessage()
+#         print("asddsa")
+#         self.connections[0].sendMessage((sensors, options, target_freqs))
+#         print("aaaaa")
+#         options[c.OPTIONS_LENGTH] /= 2
+#         print("trallal")
+#         self.connections[1].sendMessage((sensors, options, target_freqs))
+#         print("enne")
+#         if self.setupSuccessful():
+#             return c.SUCCESS_MESSAGE
+#         else:
+#             return c.FAIL_MESSAGE
+#
+#     def setupSuccessful(self):
+#         print("sees")
+#         if self.connections[0].receiveMessageBlock() == c.SUCCESS_MESSAGE and self.connections[1].receiveMessageBlock() == c.SUCCESS_MESSAGE:
+#             print("true")
+#             return True
+#         else:
+#             print("false")
+#             return False
 
 
 class Extraction(object):
     def __init__(self, connection, name):
         self.connection = connection
+        """ @type : ConnectionProcessEnd.ExtractionConnection """
         self.name = name
-        """ @type : ConnectionProcessEnd.PlotConnection """
-        self.pw = None
         self.sensors = None
         self.main_generators = None
         self.coordinates_generators = None
         self.target_freqs = None
-        self.pw = pg.plot()
-        self.connection.waitMessages(self.start, self.exit, self.update, self.setup)
+        # self.pw = pg.plot()
+        self.connection.waitMessages(self.start, self.exit, lambda: None, self.setup)
 
     def exit(self):
         self.connection.closeConnection()
 
-    def update(self):
-        pg.QtGui.QApplication.processEvents()
+    # def update(self):
+    #     pg.QtGui.QApplication.processEvents()
 
     def start(self):
         while True:
-            self.update()
+            # self.update()
             message = self.connection.receiveMessagePoll(0.1)
             if isinstance(message, basestring):
                 return message
@@ -37,7 +94,7 @@ class Extraction(object):
                 for sensor, coordinates_generator, main_generator in zip(self.sensors, self.coordinates_generators, self.main_generators):
                     coordinates = coordinates_generator.send(message.sensors[sensor]["value"])
                     if coordinates is not None:
-                        self.pw.plot(coordinates, clear=True)
+                        # self.pw.plot(coordinates, clear=True)
                         coordinates_generator.next()
                         result = main_generator.send(coordinates)
                         if result is not None:
@@ -46,16 +103,18 @@ class Extraction(object):
                 max_result = max(results.items(), key=lambda x: x[1])
                 if max_result[1] >= len(set(self.main_generators)):
                     self.connection.sendMessage((max_result[0], self.name))
+                else:
+                    self.connection.sendMessage((None, None))
 
     def setup(self):
         sensors, options, self.target_freqs = self.connection.receiveOptions()
-        self.sensors = self.getSensors(sensors)
-        self.coordinates_generators = self.getCoordinatesGenerators(options, len(self.sensors))
+        self.coordinates_generators = self.getCoordinatesGenerators(options, len(sensors))
         self.main_generators = self.getMainGenerator(
             options[c.DATA_OPTIONS],
             self.target_freqs,
-            len(self.sensors)
+            len(sensors)
         )
+        self.sensors = self.getSensors(sensors)
         return c.SUCCESS_MESSAGE
 
     def setupCoordinatesGenerator(self, options, generator_class):
@@ -156,11 +215,11 @@ class CcaPsdaExtraction(Extraction):
 
     def getMainGenerator(self, options, target_freqs, generator_count):
         cca_generator = self.setupGenerator(self.getCcaGenerator(options, target_freqs, generator_count))
-        return [cca_generator for _ in range(generator_count)]+\
+        return [cca_generator for _ in range(generator_count)] +\
                [self.setupGenerator(self.getPsdaGenerator(options, target_freqs)) for _ in range(generator_count)]
 
     def getCoordinatesGenerators(self, options, sensor_count):
-        return [self.setupCoordinatesGenerator(options, Signal.NotSum()) for _ in range(sensor_count)]+\
+        return [self.setupCoordinatesGenerator(options, Signal.NotSum()) for _ in range(sensor_count)] +\
                [self.setupCoordinatesGenerator(options, self.getGeneratorClass()) for _ in range(sensor_count)]
 
     def getSensors(self, sensors):

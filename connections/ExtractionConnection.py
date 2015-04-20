@@ -1,34 +1,48 @@
 __author__ = 'Anti'
 
-import MultipleConnections
+from connections import NotebookConnection, ConnectionPostOfficeEnd, Connections
 import Extraction
-import ConnectionPostOfficeEnd
 import constants as c
+import copy
 
 
-class ExtractionTabConnection(MultipleConnections.TabConnection):
+class ExtractionMasterConnection(Connections.MultipleConnections):
     def __init__(self):
-        MultipleConnections.TabConnection.__init__(self, c.DATA_EXTRACTION)
+        Connections.MultipleConnections.__init__(self)
 
-    def addProcess(self):
-        self.connections.append(ExtractionMethodConnection())
+    def setup(self, options):
+        self.close()
+        options2 = copy.deepcopy(options)
+        for option in options2[c.DATA_EXTRACTION]:
+            option[c.DATA_OPTIONS][c.OPTIONS_LENGTH] /= 2
+        new_connection = ExtractionTabConnection()
+        new_connection.setup(options)
+        self.connections.append(new_connection)
+        new_connection = ExtractionTabConnection()
+        new_connection.setup(options2)
+        self.connections.append(new_connection)
 
 
-class ExtractionMethodConnection(MultipleConnections.MethodConnection):
+class ExtractionTabConnection(NotebookConnection.TabConnection):
     def __init__(self):
-        MultipleConnections.MethodConnection.__init__(self)
+        NotebookConnection.TabConnection.__init__(self, c.DATA_EXTRACTION)
 
-    def isSumChannel(self, method):
-        return method == c.SUM_PSDA or method == c.SUM_BOTH
+    def getConnection(self):
+        return ExtractionMethodConnection()
 
-    def addProcess(self, method):
+
+class ExtractionMethodConnection(NotebookConnection.MethodConnection):
+    def __init__(self):
+        NotebookConnection.MethodConnection.__init__(self)
+
+    def getConnection(self, method):
         if method == c.SUM_PSDA:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsdaExtraction))
+            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsdaExtraction)
         elif method == c.SUM_BOTH:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumCcaPsdaExtraction))
+            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumCcaPsdaExtraction)
         elif method == c.PSDA:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumPsdaExtraction))
+            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumPsdaExtraction)
         elif method == c.BOTH:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaPsdaExtraction))
+            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaPsdaExtraction)
         elif method == c.CCA:
-            self.connections.append(ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaExtraction))
+            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.NotSumCcaExtraction)

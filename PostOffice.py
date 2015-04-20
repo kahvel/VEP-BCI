@@ -32,6 +32,7 @@ class PostOffice(object):
                 elif message == c.SETUP_MESSAGE:
                     if self.setup() == c.SUCCESS_MESSAGE:
                         setup_successful = True
+                        print("Setup successful!")
                     else:
                         setup_successful = False
                         print("Setup failed!")
@@ -62,20 +63,21 @@ class PostOffice(object):
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)
 
-    def handleFreqMessages(self, tab_message, no_standby, target_freqs, current_target):
-        for i, method_message in enumerate(tab_message):
-            for extraction_message in method_message:
-                if extraction_message is not None:
-                    freq, method = extraction_message
-                    if freq is not None:
-                        self.results[method][str(target_freqs)][current_target][freq] += 1
-                        if freq == self.standby_freq:
-                            # self.connections.sendPlotMessage(self.standby and not no_standby)
-                            self.standby = not self.standby
-                        if not self.standby or no_standby:
-                            # if not "short" in method:
-                            self.connections.sendTargetMessage(freq)
-                            # self.connections.sendGameMessage(freq)
+    def handleFreqMessages(self, message, no_standby, target_freqs, current_target):
+        for j, tab_message in enumerate(message):
+            for i, method_message in enumerate(tab_message):
+                for extraction_message in method_message:
+                    if extraction_message is not None:
+                        freq, method = extraction_message
+                        if freq is not None:
+                            self.results[method][str(target_freqs)][current_target][freq] += 1
+                            if freq == self.standby_freq:
+                                # self.connections.sendPlotMessage(self.standby and not no_standby)
+                                self.standby = not self.standby
+                            if not self.standby or no_standby:
+                                # if not "short" in method:
+                                self.connections.sendTargetMessage(freq)
+                                # self.connections.sendGameMessage(freq)
 
     def randomSequence(self, total, min_value, max_value, target_freqs):
         data = []

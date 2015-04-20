@@ -1,46 +1,45 @@
 __author__ = 'Anti'
 
-import MultipleConnections
-import ConnectionPostOfficeEnd
+from connections import NotebookConnection, ConnectionPostOfficeEnd
 import constants as c
 import Plot
 
 
-class PlotTabConnection(MultipleConnections.TabConnection):
+class PlotTabConnection(NotebookConnection.TabConnection):
     def __init__(self):
-        MultipleConnections.TabConnection.__init__(self, c.DATA_PLOTS)
+        NotebookConnection.TabConnection.__init__(self, c.DATA_PLOTS)
 
-    def addProcess(self):
-        self.connections.append(PlotMethodConnection())
+    def getConnection(self):
+        return PlotMethodConnection()
 
 
-class PlotMethodConnection(MultipleConnections.MethodConnection):
+class PlotMethodConnection(NotebookConnection.MethodConnection):
     def __init__(self):
-        MultipleConnections.MethodConnection.__init__(self)
+        NotebookConnection.MethodConnection.__init__(self)
 
-    def addProcess(self, method):
+    def getConnection(self, method):
         if method == c.SUM_SIGNAL:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumSignal))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.SumSignal)
         elif method == c.SUM_POWER:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumPower))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.SumPower)
         elif method == c.SUM_AVG_SIGNAL:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumAvgSignal))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.SumAvgSignal)
         elif method == c.SUM_AVG_POWER:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.SumAvgPower))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.SumAvgPower)
         elif method in [c.SIGNAL, c.POWER, c.AVG_SIGNAL, c.AVG_POWER]:
-            self.connections.append(PlotSensorConnection())
+            return PlotSensorConnection()
 
 
-class PlotSensorConnection(MultipleConnections.SensorConnection):
+class PlotSensorConnection(NotebookConnection.SensorConnection):
     def __init__(self):
-        MultipleConnections.SensorConnection.__init__(self)
+        NotebookConnection.SensorConnection.__init__(self)
 
-    def addProcess(self, method):
+    def getConnection(self, method):
         if method == c.SIGNAL:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumSignal))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumSignal)
         elif method == c.POWER:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumPower))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumPower)
         elif method == c.AVG_SIGNAL:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgSignal))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgSignal)
         elif method == c.AVG_POWER:
-            self.connections.append(ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgPower))
+            return ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgPower)

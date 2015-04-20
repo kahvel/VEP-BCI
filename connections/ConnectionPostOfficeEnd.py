@@ -7,6 +7,8 @@ import TargetsWindow
 import MyEmotiv
 import Game
 from main_window import MainWindow
+import multiprocessing
+import Extraction
 
 
 class PsychopyConnection(Connections.Connection):
@@ -19,10 +21,6 @@ class PsychopyConnection(Connections.Connection):
         self.connection.send(options[c.DATA_TARGETS])
         self.connection.send(options[c.DATA_TEST][c.TEST_STANDBY])
 
-    # def sendTargetMessage(self, target):
-    #     if target != 0:
-    #         self.sendMessage(target)
-
 
 class ExtractionConnection(Connections.Connection):
     def __init__(self, process):
@@ -32,10 +30,10 @@ class ExtractionConnection(Connections.Connection):
         self.sendSetupMessage()
         self.connection.send((sensors, options, target_freqs))
 
-    # def receiveMessageInstant(self):
-    #     a = Connections.Connection.receiveMessageInstant(self)
-    #     print(a)
-    #     return a
+    # def newProcess(self):  # Make MultipleExtraction and give self.process as argument
+    #     from_process, to_process = multiprocessing.Pipe()
+    #     multiprocessing.Process(target=Extraction.MultipleExtraction, args=(self.connection_other_end(from_process), self.process)).start()
+    #     return to_process
 
 
 class PlotConnection(Connections.Connection):

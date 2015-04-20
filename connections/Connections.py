@@ -15,7 +15,7 @@ class AbstractConnection(object):
         raise NotImplementedError("receiveMessage not implemented!")
 
     def sendOptions(self, *options):
-        pass
+        raise NotImplementedError("sendOptions not implemented!")
 
     def setupSuccessful(self):
         raise NotImplementedError("setupSuccessful not implemented!")

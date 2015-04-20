@@ -8,7 +8,6 @@ class Connection(Connections.AbstractConnection):
     def __init__(self, connection, name):
         Connections.AbstractConnection.__init__(self)
         self.connection = connection
-        """ @type : multiprocessing.Connection """
         self.name = name
 
     def waitMessages(self, start_function, exit_function, update_function, setup_function):  # wait for start or exit message
@@ -16,17 +15,14 @@ class Connection(Connections.AbstractConnection):
         while True:
             update_function()
             if message is not None:
-                # print(message, self)
                 if message == c.START_MESSAGE:
                     print("Start", self.name)
                     message = start_function()
                     continue
                 elif message == c.STOP_MESSAGE:
                     print("Stop", self.name)
-                    pass
                 elif message == c.SETUP_MESSAGE:
-                    message = setup_function()
-                    self.sendMessage(message)
+                    self.sendMessage(setup_function())
                 elif message == c.EXIT_MESSAGE:
                     print("Exit", self.name)
                     exit_function()
@@ -36,7 +32,7 @@ class Connection(Connections.AbstractConnection):
             message = self.receiveMessagePoll(0.1)
 
     def sendMessage(self, message):
-        try:  # Without it TargetWindow tries to send message through closed pipe when exiting
+        try:  # Without it some connections try to send message through closed pipe when exiting
             self.connection.send(message)
         except IOError, e:
             print(e)
