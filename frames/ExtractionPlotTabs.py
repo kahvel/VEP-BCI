@@ -53,44 +53,54 @@ class OptionsFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.OPTIONS_FRAME, row, column, **kwargs)
         windows = (c.WINDOW_NONE, c.WINDOW_HANNING, c.WINDOW_HAMMING, c.WINDOW_BLACKMAN, c.WINDOW_KAISER, c.WINDOW_BARTLETT)
         detrends = (c.CONSTANT_DETREND, c.LINEAR_DETREND)
+        filters = (c.NONE_FILTER, c.LOWPASS_FILTER, c.HIGHPASS_FILTER, c.BANDPASS_FILTER)
+        values = (c.INTERPOLATE_LINEAR, c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC)
         self.addChildWidgets((
-            # Checkbutton.Checkbutton(self.widget, c.OPTIONS_DETREND,   0, 2,                      columnspan=2),
-
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_STEP,      0, 0, command=int,    default_value=32),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_LENGTH,    0, 2, command=int,    default_value=512),
             Checkbutton.Checkbutton(self.widget, c.OPTIONS_NORMALISE, 0, 4,                      columnspan=2),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,   1, 1, values=detrends),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_BREAK,     1, 3, command=int,   allow_zero=True),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,    2, 1, command=self.disableWindow, values=windows),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,       2, 3, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
-
-
-            Checkbutton.Checkbutton(self.widget, c.OPTIONS_FILTER,    5, 4, command=self.disableFilter,      columnspan=2),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_FROM,      3, 0, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_TO,        3, 2, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_TAPS,      3, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER])
-
-
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_BREAK,     1, 0, command=int,   allow_zero=True),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,       1, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,   2, 1, values=detrends),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,    2, 4, command=self.enableWindow, values=windows),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_INTERPOLATE, 3, 1, values=values),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_FILTER,    3, 4, values=filters, command=self.enableFilter),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_FROM,      4, 0, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_TO,        4, 2, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
+            Textboxes.LabelTextbox (self.widget, c.OPTIONS_TAPS,      4, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER])
         ))
 
-    def disableFilter(self):
+    def enableFilter(self):
+        self.enableFrom()
+        self.enableTo()
+        self.enableTaps()
+
+    def enableTaps(self):
         self.conditionalDisabling(
             self.widgets_dict[c.OPTIONS_FILTER],
-            1,
-            (
-                self.widgets_dict[c.OPTIONS_FROM],
-                self.widgets_dict[c.OPTIONS_TO],
-                self.widgets_dict[c.OPTIONS_TAPS]
-            )
+            (c.LOWPASS_FILTER, c.HIGHPASS_FILTER, c.BANDPASS_FILTER),
+            (self.widgets_dict[c.OPTIONS_TAPS],)
         )
 
-    def disableWindow(self):
+    def enableFrom(self):
+        self.conditionalDisabling(
+            self.widgets_dict[c.OPTIONS_FILTER],
+            (c.HIGHPASS_FILTER, c.BANDPASS_FILTER),
+            (self.widgets_dict[c.OPTIONS_FROM], self.widgets_dict[c.OPTIONS_TAPS])
+        )
+
+    def enableTo(self):
+        self.conditionalDisabling(
+            self.widgets_dict[c.OPTIONS_FILTER],
+            (c.LOWPASS_FILTER, c.BANDPASS_FILTER),
+            (self.widgets_dict[c.OPTIONS_TO], self.widgets_dict[c.OPTIONS_TAPS])
+        )
+
+    def enableWindow(self):
         self.conditionalDisabling(
             self.widgets_dict[c.OPTIONS_WINDOW],
-            c.WINDOW_KAISER,
-            (
-                self.widgets_dict[c.OPTIONS_ARG],
-            )
+            (c.WINDOW_KAISER,),
+            (self.widgets_dict[c.OPTIONS_ARG],)
         )
 
 

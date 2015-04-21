@@ -66,6 +66,24 @@ SCIPY_WINDOW_BLACKMAN = "blackmanharris"
 SCIPY_WINDOW_KAISER = "kaiser"
 SCIPY_WINDOW_BARTLETT = "bartlett"
 
+# Interpolation function names
+INTERPOLATE_LINEAR = "Linear"
+INTERPOLATE_NEAREST = "Nearest"
+INTERPOLATE_ZERO = "Zero"
+INTERPOLATE_SLINEAR = "Slinear"
+INTERPOLATE_QUADRATIC = "Quadratic"
+INTERPOLATE_CUBIC = "Cubic"
+
+# Arguments for scipy.interpolate.interp1d
+# linear, nearest, zero, slinear, quadratic, cubic
+
+SCIPY_INTERPOLATE_LINEAR = "linear"
+SCIPY_INTERPOLATE_NEAREST = "nearest"
+SCIPY_INTERPOLATE_ZERO = "zero"
+SCIPY_INTERPOLATE_SLINEAR = "slinear"
+SCIPY_INTERPOLATE_QUADRATIC = "quadratic"
+SCIPY_INTERPOLATE_CUBIC = "cubic"
+
 # Plot and Extraction tab options frame buttons
 OPTIONS_NORMALISE = "Normalise"
 OPTIONS_DETREND = "Detrend"
@@ -78,6 +96,7 @@ OPTIONS_TAPS = "Taps"
 OPTIONS_ARG = "Arg"
 OPTIONS_WINDOW = "Window"
 OPTIONS_BREAK = "Break"
+OPTIONS_INTERPOLATE = "Interp"
 
 EXTRACTION_TAB_BUTTON_FRAME = "ExtractionTabButtonFrame"
 PLOT_TAB_BUTTON_FRAME = "PlotTabButtonFrame"
@@ -109,9 +128,15 @@ TARGET_X = "x"
 TARGET_Y = "y"
 TARGET_COLOR2 = "Color2"
 
-# Radiobutton frame button names
+# Detrend optionmenu
 CONSTANT_DETREND = "Constant"
 LINEAR_DETREND = "Linear"
+
+# Filter optionmenu
+LOWPASS_FILTER = "Low-pass"
+HIGHPASS_FILTER = "High-pass"
+BANDPASS_FILTER = "Band-pass"
+NONE_FILTER = "None"
 
 # Plus minus frame buttons
 PLUS = "+"

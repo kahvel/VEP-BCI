@@ -23,7 +23,7 @@ class WindowTab(Frame.Frame):
             Textboxes.ColorTextboxFrame(self.widget, c.WINDOW_COLOR, c.WINDOW_COLOR_FRAME,   0, 4,                default_value="#000000"),
             Textboxes.LabelTextbox     (self.widget, c.WINDOW_FREQ,    1, 0, command=float, default_value=self.getMonitorFrequency(monitor_names[0])),
             Buttons.Button             (self.widget, c.WINDOW_REFRESH, 1, 2, command=refresh_command),
-            OptionMenu.OptionMenu      (self.widget, c.WINDOW_MONITOR, 1, 3, command=monitor_command, values=monitor_names, columnspan=3)
+            OptionMenu.OptionMenu      (self.widget, c.WINDOW_MONITOR, 2, 1, command=monitor_command, values=monitor_names, columnspan=3)
         ))
 
     def getMonitorNames(self):

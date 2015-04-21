@@ -11,29 +11,26 @@ class TestTab(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.target_count = 0
         self.addChildWidgets((
-            OptionMenu.OptionMenu  (self.widget, c.TEST_TARGET,    0, 1, columnspan=2, values=(c.TEST_NONE, c.TEST_RANDOM), command=self.disableRange),
+            OptionMenu.OptionMenu  (self.widget, c.TEST_TARGET,    0, 1, columnspan=2, values=(c.TEST_NONE, c.TEST_RANDOM), command=self.enableRange),
             Checkbutton.Checkbutton(self.widget, c.TEST_STANDBY,   1, 0, columnspan=2),
-            Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 1, 2, columnspan=2, command=self.disableTime, default_value=1),
+            Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 1, 2, columnspan=2, command=self.enableTime, default_value=1),
             Textboxes.LabelTextbox (self.widget, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
             Textboxes.LabelTextbox (self.widget, c.TEST_MIN,       2, 2, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET]),
             Textboxes.LabelTextbox (self.widget, c.TEST_MAX,       2, 4, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET])
         ))
 
-    def disableTime(self):
+    def enableTime(self):
         self.conditionalDisabling(
             self.widgets_dict[c.TEST_UNLIMITED],
-            0,
+            (0,),
             (self.widgets_dict[c.TEST_TIME],)
         )
 
-    def disableRange(self):
+    def enableRange(self):
         self.conditionalDisabling(
             self.widgets_dict[c.TEST_TARGET],
-            c.TEST_RANDOM,
-            (
-                self.widgets_dict[c.TEST_MIN],
-                self.widgets_dict[c.TEST_MAX]
-            )
+            (c.TEST_RANDOM,),
+            (self.widgets_dict[c.TEST_MIN], self.widgets_dict[c.TEST_MAX])
         )
 
     def addOption(self, option):
@@ -52,5 +49,5 @@ class TestTab(Frame.Frame):
         for i in range(1, self.target_count+1):
             self.addOption(i)
         if self.widgets_dict[c.TEST_TARGET].variable.get() > self.target_count:
-            print("Warning: OptionMenu in tab Test reset to None")
+            print("Warning: Test target in Test tab reset to None")
             self.widgets_dict[c.TEST_TARGET].variable.set(c.TEST_NONE)

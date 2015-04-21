@@ -34,9 +34,9 @@ class AbstractFrame(AbstractWidget.Widget):
         for child in self.widgets_list:
             child.loadDefaultValue()
 
-    def conditionalDisabling(self, disabler, value, widgets):
+    def conditionalDisabling(self, disabler, values, widgets):
         for widget in widgets:
-            if disabler.variable.get() == value:
+            if disabler.variable.get() in values:
                 widget.enable(disabler.name)
             else:
                 widget.disable(disabler.name)
