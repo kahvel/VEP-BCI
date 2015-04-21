@@ -52,7 +52,7 @@ class OptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.OPTIONS_FRAME, row, column, **kwargs)
         windows = (c.WINDOW_NONE, c.WINDOW_HANNING, c.WINDOW_HAMMING, c.WINDOW_BLACKMAN, c.WINDOW_KAISER, c.WINDOW_BARTLETT)
-        detrends = (c.CONSTANT_DETREND, c.LINEAR_DETREND)
+        detrends = (c.LINEAR_DETREND, c.CONSTANT_DETREND, c.NONE_DETREND)
         filters = (c.NONE_FILTER, c.LOWPASS_FILTER, c.HIGHPASS_FILTER, c.BANDPASS_FILTER)
         values = (c.INTERPOLATE_LINEAR, c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC)
         self.addChildWidgets((

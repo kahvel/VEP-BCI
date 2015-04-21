@@ -55,6 +55,8 @@ WINDOW_BLACKMAN = "Blackman"
 WINDOW_KAISER = "Kaiser"
 WINDOW_BARTLETT = "Bartlett"
 
+WINDOW_FUNCTION_NAMES = (WINDOW_NONE, WINDOW_HANNING, WINDOW_HAMMING, WINDOW_BLACKMAN, WINDOW_KAISER, WINDOW_BARTLETT)
+
 # Arguments for sgipy.signal.get_window()
 # boxcar, triang, blackman, hamming, hann, bartlett, flattop, parzen,
 # bohman, blackmanharris, nuttall, barthann, kaiser (needs beta), gaussian (needs std),
@@ -131,12 +133,15 @@ TARGET_COLOR2 = "Color2"
 # Detrend optionmenu
 CONSTANT_DETREND = "Constant"
 LINEAR_DETREND = "Linear"
+NONE_DETREND = "None"
 
 # Filter optionmenu
+NONE_FILTER = "None"
 LOWPASS_FILTER = "Low-pass"
 HIGHPASS_FILTER = "High-pass"
 BANDPASS_FILTER = "Band-pass"
-NONE_FILTER = "None"
+
+FILTER_NAMES = (NONE_FILTER, LOWPASS_FILTER, HIGHPASS_FILTER, BANDPASS_FILTER)
 
 # Plus minus frame buttons
 PLUS = "+"
