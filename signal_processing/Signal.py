@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
 from signal_processing import SignalProcessing
+import constants as c
 
 
 class Signal(SignalProcessing.SignalProcessing):
@@ -9,7 +10,7 @@ class Signal(SignalProcessing.SignalProcessing):
 
     def getSegment(self, array, i):
         if array is not None:
-            step = self.options["Step"]
+            step = self.options[c.OPTIONS_STEP]
             return array[i*step:i*step+step]
         else:
             return None
@@ -30,8 +31,8 @@ class NotSumAvg(Signal):
         Signal.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         result = []
         coordinates = [0 for _ in range(step)]
         k = 0
@@ -60,8 +61,8 @@ class NotSum(Signal):
         Signal.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         coordinates = [0 for _ in range(step)]
         result = []
         filter_prev_state = self.filterPrevState([0])
@@ -88,8 +89,8 @@ class SumAvg(Signal):
         Signal.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         channel_count = len(self.channels)
         result = []
         coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
@@ -135,8 +136,8 @@ class Sum(Signal):
         Signal.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         channel_count = len(self.channels)
         result = []
         coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]

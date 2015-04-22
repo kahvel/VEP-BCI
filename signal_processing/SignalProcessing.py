@@ -20,7 +20,7 @@ class SignalProcessing(object):
         }
 
     def setup(self, options):
-        self.window_function = self.getWindowFunction(options[c.DATA_OPTIONS])
+        self.window_function = self.getWindowFunction(options[c.DATA_OPTIONS], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
         self.filter_coefficients = self.getFilter(options[c.DATA_OPTIONS])
         self.breakpoints = self.getBreakpoints(options[c.DATA_OPTIONS])
         self.options = options[c.DATA_OPTIONS]
@@ -32,11 +32,11 @@ class SignalProcessing(object):
         else:
             return self.menu_key_to_scipy_key[options[c.OPTIONS_WINDOW]]
 
-    def getWindowFunction(self, options):
+    def getWindowFunction(self, options, length):
         if options[c.OPTIONS_WINDOW] == c.WINDOW_NONE:
             return None
         elif options[c.OPTIONS_WINDOW] in c.WINDOW_FUNCTION_NAMES:
-            return scipy.signal.get_window(self.getWindowWithArgs(options), options[c.OPTIONS_LENGTH])
+            return scipy.signal.get_window(self.getWindowWithArgs(options), length)
         else:
             raise ValueError("Illegal window value in getWindowFunction: " + options[c.OPTIONS_WINDOW])
 

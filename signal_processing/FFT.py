@@ -2,6 +2,7 @@ __author__ = 'Anti'
 
 from signal_processing import SignalProcessing
 import numpy as np
+import constants as c
 
 
 class FFT(SignalProcessing.SignalProcessing):
@@ -9,13 +10,13 @@ class FFT(SignalProcessing.SignalProcessing):
         SignalProcessing.SignalProcessing.__init__(self)
 
     def normaliseSpectrum(self, fft):
-        if self.options["Normalise"]:
+        if self.options[c.OPTIONS_NORMALISE]:
             result = (fft/sum(fft))
-            result[0] = 0
+            # result[0] = 0
             return result
         else:
             result = np.log10(fft)
-            result[0] = 0
+            # result[0] = 0
             return result
 
     # def detrendSegment(self, signal):
@@ -24,16 +25,12 @@ class FFT(SignalProcessing.SignalProcessing):
     #     else:
     #         return signal
 
-    # def scaleYa(self, y,  index, gen_count, new_max=-100, new_min=100):
-    #     return ((((y - (-10)) * (new_max - new_min)) / (10 - (-10))) + new_min
-    #             + index*self.window_height + self.window_height/2) / gen_count
-    #
-    # def scalea(self, coordinates, index, packet_count):
-    #     result = []
-    #     for i in range(len(coordinates)):
-    #         result.append(i*self.window_width/len(coordinates))
-    #         result.append(self.scaleYa(coordinates[i], index, self.gen_count))
-    #     return result
+    def shortPipeline(self, coordinates):
+        detrended_signal = self.detrendSignal(coordinates)
+        window_function = self.getWindowFunction(self.options, len(detrended_signal))
+        windowed_signal = self.windowSignal(detrended_signal, window_function)
+        amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
+        return amplitude_spectrum
 
     def segmentPipeline(self, coordinates, filter_prev_state):
         filtered_segment, filter_prev_state = self.filterSignal(coordinates, filter_prev_state)
@@ -44,8 +41,6 @@ class FFT(SignalProcessing.SignalProcessing):
         detrended_signal = self.detrendSignal(coordinates)
         windowed_signal = self.windowSignal(detrended_signal, self.window_function)
         amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
-        # self.canvas.delete(self.line)
-        # self.line = self.canvas.create_line(self.scalea(windowed_signal, 0, 0), fill="Red")
         return amplitude_spectrum
 
 
@@ -54,8 +49,8 @@ class NotSum(FFT):
         FFT.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         coordinates = []
         filter_prev_state = self.filterPrevState([0])
         for i in range(length/step):
@@ -65,7 +60,7 @@ class NotSum(FFT):
                 segment.append(y)
             result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
             coordinates.extend(result)
-            spectrum = self.signalPipeline(coordinates)
+            spectrum = self.shortPipeline(coordinates)
             yield self.normaliseSpectrum(spectrum)
         while True:
             for i in range(length/step):
@@ -85,8 +80,8 @@ class NotSumAvg(FFT):
         FFT.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         k = 1
         coordinates = []
         filter_prev_state = self.filterPrevState([0])
@@ -97,7 +92,7 @@ class NotSumAvg(FFT):
                 segment.append(y)
             result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
             coordinates.extend(result)
-            average = self.signalPipeline(coordinates)
+            average = self.shortPipeline(coordinates)
             yield self.normaliseSpectrum(average)
         while True:
             for _ in range(length/step):
@@ -120,8 +115,8 @@ class SumAvg(FFT):
         FFT.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         channel_count = len(self.channels)
         # average = []
         k = 1
@@ -138,7 +133,7 @@ class SumAvg(FFT):
                 coordinates[i].extend(result)
             ffts = []
             for i in range(channel_count):
-                ffts.append(self.signalPipeline(coordinates[i]))
+                ffts.append(self.shortPipeline(coordinates[i]))
             average = []
             for i in range(len(ffts[0])):
                 summ = 0
@@ -174,8 +169,8 @@ class Sum(FFT):
         FFT.__init__(self)
 
     def coordinates_generator(self):
-        step = self.options["Step"]
-        length = self.options["Length"]
+        step = self.options[c.OPTIONS_STEP]
+        length = self.options[c.OPTIONS_LENGTH]
         channel_count = len(self.channels)
         # average = []
         coordinates = [[] for _ in range(channel_count)]
@@ -191,7 +186,7 @@ class Sum(FFT):
                 coordinates[i].extend(result)
             ffts = []
             for i in range(channel_count):
-                ffts.append(self.signalPipeline(coordinates[i]))
+                ffts.append(self.shortPipeline(coordinates[i]))
             average = []
             for i in range(len(ffts[0])):
                 summ = 0
