@@ -35,11 +35,9 @@ class Plot(object):
         return c.SUCCESS_MESSAGE
 
     def setupGenerator(self, options):
-        generator_class = self.getGeneratorClass(options)
+        self.coordinates_generator = self.getGeneratorClass(options)
         """ @type : Signal.Signal | FFT.FFT """
-        generator_class.setup(options)
-        self.coordinates_generator = generator_class.coordinates_generator()
-        self.coordinates_generator.send(None)
+        self.coordinates_generator.setup(options)
 
     def getGeneratorClass(self, options):
         raise NotImplementedError("getGeneratorClass not implemented!")
@@ -88,7 +86,7 @@ class SumSignal(Sum):
         Sum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return Signal.Sum()
+        return Signal.AbstractSumSignal()
 
 
 class NotSumSignal(NotSum):
@@ -96,7 +94,7 @@ class NotSumSignal(NotSum):
         NotSum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return Signal.NotSum()
+        return Signal.Signal()
 
 
 class SumPower(Sum):
@@ -120,7 +118,7 @@ class SumAvgSignal(Sum):
         Sum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return Signal.SumAvg()
+        return Signal.SumAverageSignal()
 
 
 class NotSumAvgSignal(NotSum):
@@ -128,7 +126,7 @@ class NotSumAvgSignal(NotSum):
         NotSum.__init__(self, connection)
 
     def getGeneratorClass(self, options):
-        return Signal.NotSumAvg()
+        return Signal.AverageSignal()
 
 
 class SumAvgPower(Sum):

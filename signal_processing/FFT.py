@@ -51,16 +51,16 @@ class NotSum(FFT):
     def coordinates_generator(self):
         step = self.options[c.OPTIONS_STEP]
         length = self.options[c.OPTIONS_LENGTH]
-        coordinates = []
+        filtered_signal = []
         filter_prev_state = self.filterPrevState([0])
         for i in range(length/step):
             segment = []
             for j in range(step):
                 y = yield
                 segment.append(y)
-            result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
-            coordinates.extend(result)
-            spectrum = self.shortPipeline(coordinates)
+            filtered_signal_segment, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
+            filtered_signal.extend(filtered_signal_segment)
+            spectrum = self.shortPipeline(filtered_signal)
             yield self.normaliseSpectrum(spectrum)
         while True:
             for i in range(length/step):
@@ -68,10 +68,10 @@ class NotSum(FFT):
                 for j in range(step):
                     y = yield
                     segment.append(y)
-                result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
-                coordinates.extend(result)
-                del coordinates[:step]
-                spectrum = self.signalPipeline(coordinates)
+                filtered_signal_segment, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
+                filtered_signal.extend(filtered_signal_segment)
+                del filtered_signal[:step]
+                spectrum = self.signalPipeline(filtered_signal)
                 yield self.normaliseSpectrum(spectrum)
 
 
@@ -83,31 +83,31 @@ class NotSumAvg(FFT):
         step = self.options[c.OPTIONS_STEP]
         length = self.options[c.OPTIONS_LENGTH]
         k = 1
-        coordinates = []
+        filtered_signal = []
         filter_prev_state = self.filterPrevState([0])
         for _ in range(length/step):
             segment = []
             for j in range(step):
                 y = yield
                 segment.append(y)
-            result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
-            coordinates.extend(result)
-            average = self.shortPipeline(coordinates)
-            yield self.normaliseSpectrum(average)
+            filtered_signal_segment, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
+            filtered_signal.extend(filtered_signal_segment)
+            average_spectrum = self.shortPipeline(filtered_signal)
+            yield self.normaliseSpectrum(average_spectrum)
         while True:
             for _ in range(length/step):
                 segment = []
                 for j in range(step):
                     y = yield
                     segment.append(y)
-                result, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
-                coordinates.extend(result)
-                del coordinates[:step]
-                amplitude_spectrum = self.signalPipeline(coordinates)
+                filtered_signal_segment, filter_prev_state = self.segmentPipeline(segment, filter_prev_state)
+                filtered_signal.extend(filtered_signal_segment)
+                del filtered_signal[:step]
+                amplitude_spectrum = self.signalPipeline(filtered_signal)
                 k += 1
                 for i in range(len(amplitude_spectrum)):
-                    average[i] = (average[i] * (k - 1) + amplitude_spectrum[i]) / k
-                yield self.normaliseSpectrum(average)
+                    average_spectrum[i] = (average_spectrum[i] * (k - 1) + amplitude_spectrum[i]) / k
+                yield self.normaliseSpectrum(average_spectrum)
 
 
 class SumAvg(FFT):
@@ -118,9 +118,9 @@ class SumAvg(FFT):
         step = self.options[c.OPTIONS_STEP]
         length = self.options[c.OPTIONS_LENGTH]
         channel_count = len(self.channels)
-        # average = []
+        # average_spectrum = []
         k = 1
-        coordinates = [[] for _ in range(channel_count)]
+        filtered_signal = [[] for _ in range(channel_count)]
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
         for _ in range(length/step):
             segment = [[] for _ in range(channel_count)]
@@ -129,18 +129,18 @@ class SumAvg(FFT):
                     y = yield
                     segment[channel].append(y)
             for i in range(channel_count):
-                result, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
-                coordinates[i].extend(result)
+                filtered_signal_segment, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
+                filtered_signal[i].extend(filtered_signal_segment)
             ffts = []
             for i in range(channel_count):
-                ffts.append(self.shortPipeline(coordinates[i]))
-            average = []
+                ffts.append(self.shortPipeline(filtered_signal[i]))
+            average_spectrum = []
             for i in range(len(ffts[0])):
                 summ = 0
                 for j in range(channel_count):
                     summ += ffts[j][i]
-                average.append(summ/channel_count)
-            yield self.normaliseSpectrum(average)
+                average_spectrum.append(summ/channel_count)
+            yield self.normaliseSpectrum(average_spectrum)
         while True:
             for _ in range(length/step):
                 segment = [[] for _ in range(channel_count)]
@@ -149,19 +149,19 @@ class SumAvg(FFT):
                         y = yield
                         segment[channel].append(y)
                 for i in range(channel_count):
-                    result, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
-                    coordinates[i].extend(result)
-                    del coordinates[i][:step]
+                    filtered_signal_segment, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
+                    filtered_signal[i].extend(filtered_signal_segment)
+                    del filtered_signal[i][:step]
                 k += 1
                 ffts = []
                 for i in range(channel_count):
-                    ffts.append(self.signalPipeline(coordinates[i]))
+                    ffts.append(self.signalPipeline(filtered_signal[i]))
                 for i in range(len(ffts[0])):
                     summ = 0
                     for j in range(channel_count):
                         summ += ffts[j][i]
-                    average[i] = (average[i] * (k - 1) + summ/channel_count) / k
-                yield self.normaliseSpectrum(average)
+                    average_spectrum[i] = (average_spectrum[i] * (k - 1) + summ/channel_count) / k
+                yield self.normaliseSpectrum(average_spectrum)
 
 
 class Sum(FFT):
@@ -172,8 +172,8 @@ class Sum(FFT):
         step = self.options[c.OPTIONS_STEP]
         length = self.options[c.OPTIONS_LENGTH]
         channel_count = len(self.channels)
-        # average = []
-        coordinates = [[] for _ in range(channel_count)]
+        # average_spectrum = []
+        filtered_signal = [[] for _ in range(channel_count)]
         filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
         for _ in range(length/step):
             segment = [[] for _ in range(channel_count)]
@@ -182,18 +182,18 @@ class Sum(FFT):
                     y = yield
                     segment[channel].append(y)
             for i in range(channel_count):
-                result, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
-                coordinates[i].extend(result)
+                filtered_signal_segment, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
+                filtered_signal[i].extend(filtered_signal_segment)
             ffts = []
             for i in range(channel_count):
-                ffts.append(self.shortPipeline(coordinates[i]))
-            average = []
+                ffts.append(self.shortPipeline(filtered_signal[i]))
+            average_spectrum = []
             for i in range(len(ffts[0])):
                 summ = 0
                 for j in range(channel_count):
                     summ += ffts[j][i]
-                average.append(summ/channel_count)
-            yield self.normaliseSpectrum(average)
+                average_spectrum.append(summ/channel_count)
+            yield self.normaliseSpectrum(average_spectrum)
         while True:
             for _ in range(length/step):
                 segment = [[] for _ in range(channel_count)]
@@ -202,15 +202,15 @@ class Sum(FFT):
                         y = yield
                         segment[channel].append(y)
                 for i in range(channel_count):
-                    result, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
-                    coordinates[i].extend(result)
-                    del coordinates[i][:step]
+                    filtered_signal_segment, filter_prev_state[i] = self.segmentPipeline(segment[i], filter_prev_state[i])
+                    filtered_signal[i].extend(filtered_signal_segment)
+                    del filtered_signal[i][:step]
                 ffts = []
                 for i in range(channel_count):
-                    ffts.append(self.signalPipeline(coordinates[i]))
+                    ffts.append(self.signalPipeline(filtered_signal[i]))
                 for i in range(len(ffts[0])):
                     summ = 0
                     for j in range(channel_count):
                         summ += ffts[j][i]
-                    average[i] = summ/channel_count
-                yield self.normaliseSpectrum(average)
+                    average_spectrum[i] = summ/channel_count
+                yield self.normaliseSpectrum(average_spectrum)

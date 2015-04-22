@@ -20,11 +20,10 @@ class SignalProcessing(object):
         }
 
     def setup(self, options):
-        self.window_function = self.getWindowFunction(options[c.DATA_OPTIONS], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
-        self.filter_coefficients = self.getFilter(options[c.DATA_OPTIONS])
-        self.breakpoints = self.getBreakpoints(options[c.DATA_OPTIONS])
-        self.options = options[c.DATA_OPTIONS]
-        self.channels = options[c.DATA_SENSORS]
+        self.window_function = self.getWindowFunction(options, options[c.OPTIONS_LENGTH])
+        self.filter_coefficients = self.getFilter(options)
+        self.breakpoints = self.getBreakpoints(options)
+        self.options = options
 
     def getWindowWithArgs(self, options):
         if options[c.OPTIONS_WINDOW] == c.WINDOW_KAISER:

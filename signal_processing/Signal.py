@@ -2,11 +2,15 @@ __author__ = 'Anti'
 
 from signal_processing import SignalProcessing
 import constants as c
+import numpy as np
 
 
-class Signal(SignalProcessing.SignalProcessing):
+class AbstractSignal(SignalProcessing.SignalProcessing):
     def __init__(self):
         SignalProcessing.SignalProcessing.__init__(self)
+        self.filter_prev_state = None
+        self.generator = None
+        self.channels = None
 
     def getSegment(self, array, i):
         if array is not None:
@@ -15,164 +19,152 @@ class Signal(SignalProcessing.SignalProcessing):
         else:
             return None
 
-    def signalPipeline(self, signal, i, filter_prev_state):
-        detrended_signal = self.detrendSignal(signal)
-        filtered_signal, filter_prev_state = self.filterSignal(detrended_signal, filter_prev_state)
-        window_segment = self.getSegment(self.window_function, i)
-        windowed_signal = self.windowSignal(filtered_signal, window_segment)
-        return windowed_signal, filter_prev_state
+    def signalPipeline(self, coordinates, window):
+        detrended_signal = self.detrendSignal(coordinates)
+        filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
+        windowed_signal = self.windowSignal(filtered_signal, window)
+        return windowed_signal
 
-    def coordinates_generator(self):
+    def coordinates_generator(self, step, length):
         raise NotImplementedError("coordinates_generator not implemented!")
 
+    def setup(self, options):
+        self.channels = options[c.DATA_SENSORS]  # TODO give this as argument??
+        options = options[c.DATA_OPTIONS]
+        SignalProcessing.SignalProcessing.setup(self, options)
+        self.filter_prev_state = self.filterPrevState([0])
 
-class NotSumAvg(Signal):
+    def send(self, message):
+        return self.generator.send(message)
+
+    def next(self):
+        self.generator.next()
+
+
+class AverageSignal(AbstractSignal):
     def __init__(self):
-        Signal.__init__(self)
+        AbstractSignal.__init__(self)
 
-    def coordinates_generator(self):
-        step = self.options[c.OPTIONS_STEP]
-        length = self.options[c.OPTIONS_LENGTH]
-        result = []
-        coordinates = [0 for _ in range(step)]
-        k = 0
-        filter_prev_state = self.filterPrevState([0])
+    def setup(self, options):
+        AbstractSignal.setup(self, options)
+        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
+        self.generator.send(None)
+
+    def coordinates_generator(self, step, length):
+        average_signal = []
         for i in range(length/step):
+            segment = []
             for j in range(step):
                 y = yield
-                coordinates[j] = y
-            processed_signal, filter_prev_state = self.signalPipeline(coordinates, i, filter_prev_state)
-            result.extend(processed_signal)
-            yield result
+                segment.append(y)
+            average_signal.extend(segment)
+            processed_average_signal = self.signalPipeline(average_signal, self.getSegment(self.window_function, i))
+            yield processed_average_signal
+        k = 1
         while True:
             k += 1
             for i in range(length/step):
+                segment = []
                 for j in range(step):
                     y = yield
-                    coordinates[j] = y
-                processed_signal, filter_prev_state = self.signalPipeline(coordinates, i, filter_prev_state)
+                    segment.append(float(y))
                 for j in range(step):
-                    result[i*step+j] = (result[i*step+j] * (k - 1) + processed_signal[j]) / k
-                yield result
+                    average_signal[i*step+j] = (average_signal[i*step+j] * (k - 1) + segment[j]) / k
+                processed_average_signal = self.signalPipeline(average_signal, self.window_function)
+                yield processed_average_signal
 
 
-class NotSum(Signal):
+class Signal(AbstractSignal):
     def __init__(self):
-        Signal.__init__(self)
+        AbstractSignal.__init__(self)
 
-    def coordinates_generator(self):
-        step = self.options[c.OPTIONS_STEP]
-        length = self.options[c.OPTIONS_LENGTH]
-        coordinates = [0 for _ in range(step)]
-        result = []
-        filter_prev_state = self.filterPrevState([0])
+    def setup(self, options):
+        AbstractSignal.setup(self, options)
+        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
+        self.generator.send(None)
+
+    def coordinates_generator(self, step, length):
+        signal = []
         for i in range(length/step):
+            segment = []
             for j in range(step):
                 y = yield
-                coordinates[j] = y
-            processed_signal, filter_prev_state = self.signalPipeline(coordinates, i, filter_prev_state)
-            result.extend(processed_signal)
+                segment.append(y)
+            signal.extend(segment)
+            result = self.signalPipeline(signal, self.getWindowFunction(self.options, len(signal)))
             yield result
         while True:
             for i in range(length/step):
+                segment = []
                 for j in range(step):
                     y = yield
-                    coordinates[j] = y
-                processed_signal, filter_prev_state = self.signalPipeline(coordinates, i, filter_prev_state)
-                for j in range(step):
-                    result[i*step+j] = processed_signal[j]
+                    segment.append(y)
+                signal.extend(segment)
+                del signal[:step]
+                result = self.signalPipeline(signal, self.window_function)
                 yield result
 
 
-class SumAvg(Signal):
+class AbstractSumSignal(AbstractSignal):
+    def __init__(self):
+        AbstractSignal.__init__(self)
+        self.generators = None
+
+    def setup(self, options):
+        AbstractSignal.setup(self, options)
+        channel_count = len(self.channels)
+        self.generators = []
+        for _ in range(channel_count):
+            new_generator = self.getGenerator()
+            new_generator.setup(options)
+            self.generators.append(new_generator)
+        self.generator = self.coordinates_generator()
+        self.generator.send(None)
+
+    def getGenerator(self):
+        raise NotImplementedError("getGenerator not implemented!")
+
+    def coordinates_generator(self, step=None, length=None):
+        while True:
+            signals = []
+            for generator in self.generators:
+                y = yield
+                signals.append(generator.send(y))
+            if None not in signals:
+                sum_of_signals = np.mean(signals, axis=0)
+                result = self.signalPipeline(sum_of_signals, self.window_function)
+                yield result
+                for generator in self.generators:
+                    generator.next()
+
+
+class RawSignal(Signal):
     def __init__(self):
         Signal.__init__(self)
 
-    def coordinates_generator(self):
-        step = self.options[c.OPTIONS_STEP]
-        length = self.options[c.OPTIONS_LENGTH]
-        channel_count = len(self.channels)
-        result = []
-        coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
-        segment = [[0 for _ in range(step)] for _ in range(channel_count)]
-        filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
-        k = 0
-        for i in range(length/step):
-            for j in range(step):
-                for channel in range(channel_count):
-                    y = yield
-                    segment[channel][j] = y
-            for channel in range(channel_count):
-                processed_signal, filter_prev_state[channel] = self.signalPipeline(segment[channel], i, filter_prev_state[channel])
-                for j in range(step):
-                    coordinates[channel][j] = processed_signal[j]
-            for j in range(step):
-                summ = 0
-                for channel in range(channel_count):
-                    summ += coordinates[channel][j]
-                result.append(summ/channel_count)
-            yield result
-        while True:
-            k += 1
-            for i in range(length/step):
-                for j in range(step):
-                    for channel in range(channel_count):
-                        y = yield
-                        segment[channel][j] = y
-                for channel in range(channel_count):
-                    processed_signal, filter_prev_state[channel] = self.signalPipeline(segment[channel], i, filter_prev_state[channel])
-                    for j in range(step):
-                        coordinates[channel][j] = processed_signal[j]
-                for j in range(step):
-                    summ = 0
-                    for channel in range(channel_count):
-                        summ += coordinates[channel][j]
-                    result[i*step+j] = (result[i*step+j] * (k - 1) + summ/channel_count) / k
-                yield result
+    def signalPipeline(self, coordinates, window):
+        return coordinates
 
 
-class Sum(Signal):
+class RawAverageSignal(AverageSignal):
     def __init__(self):
-        Signal.__init__(self)
+        AverageSignal.__init__(self)
 
-    def coordinates_generator(self):
-        step = self.options[c.OPTIONS_STEP]
-        length = self.options[c.OPTIONS_LENGTH]
-        channel_count = len(self.channels)
-        result = []
-        coordinates = [[0 for _ in range(length)] for _ in range(channel_count)]
-        segment = [[0 for _ in range(step)] for _ in range(channel_count)]
-        filter_prev_state = [self.filterPrevState([0]) for _ in range(channel_count)]
-        k = 0
-        for i in range(length/step):
-            for j in range(step):
-                for channel in range(channel_count):
-                    y = yield
-                    segment[channel][j] = y
-            for channel in range(channel_count):
-                processed_signal, filter_prev_state[channel] = self.signalPipeline(segment[channel], i, filter_prev_state[channel])
-                for j in range(step):
-                    coordinates[channel][j] = processed_signal[j]
-            for j in range(step):
-                summ = 0
-                for channel in range(channel_count):
-                    summ += coordinates[channel][j]
-                result.append(summ/channel_count)
-            yield result
-        while True:
-            k += 1
-            for i in range(length/step):
-                for j in range(step):
-                    for channel in range(channel_count):
-                        y = yield
-                        segment[channel][j] = y
-                for channel in range(channel_count):
-                    processed_signal, filter_prev_state[channel] = self.signalPipeline(segment[channel], i, filter_prev_state[channel])
-                    for j in range(step):
-                        coordinates[channel][j] = processed_signal[j]
-                for j in range(step):
-                    summ = 0
-                    for channel in range(channel_count):
-                        summ += coordinates[channel][j]
-                    result[i*step+j] = summ/channel_count
-                yield result
+    def signalPipeline(self, coordinates, window):
+        return coordinates
+
+
+class SumSignal(AbstractSumSignal):
+    def __init__(self):
+        AbstractSumSignal.__init__(self)
+
+    def getGenerator(self):
+        return RawSignal()
+
+
+class SumAverageSignal(AbstractSumSignal):
+    def __init__(self):
+        AbstractSumSignal.__init__(self)
+
+    def getGenerator(self):
+        return RawAverageSignal()

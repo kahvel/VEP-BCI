@@ -142,7 +142,7 @@ class NotSumCcaExtraction(Extraction):
         return [generator for _ in range(sensor_count)]
 
     def getCoordinatesGenerators(self, options, sensor_count):
-        return [self.setupCoordinatesGenerator(options, Signal.NotSum()) for _ in range(sensor_count)]
+        return [self.setupCoordinatesGenerator(options, Signal.Signal()) for _ in range(sensor_count)]
 
 
 class CcaPsdaExtraction(Extraction):
@@ -161,7 +161,7 @@ class CcaPsdaExtraction(Extraction):
                [self.setupGenerator(self.getPsdaGenerator(options, target_freqs)) for _ in range(generator_count)]
 
     def getCoordinatesGenerators(self, options, sensor_count):
-        return [self.setupCoordinatesGenerator(options, Signal.NotSum()) for _ in range(sensor_count)] +\
+        return [self.setupCoordinatesGenerator(options, Signal.Signal()) for _ in range(sensor_count)] +\
                [self.setupCoordinatesGenerator(options, self.getGeneratorClass()) for _ in range(sensor_count)]
 
     def getSensors(self, sensors):
