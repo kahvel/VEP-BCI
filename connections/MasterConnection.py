@@ -14,7 +14,7 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
             c.CONNECTION_PLOT:       PlotConnection.PlotTabConnection(),
-            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionMasterConnection()
+            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection()
             # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
         }
 
@@ -34,7 +34,7 @@ class MasterConnection(Connections.MultipleConnections):
         self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
 
     def receiveExtractionMessage(self):
-        return self.connections[c.CONNECTION_EXTRACTION].receiveMessageInstant()
+        return self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock()
 
     def sendStartMessage(self):
         for key in self.connections:

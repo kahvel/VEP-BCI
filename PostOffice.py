@@ -66,22 +66,23 @@ class PostOffice(object):
     def handleFreqMessages(self, message, no_standby, target_freqs, current_target):
         # Use only the first method in the first tab
         # Assume that for each method we have 2 connections, original and short
-        orig_result_freq = None
-        short_result_freq = None
-        orig_result, short_result = message
-        if orig_result != [[]] and orig_result[0][0] is not None:
-            orig_result_freq, method = orig_result[0][0]
-        if short_result != [[]] and short_result[0][0] is not None:
-            short_result_freq, method = short_result[0][0]
-        if orig_result_freq is not None and short_result_freq is not None:
-            if orig_result_freq == short_result_freq:
-                self.results[method][str(target_freqs)][current_target][orig_result_freq] += 1
-                if orig_result_freq == self.standby_freq:
-                    # self.connections.sendPlotMessage(self.standby and not no_standby)
-                    self.standby = not self.standby
-                if not self.standby or no_standby:
-                    self.connections.sendTargetMessage(orig_result_freq)
-                    # self.connections.sendGameMessage(orig_result)
+        print(message)
+        # orig_result_freq = None
+        # short_result_freq = None
+        # orig_result, short_result = message
+        # if orig_result != [[]] and orig_result[0][0] is not None:
+        #     orig_result_freq, method = orig_result[0][0]
+        # if short_result != [[]] and short_result[0][0] is not None:
+        #     short_result_freq, method = short_result[0][0]
+        # if orig_result_freq is not None and short_result_freq is not None:
+        #     if orig_result_freq == short_result_freq:
+        #         self.results[method][str(target_freqs)][current_target][orig_result_freq] += 1
+        #         if orig_result_freq == self.standby_freq:
+        #             # self.connections.sendPlotMessage(self.standby and not no_standby)
+        #             self.standby = not self.standby
+        #         if not self.standby or no_standby:
+        #             self.connections.sendTargetMessage(orig_result_freq)
+        #             # self.connections.sendGameMessage(orig_result)
 
         # for j, tab_message in enumerate(message):
         #     for i, method_message in enumerate(tab_message):

@@ -109,7 +109,6 @@ class AbstractSumSignal(AbstractSignal):
         self.generator.send(None)
 
     def getGenerator(self):
-        print(self)
         raise NotImplementedError("getGenerator not implemented!")
 
     def coordinates_generator(self, step=None, length=None):

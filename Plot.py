@@ -26,6 +26,7 @@ class Plot(object):
                     coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 if coordinates is not None:
                     self.pw.plot(coordinates, clear=True)
+                    self.coordinates_generator.next()
 
     def setup(self):
         self.sensors, options, target_freqs = self.connection.receiveOptions()
