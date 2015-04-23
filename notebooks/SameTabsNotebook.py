@@ -1,7 +1,7 @@
 __author__ = 'Anti'
 
 from frames import ExtractionPlotTabs, TargetsTab, Frame, ExtractionTab
-from notebooks import ExtractionMethods, Notebook
+from notebooks import Notebook
 import constants as c
 
 
@@ -80,7 +80,7 @@ class ExtractionNotebook(SameTabsNotebook):
         self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
-        return ExtractionTab.ExtractionTab(self.widget,  **kwargs)
+        return ExtractionPlotTabs.ExtractionTab(self.widget, row, column, **kwargs)
 
 
 class PlotNotebook(SameTabsNotebook):

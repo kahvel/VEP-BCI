@@ -69,9 +69,9 @@ class PostOffice(object):
         orig_result_freq = None
         short_result_freq = None
         orig_result, short_result = message
-        if orig_result[0][0] is not None:
+        if orig_result != [[]] and orig_result[0][0] is not None:
             orig_result_freq, method = orig_result[0][0]
-        if short_result[0][0] is not None:
+        if short_result != [[]] and short_result[0][0] is not None:
             short_result_freq, method = short_result[0][0]
         if orig_result_freq is not None and short_result_freq is not None:
             if orig_result_freq == short_result_freq:

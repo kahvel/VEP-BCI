@@ -56,9 +56,8 @@ class MainWindow(MyWindows.TkWindow):
     def removeDisabledData(self, data, filter_function, frame_key):
         result = []
         for key in range(len(data)):
-            if key != 0:
-                if not self.disabled(data[key]):
-                    result.append(filter_function(data[key], frame_key))
+            if not self.disabled(data[key]):
+                result.append(filter_function(data[key], frame_key))
         return result
 
     def getFrequencies(self, enabled_targets):

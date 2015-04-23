@@ -7,7 +7,7 @@ import constants as c
 
 class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
     def __init__(self, parent, row, column, **kwargs):
-        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, row, column, **kwargs)
+        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
         self.addChildWidgets((
             SensorsFrame(self.widget, 0, 0),
             ExtractionTabButtonFrame(self.widget, 1, 0),
