@@ -10,7 +10,7 @@ class ExtractionMethods(Notebook.Notebook):
         Notebook.Notebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
         self.addChildWidgets((
             ExtractionMethodTab.PsdaExtraction(self.widget, **kwargs),
-            ExtractionMethodTab.CcaExtraction(self.widget, **kwargs)
+            ExtractionMethodTab.CcaExtraction(self.widget, **kwargs),
         ))
 
     def createChildWidgets(self):

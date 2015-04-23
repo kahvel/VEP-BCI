@@ -1,9 +1,8 @@
 __author__ = 'Anti'
 
-import ttk
 import math
-from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame
-from notebooks import SameTabsNotebook, Notebook
+from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame, ExtractionTab
+from notebooks import SameTabsNotebook, Notebook, ExtractionMethods
 import constants as c
 
 
