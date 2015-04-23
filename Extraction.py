@@ -44,10 +44,6 @@ class Extraction(object):
                             main_generator.next()
                 max_result = max(results.items(), key=lambda x: x[1])
                 if max_result[1] >= len(set(self.main_generators)):
-                    print(self.sensors)
-                    print(self.coordinates_generators)
-                    print(self.main_generators)
-                    print(len(set(self.main_generators)), results)
                     self.connection.sendMessage((max_result[0], self.name))
                 else:
                     self.connection.sendMessage((None, None))
