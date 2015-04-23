@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 import constants as c
 import pyqtgraph as pg
-from signal_processing import Signal, FFT
+from signal_processing import Signal, PSD
 
 
 class Plot(object):
@@ -35,12 +35,12 @@ class Plot(object):
         return c.SUCCESS_MESSAGE
 
     def setupGenerator(self, options):
-        self.coordinates_generator = self.getGeneratorClass(options)
+        self.coordinates_generator = self.getGenerator(options)
         """ @type : Signal.Signal | FFT.FFT """
         self.coordinates_generator.setup(options)
 
-    def getGeneratorClass(self, options):
-        raise NotImplementedError("getGeneratorClass not implemented!")
+    def getGenerator(self, options):
+        raise NotImplementedError("getGenerator not implemented!")
 
     def getTitle(self, options):
         raise NotImplementedError("getTitle not implemented!")
@@ -85,15 +85,15 @@ class SumSignal(Sum):
     def __init__(self, connection):
         Sum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return Signal.AbstractSumSignal()
+    def getGenerator(self, options):
+        return Signal.SumSignal()
 
 
 class NotSumSignal(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
+    def getGenerator(self, options):
         return Signal.Signal()
 
 
@@ -101,23 +101,23 @@ class SumPower(Sum):
     def __init__(self, connection):
         Sum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return FFT.Sum()
+    def getGenerator(self, options):
+        return PSD.SumPsd()
 
 
 class NotSumPower(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return FFT.NotSum()
+    def getGenerator(self, options):
+        return PSD.PSD()
 
 
 class SumAvgSignal(Sum):
     def __init__(self, connection):
         Sum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
+    def getGenerator(self, options):
         return Signal.SumAverageSignal()
 
 
@@ -125,7 +125,7 @@ class NotSumAvgSignal(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
+    def getGenerator(self, options):
         return Signal.AverageSignal()
 
 
@@ -133,13 +133,13 @@ class SumAvgPower(Sum):
     def __init__(self, connection):
         Sum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return FFT.SumAvg()
+    def getGenerator(self, options):
+        return PSD.SumAveragePSD()
 
 
 class NotSumAvgPower(NotSum):
     def __init__(self, connection):
         NotSum.__init__(self, connection)
 
-    def getGeneratorClass(self, options):
-        return FFT.NotSumAvg()
+    def getGenerator(self, options):
+        return PSD.AveragePSD()

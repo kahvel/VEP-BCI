@@ -58,13 +58,10 @@ class SignalProcessing(object):
     def getBreakpoints(self, options):
         if options[c.OPTIONS_DETREND] in (c.LINEAR_DETREND, c.CONSTANT_DETREND):
             breakpoints = options[c.OPTIONS_BREAK]
-            if breakpoints != 0:
-                breakpoints_list = []
-                for i in range(breakpoints):
-                    breakpoints_list.append(options[c.OPTIONS_STEP]/breakpoints*(i+1))
-                return breakpoints_list
-            else:
-                return 0
+            breakpoints_list = []
+            for i in range(breakpoints):
+                breakpoints_list.append(options[c.OPTIONS_LENGTH]/breakpoints*i)
+            return breakpoints_list
         elif options[c.OPTIONS_DETREND] == c.NONE_DETREND:
             return 0
         else:

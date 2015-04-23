@@ -26,64 +26,6 @@ class AbstractSignal(SignalProcessing.SignalProcessing):
         return windowed_signal
 
     def coordinates_generator(self, step, length):
-        raise NotImplementedError("coordinates_generator not implemented!")
-
-    def setup(self, options):
-        self.channels = options[c.DATA_SENSORS]  # TODO give this as argument??
-        options = options[c.DATA_OPTIONS]
-        SignalProcessing.SignalProcessing.setup(self, options)
-        self.filter_prev_state = self.filterPrevState([0])
-
-    def send(self, message):
-        return self.generator.send(message)
-
-    def next(self):
-        self.generator.next()
-
-
-class AverageSignal(AbstractSignal):
-    def __init__(self):
-        AbstractSignal.__init__(self)
-
-    def setup(self, options):
-        AbstractSignal.setup(self, options)
-        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
-        self.generator.send(None)
-
-    def coordinates_generator(self, step, length):
-        average_signal = []
-        for i in range(length/step):
-            segment = []
-            for j in range(step):
-                y = yield
-                segment.append(y)
-            average_signal.extend(segment)
-            processed_average_signal = self.signalPipeline(average_signal, self.getSegment(self.window_function, i))
-            yield processed_average_signal
-        k = 1
-        while True:
-            k += 1
-            for i in range(length/step):
-                segment = []
-                for j in range(step):
-                    y = yield
-                    segment.append(float(y))
-                for j in range(step):
-                    average_signal[i*step+j] = (average_signal[i*step+j] * (k - 1) + segment[j]) / k
-                processed_average_signal = self.signalPipeline(average_signal, self.window_function)
-                yield processed_average_signal
-
-
-class Signal(AbstractSignal):
-    def __init__(self):
-        AbstractSignal.__init__(self)
-
-    def setup(self, options):
-        AbstractSignal.setup(self, options)
-        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
-        self.generator.send(None)
-
-    def coordinates_generator(self, step, length):
         signal = []
         for i in range(length/step):
             segment = []
@@ -91,18 +33,62 @@ class Signal(AbstractSignal):
                 y = yield
                 segment.append(y)
             signal.extend(segment)
-            result = self.signalPipeline(signal, self.getWindowFunction(self.options, len(signal)))
-            yield result
+            yield self.processShortSignal(signal, i)
+        counter = 1
         while True:
+            counter += 1
             for i in range(length/step):
                 segment = []
                 for j in range(step):
                     y = yield
-                    segment.append(y)
-                signal.extend(segment)
-                del signal[:step]
-                result = self.signalPipeline(signal, self.window_function)
-                yield result
+                    segment.append(float(y))
+                yield self.processSignal(signal, segment, i, counter)
+
+    def setup(self, options):
+        self.channels = options[c.DATA_SENSORS]
+        SignalProcessing.SignalProcessing.setup(self, options[c.DATA_OPTIONS])
+        self.filter_prev_state = self.filterPrevState([0])
+        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
+        self.generator.send(None)
+
+    def send(self, message):
+        return self.generator.send(message)
+
+    def next(self):
+        self.generator.next()
+
+    def processSignal(self, signal, segment, i, k):
+        raise NotImplementedError("processSignal not implemented!")
+
+    def processShortSignal(self, signal, i):
+        raise NotImplementedError("processShortSignal not implemented!")
+
+
+class AverageSignal(AbstractSignal):
+    def __init__(self):
+        AbstractSignal.__init__(self)
+
+    def processSignal(self, signal, segment, i, k):
+        step = len(segment)
+        for j in range(step):
+            signal[i*step+j] = (signal[i*step+j] * (k - 1) + segment[j]) / k
+        return self.signalPipeline(signal, self.window_function)
+
+    def processShortSignal(self, signal, i):
+        return self.signalPipeline(signal, self.getSegment(self.window_function, i))
+
+
+class Signal(AbstractSignal):
+    def __init__(self):
+        AbstractSignal.__init__(self)
+
+    def processSignal(self, signal, segment, i, k):
+        signal.extend(segment)
+        del signal[:len(segment)]
+        return self.signalPipeline(signal, self.window_function)
+
+    def processShortSignal(self, signal, i):
+        return self.signalPipeline(signal, self.getWindowFunction(self.options, len(signal)))
 
 
 class AbstractSumSignal(AbstractSignal):
@@ -111,17 +97,19 @@ class AbstractSumSignal(AbstractSignal):
         self.generators = None
 
     def setup(self, options):
-        AbstractSignal.setup(self, options)
-        channel_count = len(self.channels)
+        self.channels = options[c.DATA_SENSORS]
+        SignalProcessing.SignalProcessing.setup(self, options[c.DATA_OPTIONS])
+        self.filter_prev_state = self.filterPrevState([0])
         self.generators = []
-        for _ in range(channel_count):
+        for _ in range(len(self.channels)):
             new_generator = self.getGenerator()
             new_generator.setup(options)
             self.generators.append(new_generator)
-        self.generator = self.coordinates_generator()
+        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
         self.generator.send(None)
 
     def getGenerator(self):
+        print(self)
         raise NotImplementedError("getGenerator not implemented!")
 
     def coordinates_generator(self, step=None, length=None):
