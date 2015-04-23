@@ -21,7 +21,6 @@ def mainGenerator(length, step, target_freqs, generator_count):
         for j in range(length/step):
             for i in range(generator_count):
                 coordinates[i] = yield
-                coordinates[i] = np.roll(coordinates[i], -(j+1)*step)
             maximum = 0
             max_index = 0
             for i in range(len(reference_signals)):

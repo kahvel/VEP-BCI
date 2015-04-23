@@ -44,6 +44,10 @@ class Extraction(object):
                             main_generator.next()
                 max_result = max(results.items(), key=lambda x: x[1])
                 if max_result[1] >= len(set(self.main_generators)):
+                    print(self.sensors)
+                    print(self.coordinates_generators)
+                    print(self.main_generators)
+                    print(len(set(self.main_generators)), results)
                     self.connection.sendMessage((max_result[0], self.name))
                 else:
                     self.connection.sendMessage((None, None))
@@ -154,15 +158,6 @@ class CcaPsdaExtraction(Extraction):
     def getPsdaGenerator(self, options, target_freqs):
         return PsdaExtraction.mainGenerator(options[c.OPTIONS_LENGTH], target_freqs)
 
-    def getMainGenerators(self, options, target_freqs, generator_count):
-        cca_generator = self.setupGenerator(self.getCcaGenerator(options, target_freqs, generator_count))
-        return [cca_generator for _ in range(generator_count)] +\
-               [self.setupGenerator(self.getPsdaGenerator(options, target_freqs)) for _ in range(generator_count)]
-
-    def getGenerators(self, options, sensor_count):
-        return [self.setupCoordinatesGenerator(options, Signal.Signal()) for _ in range(sensor_count)] +\
-               [self.setupCoordinatesGenerator(options, self.getGenerator()) for _ in range(sensor_count)]
-
     def getSensors(self, sensors):
         return sensors*2
 
@@ -174,6 +169,17 @@ class SumCcaPsdaExtraction(CcaPsdaExtraction):
     def getGenerator(self):
         return PSD.SumPsd()
 
+    def getMainGenerators(self, options, target_freqs, generator_count):
+        cca_generator = self.setupGenerator(self.getCcaGenerator(options, target_freqs, generator_count))
+        psda_generator = self.setupGenerator(self.getPsdaGenerator(options, target_freqs))
+        return [cca_generator for _ in range(generator_count)] +\
+               [psda_generator for _ in range(generator_count)]
+
+    def getGenerators(self, options, sensor_count):
+        sum_psd_generator = self.setupCoordinatesGenerator(options, self.getGenerator())
+        return [self.setupCoordinatesGenerator(options, Signal.Signal()) for _ in range(sensor_count)] +\
+               [sum_psd_generator for _ in range(sensor_count)]
+
 
 class NotSumCcaPsdaExtraction(CcaPsdaExtraction):
     def __init__(self, connection):
@@ -181,3 +187,12 @@ class NotSumCcaPsdaExtraction(CcaPsdaExtraction):
 
     def getGenerator(self):
         return PSD.PSD()
+
+    def getMainGenerators(self, options, target_freqs, generator_count):
+        cca_generator = self.setupGenerator(self.getCcaGenerator(options, target_freqs, generator_count))
+        return [cca_generator for _ in range(generator_count)] +\
+               [self.setupGenerator(self.getPsdaGenerator(options, target_freqs)) for _ in range(generator_count)]
+
+    def getGenerators(self, options, sensor_count):
+        return [self.setupCoordinatesGenerator(options, Signal.Signal()) for _ in range(sensor_count)] +\
+               [self.setupCoordinatesGenerator(options, self.getGenerator()) for _ in range(sensor_count)]
