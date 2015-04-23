@@ -8,8 +8,8 @@ import constants as c
 class SameTabsNotebook(Notebook.Notebook):
     def __init__(self, parent, name, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, name, row, column, **kwargs)
-        self.tab_count = 0
-        self.default_tab_count = 1
+        self.tab_count = -1
+        self.default_tab_count = 0
         self.last_tab = None
         self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
@@ -18,8 +18,8 @@ class SameTabsNotebook(Notebook.Notebook):
             self.plusTabClicked()
 
     def addInitialTabs(self):
-        self.widgets_list.append(self.addTab(c.ALL_TAB))
         self.last_tab = self.addTab("+")
+        self.plusTabClicked()
 
     def newTab(self, row, column, **kwargs):
         raise NotImplementedError("newTab not implemented!")
@@ -30,7 +30,6 @@ class SameTabsNotebook(Notebook.Notebook):
         return tab
 
     def loadDefaultValue(self):
-        self.widgets_list[0].loadDefaultValue()  # Default values to All tab
         for _ in range(self.default_tab_count):
             self.plusTabClicked()
 
@@ -71,7 +70,7 @@ class SameTabsNotebook(Notebook.Notebook):
         self.tab_count += 1
         self.widgets_list.append(self.last_tab)
         self.widgets_list[-1].loadDefaultValue()
-        self.widget.tab(self.tab_count, text=self.tab_count)
+        self.widget.tab(self.tab_count, text=self.tab_count+1)
         self.last_tab = self.addTab(c.PLUS_TAB)
 
 
@@ -104,14 +103,6 @@ class TargetNotebook(SameTabsNotebook):
     def newTab(self, row, column, **kwargs):
         return TargetsTab.TargetsTab(self.widget, validate_freq=self.validate_freq, **kwargs)
 
-    def addTab(self, text):  # Updates OptionMenu in Test tab
-        self.targetAdded()
-        return SameTabsNotebook.addTab(self, text)
-
     def deleteTab(self):  # Updates OptionMenu in Test tab
         SameTabsNotebook.deleteTab(self)
         self.targetRemoved()
-
-    def addInitialTabs(self):  # Does not update for initial tabs
-        self.widgets_list.append(SameTabsNotebook.addTab(self, c.ALL_TAB))
-        self.last_tab = SameTabsNotebook.addTab(self, c.PLUS_TAB)

@@ -18,7 +18,7 @@ class Disable(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, 0, 0, **kwargs)
 
     def getDisableButton(self, row, column, **kwargs):
-        return Buttons.DisableButton(self.widget, c.DISABLE, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
+        return Buttons.DisableButton(self.widget, c.DISABLE_METHOD, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
 
 
 class DisableDeleteFrame(Frame.Frame):

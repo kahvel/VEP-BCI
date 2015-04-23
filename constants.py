@@ -157,6 +157,7 @@ MINUS = " -"
 # Disable and Delete frame buttons
 DISABLE = "Disable"
 DELETE = "Delete"
+DISABLE_METHOD = "Disable method"
 
 # Bottom frame buttons
 START_BUTTON = "Start"
