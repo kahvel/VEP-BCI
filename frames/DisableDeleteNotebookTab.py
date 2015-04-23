@@ -5,9 +5,9 @@ from frames import Frame
 import constants as c
 
 
-class SameTabsNotebookTab(Frame.Frame):
-    def __init__(self, parent, name, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
+class DisableDeleteNotebookTab(Frame.Frame):
+    def __init__(self, parent, name, **kwargs):
+        Frame.Frame.__init__(self, parent, name, 0, 0, **kwargs)
 
     def getDisableDeleteFrame(self, row, column, **kwargs):
         return DisableDeleteFrame(self.widget, row, column, disable=self.disable, enable=self.enable, **kwargs)

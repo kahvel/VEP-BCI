@@ -1,17 +1,16 @@
 __author__ = 'Anti'
 
 from frames import ExtractionPlotTabs, TargetsTab, Frame
-import ttk
+from notebooks import ExtractionMethods, Notebook
 import constants as c
 
 
-class SameTabsNotebook(Frame.AbstractFrame):
+class SameTabsNotebook(Notebook.Notebook):
     def __init__(self, parent, name, row, column, **kwargs):
-        Frame.AbstractFrame.__init__(self, name, row, column, **kwargs)
+        Notebook.Notebook.__init__(self, parent, name, row, column, **kwargs)
         self.tab_count = 0
         self.default_tab_count = 1
         self.last_tab = None
-        self.create(ttk.Notebook(parent))
         self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
     def tabChangedEvent(self, event):
@@ -82,7 +81,7 @@ class ExtractionNotebook(SameTabsNotebook):
         self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
-        return ExtractionPlotTabs.ExtractionTab(self.widget, row, column, **kwargs)
+        return ExtractionMethods.ExtractionMethods(self.widget, row, column, **kwargs)
 
 
 class PlotNotebook(SameTabsNotebook):
@@ -103,7 +102,7 @@ class TargetNotebook(SameTabsNotebook):
         self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
-        return TargetsTab.TargetsTab(self.widget, row, column, validate_freq=self.validate_freq, **kwargs)
+        return TargetsTab.TargetsTab(self.widget, validate_freq=self.validate_freq, **kwargs)
 
     def addTab(self, text):  # Updates OptionMenu in Test tab
         self.targetAdded()

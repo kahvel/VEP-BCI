@@ -19,6 +19,9 @@ TARGETS_TAB_TAB = "TargetsTab"
 PLOT_TAB_TAB = "PlotTab"
 EXTRACTION_TAB_TAB = "ExtractionTab"
 
+PSDA_METHOD_TAB = "PSDA"
+CCA_METHOD_TAB = "CCA"
+
 # Test tab buttons
 TEST_TIME = "Time"
 TEST_MIN = "Min"

@@ -1,13 +1,13 @@
 __author__ = 'Anti'
 
 from widgets import Textboxes
-from frames import Frame, SameTabsNotebookTab
+from frames import Frame, DisableDeleteNotebookTab
 import constants as c
 
 
-class TargetsTab(SameTabsNotebookTab.SameTabsNotebookTab):
-    def __init__(self, parent, row, column, **kwargs):
-        SameTabsNotebookTab.SameTabsNotebookTab.__init__(self, parent, c.TARGETS_TAB_TAB, row, column, **kwargs)
+class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
+    def __init__(self, parent, **kwargs):
+        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.TARGETS_TAB_TAB, **kwargs)
         self.addChildWidgets((
             TargetFrame(self.widget, 0, 0, validate_freq=kwargs["validate_freq"]),
             self.getDisableDeleteFrame(1, 0, delete_tab=kwargs["delete_tab"])

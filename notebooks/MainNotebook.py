@@ -3,16 +3,15 @@ __author__ = 'Anti'
 import ttk
 import math
 from frames import WindowTab, TestTab, RecordTab, ResultsTab, Frame
-import SameTabsNotebook
+from notebooks import SameTabsNotebook, Notebook
 import constants as c
 
 
-class MainNotebook(Frame.AbstractFrame):
+class MainNotebook(Notebook.Notebook):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.AbstractFrame.__init__(self, c.MAIN_NOTEBOOK, row, column, **kwargs)
+        Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
         validate_freq = lambda textbox, d: self.changeFreq(self.widgets_dict[c.WINDOW_TAB].widgets_dict[c.WINDOW_FREQ], textbox, d)
         monitor_freq_changed = lambda: self.changeAllFreqs(self.widgets_dict[c.WINDOW_TAB].widgets_dict[c.WINDOW_FREQ], self.widgets_dict[c.TARGETS_NOTEBOOK])
-        self.create(ttk.Notebook(parent))
         self.test_tab = TestTab.TestTab(self.widget, 0, 0)
         self.addChildWidgets((
             WindowTab.WindowTab(self.widget, 0, 0, change_target_freqs=monitor_freq_changed),
@@ -23,7 +22,6 @@ class MainNotebook(Frame.AbstractFrame):
             RecordTab.RecordTab(self.widget, 0, 0),
             ResultsTab.ResultsTab(self.widget, 0, 0)
         ))
-        self.createChildWidgets()
 
     def createChildWidgets(self):
         for widget in self.widgets_list:
