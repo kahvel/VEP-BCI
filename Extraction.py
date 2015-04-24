@@ -1,19 +1,19 @@
 __author__ = 'Anti'
 
 import constants as c
-from signal_processing import Signal, PSD
+from signal_processing import Signal, PSD, Generator
 import PsdaExtraction
 import CcaExtraction
 import pyqtgraph as pg
 
 
-class Extraction(object):
+class Extraction(Generator.AbstractMyGenerator):
     def __init__(self, connection, name):
+        Generator.AbstractMyGenerator.__init__(self)
         self.connection = connection
         """ @type : ConnectionProcessEnd.ExtractionConnection """
         self.name = name
         self.sensors = None
-        self.main_generator = None
         self.coordinates_generator = None
         self.target_freqs = None
         # self.pw = pg.plot()
@@ -36,63 +36,57 @@ class Extraction(object):
                     coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
                 if coordinates is not None:
                     self.coordinates_generator.next()
-                    result = self.main_generator.send(coordinates)
+                    result = self.generator.send(coordinates)
                     self.connection.sendMessage(result)
-                    self.main_generator.next()
+                    self.generator.next()
                 else:
                     self.connection.sendMessage(None)
 
-    def setup(self):
-        self.sensors, options, target_freqs = self.connection.receiveOptions()
-        self.coordinates_generator = self.setupGenerator(self.getGenerator(), options)
-        self.main_generator = self.getMainGenerator(
-            options[c.DATA_OPTIONS][c.OPTIONS_LENGTH],
-            options[c.DATA_OPTIONS][c.OPTIONS_STEP],
-            target_freqs,
-            len(self.sensors)
-        )
-        self.main_generator.send(None)
+    def setup(self, options=None):
+        options = self.connection.receiveOptions()
+        self.sensors = options.get(c.DATA_SENSOR, options.get(c.DATA_SENSORS))
+        self.coordinates_generator = self.getCoordinatesGenerator()
+        self.coordinates_generator.setup(options)
+        Generator.AbstractMyGenerator.setup(self, options)
         return c.SUCCESS_MESSAGE
 
-    def setupGenerator(self, generator, options):
-        generator.setup(options)
-        return generator
-
-    def getGenerator(self):
-        raise NotImplementedError("getGenerator not implemented!")
-
-    def getMainGenerator(self, length, step, target_freqs, generator_count):
-        raise NotImplementedError("getMainGenerator not implemented!")
+    def getCoordinatesGenerator(self):
+        raise NotImplementedError("getCoordinatesGenerator not implemented!")
 
 
 class SumPsda(Extraction):
     def __init__(self, connection):
         Extraction.__init__(self, connection, c.SUM_PSDA)
 
-    def getGenerator(self):
+    def getCoordinatesGenerator(self):
         return PSD.SumPsd()
 
-    def getMainGenerator(self, length, step, target_freqs, generator_count):
-        return PsdaExtraction.mainGenerator(length, target_freqs)
+    def getGenerator(self, options):
+        return PsdaExtraction.mainGenerator(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS])
 
 
 class Psda(Extraction):
     def __init__(self, connection):
         Extraction.__init__(self, connection, c.SUM_PSDA)
 
-    def getGenerator(self):
+    def getCoordinatesGenerator(self):
         return PSD.PSD()
 
-    def getMainGenerator(self, length, step, target_freqs, generator_count):
-        return PsdaExtraction.mainGenerator(length, target_freqs)
+    def getGenerator(self, options):
+        return PsdaExtraction.mainGenerator(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS])
 
 
 class Cca(Extraction):
     def __init__(self, connection):
         Extraction.__init__(self, connection, c.SUM_PSDA)
 
-    def getGenerator(self):
+    def getCoordinatesGenerator(self):
         return Signal.Signal()
 
-    def getMainGenerator(self, length, step, target_freqs, generator_count):
-        return CcaExtraction.mainGenerator(length, step, target_freqs, generator_count)
+    def getGenerator(self, options):
+        return CcaExtraction.mainGenerator(
+            options[c.DATA_OPTIONS][c.OPTIONS_LENGTH],
+            options[c.DATA_OPTIONS][c.OPTIONS_STEP],
+            options[c.DATA_FREQS],
+            len(options[c.DATA_SENSORS])
+        )

@@ -2,15 +2,15 @@ __author__ = 'Anti'
 
 import constants as c
 import pyqtgraph as pg
-from signal_processing import Signal, PSD
+from signal_processing import Signal, PSD, Generator
 
 
-class Plot(object):
+class Plot(Generator.AbstractMyGenerator):
     def __init__(self, connection):
+        Generator.AbstractMyGenerator.__init__(self)
         self.connection = connection
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
-        self.coordinates_generator = None
         self.sensors = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
         self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
@@ -23,25 +23,18 @@ class Plot(object):
                 return message
             if message is not None:
                 for sensor in self.sensors:
-                    coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
+                    coordinates = self.generator.send(message.sensors[sensor]["value"])
                 if coordinates is not None:
                     self.pw.plot(coordinates, clear=True)
-                    self.coordinates_generator.next()
+                    self.generator.next()
 
-    def setup(self):
-        self.sensors, options, target_freqs = self.connection.receiveOptions()
-        print(self.sensors)
+    def setup(self, options=None):
+        options = self.connection.receiveOptions()
+        self.sensors = options.get(c.DATA_SENSOR, options.get(c.DATA_SENSORS))
+        Generator.AbstractMyGenerator.setup(self, options)
         self.closeWindow()
         self.newWindow(self.getTitle(options))
-        self.coordinates_generator = self.setupGenerator(self.getGenerator(options), options)
         return c.SUCCESS_MESSAGE
-
-    def setupGenerator(self, generator, options):
-        generator.setup(options)
-        return generator
-
-    def getGenerator(self, options):
-        raise NotImplementedError("getGenerator not implemented!")
 
     def getTitle(self, options):
         raise NotImplementedError("getTitle not implemented!")
@@ -53,9 +46,6 @@ class Plot(object):
         pg.QtGui.QApplication.processEvents()
 
     def closeWindow(self):
-        # if self.pw is not None:
-        #     self.pw.close()
-        #     self.pw = None
         pg.QtGui.QApplication.closeAllWindows()  # Also calls exit!!!
 
     def exit(self, event=None):
