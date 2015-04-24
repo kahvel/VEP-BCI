@@ -30,15 +30,15 @@ class Plot(object):
 
     def setup(self):
         self.sensors, options, target_freqs = self.connection.receiveOptions()
+        print(self.sensors)
         self.closeWindow()
         self.newWindow(self.getTitle(options))
-        self.setupGenerator(options)
+        self.coordinates_generator = self.setupGenerator(self.getGenerator(options), options)
         return c.SUCCESS_MESSAGE
 
-    def setupGenerator(self, options):
-        self.coordinates_generator = self.getGenerator(options)
-        """ @type : Signal.Signal | FFT.FFT """
-        self.coordinates_generator.setup(options)
+    def setupGenerator(self, generator, options):
+        generator.setup(options)
+        return generator
 
     def getGenerator(self, options):
         raise NotImplementedError("getGenerator not implemented!")

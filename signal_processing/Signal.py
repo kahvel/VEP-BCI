@@ -1,16 +1,12 @@
 __author__ = 'Anti'
 
-from signal_processing import SignalProcessing
+from signal_processing import SignalProcessing, Generator
 import constants as c
-import numpy as np
 
 
 class AbstractSignal(SignalProcessing.SignalProcessing):
     def __init__(self):
         SignalProcessing.SignalProcessing.__init__(self)
-        self.filter_prev_state = None
-        self.generator = None
-        self.channels = None
 
     def getSegment(self, array, i):
         if array is not None:
@@ -19,48 +15,22 @@ class AbstractSignal(SignalProcessing.SignalProcessing):
         else:
             return None
 
-    def signalPipeline(self, coordinates, window):
-        detrended_signal = self.detrendSignal(coordinates)
+    def signalPipeline(self, signal, window):
+        detrended_signal = self.detrendSignal(signal)
         filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
         windowed_signal = self.windowSignal(filtered_signal, window)
         return windowed_signal
 
-    def coordinates_generator(self, step, length):
-        signal = []
-        for i in range(length/step):
-            segment = []
-            for j in range(step):
-                y = yield
-                segment.append(y)
-            signal.extend(segment)
-            yield self.processShortSignal(signal, i)
-        counter = 1
-        while True:
-            counter += 1
-            for i in range(length/step):
-                segment = []
-                for j in range(step):
-                    y = yield
-                    segment.append(float(y))
-                yield self.processSignal(signal, segment, i, counter)
+    def innerPipeline(self, signal, window):
+        raise NotImplementedError("innerPipeline not implemented!")
 
-    def setup(self, options):
-        self.channels = options[c.DATA_SENSORS]
-        SignalProcessing.SignalProcessing.setup(self, options[c.DATA_OPTIONS])
-        self.filter_prev_state = self.filterPrevState([0])
-        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
-        self.generator.send(None)
+    def processSumSignals(self, signal, pipelineFunction):
+        raise NotImplementedError("processSumSignals not implemented!")
 
-    def send(self, message):
-        return self.generator.send(message)
-
-    def next(self):
-        self.generator.next()
-
-    def processSignal(self, signal, segment, i, k):
+    def processSignal(self, signal, segment, i, k, pipelineFunction):
         raise NotImplementedError("processSignal not implemented!")
 
-    def processShortSignal(self, signal, i):
+    def processShortSignal(self, signal, i, pipelineFunction):
         raise NotImplementedError("processShortSignal not implemented!")
 
 
@@ -68,90 +38,78 @@ class AverageSignal(AbstractSignal):
     def __init__(self):
         AbstractSignal.__init__(self)
 
-    def processSignal(self, signal, segment, i, k):
+    def getGenerator(self, options):
+        return Generator.Generator(
+            self.processSignal,
+            self.processShortSignal,
+            self.signalPipeline
+        )
+
+    def processSignal(self, signal, segment, i, k, pipelineFunction):
         step = len(segment)
         for j in range(step):
             signal[i*step+j] = (signal[i*step+j] * (k - 1) + segment[j]) / k
-        return self.signalPipeline(signal, self.window_function)
+        return pipelineFunction(signal, self.window_function)
 
-    def processShortSignal(self, signal, i):
-        return self.signalPipeline(signal, self.getSegment(self.window_function, i))
+    def processShortSignal(self, signal, i, pipelineFunction):
+        return pipelineFunction(signal, self.getSegment(self.window_function, i))
 
 
 class Signal(AbstractSignal):
     def __init__(self):
         AbstractSignal.__init__(self)
 
-    def processSignal(self, signal, segment, i, k):
+    def getGenerator(self, options):
+        return Generator.Generator(
+            self.processSignal,
+            self.processShortSignal,
+            self.signalPipeline
+        )
+
+    def processSignal(self, signal, segment, i, k, pipelineFunction):
         signal.extend(segment)
         del signal[:len(segment)]
-        return self.signalPipeline(signal, self.window_function)
+        return pipelineFunction(signal, self.window_function)
 
-    def processShortSignal(self, signal, i):
-        return self.signalPipeline(signal, self.getWindowFunction(self.options, len(signal)))
+    def processShortSignal(self, signal, i, pipelineFunction):
+        return pipelineFunction(signal, self.getWindowFunction(self.options, len(signal)))
 
 
-class AbstractSumSignal(AbstractSignal):
+class SumSignal(Signal):
     def __init__(self):
         AbstractSignal.__init__(self)
-        self.generators = None
 
-    def setup(self, options):
-        self.channels = options[c.DATA_SENSORS]
-        SignalProcessing.SignalProcessing.setup(self, options[c.DATA_OPTIONS])
-        self.filter_prev_state = self.filterPrevState([0])
-        self.generators = []
-        for _ in range(len(self.channels)):
-            new_generator = self.getGenerator()
-            new_generator.setup(options)
-            self.generators.append(new_generator)
-        self.generator = self.coordinates_generator(options[c.DATA_OPTIONS][c.OPTIONS_STEP], options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])
-        self.generator.send(None)
+    def getGenerator(self, options):
+        return Generator.SumGenerator(
+            self.processSignal,
+            self.processShortSignal,
+            self.innerPipeline,
+            self.signalPipeline,
+            self.processSumSignals
+        )
 
-    def getGenerator(self):
-        raise NotImplementedError("getGenerator not implemented!")
+    def innerPipeline(self, signal, window):
+        return signal
 
-    def coordinates_generator(self, step=None, length=None):
-        while True:
-            signals = []
-            for generator in self.generators:
-                y = yield
-                signals.append(generator.send(y))
-            if None not in signals:
-                sum_of_signals = np.mean(signals, axis=0)
-                result = self.signalPipeline(sum_of_signals, self.window_function)
-                yield result
-                for generator in self.generators:
-                    generator.next()
+    def processSumSignals(self, signal, pipelineFunction):
+        return pipelineFunction(signal, self.window_function)
 
 
-class RawSignal(Signal):
-    def __init__(self):
-        Signal.__init__(self)
-
-    def signalPipeline(self, coordinates, window):
-        return coordinates
-
-
-class RawAverageSignal(AverageSignal):
+class SumAverageSignal(AverageSignal):
     def __init__(self):
         AverageSignal.__init__(self)
 
-    def signalPipeline(self, coordinates, window):
-        return coordinates
+    def getGenerator(self, options):
+        return Generator.SumGenerator(
+            self.processSignal,
+            self.processShortSignal,
+            self.innerPipeline,
+            self.signalPipeline,
+            self.processSumSignals
+        )
 
+    def innerPipeline(self, signal, window):
+        return signal
 
-class SumSignal(AbstractSumSignal):
-    def __init__(self):
-        AbstractSumSignal.__init__(self)
-
-    def getGenerator(self):
-        return RawSignal()
-
-
-class SumAverageSignal(AbstractSumSignal):
-    def __init__(self):
-        AbstractSumSignal.__init__(self)
-
-    def getGenerator(self):
-        return RawAverageSignal()
+    def processSumSignals(self, signal, pipelineFunction):
+        return pipelineFunction(signal, self.window_function)

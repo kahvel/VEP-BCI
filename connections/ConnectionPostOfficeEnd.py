@@ -30,11 +30,6 @@ class ExtractionConnection(Connections.Connection):
         self.sendSetupMessage()
         self.connection.send((sensors, options, target_freqs))
 
-    # def newProcess(self):  # Make MultipleExtraction and give self.process as argument
-    #     from_process, to_process = multiprocessing.Pipe()
-    #     multiprocessing.Process(target=Extraction.MultipleExtraction, args=(self.connection_other_end(from_process), self.process)).start()
-    #     return to_process
-
 
 class PlotConnection(Connections.Connection):
     def __init__(self, process):

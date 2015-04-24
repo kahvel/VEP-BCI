@@ -1,0 +1,89 @@
+__author__ = 'Anti'
+
+import numpy as np
+import constants as c
+
+
+class AbstractPythonGenerator(object):
+    def __init__(self):
+        self.generator = None
+
+    def setup(self, options):
+        self.generator = self.getGenerator(options)
+        self.generator.send(None)
+
+    def getGenerator(self, options):
+        raise NotImplementedError("getGenerator not implemented!")
+
+    def send(self, message):
+        return self.generator.send(message)
+
+    def next(self):
+        self.generator.next()
+
+
+class AbstractMyGenerator(AbstractPythonGenerator):
+    def __init__(self):
+        AbstractPythonGenerator.__init__(self)
+
+    def setup(self, options):
+        self.generator = self.getGenerator(options)
+        self.generator.setup(options)
+
+
+class Generator(AbstractPythonGenerator):
+    def __init__(self, processSignal, processShortSignal, signalPipeline):
+        AbstractPythonGenerator.__init__(self)
+        self.processSignal = processSignal
+        self.processShortSignal = processShortSignal
+        self.signalPipeline = signalPipeline
+
+    def getGenerator(self, options):
+        step = options[c.DATA_OPTIONS][c.OPTIONS_STEP]
+        length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
+        signal = []
+        for i in range(length/step):
+            segment = []
+            for j in range(step):
+                y = yield
+                segment.append(y)
+            signal.extend(segment)
+            yield self.processShortSignal(signal, i, self.signalPipeline)
+        counter = 1
+        while True:
+            counter += 1
+            for i in range(length/step):
+                segment = []
+                for j in range(step):
+                    y = yield
+                    segment.append(float(y))
+                yield self.processSignal(signal, segment, i, counter, self.signalPipeline)
+
+
+class SumGenerator(Generator):
+    def __init__(self, innerProcessSignal, innerProcessShortSignal, innerSignalPipeline, sumPipeline, processSumSignals):
+        Generator.__init__(self, innerProcessSignal, innerProcessShortSignal, innerSignalPipeline)
+        self.generators = None
+        self.sumPipeline = sumPipeline
+        self.processSumSignals = processSumSignals
+
+    def setup(self, options):
+        self.generators = []
+        for _ in range(len(options[c.DATA_SENSORS])):
+            generator = Generator(self.processSignal, self.processShortSignal, self.signalPipeline)
+            generator.setup(options)
+            self.generators.append(generator)
+        AbstractPythonGenerator.setup(self, options)
+
+    def getGenerator(self, options):
+        while True:
+            signals = []
+            for generator in self.generators:
+                y = yield
+                signals.append(generator.send(y))
+            if None not in signals:
+                sum_of_signals = np.mean(signals, axis=0)
+                result = self.processSumSignals(sum_of_signals, self.sumPipeline)
+                yield result
+                for generator in self.generators:
+                    generator.next()

@@ -2,15 +2,18 @@ __author__ = 'Anti'
 
 import scipy.signal
 import constants as c
+from signal_processing import Generator
 
 
-class SignalProcessing(object):
+class SignalProcessing(Generator.AbstractMyGenerator):
     def __init__(self):
+        Generator.AbstractMyGenerator.__init__(self)
         self.options = None
         self.channels = None
         self.window_function = None
         self.filter_coefficients = None
         self.breakpoints = None
+        self.filter_prev_state = None
         self.menu_key_to_scipy_key = {
             c.WINDOW_HANNING:  c.SCIPY_WINDOW_HANNING,
             c.WINDOW_HAMMING:  c.SCIPY_WINDOW_HAMMING,
@@ -20,10 +23,12 @@ class SignalProcessing(object):
         }
 
     def setup(self, options):
-        self.window_function = self.getWindowFunction(options, options[c.OPTIONS_LENGTH])
-        self.filter_coefficients = self.getFilter(options)
-        self.breakpoints = self.getBreakpoints(options)
-        self.options = options
+        Generator.AbstractMyGenerator.setup(self, options)
+        self.options = options[c.DATA_OPTIONS]
+        self.window_function = self.getWindowFunction(self.options, self.options[c.OPTIONS_LENGTH])
+        self.filter_coefficients = self.getFilter(self.options)
+        self.breakpoints = self.getBreakpoints(self.options)
+        self.filter_prev_state = self.getFilterPrevState([0])
 
     def getWindowWithArgs(self, options):
         if options[c.OPTIONS_WINDOW] == c.WINDOW_KAISER:
@@ -93,7 +98,7 @@ class SignalProcessing(object):
         else:
             raise ValueError("Illegal window value in windowSignal: " + self.options[c.OPTIONS_WINDOW])
 
-    def filterPrevState(self, prev_coordinates):
+    def getFilterPrevState(self, prev_coordinates):
         if self.options[c.OPTIONS_FILTER] == c.NONE_FILTER:
             return None
         elif self.options[c.OPTIONS_FILTER] in c.FILTER_NAMES:
