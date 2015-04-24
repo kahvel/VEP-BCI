@@ -1,107 +1,38 @@
 __author__ = 'Anti'
 
-from signal_processing import Signal, SignalProcessing, Generator
+from signal_processing import SignalProcessing
 import numpy as np
-import constants as c
 
 
-class AbstractPSD(SignalProcessing.SignalPipeline):
-    def __init__(self):
-        SignalProcessing.SignalPipeline.__init__(self)
-
-    def normaliseSpectrum(self, fft):
-        if self.options[c.OPTIONS_NORMALISE]:
-            result = (fft/sum(fft))
-            result[0] = None
-            return result
-        else:
-            result = np.log10(fft)
-            result[0] = None
-            return result
-
-    def signalPipeline(self, coordinates, window):
-        windowed_signal = SignalProcessing.SignalPipeline.signalPipeline(self, coordinates, window)
+class AbstractPSD(object):
+    def signalPipeline(self, signal, window):
+        detrended_signal = self.detrendSignal(signal)
+        filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
+        windowed_signal = self.windowSignal(filtered_signal, window)
         amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
         normalised_spectrum = self.normaliseSpectrum(amplitude_spectrum)
         return normalised_spectrum
 
 
-class PSD(AbstractPSD):
+class PSD(AbstractPSD, SignalProcessing.Signal):
     def __init__(self):
         AbstractPSD.__init__(self)
-
-    def getGenerator(self, options):
-        return Generator.Generator(
-            self.processSignal,
-            self.processShortSignal,
-            self.signalPipeline
-        )
-
-    def processSignal(self, signal, segment, i, k, pipelineFunction):
-        signal.extend(segment)
-        del signal[:len(segment)]
-        return pipelineFunction(signal, self.window_function)
-
-    def processShortSignal(self, signal, i, pipelineFunction):
-        return pipelineFunction(signal, self.getWindowFunction(self.options, len(signal)))
+        SignalProcessing.Signal.__init__(self, self.signalPipeline)
 
 
-class AveragePSD(AbstractPSD):
+class AveragePSD(AbstractPSD, SignalProcessing.AverageSignal):
     def __init__(self):
         AbstractPSD.__init__(self)
-
-    def getGenerator(self, options):
-        return Generator.Generator(
-            self.processSignal,
-            self.processShortSignal,
-            self.signalPipeline
-        )
-
-    def processSignal(self, signal, segment, i, k, pipelineFunction):
-        step = len(segment)
-        for j in range(step):
-            signal[i*step+j] = (signal[i*step+j] * (k - 1) + segment[j]) / k
-        return pipelineFunction(signal, self.window_function)
-
-    def processShortSignal(self, signal, i, pipelineFunction):
-        return pipelineFunction(signal, self.getSegment(self.window_function, i))
+        SignalProcessing.AverageSignal.__init__(self, self.signalPipeline)
 
 
-class SumAveragePSD(AveragePSD):
+class SumAveragePSD(AveragePSD, SignalProcessing.SumAverageSignal):
     def __init__(self):
         AveragePSD.__init__(self)
-
-    def getGenerator(self, options):
-        return Generator.SumGenerator(
-            self.processSignal,
-            self.processShortSignal,
-            self.innerPipeline,
-            self.signalPipeline,
-            self.processSumSignals
-        )
-
-    def innerPipeline(self, signal, window):
-        return signal
-
-    def processSumSignals(self, signal, pipelineFunction):
-        return pipelineFunction(signal, self.window_function)
+        SignalProcessing.SumAverageSignal.__init__(self, self.signalPipeline)
 
 
-class SumPsd(PSD):
+class SumPsd(PSD, SignalProcessing.SumSignal):
     def __init__(self):
         PSD.__init__(self)
-
-    def getGenerator(self, options):
-        return Generator.SumGenerator(
-            self.processSignal,
-            self.processShortSignal,
-            self.innerPipeline,
-            self.signalPipeline,
-            self.processSumSignals
-        )
-
-    def innerPipeline(self, signal, window):
-        return signal
-
-    def processSumSignals(self, signal, pipelineFunction):
-        return pipelineFunction(signal, self.window_function)
+        SignalProcessing.SumSignal.__init__(self, self.signalPipeline)
