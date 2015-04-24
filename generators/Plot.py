@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 import constants as c
 import pyqtgraph as pg
-from signal_processing import Signal, PSD, Generator
+from generators import Signal, PSD, Generator
 
 
 class Plot(Generator.AbstractMyGenerator):
@@ -30,14 +30,14 @@ class Plot(Generator.AbstractMyGenerator):
 
     def setup(self, options=None):
         options = self.connection.receiveOptions()
-        self.sensors = options.get(c.DATA_SENSOR, options.get(c.DATA_SENSORS))
+        self.sensors = options[c.DATA_SENSORS]
         Generator.AbstractMyGenerator.setup(self, options)
         self.closeWindow()
         self.newWindow(self.getTitle(options))
         return c.SUCCESS_MESSAGE
 
     def getTitle(self, options):
-        raise NotImplementedError("getTitle not implemented!")
+        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
 
     def newWindow(self, title):
         self.pw = pg.plot(title=title)
@@ -60,16 +60,10 @@ class NotSum(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 
-    def getTitle(self, options):
-        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSOR])
-
 
 class Sum(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
-
-    def getTitle(self, options):
-        return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])
 
 
 class SumSignal(Sum):

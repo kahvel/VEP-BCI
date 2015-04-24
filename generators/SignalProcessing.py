@@ -2,7 +2,7 @@ __author__ = 'Anti'
 
 import scipy.signal
 import constants as c
-from signal_processing import Generator
+from generators import Generator
 import numpy as np
 
 

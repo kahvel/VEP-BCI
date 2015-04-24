@@ -2,6 +2,7 @@ __author__ = 'Anti'
 
 import Connections
 import constants as c
+import copy
 
 
 class SensorConnection(Connections.MultipleConnections):
@@ -12,8 +13,9 @@ class SensorConnection(Connections.MultipleConnections):
         self.close()
         for sensor in options[c.DATA_SENSORS]:
             new_connection = self.getConnection(options[c.DATA_METHOD])
-            options[c.DATA_SENSOR] = [sensor]
-            new_connection.setup(options)
+            dict_copy = copy.deepcopy(options)
+            dict_copy[c.DATA_SENSORS] = [sensor]
+            new_connection.setup(dict_copy)
             self.connections.append(new_connection)
 
     def getConnection(self, method):
@@ -31,8 +33,9 @@ class MethodConnection(Connections.MultipleConnections):
         self.close()
         for method in options[c.DATA_METHODS]:
             new_connection = self.getConnection(method)
-            options[c.DATA_METHOD] = method
-            new_connection.setup(options)
+            dict_copy = copy.deepcopy(options)
+            dict_copy[c.DATA_METHOD] = method
+            new_connection.setup(dict_copy)
             self.connections.append(new_connection)
 
 
@@ -45,8 +48,9 @@ class TabConnection(Connections.MultipleConnections):
         self.close()
         for option in options[self.options_key]:
             new_connection = self.getConnection()
-            option[c.DATA_FREQS] = options[c.DATA_FREQS]
-            new_connection.setup(option)
+            dict_copy = copy.deepcopy(option)
+            dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
+            new_connection.setup(dict_copy)
             self.connections.append(new_connection)
 
     def getConnection(self):

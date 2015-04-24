@@ -7,8 +7,6 @@ import TargetsWindow
 import MyEmotiv
 import Game
 from main_window import MainWindow
-import multiprocessing
-import Extraction
 
 
 class PsychopyConnection(Connections.Connection):

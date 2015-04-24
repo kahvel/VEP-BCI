@@ -228,7 +228,6 @@ DATA_OPTIONS = "Options"
 DATA_METHODS = "Methods"
 
 DATA_METHOD = "Method"
-DATA_SENSOR = "Sensor"
 
 DATA_FREQ = "Freq"
 

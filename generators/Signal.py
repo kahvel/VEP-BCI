@@ -1,6 +1,6 @@
 __author__ = 'Anti'
 
-from signal_processing import SignalProcessing
+from generators import SignalProcessing
 
 
 class AbstractSignal(object):
