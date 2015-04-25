@@ -122,12 +122,10 @@ class SignalPipeline(SignalProcessing):
 
     def normaliseSpectrum(self, fft):
         if self.options[c.OPTIONS_NORMALISE]:
-            result = (fft/sum(fft))
-            result[0] = None
+            result = (fft/sum(fft))[1:]
             return result
         else:
-            result = np.log10(fft)
-            result[0] = None
+            result = np.log10(fft)[1:]
             return result
 
     def innerPipeline(self, signal, window):
