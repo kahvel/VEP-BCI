@@ -63,10 +63,10 @@ class SignalProcessing(Generator.AbstractMyGenerator):
 
     def getBreakpoints(self, options):
         if options[c.OPTIONS_DETREND] in (c.LINEAR_DETREND, c.CONSTANT_DETREND):
-            breakpoints = options[c.OPTIONS_BREAK]
+            breakpoints_count = options[c.OPTIONS_BREAK]+1
             breakpoints_list = []
-            for i in range(breakpoints):
-                breakpoints_list.append(options[c.OPTIONS_LENGTH]/breakpoints*i)
+            for i in range(breakpoints_count):
+                breakpoints_list.append(options[c.OPTIONS_LENGTH]/breakpoints_count*i)
             return breakpoints_list
         elif options[c.OPTIONS_DETREND] == c.NONE_DETREND:
             return 0

@@ -52,11 +52,11 @@ class SameTabsNotebook(Notebook.Notebook):
 
     def deleteTab(self):
         current = self.widget.index("current")
-        if current != 0:
-            del self.widgets_list[current]
-            self.tab_count -= 1
+        del self.widgets_list[current]
+        self.tab_count -= 1
+        if self.tab_count != -1:
             self.changeActiveTab(current)
-            self.widget.forget(current)
+        self.widget.forget(current)
 
     def changeActiveTab(self, current):
         if current == self.tab_count+1:
