@@ -13,8 +13,9 @@ class PostOffice(object):
         self.options = None
         self.results = None
         self.resetResults()
-        self.standby = None
+        self.standby_state = None
         self.standby_freq = None
+        self.no_standby = None
         self.recorded_signals = [None for _ in range(7)]
         self.waitConnections()
 
@@ -63,7 +64,7 @@ class PostOffice(object):
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)
 
-    def handleFreqMessages(self, message, no_standby, target_freqs, current_target):
+    def handleFreqMessages(self, message, target_freqs, current_target):
         # print(message)
         pass
 
@@ -80,9 +81,9 @@ class PostOffice(object):
         #     if orig_result_freq == short_result_freq:
         #         self.results[method][str(target_freqs)][current_target][orig_result_freq] += 1
         #         if orig_result_freq == self.standby_freq:
-        #             # self.connections.sendPlotMessage(self.standby and not no_standby)
-        #             self.standby = not self.standby
-        #         if not self.standby or no_standby:
+        #             # self.connections.sendPlotMessage(self.standby_state and not no_standby)
+        #             self.standby_state = not self.standby_state
+        #         if not self.standby_state or no_standby:
         #             self.connections.sendTargetMessage(orig_result_freq)
         #             # self.connections.sendGameMessage(orig_result)
 
@@ -95,9 +96,9 @@ class PostOffice(object):
         #                     print(message)
         #                     self.results[method][str(target_freqs)][current_target][freq] += 1
         #                     if freq == self.standby_freq:
-        #                         # self.connections.sendPlotMessage(self.standby and not no_standby)
-        #                         self.standby = not self.standby
-        #                     if not self.standby or no_standby:
+        #                         # self.connections.sendPlotMessage(self.standby_state and not no_standby)
+        #                         self.standby_state = not self.standby_state
+        #                     if not self.standby_state or no_standby:
         #                         # if not "short" in method:
         #                         self.connections.sendTargetMessage(freq)
         #                         # self.connections.sendGameMessage(freq)
@@ -140,7 +141,7 @@ class PostOffice(object):
     def isRandom(self, test_target):
         return test_target == c.TEST_RANDOM
 
-    def targetChangingLoop(self, options, target_freqs, no_standby):
+    def targetChangingLoop(self, options, target_freqs):
         count = 0
         target_count = len(target_freqs)
         total_time = self.getTotalTime(options[c.TEST_UNLIMITED], options[c.TEST_TIME])
@@ -159,13 +160,22 @@ class PostOffice(object):
             print(time, target, total_time)
             if target is not None:
                 self.connections.sendTargetMessage(target)
-            message = self.startPacketSending(time, no_standby, target_freqs, target)
+            message = self.startPacketSending(time, target_freqs, target)
             if message is not None:
                 return message
+
+    def setStandby(self, options):
+        if self.isStandby(options[c.DATA_TEST][c.TEST_STANDBY]):
+            self.no_standby = True
+            self.standby_freq = options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]-1]
+        else:
+            self.no_standby = True
+        self.standby_state = False
 
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
         self.connections.setup(self.options)
+        self.setStandby(self.options)
         if self.connections.setupSuccessful():
             self.setupResults(self.options[c.DATA_FREQS])
             return c.SUCCESS_MESSAGE
@@ -175,44 +185,45 @@ class PostOffice(object):
     def exit(self):
         self.connections.close()
 
+    def isStandby(self, standby):
+        if standby == c.TEST_NONE:
+            return False
+        else:
+            return True
+
     def start(self):
         self.connections.sendStartMessage()
         message = self.targetChangingLoop(
             self.options[c.DATA_TEST],
             self.options[c.DATA_FREQS],
-            not self.options[c.DATA_TEST][c.TEST_STANDBY]
         )
         self.connections.sendStopMessage()
         return message
 
-    def handleEmotivMessages(self, no_standby):
+    def handleEmotivMessages(self):
         message = self.connections.receiveEmotivMessage()
         if message is not None:
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
-            if not self.standby or no_standby:
+            if not self.standby_state:
                 return 1
         return 0
 
-    def startPacketSending(self, length, no_standby, target_freqs, current_target):
+    def startPacketSending(self, length, target_freqs, current_target):
         count = 0
-        self.standby = True
-        self.standby_freq = target_freqs[-1]
         while count < length:
             main_message = self.main_connection.receiveMessageInstant()
             if main_message is not None:
                 return main_message
-            count += self.handleEmotivMessages(no_standby)
+            count += self.handleEmotivMessages()
             self.handleFreqMessages(
                 self.connections.receiveExtractionMessage(),
-                no_standby,
                 target_freqs,
                 current_target
             )
         # Wait for the last result
         # self.handleFreqMessages(
         #     self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),
-        #     no_standby,
         #     target_freqs,
         #     current_target
         # )

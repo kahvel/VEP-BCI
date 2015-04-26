@@ -43,6 +43,9 @@ class Target(object):
     def setCurrent(self, value):
         self.current_target = value
 
+    def setStandbyTarget(self, value):
+        self.standby_target = value
+
     def drawRect(self, color, standby):
         self.rect.setFillColor(color, colorSpace="rgb")
         self.rect.setLineColor(color, colorSpace="rgb")
@@ -77,8 +80,11 @@ class TargetsWindow(object):
 
     def setup(self):
         options = self.connection.receiveOptions()
-        self.setBackground(options[c.DATA_BACKGROUND])
-        self.setTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_COLOR])
+        self.window = self.getWindow(options[c.DATA_BACKGROUND])
+        self.monitor_frequency = self.getMonitorFreq(options[c.DATA_BACKGROUND])
+        self.targets = self.getTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_COLOR], self.window)
+        self.generators = self.getGenerators(self.targets)
+        self.setStandbyTarget(options[c.DATA_TEST][c.TEST_STANDBY])
         return c.SUCCESS_MESSAGE
 
     def exit(self):
@@ -94,26 +100,30 @@ class TargetsWindow(object):
         if self.window is not None:
             self.window.flip()
 
-    def setBackground(self, background_data):
+    def getMonitorFreq(self, background_data):
+        return background_data[c.WINDOW_FREQ]
+
+    def getWindow(self, background_data):
         self.closeWindow()
-        self.window = visual.Window(
-            [
-                background_data[c.WINDOW_WIDTH],
-                background_data[c.WINDOW_HEIGHT]
-            ],
+        return visual.Window(
+            [background_data[c.WINDOW_WIDTH], background_data[c.WINDOW_HEIGHT]],
             units="pix",
             color=background_data[c.WINDOW_COLOR]
         )
-        self.monitor_frequency = background_data[c.WINDOW_FREQ]
 
-    def setTargets(self, targets, test_color):
-        self.targets = []
-        self.generators = []
-        for target in targets:
-            self.targets.append(Target(target, test_color, self.window))
-            self.generators.append(self.targets[-1].generator())
-            self.generators[-1].send(None)
-        self.targets[-1].standby_target = True
+    def getTargets(self, targets_data, test_color, window):
+        return [Target(data, test_color, window) for data in targets_data]
+
+    def setupGenerator(self, generator):
+        generator.send(None)
+        return generator
+
+    def getGenerators(self, targets):
+        return [self.setupGenerator(target.generator()) for target in targets]
+
+    def setStandbyTarget(self, standby):
+        if standby != c.TEST_NONE:
+            self.targets[standby-1].setStandbyTarget(True)
 
     def setCurrentTarget(self, target):
         if self.prev_current is not None:
