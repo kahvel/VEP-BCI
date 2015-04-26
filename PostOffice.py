@@ -65,8 +65,8 @@ class PostOffice(object):
             message = self.main_connection.receiveMessagePoll(0.1)
 
     def handleFreqMessages(self, message, target_freqs, current_target):
-        # print(message)
-        pass
+
+        print(message)
 
         # Use only the first method in the first tab
         # Assume that for each method we have 2 connections, original and short
@@ -200,11 +200,16 @@ class PostOffice(object):
         self.connections.sendStopMessage()
         return message
 
-    def handleEmotivMessages(self):
+    def handleEmotivMessages(self, target_freqs, current_target):
         message = self.connections.receiveEmotivMessage()
         if message is not None:
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
+            self.handleFreqMessages(
+                self.connections.receiveExtractionMessage(),
+                target_freqs,
+                current_target
+            )
             if not self.standby_state:
                 return 1
         return 0
@@ -215,12 +220,7 @@ class PostOffice(object):
             main_message = self.main_connection.receiveMessageInstant()
             if main_message is not None:
                 return main_message
-            count += self.handleEmotivMessages()
-            self.handleFreqMessages(
-                self.connections.receiveExtractionMessage(),
-                target_freqs,
-                current_target
-            )
+            count += self.handleEmotivMessages(target_freqs, current_target)
         # Wait for the last result
         # self.handleFreqMessages(
         #     self.connections[c.CONNECTION_EXTRACTION].receiveMessageBlock(),

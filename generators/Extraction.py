@@ -34,14 +34,14 @@ class Extraction(Generator.AbstractMyGenerator):
                 if coordinates is not None:
                     self.coordinates_generator.next()
                     result = self.generator.send(coordinates)
-                    self.connection.sendMessage(result)
+                    self.connection.sendMessage(((self.name, self.sensors), result))
                     self.generator.next()
                 else:
                     self.connection.sendMessage(None)
 
     def setup(self, options=None):
         options = self.connection.receiveOptions()
-        self.sensors = options[c.DATA_SENSORS]
+        self.sensors = tuple(options[c.DATA_SENSORS])
         self.coordinates_generator = self.getCoordinatesGenerator()
         self.coordinates_generator.setup(options)
         Generator.AbstractMyGenerator.setup(self, options)
@@ -64,7 +64,7 @@ class SumPsda(Extraction):
 
 class Psda(Extraction):
     def __init__(self, connection):
-        Extraction.__init__(self, connection, c.SUM_PSDA)
+        Extraction.__init__(self, connection, c.PSDA)
 
     def getCoordinatesGenerator(self):
         return PSD.PSD()
@@ -75,7 +75,7 @@ class Psda(Extraction):
 
 class Cca(Extraction):
     def __init__(self, connection):
-        Extraction.__init__(self, connection, c.SUM_PSDA)
+        Extraction.__init__(self, connection, c.CCA)
         self.coordinates_generators = None
 
     def getCoordinatesGenerator(self):
@@ -86,7 +86,7 @@ class Cca(Extraction):
 
     def setup(self, options=None):
         options = self.connection.receiveOptions()
-        self.sensors = options[c.DATA_SENSORS]
+        self.sensors = tuple(options[c.DATA_SENSORS])
         self.coordinates_generators = self.getCoordinatesGenerator()
         for generator in self.coordinates_generators:
             generator.setup(options)
@@ -107,7 +107,7 @@ class Cca(Extraction):
                         generator.next()
                         freq = self.generator.send(signal)
                 if freq is not None:
-                    self.connection.sendMessage(freq)
+                    self.connection.sendMessage(((self.name, self.sensors), freq))
                     self.generator.next()
                 else:
                     self.connection.sendMessage(None)
