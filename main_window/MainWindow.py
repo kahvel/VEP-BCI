@@ -102,7 +102,7 @@ class MainWindow(MyWindows.TkWindow):
             )
         )
         result[c.TARGET_COLOR1] = target_data[key][c.TARGET_COLOR1_FRAME][c.TEXTBOX]
-        result[c.TARGET_COLOR2] = target_data[key][c.TARGET_COLOR2_FRAME][c.TEXTBOX]
+        result[c.TARGET_COLOR0] = target_data[key][c.TARGET_COLOR2_FRAME][c.TEXTBOX]
         result[c.DATA_FREQ] = self.getPlusMinusValue(target_data[key])
         result[c.TARGET_SEQUENCE] = target_data[key][c.TARGET_SEQUENCE]
         return result
@@ -150,7 +150,12 @@ class MainWindow(MyWindows.TkWindow):
         }
 
     def getTestData(self, data):
-        return self.filterData(data)
+        result = self.filterData(
+            data,
+            (c.TEST_COLOR_FRAME,)
+        )
+        result[c.TEST_COLOR] = data[c.TEST_COLOR_FRAME][c.TEXTBOX]
+        return result
 
     def exit(self):
         print("Exiting main window")

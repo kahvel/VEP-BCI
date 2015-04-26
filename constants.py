@@ -31,6 +31,7 @@ TEST_TARGET = "Test target"
 TEST_UNLIMITED = "Unlimited"
 TEST_NONE = "None"
 TEST_RANDOM = "Random"
+TEST_COLOR = "Color"
 
 # Window tab buttons
 WINDOW_WIDTH = "Width"
@@ -121,6 +122,7 @@ DISABLE_DELETE_FRAME = "DisableDeleteFrame"
 TARGET_COLOR1_FRAME = "Color1TextboxFrame"
 TARGET_COLOR2_FRAME = "Color2TextboxFrame"
 WINDOW_COLOR_FRAME = "ColorTextboxFrame"
+TEST_COLOR_FRAME = "TestColorTextboxFrame"
 
 TARGET_FRAME = "TargetFrame"
 
@@ -135,7 +137,7 @@ TARGET_HEIGHT = "Height"
 TARGET_COLOR1 = "Color1"
 TARGET_X = "x"
 TARGET_Y = "y"
-TARGET_COLOR2 = "Color2"
+TARGET_COLOR0 = "Color0"
 TARGET_SEQUENCE = "Sequence"
 
 # Detrend optionmenu

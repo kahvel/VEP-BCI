@@ -12,6 +12,7 @@ class TestTab(Frame.Frame):
         self.target_count = 0
         self.addChildWidgets((
             OptionMenu.OptionMenu  (self.widget, c.TEST_TARGET,    0, 1, columnspan=2, values=(c.TEST_NONE, c.TEST_RANDOM), command=self.enableRange),
+            Textboxes.ColorTextboxFrame(self.widget, c.TEST_COLOR, c.TEST_COLOR_FRAME, 0, 3, default_value="#ffffb3"),
             Checkbutton.Checkbutton(self.widget, c.TEST_STANDBY,   1, 0, columnspan=2),
             Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 1, 2, columnspan=2, command=self.enableTime, default_value=1),
             Textboxes.LabelTextbox (self.widget, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),

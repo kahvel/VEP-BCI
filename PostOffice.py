@@ -64,9 +64,11 @@ class PostOffice(object):
             message = self.main_connection.receiveMessagePoll(0.1)
 
     def handleFreqMessages(self, message, no_standby, target_freqs, current_target):
+        # print(message)
+        pass
+
         # Use only the first method in the first tab
         # Assume that for each method we have 2 connections, original and short
-        print(message)
         # orig_result_freq = None
         # short_result_freq = None
         # orig_result, short_result = message
@@ -100,36 +102,6 @@ class PostOffice(object):
         #                         self.connections.sendTargetMessage(freq)
         #                         # self.connections.sendGameMessage(freq)
 
-    def randomSequence(self, total, min_value, max_value, target_freqs):
-        data = []
-        initial_values = {i: total for i in range(len(target_freqs))}
-        while True:
-            target = random.choice(initial_values.keys())
-            time = random.randint(min_value, max_value)
-            if initial_values[target] - time < min_value:
-                time = initial_values[target]
-            initial_values[target] = initial_values[target]-time
-            if len(data) > 0 and data[-1][0] == target:
-                data[-1][1] += time
-            else:
-                data.append([target, time])
-            if initial_values[target] == 0:
-                del initial_values[target]
-                if initial_values == {}:
-                    break
-        return data
-
-    def normalSequence(self, target, time):
-        return [[target, time]]
-
-    def getSequence(self, options, target_freqs):
-        if options[c.TEST_TARGET] == c.TEST_RANDOM:
-            return self.randomSequence(options[c.TEST_TIME], options[c.TEST_MIN], options[c.TEST_MAX], target_freqs)
-        elif options[c.TEST_UNLIMITED]:
-            return self.normalSequence(options[c.TEST_TARGET], float("inf"))
-        else:
-            return self.normalSequence(options[c.TEST_TARGET], options[c.TEST_TIME])
-
     def resetResults(self):
         self.results = {name: {} for name in c.EXTRACTION_METHOD_NAMES}
 
@@ -148,15 +120,48 @@ class PostOffice(object):
                 for row in sorted(self.results[method][freqs]):
                     print row, self.results[method][freqs][row]
 
-    def targetChangingLoop(self, sequence, target_freqs, no_standby):
-        # print(sequence)
-        message = None
-        for target, time in sequence:
-            self.connections.sendTargetMessage(target)
+    def getTargetTime(self, time, unlimited, is_random, min, max):
+        if is_random:
+            return random.randint(min, max)
+        else:
+            return self.getTotalTime(unlimited, time)
+
+    def getTotalTime(self, unlimited, test_time):
+        return float("inf") if unlimited else test_time
+
+    def getTarget(self, test_target, target_count):
+        if self.isRandom(test_target):
+            return random.randint(1, target_count)
+        elif test_target != c.TEST_NONE:
+            return test_target
+        else:
+            return None
+
+    def isRandom(self, test_target):
+        return test_target == c.TEST_RANDOM
+
+    def targetChangingLoop(self, options, target_freqs, no_standby):
+        count = 0
+        target_count = len(target_freqs)
+        total_time = self.getTotalTime(options[c.TEST_UNLIMITED], options[c.TEST_TIME])
+        while count < total_time:
+            target = self.getTarget(options[c.TEST_TARGET], target_count)
+            time = self.getTargetTime(
+                options[c.TEST_TIME],
+                options[c.TEST_UNLIMITED],
+                self.isRandom(options[c.TEST_TARGET]),
+                options[c.TEST_MIN],
+                options[c.TEST_MAX]
+            )
+            if count+time > total_time:
+                time = total_time-count
+            count += time
+            print(time, target, total_time)
+            if target is not None:
+                self.connections.sendTargetMessage(target)
             message = self.startPacketSending(time, no_standby, target_freqs, target)
             if message is not None:
-                break
-        return message
+                return message
 
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
@@ -173,7 +178,7 @@ class PostOffice(object):
     def start(self):
         self.connections.sendStartMessage()
         message = self.targetChangingLoop(
-            self.getSequence(self.options[c.DATA_TEST], self.options[c.DATA_FREQS]),
+            self.options[c.DATA_TEST],
             self.options[c.DATA_FREQS],
             not self.options[c.DATA_TEST][c.TEST_STANDBY]
         )

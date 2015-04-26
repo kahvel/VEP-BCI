@@ -15,9 +15,7 @@ class PsychopyConnection(Connections.Connection):
 
     def sendOptions(self, options):
         self.sendSetupMessage()
-        self.connection.send(options[c.DATA_BACKGROUND])
-        self.connection.send(options[c.DATA_TARGETS])
-        self.connection.send(options[c.DATA_TEST][c.TEST_STANDBY])
+        self.connection.send(options)
 
 
 class ExtractionConnection(Connections.Connection):

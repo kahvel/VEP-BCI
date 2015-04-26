@@ -54,11 +54,7 @@ class PsychopyConnection(Connection):
         Connection.__init__(self, connection, c.CONNECTION_PSYCHOPY_NAME)
 
     def receiveOptions(self):
-        return (
-            self.receiveMessageBlock(),
-            self.receiveMessageBlock(),
-            self.receiveMessageBlock()
-        )
+        return self.receiveMessageBlock()
 
 
 class ExtractionConnection(Connection):

@@ -34,7 +34,7 @@ class TargetFrame(Frame.Frame):
             Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, c.TARGET_COLOR1_FRAME, 2, 4, default_value="#ffffff"),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_X,      3, 0, command=int, allow_negative=True, allow_zero=True),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      3, 2, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR2, c.TARGET_COLOR2_FRAME, 3, 4, default_value="#000000")
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR0, c.TARGET_COLOR2_FRAME, 3, 4, default_value="#000000")
         ))
 
     def getTargetFreq(self):
