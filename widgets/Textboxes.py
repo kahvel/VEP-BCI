@@ -15,8 +15,8 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         self.width = kwargs.get("width", 5)
         self.arg_command = kwargs.get("command", lambda x: None)
         self.auto_update = kwargs.get("auto_update", lambda: True)
-        validate_command = lambda: self.auto_update() if self.validate() else False
-        self.create(Tkinter.Entry(parent, validate="focusout", validatecommand=validate_command, width=self.width))
+        self.validate_command = lambda: self.auto_update() if self.validate() else False
+        self.create(Tkinter.Entry(parent, validate="focusout", validatecommand=self.validate_command, width=self.width))
 
     def setValue(self, value):
         previous_state = self.widget.config("state")[4]
@@ -25,6 +25,17 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         self.widget.insert(0, value)
         self.widget.config(state=previous_state)
         self.validate()
+
+    def loadDefaultValue(self):
+        self.setValue(self.default_value)
+        self.auto_update()
+        self.disabled = self.default_disability
+        self.disablers = self.default_disablers
+        self.updateState()
+
+    def setValueAndUpdate(self, value):
+        self.setValue(value)
+        self.auto_update()
 
     def getValue(self):
         return self.widget.get()
@@ -43,7 +54,9 @@ class Textbox(AbstractWidget.WidgetWithCommand):
             return True
 
     def validationFunction(self):
-        self.arg_command(self.widget.get())
+        ret = self.arg_command(self.widget.get())
+        if isinstance(ret, bool):
+            assert ret
 
 
 class LabelTextbox(Textbox):
@@ -52,14 +65,23 @@ class LabelTextbox(Textbox):
         self.allow_negative = kwargs.get("allow_negative", False)
         self.allow_zero = kwargs.get("allow_zero", False)
         label = Tkinter.Label(parent, text=self.name)
-        label.grid(row=self.row, column=self.column-1, columnspan=self.columnspan, padx=self.padx, pady=self.pady)
+        label.grid(row=self.row, column=self.column-1, padx=self.padx, pady=self.pady)
 
     def validationFunction(self):
         if not self.allow_negative:
             assert float(self.widget.get()) >= 0
         if not self.allow_zero:
             assert float(self.widget.get()) != 0
-        self.arg_command(self.widget.get())
+        Textbox.validationFunction(self)
+
+
+class SequenceTextbox(LabelTextbox):
+    def __init__(self, parent, name, row, column, **kwargs):
+        LabelTextbox.__init__(self, parent, name, row, column, **kwargs)
+
+    def loadDefaultValue(self):
+        self.disabled = self.default_disability
+        self.disablers = self.default_disablers
 
 
 class PlusMinusTextboxFrame(Frame.Frame):

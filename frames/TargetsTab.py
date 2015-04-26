@@ -3,30 +3,97 @@ __author__ = 'Anti'
 from widgets import Textboxes
 from frames import Frame, DisableDeleteNotebookTab
 import constants as c
+import math
 
 
 class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, getMonitorFreq, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.TARGETS_TAB_TAB, **kwargs)
         self.addChildWidgets((
-            TargetFrame(self.widget, 0, 0, validate_freq=kwargs["validate_freq"]),
+            TargetFrame(self.widget, 0, 0, getMonitorFreq, **kwargs),
             self.getDisableDeleteFrame(1, 0, delete_tab=kwargs["delete_tab"])
         ))
 
+    def changeFreq(self):
+        self.widgets_dict[c.TARGET_FRAME].changeFreq()
+
 
 class TargetFrame(Frame.Frame):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, row, column, getMonitorFreq, **kwargs):
         Frame.Frame.__init__(self, parent, c.TARGET_FRAME, row, column, **kwargs)
-        validate_freq = lambda: kwargs["validate_freq"](self.widgets_dict[c.PLUS_MINUS_TEXTOX_FRAME].widgets_dict[c.TARGET_FREQ], 0)
-        increase      = lambda: kwargs["validate_freq"](self.widgets_dict[c.PLUS_MINUS_TEXTOX_FRAME].widgets_dict[c.TARGET_FREQ], -1)
-        decrease      = lambda: kwargs["validate_freq"](self.widgets_dict[c.PLUS_MINUS_TEXTOX_FRAME].widgets_dict[c.TARGET_FREQ], 1)
+        self.getMonitorFreq = getMonitorFreq
+        self.loading_default_value = True
+        validate = lambda: self.changeFreq()
+        increase = lambda: self.changeFreq(increase=True)
+        decrease = lambda: self.changeFreq(decrease=True)
         self.addChildWidgets((
-            Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate_freq, default_value=10.0),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_DELAY,  0, 4, command=int, allow_zero=True),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  1, 0, command=int, default_value=150),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 1, 2, command=int, default_value=150),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, c.TARGET_COLOR1_FRAME, 1, 4, default_value="#ffffff"),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_X,      2, 0, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      2, 2, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR2, c.TARGET_COLOR2_FRAME, 2, 4, default_value="#000000"),
+            Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
+            Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4),
+            Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
+            Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, c.TARGET_COLOR1_FRAME, 2, 4, default_value="#ffffff"),
+            Textboxes.LabelTextbox         (self.widget, c.TARGET_X,      3, 0, command=int, allow_negative=True, allow_zero=True),
+            Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      3, 2, command=int, allow_negative=True, allow_zero=True),
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR2, c.TARGET_COLOR2_FRAME, 3, 4, default_value="#000000")
         ))
+
+    def getTargetFreq(self):
+        return float(self.getFrequencyTextbox().getValue())
+
+    def setTargetFreq(self, value):
+        self.getFrequencyTextbox().setValue(value)
+
+    def getFrequencyTextbox(self):
+        return self.widgets_dict[c.PLUS_MINUS_TEXTOX_FRAME].widgets_dict[c.TARGET_FREQ]
+
+    def getSequenceTextbox(self):
+        return self.widgets_dict[c.TARGET_SEQUENCE]
+
+    def setSequence(self, freq_on, freq_off):
+        self.getSequenceTextbox().setValue(self.calculateSequence(freq_on, freq_off))
+
+    def calculateSequence(self, freq_on, freq_off):
+        return ("1"*freq_on)+("0"*freq_off)
+
+    def getSequence(self):
+        return self.getSequenceTextbox().getValue()
+
+    def sequenceChanged(self, sequence):
+        if sequence.count("0") == len(sequence) or sequence.count("1") == len(sequence):
+            self.setTargetFreq(self.getMonitorFreq())
+            return True
+        state_change_count = 0
+        prev = sequence[-1]
+        for c in sequence:
+            if c not in "01":
+                return False
+            if c != prev:
+                state_change_count += 1.0
+                prev = c
+        self.setTargetFreq(state_change_count/(2*len(sequence)/self.getMonitorFreq()))
+        return True
+
+    def calculateOnOffFreq(self, increase=False, decrease=False):
+        target_freq = self.getTargetFreq()
+        monitor_freq = self.getMonitorFreq()
+        freq_on = math.floor(monitor_freq/target_freq/2.0)
+        freq_off = math.ceil(monitor_freq/target_freq/2.0)
+        if freq_on < freq_off:
+            freq_on += decrease
+            freq_off -= increase
+        else:
+            freq_off += decrease
+            freq_on -= increase
+        return int(freq_on), int(freq_off)
+
+    def calculateNewFreq(self, freq_on, freq_off):
+        return self.getMonitorFreq()/(freq_off+freq_on)
+
+    def changeFreq(self, increase=False, decrease=False):
+        freq_on, freq_off = self.calculateOnOffFreq(increase, decrease)
+        if freq_off+freq_on != 0:
+            self.setTargetFreq(self.calculateNewFreq(freq_on, freq_off))
+            self.setSequence(freq_on, freq_off)
+            return True
+        else:
+            return False

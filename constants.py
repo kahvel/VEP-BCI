@@ -136,6 +136,7 @@ TARGET_COLOR1 = "Color1"
 TARGET_X = "x"
 TARGET_Y = "y"
 TARGET_COLOR2 = "Color2"
+TARGET_SEQUENCE = "Sequence"
 
 # Detrend optionmenu
 CONSTANT_DETREND = "Constant"

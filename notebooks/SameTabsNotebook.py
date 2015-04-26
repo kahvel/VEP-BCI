@@ -9,13 +9,14 @@ class SameTabsNotebook(Notebook.Notebook):
     def __init__(self, parent, name, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, name, row, column, **kwargs)
         self.tab_count = -1
-        self.default_tab_count = 0
+        # self.default_tab_count = 0
         self.last_tab = None
         self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
     def tabChangedEvent(self, event):
         if event.widget.index("current") == self.tab_count+1:
             self.plusTabClicked()
+            self.tabDefaultValues(-1)
 
     def addInitialTabs(self):
         self.last_tab = self.addTab("+")
@@ -29,20 +30,23 @@ class SameTabsNotebook(Notebook.Notebook):
         self.widget.add(tab.widget, text=text)
         return tab
 
+    def tabDefaultValues(self, tab_index):
+        self.widgets_list[tab_index].loadDefaultValue()
+
     def loadDefaultValue(self):
-        for _ in range(self.default_tab_count):
-            self.plusTabClicked()
+        for i in range(self.tab_count+1):
+            self.tabDefaultValues(i)
 
     def save(self, file):
         file.write(str(self.tab_count)+"\n")
-        Frame.Frame.save(self, file)
+        Notebook.Notebook.save(self, file)
 
     def load(self, file):
         self.deleteAllTabs()
         tab_count = int(file.readline())
         for i in range(tab_count):
             self.plusTabClicked()
-        Frame.Frame.load(self, file)
+        Notebook.Notebook.load(self, file)
 
     def deleteAllTabs(self):
         if self.tab_count != 0:
@@ -69,7 +73,6 @@ class SameTabsNotebook(Notebook.Notebook):
     def plusTabClicked(self):
         self.tab_count += 1
         self.widgets_list.append(self.last_tab)
-        self.widgets_list[-1].loadDefaultValue()
         self.widget.tab(self.tab_count, text=self.tab_count+1)
         self.last_tab = self.addTab(c.PLUS_TAB)
 
@@ -93,15 +96,23 @@ class PlotNotebook(SameTabsNotebook):
 
 
 class TargetNotebook(SameTabsNotebook):
-    def __init__(self, parent, row, column, targetAdded, targetRemoved, **kwargs):
+    def __init__(self, parent, row, column, targetAdded, targetRemoved, getMonitorFreq, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.TARGETS_NOTEBOOK, row, column, **kwargs)
-        self.validate_freq = kwargs["validate_freq"]
+        self.getMonitorFreq = getMonitorFreq
         self.targetAdded = targetAdded
         self.targetRemoved = targetRemoved
         self.addInitialTabs()
 
+    def changeFreq(self):
+        for widget in self.widgets_list:
+            widget.changeFreq()
+
+    def plusTabClicked(self):
+        self.targetAdded()
+        SameTabsNotebook.plusTabClicked(self)
+
     def newTab(self, row, column, **kwargs):
-        return TargetsTab.TargetsTab(self.widget, validate_freq=self.validate_freq, **kwargs)
+        return TargetsTab.TargetsTab(self.widget, self.getMonitorFreq, **kwargs)
 
     def deleteTab(self):  # Updates OptionMenu in Test tab
         SameTabsNotebook.deleteTab(self)
