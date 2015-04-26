@@ -61,6 +61,7 @@ class SameTabsNotebook(Notebook.Notebook):
         if self.tab_count != -1:
             self.changeActiveTab(current)
         self.widget.forget(current)
+        return current
 
     def changeActiveTab(self, current):
         if current == self.tab_count+1:
@@ -115,5 +116,5 @@ class TargetNotebook(SameTabsNotebook):
         return TargetsTab.TargetsTab(self.widget, self.getMonitorFreq, **kwargs)
 
     def deleteTab(self):  # Updates OptionMenu in Test tab
-        SameTabsNotebook.deleteTab(self)
-        self.targetRemoved()
+        deleted_tab = SameTabsNotebook.deleteTab(self)
+        self.targetRemoved(deleted_tab)

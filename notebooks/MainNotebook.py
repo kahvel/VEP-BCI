@@ -28,5 +28,5 @@ class MainNotebook(Notebook.Notebook):
     def targetAdded(self):
         self.test_tab.targetAdded()
 
-    def targetRemoved(self):
-        self.test_tab.targetRemoved()
+    def targetRemoved(self, deleted_tab):
+        self.test_tab.targetRemoved(deleted_tab)
