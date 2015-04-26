@@ -27,14 +27,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         self.validate()
 
     def loadDefaultValue(self):
-        self.setValue(self.default_value)
-        self.auto_update()
-        self.disabled = self.default_disability
-        self.disablers = self.default_disablers
-        self.updateState()
-
-    def setValueAndUpdate(self, value):
-        self.setValue(value)
+        AbstractWidget.WidgetWithCommand.loadDefaultValue(self)
         self.auto_update()
 
     def getValue(self):

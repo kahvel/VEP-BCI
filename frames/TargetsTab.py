@@ -58,20 +58,24 @@ class TargetFrame(Frame.Frame):
     def getSequence(self):
         return self.getSequenceTextbox().getValue()
 
+    def getStateChangeCount(self, sequence):
+        state_change_count = 0
+        prev = sequence[-1]
+        for c in sequence:
+            if c != prev:
+                state_change_count += 1.0
+                prev = c
+        return state_change_count
+
     def sequenceChanged(self, sequence):
         if sequence.count("0") == len(sequence) or sequence.count("1") == len(sequence):
             self.setTargetFreq(self.getMonitorFreq())
             return True
-        state_change_count = 0
-        prev = sequence[-1]
-        for c in sequence:
-            if c not in "01":
-                return False
-            if c != prev:
-                state_change_count += 1.0
-                prev = c
-        self.setTargetFreq(state_change_count/(2*len(sequence)/self.getMonitorFreq()))
-        return True
+        elif sequence.count("0")+sequence.count("1") != len(sequence):
+            return False
+        else:
+            self.setTargetFreq(self.getStateChangeCount(sequence)/(2*len(sequence)/self.getMonitorFreq()))
+            return True
 
     def calculateOnOffFreq(self, increase=False, decrease=False):
         target_freq = self.getTargetFreq()
@@ -92,8 +96,11 @@ class TargetFrame(Frame.Frame):
     def changeFreq(self, increase=False, decrease=False):
         freq_on, freq_off = self.calculateOnOffFreq(increase, decrease)
         if freq_off+freq_on != 0:
-            self.setTargetFreq(self.calculateNewFreq(freq_on, freq_off))
-            self.setSequence(freq_on, freq_off)
+            new_freq = self.calculateNewFreq(freq_on, freq_off)
+            if new_freq != self.getTargetFreq() or self.loading_default_value:
+                self.setTargetFreq(new_freq)
+                self.setSequence(freq_on, freq_off)
+                self.loading_default_value = False
             return True
         else:
             return False

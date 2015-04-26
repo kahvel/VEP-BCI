@@ -35,24 +35,18 @@ class Target(object):
             pos=(target["x"], target["y"]-target["Height"]+20)
         )
         self.freq = float(target[c.DATA_FREQ])
-        self.sequence = "01"
-        monitor_frequency = int(monitor_frequency)
-        self.freq_on = int(monitor_frequency/self.freq//2)
-        self.freq_off = int(monitor_frequency/self.freq/2.0+0.5)
-        print("Frequency: " + str(float(monitor_frequency)/(self.freq_off+self.freq_on)), str(self.freq_on), self.freq_off)
+        self.sequence = str(target[c.TARGET_SEQUENCE])
 
     def generator(self):
         while True:
             for c in self.sequence:
+                standby = yield
                 if c == "1":
-                    for _ in range(self.freq_on):
-                        standby = yield
-                        if not standby or self.standby_target:
-                            self.rect.draw()
-                        # self.fixation.draw()
+                    if not standby or self.standby_target:
+                        self.rect.draw()
+                    # self.fixation.draw()
                 if c == "0":
-                    for _ in range(self.freq_off):
-                        yield
+                    pass
 
 
 class TargetsWindow(object):
@@ -62,7 +56,6 @@ class TargetsWindow(object):
         """ @type : ConnectionProcessEnd.PsychopyConnection """
         self.targets = None
         self.generators = None
-        # self.lock = args[1]
         self.window = None
         self.monitor_frequency = None
         # clock = core.Clock()

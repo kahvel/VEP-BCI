@@ -97,12 +97,14 @@ class MainWindow(MyWindows.TkWindow):
             (
                 c.TARGET_COLOR1_FRAME,
                 c.TARGET_COLOR2_FRAME,
-                c.PLUS_MINUS_TEXTOX_FRAME
+                c.PLUS_MINUS_TEXTOX_FRAME,
+                c.TARGET_SEQUENCE
             )
         )
         result[c.TARGET_COLOR1] = target_data[key][c.TARGET_COLOR1_FRAME][c.TEXTBOX]
         result[c.TARGET_COLOR2] = target_data[key][c.TARGET_COLOR2_FRAME][c.TEXTBOX]
         result[c.DATA_FREQ] = self.getPlusMinusValue(target_data[key])
+        result[c.TARGET_SEQUENCE] = target_data[key][c.TARGET_SEQUENCE]
         return result
 
     def getTargetData(self, data):
