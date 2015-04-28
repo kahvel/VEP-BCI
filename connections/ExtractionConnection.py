@@ -1,8 +1,7 @@
-from generators import Extraction
-
 __author__ = 'Anti'
 
 from connections import NotebookConnection, ConnectionPostOfficeEnd
+from generators import Extraction
 import constants as c
 
 
@@ -67,7 +66,8 @@ class ExtractionTabConnection(NotebookConnection.TabConnection):
         tab_results = self.getTabResults(detailed_results)
         method_results = self.getMethodResults(detailed_results)
         results = self.getResults(detailed_results)
-        return results, tab_results, method_results, detailed_results
+        result_count = sum(results.itervalues())
+        return result_count, results, tab_results, method_results, detailed_results
 
 
 class ExtractionMethodConnection(NotebookConnection.MethodConnection):

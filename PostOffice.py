@@ -66,42 +66,17 @@ class PostOffice(object):
 
     def handleFreqMessages(self, message, target_freqs, current_target):
 
-        print(message)
-
-        # Use only the first method in the first tab
-        # Assume that for each method we have 2 connections, original and short
-        # orig_result_freq = None
-        # short_result_freq = None
-        # orig_result, short_result = message
-        # if orig_result != [[]] and orig_result[0][0] is not None:
-        #     orig_result_freq, method = orig_result[0][0]
-        # if short_result != [[]] and short_result[0][0] is not None:
-        #     short_result_freq, method = short_result[0][0]
-        # if orig_result_freq is not None and short_result_freq is not None:
-        #     if orig_result_freq == short_result_freq:
-        #         self.results[method][str(target_freqs)][current_target][orig_result_freq] += 1
-        #         if orig_result_freq == self.standby_freq:
-        #             # self.connections.sendPlotMessage(self.standby_state and not no_standby)
-        #             self.standby_state = not self.standby_state
-        #         if not self.standby_state or no_standby:
-        #             self.connections.sendTargetMessage(orig_result_freq)
-        #             # self.connections.sendGameMessage(orig_result)
-
-        # for j, tab_message in enumerate(message):
-        #     for i, method_message in enumerate(tab_message):
-        #         for extraction_message in method_message:
-        #             if extraction_message is not None:
-        #                 freq, method = extraction_message
-        #                 if freq is not None:
-        #                     print(message)
-        #                     self.results[method][str(target_freqs)][current_target][freq] += 1
-        #                     if freq == self.standby_freq:
-        #                         # self.connections.sendPlotMessage(self.standby_state and not no_standby)
-        #                         self.standby_state = not self.standby_state
-        #                     if not self.standby_state or no_standby:
-        #                         # if not "short" in method:
-        #                         self.connections.sendTargetMessage(freq)
-        #                         # self.connections.sendGameMessage(freq)
+        result_count, results, tab_results, method_results, detailed_results = message
+        if results != {}:
+            max_freq, max_count = max(results.items(), key=lambda x: x[1])
+            if max_count == result_count:
+                print(max_freq, max_count)
+                if max_freq == self.standby_freq:
+                    # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
+                    self.standby_state = not self.standby_state
+                if not self.standby_state or self.no_standby:
+                    self.connections.sendTargetMessage(max_freq)
+                    # self.connections.sendGameMessage(max_freq)
 
     def resetResults(self):
         self.results = {name: {} for name in c.EXTRACTION_METHOD_NAMES}

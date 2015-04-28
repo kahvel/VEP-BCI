@@ -56,7 +56,7 @@ class OptionsFrame(Frame.Frame):
         filters = c.FILTER_NAMES
         interpolations = c.INTERPOLATE_NAMES
         self.addChildWidgets((
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,     0, 1, values=detrends),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,     0, 1, values=detrends, command=self.enableBreak),
             OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,      0, 4, command=self.enableWindow, values=windows),
             OptionMenu.OptionMenu  (self.widget, c.OPTIONS_INTERPOLATE, 1, 1, values=interpolations),
             OptionMenu.OptionMenu  (self.widget, c.OPTIONS_FILTER,      1, 4, values=filters, command=self.enableFilter),
@@ -75,6 +75,13 @@ class OptionsFrame(Frame.Frame):
         self.enableFrom()
         self.enableTo()
         self.enableTaps()
+
+    def enableBreak(self):
+        self.conditionalDisabling(
+            self.widgets_dict[c.OPTIONS_DETREND],
+            (c.CONSTANT_DETREND, c.LINEAR_DETREND),
+            (self.widgets_dict[c.OPTIONS_BREAK],)
+        )
 
     def enableTaps(self):
         self.conditionalDisabling(

@@ -81,11 +81,14 @@ class SignalProcessing(Generator.AbstractMyGenerator):
         else:
             raise ValueError("Illegal filter value in filterSignal: " + self.options[c.OPTIONS_FILTER])
 
+    def getShortBreakpoints(self, signal):
+        return [breakpoint for breakpoint in self.breakpoints if breakpoint < len(signal)]
+
     def detrendSignal(self, signal):
         if self.options[c.OPTIONS_DETREND] == c.LINEAR_DETREND:
-            return scipy.signal.detrend(signal, type="linear", bp=self.options[c.OPTIONS_BREAK])
+            return scipy.signal.detrend(signal, type="linear", bp=self.getShortBreakpoints(signal))
         elif self.options[c.OPTIONS_DETREND] == c.CONSTANT_DETREND:
-            return scipy.signal.detrend(signal, type="constant", bp=self.options[c.OPTIONS_BREAK])
+            return scipy.signal.detrend(signal, type="constant", bp=self.getShortBreakpoints(signal))
         elif self.options[c.OPTIONS_DETREND] == c.NONE_DETREND:
             return signal
         else:
@@ -199,7 +202,7 @@ class SumSignal(Signal):
         return signal
 
     def processSumSignals(self, signal, pipelineFunction):
-        return pipelineFunction(signal, self.window_function)
+        return pipelineFunction(signal, self.getWindowFunction(self.options, len(signal)))
 
 
 class SumAverageSignal(AverageSignal):
