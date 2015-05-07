@@ -17,7 +17,7 @@ class Extraction(Generator.AbstractMyGenerator):
         self.connection.waitMessages(self.start, self.exit, lambda: None, self.setup)
 
     def exit(self):
-        self.connection.closeConnection()
+        self.connection.close()
 
     # def update(self):
     #     pg.QtGui.QApplication.processEvents()

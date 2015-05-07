@@ -9,11 +9,11 @@ import constants as c
 class MainWindow(MyWindows.TkWindow):
     def __init__(self, connection):
         MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
-        self.start_button = None
-
+        self.exitFlag = False
         self.main_frame = MainFrame.MainFrame(self,
             (
                 self.start,
+                self.stop,
                 self.setup,
                 self.askSaveFile,
                 self.askLoadFile,
@@ -26,14 +26,26 @@ class MainWindow(MyWindows.TkWindow):
             )
         )
         self.loadValues(c.DEFAULT_FILE)
-
+        self.disableButton(c.START_BUTTON)
+        self.disableButton(c.STOP_BUTTON)
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
 
         self.connection = connection
-        """ @type : ConnectionProcessEnd.MainConnection """
+        """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
+
+    def mainloop(self, n=0):
+        while True:
+            message = self.connection.receiveMessagePoll(0.1)
+            if message is c.STOP_MESSAGE:
+                self.stop()
+            if not self.exitFlag:
+                self.update()
+            else:
+                self.connection.close()
+                return
 
     def loadValues(self, default_file_name):
         try:
@@ -159,6 +171,7 @@ class MainWindow(MyWindows.TkWindow):
         return result
 
     def exit(self):
+        self.exitFlag = True
         print("Exiting main window")
         self.connection.sendExitMessage()
         self.destroy()
@@ -170,13 +183,24 @@ class MainWindow(MyWindows.TkWindow):
         else:
             self.connection.sendSetupMessage()
             self.connection.sendMessage(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
+            self.enableButton(c.START_BUTTON)
+
+    def disableButton(self, button_name):
+        self.main_frame.widgets_dict[c.BOTTOM_FRAME].disableButton(button_name)
+
+    def enableButton(self, button_name):
+        self.main_frame.widgets_dict[c.BOTTOM_FRAME].enableButton(button_name)
 
     def start(self):
-        self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.STOP_BUTTON, command=self.stop)
+        self.disableButton(c.SETUP_BUTTON)
+        self.disableButton(c.START_BUTTON)
+        self.enableButton(c.STOP_BUTTON)
         self.connection.sendStartMessage()
 
     def stop(self):
-        self.main_frame.widgets_dict[c.BOTTOM_FRAME].widgets_dict[c.START_BUTTON].widget.configure(text=c.START_BUTTON, command=self.start)
+        self.enableButton(c.SETUP_BUTTON)
+        self.enableButton(c.START_BUTTON)
+        self.disableButton(c.STOP_BUTTON)
         self.connection.sendStopMessage()
 
     # Save and Load

@@ -50,7 +50,7 @@ class Plot(Generator.AbstractMyGenerator):
 
     def exit(self, event=None):
         if event is None:
-            self.connection.closeConnection()
+            self.connection.close()
             self.closeWindow()
         else:
             event.ignore()

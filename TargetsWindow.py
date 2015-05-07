@@ -123,7 +123,7 @@ class TargetsWindow(object):
         return c.SUCCESS_MESSAGE
 
     def exit(self):
-        self.connection.closeConnection()
+        self.connection.close()
         self.closeWindow()
         core.quit()
 

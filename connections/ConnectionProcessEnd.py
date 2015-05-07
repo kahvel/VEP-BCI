@@ -40,7 +40,7 @@ class Connection(Connections.AbstractConnection):
     def receiveMessage(self):
         return self.connection.recv()
 
-    def closeConnection(self):
+    def close(self):
         self.sendMessage(c.CLOSE_MESSAGE)
         self.connection.close()
         self.connection = None

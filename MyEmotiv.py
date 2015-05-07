@@ -93,7 +93,7 @@ class MyEmotiv(object):
 
     def cleanUp(self):
         self.closeDevices()
-        self.connection.closeConnection()
+        self.connection.close()
 
     def setupCrypto(self, sn):
         type = 0 # feature[5]

@@ -143,6 +143,7 @@ class PostOffice(object):
             message = self.startPacketSending(time, target_freqs, target)
             if message is not None:
                 return message
+        self.main_connection.sendMessage(c.STOP_MESSAGE)
 
     def setStandby(self, options):
         if self.isStandby(options[c.DATA_TEST][c.TEST_STANDBY]):
@@ -164,6 +165,7 @@ class PostOffice(object):
 
     def exit(self):
         self.connections.close()
+        self.main_connection.close()
 
     def isStandby(self, standby):
         if standby == c.TEST_NONE:
