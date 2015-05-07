@@ -10,21 +10,22 @@ class Connection(Connections.AbstractConnection):
         self.connection = connection
         self.name = name
 
-    def waitMessages(self, start_function, exit_function, update_function, setup_function):  # wait for start or exit message
+    def waitMessages(self, start_function, exit_function, update_function, setup_function):  # wait messages
         message = None
         while True:
             update_function()
             if message is not None:
                 if message == c.START_MESSAGE:
-                    print("Start", self.name)
+                    # print("Start", self.name)
                     message = start_function()
                     continue
                 elif message == c.STOP_MESSAGE:
-                    print("Stop", self.name)
+                    pass
+                    # print("Stop", self.name)
                 elif message == c.SETUP_MESSAGE:
                     self.sendMessage(setup_function())
                 elif message == c.EXIT_MESSAGE:
-                    print("Exit", self.name)
+                    # print("Exit", self.name)
                     exit_function()
                     return
                 else:
@@ -85,7 +86,7 @@ class MainConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_MAIN_NAME)
 
-    def send(self, message):
+    def sendMessage(self, message):
         self.connection.send(message)
 
 

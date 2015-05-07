@@ -30,7 +30,7 @@ class MainWindow(MyWindows.TkWindow):
         self.disableButton(c.STOP_BUTTON)
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
-
+        self.setup_options = None
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.protocol("WM_DELETE_WINDOW", self.exit)
@@ -54,17 +54,17 @@ class MainWindow(MyWindows.TkWindow):
             self.main_frame.loadDefaultValue()
 
     def resetResults(self):
-        self.connection.send(c.RESET_RESULTS_MESSAGE)
+        self.connection.sendMessage(c.RESET_RESULTS_MESSAGE)
 
     def showResults(self):
-        self.connection.send(c.SHOW_RESULTS_MESSAGE)
+        self.connection.sendMessage(c.SHOW_RESULTS_MESSAGE)
 
     def saveResults(self):
-        self.connection.send(c.SAVE_RESULTS_MESSAGE)
+        self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
 
     def calculateThreshold(self):
-        self.connection.send("Threshold")
-        self.connection.send(self.getChosenFreq())
+        self.connection.sendMessage("Threshold")
+        self.connection.sendMessage(self.getChosenFreq())
 
     def removeDisabledData(self, data, filter_function, frame_key):
         result = []
@@ -178,11 +178,12 @@ class MainWindow(MyWindows.TkWindow):
 
     def setup(self):
         not_validated = self.main_frame.getNotValidated()
+        self.setup_options = self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
         if len(not_validated) != 0:
             print(not_validated)
         else:
             self.connection.sendSetupMessage()
-            self.connection.sendMessage(self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]))
+            self.connection.sendMessage(self.setup_options)
             self.enableButton(c.START_BUTTON)
 
     def disableButton(self, button_name):
@@ -192,6 +193,8 @@ class MainWindow(MyWindows.TkWindow):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].enableButton(button_name)
 
     def start(self):
+        if self.setup_options != self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]):
+            print("Warning: options were changed, but setup was not clicked")
         self.disableButton(c.SETUP_BUTTON)
         self.disableButton(c.START_BUTTON)
         self.enableButton(c.STOP_BUTTON)
@@ -228,14 +231,14 @@ class MainWindow(MyWindows.TkWindow):
         if self.current_radio_button.get() == 0:
             print("Choose target")
         else:
-            self.connection.send("Record target")
-            # self.connection.send(self.removeDisabledData())
-            self.connection.send(self.getBackgroundData())
-            self.connection.send([self.targets[self.current_radio_button.get()]])
-            self.connection.send(length)
-            self.connection.send(self.current_radio_button.get())
+            self.connection.sendMessage("Record target")
+            # self.connection.sendMessage(self.removeDisabledData())
+            self.connection.sendMessage(self.getBackgroundData())
+            self.connection.sendMessage([self.targets[self.current_radio_button.get()]])
+            self.connection.sendMessage(length)
+            self.connection.sendMessage(self.current_radio_button.get())
 
     def recordNeutral(self):
-        self.connection.send("Record neutral")
-        self.connection.send(int(self.textboxes["Record"]["Length"].get()))
-        self.connection.send(self.current_radio_button.get())
+        self.connection.sendMessage("Record neutral")
+        self.connection.sendMessage(int(self.textboxes["Record"]["Length"].get()))
+        self.connection.sendMessage(self.current_radio_button.get())
