@@ -96,11 +96,9 @@ class TargetFrame(Frame.Frame):
     def changeFreq(self, increase=False, decrease=False):
         freq_on, freq_off = self.calculateOnOffFreq(increase, decrease)
         if freq_off+freq_on != 0:
-            new_freq = self.calculateNewFreq(freq_on, freq_off)
-            if new_freq != self.getTargetFreq() or self.loading_default_value:
-                self.setTargetFreq(new_freq)
-                self.setSequence(freq_on, freq_off)
-                self.loading_default_value = False
+            self.setTargetFreq(self.calculateNewFreq(freq_on, freq_off))
+            self.setSequence(freq_on, freq_off)
+            self.loading_default_value = False
             return True
         else:
             return False
