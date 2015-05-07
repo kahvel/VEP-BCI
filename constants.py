@@ -42,8 +42,9 @@ WINDOW_REFRESH = "Refresh"
 WINDOW_MONITOR = "Monitor"
 
 # Result tab buttons
-RESULT_SHOW = "Show"
-RESULT_RESET = "Reset"
+RESULT_SHOW_BUTTON = "Show"
+RESULT_RESET_BUTTON = "Reset"
+RESULT_SAVE_BUTTON = "Save"
 
 # Record tab buttons
 RECORD_LENGTH = "Length"
@@ -125,6 +126,7 @@ WINDOW_COLOR_FRAME = "ColorTextboxFrame"
 TEST_COLOR_FRAME = "TestColorTextboxFrame"
 
 TARGET_FRAME = "TargetFrame"
+RESULT_FRAME = "ResultFrame"
 
 # Color textbox's textbox name
 TEXTBOX = "Textbox"
@@ -217,6 +219,10 @@ CLOSE_MESSAGE = "Close"
 SETUP_MESSAGE = "Setup"
 FAIL_MESSAGE = "Fail"
 SUCCESS_MESSAGE = "Success"
+
+SHOW_RESULTS_MESSAGE = "Show results"
+RESET_RESULTS_MESSAGE = "Reset results"
+SAVE_RESULTS_MESSAGE = "Save results"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"

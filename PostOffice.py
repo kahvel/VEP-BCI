@@ -53,10 +53,12 @@ class PostOffice(object):
                     self.recordSignal(self.main_connection.recv(), self.main_connection.recv())
                     self.sendMessage(self.emotiv_connection, "Stop")
                     self.sendMessage(self.psychopy_connection, "Stop")
-                elif message == "Reset results":
+                elif message == c.RESET_RESULTS_MESSAGE:
                     self.resetResults()
-                elif message == "Show results":
+                elif message == c.SHOW_RESULTS_MESSAGE:
                     self.printResults()
+                elif message == c.SAVE_RESULTS_MESSAGE:
+                    self.saveResults()
                 elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return
@@ -80,6 +82,9 @@ class PostOffice(object):
 
     def resetResults(self):
         self.results = {name: {} for name in c.EXTRACTION_METHOD_NAMES}
+
+    def saveResults(self):
+        pass
 
     def setupResults(self, target_freqs):
         for key in self.results:

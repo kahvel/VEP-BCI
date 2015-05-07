@@ -1,13 +1,25 @@
 __author__ = 'Anti'
 
-from widgets import Textboxes, Checkbutton, OptionMenu
+from widgets import Textboxes, Checkbutton, OptionMenu, Buttons
 from frames import Frame
 import Tkinter
 import constants as c
 
 
+class ResultsFrame(Frame.Frame):
+    def __init__(self, parent, buttons, row, column, **kwargs):
+        show, reset, save = buttons
+        Frame.Frame.__init__(self, parent, c.RESULT_FRAME, row, column, **kwargs)
+        Tkinter.Label(self.widget, text="Results").grid(row=0, column=0, padx=5, pady=5)
+        self.addChildWidgets((
+            Buttons.Button(self.widget, c.RESULT_SHOW_BUTTON,  0, 1, command=show),
+            Buttons.Button(self.widget, c.RESULT_RESET_BUTTON, 0, 2, command=reset),
+            Buttons.Button(self.widget, c.RESULT_SAVE_BUTTON, 0, 3, command=save)
+        ))
+
+
 class TestTab(Frame.Frame):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, buttons, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.target_count = 0
         self.addChildWidgets((
@@ -17,7 +29,8 @@ class TestTab(Frame.Frame):
             Textboxes.LabelTextbox (self.widget, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
             Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 2, 2, columnspan=2, command=self.enableTime, default_value=1),
             Textboxes.LabelTextbox (self.widget, c.TEST_MIN,       3, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET]),
-            Textboxes.LabelTextbox (self.widget, c.TEST_MAX,       3, 2, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET])
+            Textboxes.LabelTextbox (self.widget, c.TEST_MAX,       3, 2, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_TARGET]),
+            ResultsFrame(self.widget, buttons, 4, 0, columnspan=4)
         ))
 
     def enableTime(self):

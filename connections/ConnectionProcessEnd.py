@@ -85,6 +85,9 @@ class MainConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_MAIN_NAME)
 
+    def send(self, message):
+        self.connection.send(message)
+
 
 class EmotivConnection(Connection):
     def __init__(self, connection):

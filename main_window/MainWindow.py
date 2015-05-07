@@ -12,20 +12,18 @@ class MainWindow(MyWindows.TkWindow):
         self.start_button = None
 
         self.main_frame = MainFrame.MainFrame(self,
-            # (
+            (
                 self.start,
                 self.setup,
                 self.askSaveFile,
                 self.askLoadFile,
                 self.exit
-            # ),
-            # (
-            #     self.showResults,
-            #     self.resetResults
-            # ),
-            # (
-            #     self.calculateThreshold,
-            # ),
+            ),
+            (
+                self.showResults,
+                self.resetResults,
+                self.saveResults
+            )
         )
         self.loadValues(c.DEFAULT_FILE)
 
@@ -44,10 +42,13 @@ class MainWindow(MyWindows.TkWindow):
             self.main_frame.loadDefaultValue()
 
     def resetResults(self):
-        self.connection.send("Reset results")
+        self.connection.send(c.RESET_RESULTS_MESSAGE)
 
     def showResults(self):
-        self.connection.send("Show results")
+        self.connection.send(c.SHOW_RESULTS_MESSAGE)
+
+    def saveResults(self):
+        self.connection.send(c.SAVE_RESULTS_MESSAGE)
 
     def calculateThreshold(self):
         self.connection.send("Threshold")
