@@ -7,41 +7,59 @@ import constants as c
 
 
 class Target(object):
-    def __init__(self, target, test_color, window):
+    def __init__(self, options, test_color, window):
         self.standby_target = False
-        self.color1 = target[c.TARGET_COLOR1]
-        self.color0 = target[c.TARGET_COLOR0]
+        self.color1 = options[c.TARGET_COLOR1]
+        self.color0 = options[c.TARGET_COLOR0]
         self.test_color = test_color
         self.current_target = False
-        self.rect = visual.Rect(
-            window,
-            width=target[c.TARGET_WIDTH],
-            height=target[c.TARGET_HEIGHT],
-            pos=(target[c.TARGET_X], target[c.TARGET_Y]),
-            autoLog=False,
-            fillColor=self.color1
-        )
-        # self.fixation = visual.GratingStim(window, size=1, pos=[int(target["x"]), int(target["y"])], sf=0, rgb=1)
+        self.detected_target = False
+        self.detected_counter = 0
+        self.detected_length = 3
+        self.rect = self.getRect(window, options, self.color1)
+        # self.fixation = visual.GratingStim(window, size=1, pos=[int(options["x"]), int(options["y"])], sf=0, rgb=1)
         # self.fixation.setAutoDraw(True)
-        self.detected_rect = visual.Rect(
+        self.current_target_signs = self.getSigns(window, options, self.test_color)
+        self.detected_target_signs = self.getSigns(window, options, "#00ff00")
+        self.freq = float(options[c.DATA_FREQ])
+        self.sequence = str(options[c.TARGET_SEQUENCE])
+
+    def getRect(self, window, options, color):
+        return visual.Rect(
             window,
-            width=10,
-            height=10,
-            fillColor="#00ff00",
-            pos=(target[c.TARGET_X], target[c.TARGET_Y]+target[c.TARGET_WIDTH]+20)
+            width=options[c.TARGET_WIDTH],
+            height=options[c.TARGET_HEIGHT],
+            pos=(options[c.TARGET_X], options[c.TARGET_Y]),
+            autoLog=False,
+            fillColor=color
         )
-        self.current_rect = visual.Rect(
+
+    def getTriangle(self, window, options, color, x, y, ori=0):
+        return visual.Polygon(
             window,
-            width=10,
-            height=10,
-            fillColor="#00ff00",
-            pos=(target["x"], target["y"]-target["Height"]+20)
+            edges=3,
+            radius=10,
+            fillColor=color,
+            ori=ori,
+            pos=(
+                options[c.TARGET_X]+(options[c.TARGET_WIDTH]/2 + 20)*x,
+                options[c.TARGET_Y]+(options[c.TARGET_HEIGHT]/2 + 20)*y
+            )
         )
-        self.freq = float(target[c.DATA_FREQ])
-        self.sequence = str(target[c.TARGET_SEQUENCE])
+
+    def getSigns(self, window, options, color):
+        return (
+            self.getTriangle(window, options, color, 0, 1, 60),
+            self.getTriangle(window, options, color, 1, 0, 30),
+            self.getTriangle(window, options, color, 0, -1),
+            self.getTriangle(window, options, color, -1, 0, -30)
+        )
 
     def setCurrent(self, value):
         self.current_target = value
+
+    def detected(self):
+        self.detected_target = True
 
     def setStandbyTarget(self, value):
         self.standby_target = value
@@ -52,14 +70,31 @@ class Target(object):
         if not standby or self.standby_target:
             self.rect.draw()
 
+    def drawTriangles(self, standby, triangles):
+        if not standby:
+            for triangle in triangles:
+                triangle.draw()
+
+    def drawDetectedSigns(self, standby):
+        self.drawTriangles(standby, self.detected_target_signs)
+        if self.detected_counter < self.detected_length:
+            self.detected_counter = 0
+            self.detected_target = False
+        else:
+            self.detected_counter += 1
+
     def generator(self):
         while True:
             for state in self.sequence:
                 standby = yield
+                if self.detected_target:
+                    self.drawDetectedSigns(standby)
+                elif self.current_target:
+                    self.drawTriangles(standby, self.current_target_signs)
                 if state == "1":
-                    self.drawRect(self.test_color if self.current_target else self.color1, standby)
+                    self.drawRect(self.color1, standby)
                     # self.fixation.draw()
-                if state == "0":
+                elif state == "0":
                     self.drawRect(self.color0, standby)
 
 
@@ -131,6 +166,9 @@ class TargetsWindow(object):
         target.setCurrent(True)
         self.prev_current = target
 
+    def setTargetDetected(self, target):
+        target.detected()
+
     def start(self, standby=False):
         while True:
             self.updateWindow()
@@ -140,11 +178,10 @@ class TargetsWindow(object):
                     standby = message
                     continue
                 elif isinstance(message, basestring):
-                    # prev_rect.setAutoDraw(False)
                     return message
                 for i in range(len(self.targets)):
                     if message == self.targets[i].freq and isinstance(message, float):
-                        self.targets[i].detected_rect.draw()
+                        self.setTargetDetected(self.targets[i])
                         break
                     elif message == i+1 and isinstance(message, int):
                         self.setCurrentTarget(self.targets[i])

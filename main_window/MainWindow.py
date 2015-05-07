@@ -153,7 +153,7 @@ class MainWindow(MyWindows.TkWindow):
     def getTestData(self, data):
         result = self.filterData(
             data,
-            (c.TEST_COLOR_FRAME,)
+            (c.TEST_COLOR_FRAME, c.RESULT_FRAME)
         )
         result[c.TEST_COLOR] = data[c.TEST_COLOR_FRAME][c.TEXTBOX]
         return result
