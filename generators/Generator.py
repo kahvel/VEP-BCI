@@ -103,16 +103,6 @@ class AbstractExtracionGenerator(AbstractPythonGenerator):
     def getHarmonics(self, options):
         return options[c.OPTIONS_HARMONICS]
 
-    def getMax(self, getValue, arg_list):
-        max_value = -float("inf")
-        max_index = None
-        for i in range(len(arg_list)):
-            value = getValue(arg_list[i])
-            if value > max_value:
-                max_value = value
-                max_index = i
-        return max_value, max_index
-
     def checkLength(self, signal_length, options_length):
         if self.short_signal and signal_length == options_length:
             self.short_signal = False

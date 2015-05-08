@@ -19,7 +19,7 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
 
     def getReferenceSignals(self, length, target_freqs):
         reference_signals = []
-        t = np.arange(0, length, step=1)/c.HEADSET_FREQ
+        t = np.arange(0, length, step=1.0)/c.HEADSET_FREQ
         for freq in target_freqs:
             reference_signals.append([])
             for harmonic in range(1, self.harmonics+1):
@@ -39,23 +39,17 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
         else:
             return np.array(target_reference)
 
+    def getResults(self, coordinates, length):
+        return tuple(map(lambda reference: self.getCorr(coordinates, self.getReferenceSignal(reference, length).T), self.reference_signals))
+
     def getGenerator(self, options):
         length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
-        target_freqs = options[c.DATA_FREQS]
         generator_count = len(options[c.DATA_SENSORS])
         coordinates = [[] for _ in range(generator_count)]
         while True:
             for i in range(generator_count):
                 coordinates[i] = yield
-            self.checkLength(len(coordinates[0]), length)
-            max_value, max_index = self.getMax(
-                lambda target_reference: self.getCorr(
-                    np.array(coordinates).T,
-                    self.getReferenceSignal(target_reference, len(coordinates[0])).T
-                ),
-                self.reference_signals
-            )
-            # print maximum, 0.2
-            # if maximum > 0.2:
-            #     yield target_freqs[max_index]
-            yield target_freqs[max_index]
+            actual_length = len(coordinates[0])
+            self.checkLength(actual_length, length)
+            transposed_coordinates = np.array(coordinates).T
+            yield self.getResults(transposed_coordinates, actual_length)
