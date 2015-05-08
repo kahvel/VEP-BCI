@@ -19,13 +19,12 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
 
     def getReferenceSignals(self, length, target_freqs):
         reference_signals = []
-        t = np.arange(0, length)  # TODO???
+        t = np.arange(0, length, step=1)/c.HEADSET_FREQ
         for freq in target_freqs:
             reference_signals.append([])
             for harmonic in range(1, self.harmonics+1):
-                reference_signals[-1].append(np.sin(np.pi*2*harmonic*freq/c.HEADSET_FREQ*t))
-                reference_signals[-1].append(np.cos(np.pi*2*harmonic*freq/c.HEADSET_FREQ*t))
-            # reference_signals[-1] = np.array(reference_signals[-1]).T
+                reference_signals[-1].append(np.sin(np.pi*2*harmonic*freq*t))
+                reference_signals[-1].append(np.cos(np.pi*2*harmonic*freq*t))
         return reference_signals
 
     def getCorr(self, signal, reference):
@@ -44,7 +43,7 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
         length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         target_freqs = options[c.DATA_FREQS]
         generator_count = len(options[c.DATA_SENSORS])
-        coordinates = [None for _ in range(generator_count)]
+        coordinates = [[] for _ in range(generator_count)]
         while True:
             for i in range(generator_count):
                 coordinates[i] = yield

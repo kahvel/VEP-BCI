@@ -211,7 +211,7 @@ class PostOffice(object):
         # )
 
 
-
+    # The following code currently does not work
 
     def calculateThreshold(self):
         target_freqs = self.main_connection.recv()
