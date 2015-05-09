@@ -43,7 +43,7 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
         return {freq: self.getCorr(coordinates, self.getReferenceSignal(reference, length).T) for freq, reference in zip(target_freqs, self.reference_signals)}
 
     def getGenerator(self, options):
-        length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
+        max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         generator_count = len(options[c.DATA_SENSORS])
         target_freqs = options[c.DATA_FREQS]
         coordinates = [[] for _ in range(generator_count)]
@@ -51,6 +51,6 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
             for i in range(generator_count):
                 coordinates[i] = yield
             actual_length = len(coordinates[0])
-            self.checkLength(actual_length, length)
+            self.checkLength(actual_length, max_length)
             transposed_coordinates = np.array(coordinates).T
             yield self.getResults(transposed_coordinates, actual_length, target_freqs)

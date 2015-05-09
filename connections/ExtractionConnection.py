@@ -5,9 +5,21 @@ from generators import Extraction
 import constants as c
 
 
-class ExtractionTabConnection(NotebookConnection.TabConnection):
+class ExtractionConnection(object):
+    def receiveExtractionMessages(self):
+        result = {}
+        for connection in self.connections:
+            message = connection.receiveExtractionMessages()
+            if message is not None:
+                result[connection.id] = message
+        return result if result != {} else None
+
+
+class ExtractionTabConnection(ExtractionConnection, NotebookConnection.TabConnection):
     def __init__(self):
+        ExtractionConnection.__init__(self)
         NotebookConnection.TabConnection.__init__(self, c.DATA_EXTRACTION)
+        self.message_counter = 0
 
     def getConnection(self):
         return ExtractionMethodConnection()
@@ -62,7 +74,8 @@ class ExtractionTabConnection(NotebookConnection.TabConnection):
 
     def getMessages(self):
         message = self.receiveExtractionMessages()
-        print(message)
+        if message is not None:
+            print(message)
         return {}, {}, {}, {}, {}
         # detailed_results = self.getDetailedResults(message)
         # tab_results = self.getTabResults(detailed_results)
@@ -71,12 +84,10 @@ class ExtractionTabConnection(NotebookConnection.TabConnection):
         # result_count = sum(results.itervalues())
         # return result_count, results, tab_results, method_results, detailed_results
 
-    def receiveExtractionMessages(self):
-        return {connection.id: connection.receiveExtractionMessages() for connection in self.connections}
 
-
-class ExtractionMethodConnection(NotebookConnection.MethodConnection):
+class ExtractionMethodConnection(ExtractionConnection, NotebookConnection.MethodConnection):
     def __init__(self):
+        ExtractionConnection.__init__(self)
         NotebookConnection.MethodConnection.__init__(self)
 
     def getConnection(self, method):
@@ -89,12 +100,10 @@ class ExtractionMethodConnection(NotebookConnection.MethodConnection):
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
-    def receiveExtractionMessages(self):
-        return {connection.id: connection.receiveExtractionMessages() for connection in self.connections}
 
-
-class ExtractionSensorConnection(NotebookConnection.SensorConnection):
+class ExtractionSensorConnection(ExtractionConnection, NotebookConnection.SensorConnection):
     def __init__(self):
+        ExtractionConnection.__init__(self)
         NotebookConnection.SensorConnection.__init__(self)
 
     def getConnection(self, method):
@@ -102,6 +111,3 @@ class ExtractionSensorConnection(NotebookConnection.SensorConnection):
             return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
-
-    def receiveExtractionMessages(self):
-        return {connection.id: connection.receiveExtractionMessages() for connection in self.connections}

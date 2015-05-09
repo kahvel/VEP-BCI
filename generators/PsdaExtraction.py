@@ -63,9 +63,10 @@ class PsdaExtraction(Generator.AbstractExtracionGenerator):
         return {freq: self.getListOfMagnitudes(freq, harmonics, interpolation_func) for freq, harmonics in zip(target_freqs, self.harmonics)}
 
     def getGenerator(self, options):
-        length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
+        max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         target_freqs = options[c.DATA_FREQS]
         while True:
             coordinates = yield
-            self.checkLength(len(coordinates), self.getFftLength(length))
+            actual_length = len(coordinates)
+            self.checkLength(actual_length, self.getFftLength(max_length))
             yield self.getResults(target_freqs, coordinates)

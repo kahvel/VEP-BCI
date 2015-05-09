@@ -100,14 +100,14 @@ class Cca(Extraction):
             if isinstance(message, basestring):
                 return message
             if message is not None:
-                freq = None
+                results = None
                 for sensor, generator in zip(self.sensors, self.coordinates_generators):
                     signal = generator.send(message.sensors[sensor]["value"])
                     if signal is not None:
                         generator.next()
-                        freq = self.generator.send(signal)
-                if freq is not None:
-                    self.connection.sendMessage(freq)
+                        results = self.generator.send(signal)
+                if results is not None:
+                    self.connection.sendMessage(results)
                     self.generator.next()
                 else:
                     self.connection.sendMessage(None)
