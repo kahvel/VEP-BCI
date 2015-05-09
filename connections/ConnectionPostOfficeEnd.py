@@ -26,6 +26,9 @@ class ExtractionConnection(Connections.Connection):
         self.sendSetupMessage()
         self.connection.send(options)
 
+    def receiveExtractionMessages(self):
+        return self.receiveMessageBlock()
+
 
 class PlotConnection(Connections.Connection):
     def __init__(self, process):

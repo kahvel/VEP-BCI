@@ -16,6 +16,7 @@ class SensorConnection(Connections.MultipleConnections):
             dict_copy = copy.deepcopy(options)
             dict_copy[c.DATA_SENSORS] = [sensor]
             new_connection.setup(dict_copy)
+            new_connection.setId(sensor)
             self.connections.append(new_connection)
 
     def getConnection(self, method):
@@ -36,6 +37,7 @@ class MethodConnection(Connections.MultipleConnections):
             dict_copy = copy.deepcopy(options)
             dict_copy[c.DATA_METHOD] = method
             new_connection.setup(dict_copy)
+            new_connection.setId((method, tuple(options[c.DATA_SENSORS])))
             self.connections.append(new_connection)
 
 
@@ -46,12 +48,13 @@ class TabConnection(Connections.MultipleConnections):
 
     def setup(self, options):
         self.close()
-        for option in options[self.options_key]:
+        for tab_id, option in enumerate(options[self.options_key]):
             new_connection = self.getConnection()
             dict_copy = copy.deepcopy(option)
             dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
             dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS]
             new_connection.setup(dict_copy)
+            new_connection.setId(tab_id+1)
             self.connections.append(new_connection)
 
     def getConnection(self):

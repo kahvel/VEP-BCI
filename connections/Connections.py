@@ -7,6 +7,7 @@ import multiprocessing
 class AbstractConnection(object):
     def __init__(self):
         self.connection = None
+        self.id = None
 
     def sendMessage(self, message):
         raise NotImplementedError("sendMessage not implemented!")
@@ -55,6 +56,9 @@ class AbstractConnection(object):
             else:
                 print("Warning! Infinite poll returned False.")
 
+    def setId(self, id):
+        self.id = id
+
 
 class Connection(AbstractConnection):
     def __init__(self, process, connection_other_end):
@@ -67,11 +71,6 @@ class Connection(AbstractConnection):
 
     def receiveMessage(self):
         return self.connection.recv()
-        # message = self.connection.recv()
-        # if message == c.CLOSE_MESSAGE:
-        #     self.connection.close()
-        #     self.connection = None
-        # return message
 
     def setup(self, *options):
         if self.connection is None:

@@ -61,14 +61,18 @@ class ExtractionTabConnection(NotebookConnection.TabConnection):
         return results
 
     def getMessages(self):
-        message = self.receiveMessageBlock()
+        message = self.receiveExtractionMessages()
         print(message)
-        detailed_results = self.getDetailedResults(message)
-        tab_results = self.getTabResults(detailed_results)
-        method_results = self.getMethodResults(detailed_results)
-        results = self.getResults(detailed_results)
-        result_count = sum(results.itervalues())
-        return result_count, results, tab_results, method_results, detailed_results
+        return {}, {}, {}, {}, {}
+        # detailed_results = self.getDetailedResults(message)
+        # tab_results = self.getTabResults(detailed_results)
+        # method_results = self.getMethodResults(detailed_results)
+        # results = self.getResults(detailed_results)
+        # result_count = sum(results.itervalues())
+        # return result_count, results, tab_results, method_results, detailed_results
+
+    def receiveExtractionMessages(self):
+        return {connection.id: connection.receiveExtractionMessages() for connection in self.connections}
 
 
 class ExtractionMethodConnection(NotebookConnection.MethodConnection):
@@ -85,6 +89,9 @@ class ExtractionMethodConnection(NotebookConnection.MethodConnection):
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
+    def receiveExtractionMessages(self):
+        return {connection.id: connection.receiveExtractionMessages() for connection in self.connections}
+
 
 class ExtractionSensorConnection(NotebookConnection.SensorConnection):
     def __init__(self):
@@ -95,3 +102,6 @@ class ExtractionSensorConnection(NotebookConnection.SensorConnection):
             return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
+
+    def receiveExtractionMessages(self):
+        return {connection.id: connection.receiveExtractionMessages() for connection in self.connections}
