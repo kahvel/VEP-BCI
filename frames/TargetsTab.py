@@ -28,6 +28,7 @@ class TargetFrame(Frame.Frame):
         decrease = lambda: self.changeFreq(decrease=True)
         self.addChildWidgets((
             Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
+            Textboxes.LabelTextbox         (self.widget, c.TARGET_HARMONICS, 0, 4, default_value="1,2,3", command=self.harmonicsValidation, allow_zero=True, allow_negative=True),
             Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
@@ -36,6 +37,10 @@ class TargetFrame(Frame.Frame):
             Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      3, 2, command=int, allow_negative=True, allow_zero=True),
             Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR0, c.TARGET_COLOR2_FRAME, 3, 4, default_value="#000000")
         ))
+
+    def harmonicsValidation(self, value):
+        for v in value.split(","):
+            assert int(v) > 0
 
     def getTargetFreq(self):
         return float(self.getFrequencyTextbox().getValue())

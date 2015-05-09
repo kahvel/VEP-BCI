@@ -65,7 +65,6 @@ class OptionsFrame(Frame.Frame):
             Checkbutton.Checkbutton(self.widget, c.OPTIONS_NORMALISE,   2, 4, columnspan=2),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_BREAK,       3, 0, command=int,   allow_zero=True),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_ARG,         3, 2, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_WINDOW]),
-            Textboxes.LabelTextbox (self.widget, c.OPTIONS_HARMONICS,   3, 4, command=int,   allow_zero=False, default_value=3),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_FROM,        4, 0, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_TO,          4, 2, command=float, allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER]),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_TAPS,        4, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER])

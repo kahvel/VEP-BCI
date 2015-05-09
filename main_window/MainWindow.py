@@ -151,6 +151,12 @@ class MainWindow(MyWindows.TkWindow):
     def getExtractionData(self, data):
         return self.removeDisabledData(data, self.getOptions, c.EXTRACTION_TAB_BUTTON_FRAME)
 
+    def getHarmonics(self, data):
+        result = []
+        for target in data:
+            result.append(tuple(map(int, target[c.TARGET_HARMONICS].split(","))))
+        return result
+
     def getData(self, all_data):
         target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
         return {
@@ -159,7 +165,8 @@ class MainWindow(MyWindows.TkWindow):
             c.DATA_FREQS: self.getFrequencies(target_data),
             c.DATA_PLOTS: self.getPlotData(all_data[c.PLOT_NOTEBOOK]),
             c.DATA_EXTRACTION: self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
-            c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB])
+            c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB]),
+            c.DATA_HARMONICS: self.getHarmonics(target_data)
         }
 
     def getTestData(self, data):

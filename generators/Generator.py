@@ -97,11 +97,11 @@ class AbstractExtracionGenerator(AbstractPythonGenerator):
 
     def setup(self, options):
         AbstractPythonGenerator.setup(self, options)
-        self.harmonics = self.getHarmonics(options[c.DATA_OPTIONS])
+        self.harmonics = self.getHarmonics(options)
         self.short_signal = True
 
     def getHarmonics(self, options):
-        return options[c.OPTIONS_HARMONICS]
+        return options[c.DATA_HARMONICS]
 
     def checkLength(self, signal_length, options_length):
         if self.short_signal and signal_length == options_length:

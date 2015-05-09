@@ -107,7 +107,6 @@ OPTIONS_ARG = "Arg"
 OPTIONS_WINDOW = "Window"
 OPTIONS_BREAK = "Break"
 OPTIONS_INTERPOLATE = "Interp"
-OPTIONS_HARMONICS = "Harmonics"
 
 EXTRACTION_TAB_BUTTON_FRAME = "ExtractionTabButtonFrame"
 PLOT_TAB_BUTTON_FRAME = "PlotTabButtonFrame"
@@ -141,6 +140,7 @@ TARGET_X = "x"
 TARGET_Y = "y"
 TARGET_COLOR0 = "Color0"
 TARGET_SEQUENCE = "Sequence"
+TARGET_HARMONICS = "Harmonics"
 
 # Detrend optionmenu
 CONSTANT_DETREND = "Constant"
@@ -233,6 +233,7 @@ DATA_FREQS = "Freqs"
 DATA_PLOTS = "Plots"
 DATA_EXTRACTION = "Extraction"
 DATA_TEST = "Test"
+DATA_HARMONICS = "Harmonics"
 
 DATA_SENSORS = "Sensors"
 DATA_OPTIONS = "Options"

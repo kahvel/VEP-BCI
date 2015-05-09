@@ -62,6 +62,7 @@ class ExtractionTabConnection(NotebookConnection.TabConnection):
 
     def getMessages(self):
         message = self.receiveMessageBlock()
+        print(message)
         detailed_results = self.getDetailedResults(message)
         tab_results = self.getTabResults(detailed_results)
         method_results = self.getMethodResults(detailed_results)

@@ -50,6 +50,7 @@ class TabConnection(Connections.MultipleConnections):
             new_connection = self.getConnection()
             dict_copy = copy.deepcopy(option)
             dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
+            dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS]
             new_connection.setup(dict_copy)
             self.connections.append(new_connection)
 

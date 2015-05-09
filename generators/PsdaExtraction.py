@@ -55,12 +55,12 @@ class PsdaExtraction(Generator.AbstractExtracionGenerator):
         else:
             return self.fft_bins
 
-    def getListOfMagnitudes(self, harmonic, target_freqs, interpolation_func):
-        return tuple(map(lambda x: self.getMagnitude(x, harmonic, interpolation_func), target_freqs))
+    def getListOfMagnitudes(self, freq, harmonics, interpolation_func):
+        return {harmonic: self.getMagnitude(freq, harmonic, interpolation_func) for harmonic in harmonics}
 
     def getResults(self, target_freqs, coordinates):
         interpolation_func = self.interpolation(self.getFreqs(len(coordinates)), coordinates)
-        return tuple(map(lambda harmonic: self.getListOfMagnitudes(harmonic, target_freqs, interpolation_func), range(1, self.harmonics+1)))
+        return {freq: self.getListOfMagnitudes(freq, harmonics, interpolation_func) for freq, harmonics in zip(target_freqs, self.harmonics)}
 
     def getGenerator(self, options):
         length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
