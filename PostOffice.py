@@ -66,11 +66,41 @@ class PostOffice(object):
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)
 
-    def handleFreqMessages(self, message, target_freqs, current_target):
+    def countFreqs(self, freqs):
+        result = {}
+        for tab in freqs:
+            if freqs[tab] not in result:
+                result[freqs[tab]] = 1
+            else:
+                result[freqs[tab]] += 1
+        return result
 
-        result_count, results, tab_results, method_results, detailed_results = message
-        if results != {}:
-            max_freq, max_count = max(results.items(), key=lambda x: x[1])
+    def countAllFreqs(self, *freqs_dicts):
+        result = {}
+        for dict in freqs_dicts:
+            for freq in dict:
+                if freq not in result:
+                    result[freq] = 1
+                else:
+                    result[freq] += 1
+        return result
+
+    def handleFreqMessages(self, message, target_freqs, current_target):
+        results = message
+        if results is not None:
+            cca_results = results[c.CCA]
+            psda_results = results[c.PSDA]
+            sum_psda_results = results[c.SUM_PSDA]
+            all_cca_results, max_cca_freqs, max_cca_values, max_cca_value = cca_results
+            all_psda_results, max_psda_freqs, max_psda_values, max_psda_value = psda_results[c.RESULT_SUM]
+            all_sum_psda_results, max_sum_psda_freqs, max_sum_psda_values, max_sum_psda_value = sum_psda_results[c.RESULT_SUM][c.RESULT_SUM]
+            counted_freqs = self.countAllFreqs(
+                self.countFreqs(max_cca_freqs),
+                self.countFreqs(max_psda_freqs),
+                self.countFreqs(max_sum_psda_freqs)
+            )
+            result_count = sum(counted_freqs.values())
+            max_freq, max_count = max(counted_freqs.items(), key=lambda x: x[1])
             if max_count == result_count:
                 print(max_freq, max_count)
                 if max_freq == self.standby_freq:

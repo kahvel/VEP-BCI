@@ -135,23 +135,17 @@ class ExtractionTabConnection(ExtractionConnection, NotebookConnection.TabConnec
         result[c.RESULT_SUM] = self.getSumPsdaResults(sum_sensors)
         return result
 
+    def results(self, message):
+        return {
+            c.CCA: self.getCcaResults(copy.deepcopy(message)),
+            c.PSDA: self.getSumPsdaResults(self.getMethodResults(copy.deepcopy(message), c.SUM_PSDA)),
+            c.SUM_PSDA: self.getPsdaResults(copy.deepcopy(message))
+        }
+
     def getMessages(self):
         message = self.receiveExtractionMessages()
         if message is not None:
-            print(message)
-            # all_cca_results, max_cca_results, max_cca_freqs, max_cca_values, max_cca_value
-            cca_results = self.getCcaResults(copy.deepcopy(message))
-            sum_psda_results = self.getSumPsdaResults(self.getMethodResults(copy.deepcopy(message), c.SUM_PSDA))
-            psda_results = self.getPsdaResults(copy.deepcopy(message))
-            for key, value in psda_results.items():
-                print(value)
-        return {}, {}, {}, {}, {}
-        # detailed_results = self.getDetailedResults(message)
-        # tab_results = self.getTabResults(detailed_results)
-        # method_results = self.getMethodResults(detailed_results)
-        # results = self.getResults(detailed_results)
-        # result_count = sum(results.itervalues())
-        # return result_count, results, tab_results, method_results, detailed_results
+            return self.results(message)
 
 
 class ExtractionMethodConnection(ExtractionConnection, NotebookConnection.MethodConnection):
