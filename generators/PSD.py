@@ -26,13 +26,13 @@ class AveragePSD(AbstractPSD, SignalProcessing.AverageSignal):
         SignalProcessing.AverageSignal.__init__(self, self.signalPipeline)
 
 
-class SumAveragePSD(AveragePSD, SignalProcessing.SumAverageSignal):
+class SumAveragePSD(AbstractPSD, SignalProcessing.SumAverageSignal):
     def __init__(self):
-        AveragePSD.__init__(self)
+        AbstractPSD.__init__(self)
         SignalProcessing.SumAverageSignal.__init__(self, self.signalPipeline)
 
 
-class SumPsd(PSD, SignalProcessing.SumSignal):
+class SumPsd(AbstractPSD, SignalProcessing.SumSignal):
     def __init__(self):
-        PSD.__init__(self)
+        AbstractPSD.__init__(self)
         SignalProcessing.SumSignal.__init__(self, self.signalPipeline)

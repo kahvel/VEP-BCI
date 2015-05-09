@@ -23,13 +23,13 @@ class Signal(AbstractSignal, SignalProcessing.Signal):
         SignalProcessing.Signal.__init__(self, self.signalPipeline)
 
 
-class SumSignal(Signal, SignalProcessing.SumSignal):
+class SumSignal(AbstractSignal, SignalProcessing.SumSignal):
     def __init__(self):
         AbstractSignal.__init__(self)
         SignalProcessing.SumSignal.__init__(self, self.signalPipeline)
 
 
-class SumAverageSignal(AverageSignal, SignalProcessing.SumAverageSignal):
+class SumAverageSignal(AbstractSignal, SignalProcessing.SumAverageSignal):
     def __init__(self):
-        AverageSignal.__init__(self)
+        AbstractSignal.__init__(self)
         SignalProcessing.SumAverageSignal.__init__(self, self.signalPipeline)
