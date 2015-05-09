@@ -3,6 +3,7 @@ __author__ = 'Anti'
 from connections import NotebookConnection, ConnectionPostOfficeEnd
 from generators import Extraction
 import constants as c
+import copy
 
 
 class ExtractionConnection(object):
@@ -24,58 +25,126 @@ class ExtractionTabConnection(ExtractionConnection, NotebookConnection.TabConnec
     def getConnection(self):
         return ExtractionMethodConnection()
 
-    def addFrequency(self, results, message):
-        if message is not None:
-            name, freq = message
-            results[name] = freq
-
-    def getDetailedResults(self, message):
+    def getMethodResults(self, message, method_name):
         results = {}
-        for i, tab in enumerate(message):
-            i += 1
-            results[i] = {}
-            for method in tab:
-                if isinstance(method, list):
-                    for sensor in method:
-                        self.addFrequency(results[i], sensor)
-                else:
-                    self.addFrequency(results[i], method)
+        for tab in message:
+            for method, sensors in message[tab]:
+                if method == method_name:
+                    if tab not in results:
+                        results[tab] = message[tab][(method, sensors)]
+                    break
         return results
 
-    def addToDict(self, dict, value):
-        if value in dict:
-            dict[value] += 1
-        else:
-            dict[value] = 1
+    def getMaxResults(self, all_results):
+        return {key: max(all_results[key].items(), key=lambda x: x[1]) for key in all_results}
 
-    def getTabResults(self, detailed_results):
-        tab_results = {}
-        for tab in detailed_results:
-            tab_results[tab] = {}
-            for method in detailed_results[tab]:
-                self.addToDict(tab_results[tab], detailed_results[tab][method])
-        return tab_results
+    def getMaxFreqs(self, max_results):
+        return {key: max_results[key][0] for key in max_results}
 
-    def getMethodResults(self, detailed_results):
-        method_results = {}
-        for tab in detailed_results:
-            for method in detailed_results[tab]:
-                if method not in method_results:
-                    method_results[method] = {}
-                self.addToDict(method_results[method], detailed_results[tab][method])
-        return method_results
+    def getMaxValues(self, max_results):
+        return {key: max_results[key][1] for key in max_results}
 
-    def getResults(self, detailed_results):
-        results = {}
-        for tab in detailed_results:
-            for method in detailed_results[tab]:
-                self.addToDict(results, detailed_results[tab][method])
-        return results
+    def getOverallMaxValue(self, max_values):
+        return max(max_values.values()) if max_values != {} else None
+
+    def getResults(self, all_results):
+        max_results = self.getMaxResults(all_results)
+        max_freqs = self.getMaxFreqs(max_results)
+        max_values = self.getMaxValues(max_results)
+        max_value = self.getOverallMaxValue(max_values)
+        return all_results, max_freqs, max_values, max_value
+
+    def getCcaResults(self, message):
+        all_results = self.getMethodResults(message, c.CCA)
+        return self.getResults(all_results)
+
+    def getSumHarmonics(self, all_results):
+        result = {}
+        for tab in all_results:
+            result[tab] = {}
+            for freq in all_results[tab]:
+                result[tab][freq] = sum(all_results[tab][freq].values())
+        return result
+
+    def getHarmonicsResults(self, all_results, harmonic):
+        result = {}
+        for tab in all_results:
+            result[tab] = {}
+            for freq in all_results[tab]:
+                if harmonic in all_results[tab][freq]:
+                    result[tab][freq] = copy.deepcopy(all_results[tab][freq][harmonic])
+        return result
+
+    def getMaxHarmonics(self, all_results):
+        return {key: self.getMaxResults(all_results[key]) for key in all_results}
+
+    def getHarmonics(self, all_results):
+        result = []
+        for tab in all_results:
+            for freq in all_results[tab]:
+                for harmonic in all_results[tab][freq]:
+                    if harmonic not in result:
+                        result.append(harmonic)
+        return result
+
+    def getSumPsdaResults(self, all_results):
+        sum_harmonics = self.getSumHarmonics(all_results)
+        harmonics = self.getHarmonics(all_results)
+        max_harmonics = self.getMaxHarmonics(all_results)
+        result = {harmonic: self.getResults(self.getHarmonicsResults(all_results, harmonic)) for harmonic in harmonics}
+        result[c.RESULT_SUM] = self.getResults(sum_harmonics)
+        return result
+
+    def getSensors(self, message, method_name):
+        result = []
+        for tab in message:
+            for method, sensors in message[tab]:
+                if method == method_name:
+                    for sensor in sensors:
+                        if sensor not in result:
+                            result.append(sensor)
+        return result
+
+    def getSensorResults(self, all_results, sensors):
+        result = {}
+        for tab in all_results:
+            for sensor in all_results[tab]:
+                if sensor == sensors:
+                    result[tab] = all_results[tab][sensor]
+        return result
+
+    def getSumSensors(self, all_results):
+        result = {}
+        for tab in all_results:
+            result[tab] = {}
+            for sensor in all_results[tab]:
+                for freq in all_results[tab][sensor]:
+                    if freq not in result[tab]:
+                        result[tab][freq] = copy.deepcopy(all_results[tab][sensor][freq])
+                    else:
+                        for harmonic in all_results[tab][sensor][freq]:
+                            result[tab][freq][harmonic] += all_results[tab][sensor][freq][harmonic]
+        return result
+
+    def getPsdaResults(self, message):
+        all_results = self.getMethodResults(message, c.PSDA)
+        sum_sensors = self.getSumSensors(all_results)
+        sensors = self.getSensors(message, c.PSDA)
+        sensor_results = {sensor: self.getSensorResults(all_results, sensor) for sensor in sensors}
+        result = {sensor: self.getSumPsdaResults(sensor_results[sensor]) for sensor in sensors}
+        result[c.RESULT_SUM] = self.getSumPsdaResults(sum_sensors)
+        return result
 
     def getMessages(self):
         message = self.receiveExtractionMessages()
         if message is not None:
             print(message)
+            # all_cca_results, max_cca_results, max_cca_freqs, max_cca_values, max_cca_value
+            cca_results = self.getCcaResults(copy.deepcopy(message))
+            sum_psda_results = self.getSumPsdaResults(self.getMethodResults(copy.deepcopy(message), c.SUM_PSDA))
+            psda_results = self.getPsdaResults(copy.deepcopy(message))
+            for key, value in psda_results.items():
+                print(value)
         return {}, {}, {}, {}, {}
         # detailed_results = self.getDetailedResults(message)
         # tab_results = self.getTabResults(detailed_results)
