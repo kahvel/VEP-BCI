@@ -48,7 +48,7 @@ class Generator(AbstractPythonGenerator):
                 y = yield
                 segment.append(y)
             signal.extend(segment)
-            yield self.processShortSignal(signal, i, self.signalPipeline)
+        yield self.processShortSignal(signal, i, self.signalPipeline)
         counter = 1
         while True:
             counter += 1

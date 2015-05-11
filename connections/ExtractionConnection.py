@@ -138,8 +138,8 @@ class ExtractionTabConnection(ExtractionConnection, NotebookConnection.TabConnec
     def results(self, message):
         return {
             c.CCA: self.getCcaResults(copy.deepcopy(message)),
-            c.PSDA: self.getSumPsdaResults(self.getMethodResults(copy.deepcopy(message), c.SUM_PSDA)),
-            c.SUM_PSDA: self.getPsdaResults(copy.deepcopy(message))
+            c.SUM_PSDA: self.getSumPsdaResults(self.getMethodResults(copy.deepcopy(message), c.SUM_PSDA)),
+            c.PSDA: self.getPsdaResults(copy.deepcopy(message))
         }
 
     def getMessages(self):

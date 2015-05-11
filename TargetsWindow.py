@@ -17,8 +17,8 @@ class Target(object):
         self.detected_counter = 0
         self.detected_length = 3
         self.rect = self.getRect(window, options, self.color1)
-        # self.fixation = visual.GratingStim(window, size=1, pos=[int(options["x"]), int(options["y"])], sf=0, rgb=1)
-        # self.fixation.setAutoDraw(True)
+        self.fixation = visual.GratingStim(window, size=1, pos=[options[c.TARGET_X], options[c.TARGET_Y]], sf=0, rgb=1)
+        self.fixation.setAutoDraw(True)
         self.current_target_signs = self.getSigns(window, options, self.test_color)
         self.detected_target_signs = self.getSigns(window, options, "#00ff00")
         self.freq = float(options[c.DATA_FREQ])
