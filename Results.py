@@ -28,6 +28,8 @@ class Results(object):
 
     def trialtoString(self, trial_id):
         res = self.results[trial_id]
+        if len(res) == 2:
+            return "No results"
         result = "Total time: " + str(res["TotalTime"]) + " Packets; " + str(res["TotalTimeSec"]) + " sec"
         result += "\nTime per target: " + str(res["TimePerTarget"])
         result += "\nAcc: " + str(res["Accuracy"]) + " (Correct: " + str(res["Correct"]) + " Wrong: " + str(res["Wrong"]) + " Total: " + str(res["Correct"]+res["Wrong"]) + ")"
@@ -53,7 +55,10 @@ class Results(object):
         self.results[self.trial_id]["ITRt"] = self.getItrT(itr, time_per_target)
 
     def getTimePerTarget(self, total_results, total_time):
-        return float(total_time)/total_results
+        if total_results == 0:
+            return np.nan
+        else:
+            return float(total_time)/total_results
 
     def getTimeInSec(self, time):
         return float(time)/c.HEADSET_FREQ
@@ -87,6 +92,8 @@ class Results(object):
     def getItr(self, P, N):
         if N == 1:
             return np.nan
+        elif P == 1:
+            return self.log2(N)+P*self.log2(P)
         else:
             return self.log2(N)+P*self.log2(P)+(1-P)*self.log2((1-P)/(N-1))
 

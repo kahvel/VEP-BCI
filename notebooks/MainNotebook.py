@@ -16,7 +16,7 @@ class MainNotebook(Notebook.Notebook):
             SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0),
             SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
             self.test_tab,
-            RecordTab.RecordTab(self.widget, 0, 0)
+            #RecordTab.RecordTab(self.widget, 0, 0)
         ))
 
     def getMonitorFreq(self):
