@@ -19,6 +19,8 @@ class PostOffice(object):
         self.recorded_signals = [None for _ in range(7)]
         self.prev_results = []
         self.prev_results_counter = {}
+        self.actual_results = []
+        self.actual_results_counter = {}
         self.need_new_target = None
         self.message_counter = None
         self.waitConnections()
@@ -56,13 +58,19 @@ class PostOffice(object):
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)
 
-    def countFreqs(self, freqs, cca=False):
+    def countFreqs(self, freqs, weight=None):
         result = {}
         for tab in freqs:
             if freqs[tab] not in result:
-                result[freqs[tab]] = 1 if cca is False else 1
+                if weight is None:
+                    result[freqs[tab]] = 1
+                else:
+                    result[freqs[tab]] = weight[tab]
             else:
-                result[freqs[tab]] += 1 if cca is False else 1
+                if weight is None:
+                    result[freqs[tab]] += 1
+                else:
+                    result[freqs[tab]] += weight[tab]
         return result
 
     def countAllFreqs(self, *freqs_dicts):
@@ -95,20 +103,20 @@ class PostOffice(object):
 
     def findCorrectResults(self, results, target_freqs):
         result = self.countAllFreqs(
-            self.countFreqs(results[c.CCA][1], cca=True),
-            # self.countFreqs(results[c.SUM_PSDA][1][1] if 1 in results[c.SUM_PSDA] else {}),
-            # self.countFreqs(results[c.SUM_PSDA][2][1] if 2 in results[c.SUM_PSDA] else {}),
-            # self.countFreqs(results[c.SUM_PSDA][3][1] if 3 in results[c.SUM_PSDA] else {}),
-            self.countFreqs(results[c.SUM_PSDA][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.SUM_PSDA] else {}),
-            # self.countFreqs(results[c.PSDA]["O1"][1][1] if "O1" in results[c.PSDA] and 1 in results[c.PSDA]["O1"] else {}),
+            self.countFreqs(results[c.CCA][1], weight={2: 12, 4: 6}),
+            self.countFreqs(results[c.SUM_PSDA][1][1] if 1 in results[c.SUM_PSDA] else {}, weight={1: 6}),
+            # self.countFreqs(results[c.SUM_PSDA][2][1] if 2 in results[c.SUM_PSDA] else {}, sum_psda=True),
+            # self.countFreqs(results[c.SUM_PSDA][3][1] if 3 in results[c.SUM_PSDA] else {}, sum_psda=True),
+            self.countFreqs(results[c.SUM_PSDA][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.SUM_PSDA] else {}, weight={1: 6}),
+            self.countFreqs(results[c.PSDA]["O1"][1][1] if "O1" in results[c.PSDA] and 1 in results[c.PSDA]["O1"] else {}),
             # self.countFreqs(results[c.PSDA]["O1"][2][1] if "O1" in results[c.PSDA] and 2 in results[c.PSDA]["O1"] else {}),
             # self.countFreqs(results[c.PSDA]["O1"][3][1] if "O1" in results[c.PSDA] and 3 in results[c.PSDA]["O1"] else {}),
-            # self.countFreqs(results[c.PSDA]["O1"][c.RESULT_SUM][1] if "O1" in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA]["O1"] else {}),
-            # self.countFreqs(results[c.PSDA]["O2"][1][1] if "O2" in results[c.PSDA] and 1 in results[c.PSDA]["O2"] else {}),
+            self.countFreqs(results[c.PSDA]["O1"][c.RESULT_SUM][1] if "O1" in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA]["O1"] else {}),
+            self.countFreqs(results[c.PSDA]["O2"][1][1] if "O2" in results[c.PSDA] and 1 in results[c.PSDA]["O2"] else {}),
             # self.countFreqs(results[c.PSDA]["O2"][2][1] if "O2" in results[c.PSDA] and 2 in results[c.PSDA]["O2"] else {}),
             # self.countFreqs(results[c.PSDA]["O2"][3][1] if "O2" in results[c.PSDA] and 3 in results[c.PSDA]["O2"] else {}),
-            # self.countFreqs(results[c.PSDA]["O2"][c.RESULT_SUM][1] if "O2" in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA]["O2"] else {}),
-            # self.countFreqs(results[c.PSDA][c.RESULT_SUM][1][1] if c.RESULT_SUM in results[c.PSDA] and 1 in results[c.PSDA][c.RESULT_SUM] else {}),
+            self.countFreqs(results[c.PSDA]["O2"][c.RESULT_SUM][1] if "O2" in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA]["O2"] else {}),
+            self.countFreqs(results[c.PSDA][c.RESULT_SUM][1][1] if c.RESULT_SUM in results[c.PSDA] and 1 in results[c.PSDA][c.RESULT_SUM] else {}),
             # self.countFreqs(results[c.PSDA][c.RESULT_SUM][2][1] if c.RESULT_SUM in results[c.PSDA] and 2 in results[c.PSDA][c.RESULT_SUM] else {}),
             # self.countFreqs(results[c.PSDA][c.RESULT_SUM][3][1] if c.RESULT_SUM in results[c.PSDA] and 3 in results[c.PSDA][c.RESULT_SUM] else {}),
             self.countFreqs(results[c.PSDA][c.RESULT_SUM][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA][c.RESULT_SUM] else {}),
@@ -123,32 +131,42 @@ class PostOffice(object):
         rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         if results is not None:
             counted_freqs = self.findCorrectResults(results, target_freqs)
-            max_freq_rounded, max_count = max(counted_freqs.items(), key=lambda x: x[1])
-            max_freq = target_freqs[rounded_target_freqs.index(max_freq_rounded)]
-            if max_count >= sum(counted_freqs.values()):
-                self.prev_results.append(max_freq)
-                self.prev_results_counter[max_freq] += 1
-                if len(self.prev_results) > 1:
-                    self.prev_results_counter[self.prev_results[0]] -= 1
-                    del self.prev_results[0]
+            # max_freq_rounded, max_count = max(counted_freqs.items(), key=lambda x: x[1])
+            # max_freq = target_freqs[rounded_target_freqs.index(max_freq_rounded)]
+            for freq in counted_freqs:
+                self.prev_results_counter[freq] += counted_freqs[freq]
+            self.prev_results.append(counted_freqs)
+            if len(self.prev_results) > 3:
+                for result in self.prev_results[0]:
+                    self.prev_results_counter[result] -= self.prev_results[0][result]
+                del self.prev_results[0]
                 f, m = max(self.prev_results_counter.items(), key=lambda x: x[1])
-                max_freq = f
-                if m >= 1:
-                    if max_freq == self.standby_freq:
-                        # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
-                        self.standby_state = not self.standby_state
-                        self.connections.sendTargetMessage(self.standby_state)
-                        winsound.Beep(2500, 100)
-                        self.prev_results = []
-                    if not self.standby_state or self.no_standby:
-                        self.connections.sendTargetMessage(max_freq)
-                        # self.connections.sendGameMessage(max_freq)
-                        if not self.results.isPrevResult(max_freq):
-                            self.results.addResult(target_freqs[current_target-1], max_freq)
-                            if max_freq != target_freqs[current_target-1]:
-                                print(counted_freqs, max_freq_rounded, max_count, target_freqs[current_target-1], self.prev_results)
-                        if max_freq == target_freqs[current_target-1]:
-                            self.need_new_target = True
+                max_freq = target_freqs[rounded_target_freqs.index(f)]
+                if m >= 65:
+                    self.actual_results.append(f)
+                    self.actual_results_counter[f] += 1
+                    if len(self.actual_results) > 5:
+                        self.actual_results_counter[self.actual_results[0]] -= 1
+                        del self.actual_results[0]
+                        f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
+                        if m1 >= 4:
+                            # if max_freq == self.standby_freq:
+                            #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
+                            #     self.standby_state = not self.standby_state
+                            #     self.connections.sendTargetMessage(self.standby_state)
+                            #     winsound.Beep(2500, 100)
+                            #     self.prev_results = []
+                            if not self.standby_state or self.no_standby:
+                                self.connections.sendTargetMessage(max_freq)
+                                # self.connections.sendGameMessage(max_freq)
+                                if not self.results.isPrevResult(max_freq):
+                                    self.results.addResult(target_freqs[current_target-1], max_freq)
+                                    if max_freq != target_freqs[current_target-1]:
+                                        print("wrong", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target-1], max_freq, f1)
+                                    else:
+                                        print("right", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target-1], max_freq, f1)
+                                if max_freq == target_freqs[current_target-1]:
+                                    self.need_new_target = True
 
     def getTotalTime(self, unlimited, test_time):
         return float("inf") if unlimited else test_time
@@ -175,6 +193,7 @@ class PostOffice(object):
             if message is not None:
                 return message
         self.main_connection.sendMessage(c.STOP_MESSAGE)
+        return c.STOP_MESSAGE
 
     def setStandby(self, options):
         if self.isStandby(options[c.DATA_TEST][c.TEST_STANDBY]):
@@ -190,7 +209,9 @@ class PostOffice(object):
         self.setStandby(self.options)
         self.message_counter = 0
         self.prev_results = []
-        self.prev_results_counter = {freq: 0 for freq in self.options[c.DATA_FREQS]}
+        rounded_target_freqs = tuple(round(freq, 2) for freq in self.options[c.DATA_FREQS])
+        self.prev_results_counter = {freq: 0 for freq in rounded_target_freqs}
+        self.actual_results_counter = {freq: 0 for freq in rounded_target_freqs}
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS])
             return c.SUCCESS_MESSAGE
