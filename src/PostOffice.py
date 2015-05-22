@@ -1,9 +1,9 @@
 __author__ = 'Anti'
 
 import random
+
 import constants as c
 from connections import MasterConnection, ConnectionPostOfficeEnd
-import winsound
 import Results
 
 

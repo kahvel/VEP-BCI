@@ -1,9 +1,10 @@
 __author__ = 'Anti'
 
+import copy
+
 from connections import NotebookConnection, ConnectionPostOfficeEnd
 from generators import Extraction
 import constants as c
-import copy
 
 
 class ExtractionConnection(object):

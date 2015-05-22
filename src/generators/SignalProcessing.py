@@ -1,9 +1,10 @@
 __author__ = 'Anti'
 
 import scipy.signal
+import numpy as np
+
 import constants as c
 from generators import Generator
-import numpy as np
 
 
 class SignalProcessing(Generator.AbstractMyGenerator):

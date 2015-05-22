@@ -1,7 +1,9 @@
 __author__ = 'Anti'
 
-from psychopy import visual, core, logging, event
+from psychopy import visual, core, logging
+
 import constants as c
+
 
 # To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
 

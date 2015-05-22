@@ -1,8 +1,7 @@
-from gui.widgets.frames.tabs import TestTab
-
 __author__ = 'Anti'
 
 from gui.widgets.frames.notebooks import SameTabsNotebook, Notebook
+from gui.widgets.frames.tabs import TestTab, WindowTab
 import constants as c
 
 

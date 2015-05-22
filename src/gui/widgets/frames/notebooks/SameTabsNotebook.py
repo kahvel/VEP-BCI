@@ -1,8 +1,7 @@
-from gui.widgets.frames.tabs import ExtractionPlotTabs
-
 __author__ = 'Anti'
 
 from gui.widgets.frames.notebooks import Notebook
+from gui.widgets.frames.tabs import ExtractionPlotTabs, TargetsTab
 import constants as c
 
 

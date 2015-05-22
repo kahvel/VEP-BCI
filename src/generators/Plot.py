@@ -1,7 +1,8 @@
 __author__ = 'Anti'
 
-import constants as c
 import pyqtgraph as pg
+
+import constants as c
 from generators import Signal, PSD, Generator
 
 

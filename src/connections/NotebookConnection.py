@@ -1,8 +1,9 @@
 __author__ = 'Anti'
 
+import copy
+
 import Connections
 import constants as c
-import copy
 
 
 class SensorConnection(Connections.MultipleConnections):

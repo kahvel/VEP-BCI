@@ -2,6 +2,7 @@ __author__ = 'Anti'
 
 import numpy as np
 import scipy.interpolate
+
 import constants as c
 from generators import Generator
 

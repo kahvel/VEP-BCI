@@ -1,10 +1,13 @@
 __author__ = 'Anti'
 
-import emokit.emotiv
+import Queue
+
 from Crypto.Cipher import AES
 from Crypto import Random
+
+import emokit.emotiv
 import constants as c
-import Queue
+
 
 sensorBits = {
     'F3': [10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7],
@@ -175,7 +178,7 @@ class MyEmotiv(object):
             if message is not None:
                 self.closeDevices()
                 return message
-    
+
     def get_level(self, data, bits):
         level = 0
         for i in range(13, -1, -1):

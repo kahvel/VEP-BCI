@@ -1,6 +1,7 @@
 __author__ = 'Anti'
 
 import numpy as np
+
 import constants as c
 
 

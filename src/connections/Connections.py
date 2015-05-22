@@ -1,7 +1,8 @@
 __author__ = 'Anti'
 
-import constants as c
 import multiprocessing
+
+import constants as c
 
 
 class AbstractConnection(object):

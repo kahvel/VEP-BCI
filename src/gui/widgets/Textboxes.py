@@ -4,7 +4,7 @@ import Tkinter
 import tkColorChooser
 
 from gui.widgets.frames import PlusMinusFrame, Frame
-from widgets import AbstractWidget, Buttons
+from gui.widgets import AbstractWidget, Buttons
 import constants as c
 
 

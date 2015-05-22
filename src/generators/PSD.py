@@ -1,7 +1,8 @@
 __author__ = 'Anti'
 
-from generators import SignalProcessing
 import numpy as np
+
+from generators import SignalProcessing
 
 
 class AbstractPSD(object):
