@@ -54,6 +54,8 @@ class PostOffice(object):
                 elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return
+                elif message in c.ROBOT_COMMANDS:
+                    self.connections.sendRobotMessage(message)
                 else:
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)

@@ -18,6 +18,10 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_ROBOT:      ConnectionPostOfficeEnd.RobotConnection()
         }
 
+    def sendRobotMessage(self, message):
+        if not self.connections[c.CONNECTION_ROBOT].isClosed():
+            self.connections[c.CONNECTION_ROBOT].sendMessage(message)
+
     def sendTargetMessage(self, message):
         self.connections[c.CONNECTION_PSYCHOPY].sendMessage(message)
 
