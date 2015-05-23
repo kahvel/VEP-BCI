@@ -8,7 +8,8 @@ import constants as c
 
 
 class MainFrame(Frame.Frame):
-    def __init__(self, parent, bottom_frame_buttons, notebook_buttons, row=0, column=0, **kwargs):
+    def __init__(self, parent, buttons, row=0, column=0, **kwargs):
+        bottom_frame_buttons, notebook_buttons = buttons
         Frame.Frame.__init__(self, parent, c.MAIN_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             MainNotebook.MainNotebook(self.widget, notebook_buttons, 0, 0),

@@ -11,7 +11,9 @@ class MainWindow(MyWindows.TkWindow):
     def __init__(self, connection):
         MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
         self.exitFlag = False
-        self.main_frame = MainFrame.MainFrame(self,
+        self.connection = connection
+        """ @type : connections.ConnectionProcessEnd.MainConnection """
+        self.main_frame = MainFrame.MainFrame(self, (
             (
                 self.start,
                 self.stop,
@@ -21,10 +23,14 @@ class MainWindow(MyWindows.TkWindow):
                 self.exit
             ),
             (
-                self.showResults,
-                self.resetResults,
-                self.saveResults
+                (
+                    self.showResults,
+                    self.resetResults,
+                    self.saveResults
+                ),
+                self.connection.sendMessage
             )
+        )
         )
         self.loadValues(c.DEFAULT_FILE)
         self.disableButton(c.START_BUTTON)
@@ -32,8 +38,6 @@ class MainWindow(MyWindows.TkWindow):
         # self.neutral_signal = None
         # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
         self.setup_options = None
-        self.connection = connection
-        """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
