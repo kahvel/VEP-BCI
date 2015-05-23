@@ -65,6 +65,14 @@ class AbstractFrame(AbstractWidget.Widget):
         else:
             return {index: self.widgets_list[index].getValue() for index in range(len(self.widgets_list))}
 
+    def targetAdded(self):
+        for widget in self.widgets_list:
+            widget.targetAdded()
+
+    def targetRemoved(self, deleted_tab):
+        for widget in self.widgets_list:
+            widget.targetRemoved(deleted_tab)
+
 
 class Frame(AbstractFrame):
     def __init__(self, parent, name, row, column, **kwargs):

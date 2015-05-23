@@ -24,9 +24,3 @@ class MainNotebook(Notebook.Notebook):
 
     def monitorFreqChanged(self):
         self.widgets_dict[c.TARGETS_TAB].changeFreq()
-
-    def targetAdded(self):
-        self.test_tab.targetAdded()
-
-    def targetRemoved(self, deleted_tab):
-        self.test_tab.targetRemoved(deleted_tab)

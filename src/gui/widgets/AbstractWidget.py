@@ -53,6 +53,12 @@ class Widget(object):
     def validate(self):
         return True
 
+    def targetAdded(self):
+        pass
+
+    def targetRemoved(self, deleted_tab):
+        pass
+
 
 class WidgetWithCommand(Widget):
     def __init__(self, name, row, column, **kwargs):

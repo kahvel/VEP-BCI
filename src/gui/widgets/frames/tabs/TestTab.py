@@ -22,7 +22,6 @@ class ResultsFrame(Frame.Frame):
 class TestTab(Frame.Frame):
     def __init__(self, parent, buttons, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
-        self.target_count = 0
         self.addChildWidgets((
             OptionMenu.TargetChoosingMenu(self.widget, c.TEST_TARGET,    0, 1, (c.TEST_NONE, c.TEST_RANDOM), columnspan=2),
             Textboxes.ColorTextboxFrame(self.widget, c.TEST_COLOR, c.TEST_COLOR_FRAME, 0, 3, default_value="#ffffb3"),
@@ -38,11 +37,3 @@ class TestTab(Frame.Frame):
             (0,),
             (self.widgets_dict[c.TEST_TIME],)
         )
-
-    def targetAdded(self):
-        self.widgets_dict[c.TEST_TARGET].targetAdded()
-        self.widgets_dict[c.TEST_STANDBY].targetAdded()
-
-    def targetRemoved(self, deleted_tab):
-        self.widgets_dict[c.TEST_TARGET].targetRemoved(deleted_tab)
-        self.widgets_dict[c.TEST_STANDBY].targetRemoved(deleted_tab)

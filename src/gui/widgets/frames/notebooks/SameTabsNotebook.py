@@ -34,6 +34,7 @@ class SameTabsNotebook(Notebook.Notebook):
         self.widgets_list[tab_index].loadDefaultValue()
 
     def loadDefaultValue(self):
+        self.addInitialTabs()
         for i in range(self.tab_count+1):
             self.tabDefaultValues(i)
 
@@ -81,7 +82,6 @@ class SameTabsNotebook(Notebook.Notebook):
 class ExtractionNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
-        self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
         return ExtractionPlotTabs.ExtractionTab(self.widget, row, column, **kwargs)
@@ -90,31 +90,29 @@ class ExtractionNotebook(SameTabsNotebook):
 class PlotNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
-        self.addInitialTabs()
 
     def newTab(self, row, column, **kwargs):
         return ExtractionPlotTabs.PlotTab(self.widget, row, column, **kwargs)
 
 
 class TargetNotebook(SameTabsNotebook):
-    def __init__(self, parent, row, column, targetAdded, targetRemoved, getMonitorFreq, **kwargs):
+    def __init__(self, parent, row, column, addTarget, removeTarget, getMonitorFreq, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.TARGETS_NOTEBOOK, row, column, **kwargs)
         self.getMonitorFreq = getMonitorFreq
-        self.targetAdded = targetAdded
-        self.targetRemoved = targetRemoved
-        self.addInitialTabs()
+        self.addTarget = addTarget
+        self.removeTarget = removeTarget
 
     def changeFreq(self):
         for widget in self.widgets_list:
             widget.changeFreq()
 
     def plusTabClicked(self):
-        self.targetAdded()
+        self.addTarget()
         SameTabsNotebook.plusTabClicked(self)
 
     def newTab(self, row, column, **kwargs):
         return TargetsTab.TargetsTab(self.widget, self.getMonitorFreq, **kwargs)
 
-    def deleteTab(self):  # Updates OptionMenu in Test tab
+    def deleteTab(self):  # Updates TargetChoosinMenues
         deleted_tab = SameTabsNotebook.deleteTab(self)
-        self.targetRemoved(deleted_tab)
+        self.removeTarget(deleted_tab)
