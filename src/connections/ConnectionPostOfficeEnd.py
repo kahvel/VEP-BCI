@@ -1,11 +1,11 @@
-from gui import TargetsWindow
-from gui.main_window import MainWindow
-
 __author__ = 'Anti'
 
 import Connections
 import ConnectionProcessEnd
 import MyEmotiv
+import Robot
+from gui import TargetsWindow
+from gui.main_window import MainWindow
 
 
 class PsychopyConnection(Connections.Connection):
@@ -51,3 +51,12 @@ class EmotivConnection(Connections.Connection):
 
     def sendOptions(self, *options):
         self.sendSetupMessage()
+
+
+class RobotConnection(Connections.Connection):
+    def __init__(self):
+        Connections.Connection.__init__(self, Robot.Robot, ConnectionProcessEnd.RobotConnection)
+
+    def sendOptions(self, options):
+        self.sendSetupMessage()
+        self.sendMessage(options)

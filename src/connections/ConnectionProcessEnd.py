@@ -93,3 +93,8 @@ class MainConnection(Connection):
 class EmotivConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_EMOTIV_NAME)
+
+
+class RobotConnection(Connection):
+    def __init__(self, connection):
+        Connection.__init__(self, connection, c.CONNECTION_ROBOT_NAME)

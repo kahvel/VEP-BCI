@@ -14,8 +14,8 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
             c.CONNECTION_PLOT:       PlotConnection.PlotTabConnection(),
-            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection()
-            # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
+            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection(),
+            c.CONNECTION_ROBOT:      ConnectionPostOfficeEnd.RobotConnection()
         }
 
     def sendTargetMessage(self, message):
