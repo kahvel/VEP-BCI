@@ -1,7 +1,7 @@
 __author__ = 'Anti'
 
 from gui.widgets.frames.notebooks import SameTabsNotebook, Notebook
-from gui.widgets.frames.tabs import TestTab, WindowTab
+from gui.widgets.frames.tabs import TestTab, WindowTab, RobotTab
 import constants as c
 
 
@@ -16,7 +16,7 @@ class MainNotebook(Notebook.Notebook):
             SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0),
             SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
             self.test_tab,
-            #RecordTab.RecordTab(self.widget, 0, 0)
+            RobotTab.RobotTab(self.widget)
         ))
 
     def getMonitorFreq(self):

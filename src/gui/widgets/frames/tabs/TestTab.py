@@ -25,9 +25,9 @@ class TestTab(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.target_count = 0
         self.addChildWidgets((
-            OptionMenu.OptionMenu  (self.widget, c.TEST_TARGET,    0, 1, columnspan=2, values=(c.TEST_NONE, c.TEST_RANDOM)),
+            OptionMenu.OptionMenu  (self.widget, c.TEST_TARGET,    0, 1, (c.TEST_NONE, c.TEST_RANDOM), columnspan=2),
             Textboxes.ColorTextboxFrame(self.widget, c.TEST_COLOR, c.TEST_COLOR_FRAME, 0, 3, default_value="#ffffb3"),
-            OptionMenu.OptionMenu  (self.widget, c.TEST_STANDBY,   1, 1, columnspan=2, values=(c.TEST_NONE,)),
+            OptionMenu.OptionMenu  (self.widget, c.TEST_STANDBY,   1, 1, (c.TEST_NONE,), columnspan=2),
             Textboxes.LabelTextbox (self.widget, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
             Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 2, 2, columnspan=2, command=self.enableTime, default_value=1),
             ResultsFrame(self.widget, buttons, 4, 0, columnspan=4)

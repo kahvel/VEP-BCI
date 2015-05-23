@@ -58,10 +58,10 @@ class OptionsFrame(Frame.Frame):
         filters = c.FILTER_NAMES
         interpolations = c.INTERPOLATE_NAMES
         self.addChildWidgets((
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,     0, 1, values=detrends, command=self.enableBreak),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,      0, 4, command=self.enableWindow, values=windows),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_INTERPOLATE, 1, 1, values=interpolations),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_FILTER,      1, 4, values=filters, command=self.enableFilter),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,     0, 1, detrends, command=self.enableBreak),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,      0, 4, windows, command=self.enableWindow),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_INTERPOLATE, 1, 1, interpolations),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_FILTER,      1, 4, filters, command=self.enableFilter),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_STEP,        2, 0, command=int,    default_value=32),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_LENGTH,      2, 2, command=int,    default_value=512),
             Checkbutton.Checkbutton(self.widget, c.OPTIONS_NORMALISE,   2, 4, columnspan=2),

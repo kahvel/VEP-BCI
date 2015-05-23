@@ -6,12 +6,12 @@ import Tkinter
 
 
 class OptionMenu(AbstractWidget.WidgetWithCommand):
-    def __init__(self, parent, name, row, column, **kwargs):
+    def __init__(self, parent, name, row, column, values, **kwargs):
         AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.setDefaultKwargs(kwargs, {
             "default_value": self.getDefaultValue(kwargs),
             "columnspan": kwargs.get("columnspan", 2)
         }))
-        self.values = kwargs.get("values", [])
+        self.values = values
         self.variable = Tkinter.StringVar()
         self.command = kwargs.get("command", lambda: None)
         label = Tkinter.Label(parent, text=self.name)
