@@ -47,10 +47,10 @@ class Widget(object):
             self.disabled = True
 
     def save(self, file):
-        file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
+        file.write(self.name+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
     def load(self, file):
-        name, value, disabled, disablers = file.readline().strip().split(";")
+        name, disabled, disablers = file.readline().strip().split(";")
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []
 
@@ -111,3 +111,6 @@ class WidgetWithCommand(Widget):
         Widget.disable(self, disabler)
         if not self.always_enabled:
             self.widget.config(state=self.disabled_state)
+
+    def save(self, file):
+        file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")

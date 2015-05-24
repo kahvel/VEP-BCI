@@ -71,22 +71,33 @@ class TargetChoosingMenu(OptionMenu):
         if target > tab:
             self.setValue(target-1)
 
-    def targetRemoved(self, deleted_tab):
+    def deleteAndAddAll(self):
         self.deleteOptions()
         self.addDefaultOptions()
-        del self.disabled_tabs[deleted_tab]
         self.addTargetOptions()
+
+    def targetRemoved(self, deleted_tab):
+        del self.disabled_tabs[deleted_tab]
+        self.deleteAndAddAll()
         self.updateAfterDeleteOrDisable(deleted_tab, self.decreaseLargerTabs)
 
     def targetDisabled(self, tabs, current_tab):
         self.disabled_tabs = copy.deepcopy(tabs)
-        self.deleteOptions()
-        self.addDefaultOptions()
-        self.addTargetOptions()
+        self.deleteAndAddAll()
         self.updateAfterDeleteOrDisable(current_tab)
 
     def targetEnabled(self, tabs, current_tab):
         self.disabled_tabs = copy.deepcopy(tabs)
-        self.deleteOptions()
-        self.addDefaultOptions()
-        self.addTargetOptions()
+        self.deleteAndAddAll()
+
+    def save(self, file):
+        file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(list(int(value) for value in self.disabled_tabs)).strip("[]")+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
+
+    def load(self, file):
+        name, value, disabled, disabled_tabs, disablers = file.readline().strip().split(";")
+        self.setValue(value)
+        self.disabled = int(disabled)
+        self.disablers = disablers.split(", ") if disablers != "" else []
+        disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
+        self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
+        self.deleteAndAddAll()
