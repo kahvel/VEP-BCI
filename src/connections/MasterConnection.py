@@ -64,9 +64,11 @@ class MasterConnection(Connections.MultipleConnections):
 
     def setup(self, options):
         for key in self.connections:
-            if key == c.CONNECTION_EXTRACTION or key == c.CONNECTION_PLOT or key == c.CONNECTION_PSYCHOPY or\
+            if key == c.CONNECTION_EXTRACTION or key == c.CONNECTION_PLOT or\
                     not options[self.connection_to_data[key]][c.DISABLE]:
                 self.connections[key].setup(options)
+            else:
+                self.connections[key].close()
 
     def setupSuccessful(self):
         result = True

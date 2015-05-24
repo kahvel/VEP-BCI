@@ -35,8 +35,6 @@ class MainWindow(MyWindows.TkWindow):
         self.loadValues(c.DEFAULT_FILE)
         self.disableButton(c.START_BUTTON)
         self.disableButton(c.STOP_BUTTON)
-        # self.neutral_signal = None
-        # self.target_signal = [None for _ in range(self.tabs["Targets"].tab_count)]
         self.setup_options = None
         self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
@@ -48,6 +46,8 @@ class MainWindow(MyWindows.TkWindow):
                 self.stop()
             elif message == c.SUCCESS_MESSAGE:  # Setup was successful
                 self.enableButton(c.START_BUTTON)
+            elif message == c.FAIL_MESSAGE:  # Setup failed
+                self.disableButton(c.START_BUTTON)
             if not self.exitFlag:
                 self.update()
             else:
@@ -140,6 +140,7 @@ class MainWindow(MyWindows.TkWindow):
             )
         )
         result[c.WINDOW_COLOR] = data[c.WINDOW_COLOR_FRAME][c.TEXTBOX]
+        result[c.DISABLE] = data[c.DISABLE]
         return result
 
     def getEnabledData(self, data):
@@ -164,8 +165,8 @@ class MainWindow(MyWindows.TkWindow):
             result.append(tuple(map(int, target[c.TARGET_HARMONICS].split(","))))
         return result
 
-    def getRobotData(self, data):
-        return {c.DISABLE: data[c.ROBOT_TAB][c.DISABLE]}
+    def getDisableData(self, data, tab):
+        return {c.DISABLE: data[tab][c.DISABLE]}
 
     def getData(self, all_data):
         target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
@@ -177,7 +178,7 @@ class MainWindow(MyWindows.TkWindow):
             c.DATA_EXTRACTION: self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
             c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB]),
             c.DATA_HARMONICS: self.getHarmonics(target_data),
-            c.DATA_ROBOT: self.getRobotData(all_data),
+            c.DATA_ROBOT: self.getDisableData(all_data, c.ROBOT_TAB),
             c.DATA_EMOTIV: {c.DISABLE: 0}
         }
 
@@ -241,22 +242,3 @@ class MainWindow(MyWindows.TkWindow):
         if file is not None:
             self.main_frame.load(file)
             file.close()
-
-    # Recording (currently not working)
-
-    def recordTarget(self):
-        length = int(self.textboxes["Record"]["Length"].get())
-        if self.current_radio_button.get() == 0:
-            print("Choose target")
-        else:
-            self.connection.sendMessage("Record target")
-            # self.connection.sendMessage(self.removeDisabledData())
-            self.connection.sendMessage(self.getBackgroundData())
-            self.connection.sendMessage([self.targets[self.current_radio_button.get()]])
-            self.connection.sendMessage(length)
-            self.connection.sendMessage(self.current_radio_button.get())
-
-    def recordNeutral(self):
-        self.connection.sendMessage("Record neutral")
-        self.connection.sendMessage(int(self.textboxes["Record"]["Length"].get()))
-        self.connection.sendMessage(self.current_radio_button.get())

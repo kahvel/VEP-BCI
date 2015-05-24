@@ -26,25 +26,18 @@ class PostOffice(object):
         self.waitConnections()
 
     def waitConnections(self):
-        setup_successful = False
         message = None
         while True:
             if message is not None:
                 if message == c.START_MESSAGE:
-                    if setup_successful:
-                        message = self.start()
-                        continue
-                    else:
-                        print("Setup was not successful!")
+                    message = self.start()
+                    continue
                 elif message == c.SETUP_MESSAGE:
-                    if self.setup() == c.SUCCESS_MESSAGE:
-                        setup_successful = True
-                        self.main_connection.sendMessage(c.SUCCESS_MESSAGE)
-                        print("Setup successful!")
-                    else:
-                        setup_successful = False
+                    setup_message = self.setup()
+                    if setup_message == c.FAIL_MESSAGE:
                         self.connections.close()
                         print("Setup failed!")
+                    self.main_connection.sendMessage(setup_message)
                 elif message == c.STOP_MESSAGE:
                     print("Stop PostOffice")
                 elif message == c.RESET_RESULTS_MESSAGE:
