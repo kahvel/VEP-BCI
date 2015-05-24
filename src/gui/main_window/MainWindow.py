@@ -164,6 +164,9 @@ class MainWindow(MyWindows.TkWindow):
             result.append(tuple(map(int, target[c.TARGET_HARMONICS].split(","))))
         return result
 
+    def getRobotData(self, data):
+        return {c.DISABLE: data[c.ROBOT_TAB][c.DISABLE]}
+
     def getData(self, all_data):
         target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
         return {
@@ -173,7 +176,9 @@ class MainWindow(MyWindows.TkWindow):
             c.DATA_PLOTS: self.getPlotData(all_data[c.PLOT_NOTEBOOK]),
             c.DATA_EXTRACTION: self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
             c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB]),
-            c.DATA_HARMONICS: self.getHarmonics(target_data)
+            c.DATA_HARMONICS: self.getHarmonics(target_data),
+            c.DATA_ROBOT: self.getRobotData(all_data),
+            c.DATA_EMOTIV: {c.DISABLE: 0}
         }
 
     def getTestData(self, data):

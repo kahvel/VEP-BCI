@@ -17,10 +17,13 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection(),
             c.CONNECTION_ROBOT:      ConnectionPostOfficeEnd.RobotConnection()
         }
-
-    # def sendExitMessage(self):
-    #     for key in self.connections:
-    #         self.connections[key].sendExitMessage()
+        self.connection_to_data = {
+            c.CONNECTION_EMOTIV:     c.DATA_EMOTIV,
+            c.CONNECTION_PSYCHOPY:   c.DATA_BACKGROUND,
+            c.CONNECTION_PLOT:       c.DATA_PLOTS,
+            c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
+            c.CONNECTION_ROBOT:      c.DATA_ROBOT
+        }
 
     def sendRobotMessage(self, message):
         if not self.connections[c.CONNECTION_ROBOT].isClosed():
@@ -61,7 +64,9 @@ class MasterConnection(Connections.MultipleConnections):
 
     def setup(self, options):
         for key in self.connections:
-            self.connections[key].setup(options)
+            if key == c.CONNECTION_EXTRACTION or key == c.CONNECTION_PLOT or key == c.CONNECTION_PSYCHOPY or\
+                    not options[self.connection_to_data[key]][c.DISABLE]:
+                self.connections[key].setup(options)
 
     def setupSuccessful(self):
         result = True

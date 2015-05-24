@@ -165,7 +165,6 @@ MINUS = " -"
 # Disable and Delete frame buttons
 DISABLE = "Disable"
 DELETE = "Delete"
-DISABLE_METHOD = "Disable method"
 
 # Bottom frame buttons
 START_BUTTON = "Start"
@@ -235,6 +234,8 @@ DATA_PLOTS = "Plots"
 DATA_EXTRACTION = "Extraction"
 DATA_TEST = "Test"
 DATA_HARMONICS = "Harmonics"
+DATA_ROBOT = "Robot"
+DATA_EMOTIV = "Emotiv"
 
 DATA_SENSORS = "Sensors"
 DATA_OPTIONS = "Options"

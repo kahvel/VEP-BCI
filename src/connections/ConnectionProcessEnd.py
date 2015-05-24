@@ -10,7 +10,7 @@ class Connection(Connections.AbstractConnection):
         self.connection = connection
         self.name = name
 
-    def waitMessages(self, start, exit, update, setup, additional=lambda: False):  # wait messages
+    def waitMessages(self, start, exit, update, setup, additional=lambda x: False):  # wait messages
         message = None
         while True:
             update()
