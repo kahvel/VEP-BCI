@@ -41,8 +41,8 @@ class TargetFrame(Frame.Frame):
         decrease = lambda: self.changeFreq(decrease=True)
         self.addChildWidgets((
             Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_HARMONICS, 0, 4, default_value="1,2,3", command=self.harmonicsValidation, allow_zero=True, allow_negative=True),
-            Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4),
+            Textboxes.LabelTextbox         (self.widget, c.TARGET_HARMONICS, 0, 3, default_value="1,2,3", command=self.harmonicsValidation, allow_zero=True, allow_negative=True, label_columnspan=2, width=7),
+            Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4, label_columnspan=2),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
             Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, c.TARGET_COLOR1_FRAME, 2, 4, default_value="#ffffff"),

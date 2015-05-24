@@ -10,7 +10,7 @@ import constants as c
 
 class Textbox(AbstractWidget.WidgetWithCommand):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column+1, **self.setDefaultKwargs(kwargs, {
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.setDefaultKwargs(kwargs, {
             "disabled_state": "readonly"
         }))
         self.width = kwargs.get("width", 5)
@@ -55,11 +55,12 @@ class Textbox(AbstractWidget.WidgetWithCommand):
 
 class LabelTextbox(Textbox):
     def __init__(self, parent, name, row, column, **kwargs):
-        Textbox.__init__(self, parent, name, row, column, **kwargs)
+        label_columnspan = kwargs.get("label_columnspan", 1)
+        Textbox.__init__(self, parent, name, row, column+label_columnspan, **kwargs)
         self.allow_negative = kwargs.get("allow_negative", False)
         self.allow_zero = kwargs.get("allow_zero", False)
         label = Tkinter.Label(parent, text=self.name)
-        label.grid(row=self.row, column=self.column-1, padx=self.padx, pady=self.pady)
+        label.grid(row=self.row, column=column, padx=self.padx, pady=self.pady, columnspan=label_columnspan)
 
     def validationFunction(self):
         if not self.allow_negative:
