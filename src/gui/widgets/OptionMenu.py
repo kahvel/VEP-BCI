@@ -2,6 +2,8 @@ __author__ = 'Anti'
 
 import Tkinter
 
+import copy
+
 from gui.widgets import AbstractWidget
 import constants as c
 
@@ -32,8 +34,8 @@ class OptionMenu(AbstractWidget.WidgetWithCommand):
 class TargetChoosingMenu(OptionMenu):
     def __init__(self, parent, name, row, column, values, **kwargs):
         OptionMenu.__init__(self, parent, name, row, column, values, **kwargs)
-        self.target_count = 0
         self.reset_value = kwargs.get("reset_value", values[0])
+        self.disabled_tabs = []
 
     def addOption(self, option, command=lambda x: None):
         self.widget["menu"].add_command(label=option, command=Tkinter._setit(self.variable, option, callback=command))
@@ -43,30 +45,48 @@ class TargetChoosingMenu(OptionMenu):
             self.addOption(option)
 
     def addTargetOptions(self):
-        for i in range(1, self.target_count+1):
-            self.addOption(i)
+        for i, disabled in enumerate(self.disabled_tabs):
+            if not disabled:
+                self.addOption(i+1)
 
     def targetAdded(self):
-        self.target_count += 1
-        self.addOption(self.target_count)
+        self.disabled_tabs.append(False)
+        self.addOption(len(self.disabled_tabs))
 
     def deleteOptions(self):
         self.widget["menu"].delete(0, Tkinter.END)
 
-    def updateOptionMenu(self, deleted_tab):
-        deleted_tab += 1
+    def updateAfterDeleteOrDisable(self, tab, additionalFunction=lambda x, y: None):
+        tab += 1
         target = self.getValue()
         if target not in self.values:
             target = int(target)
-            if target == deleted_tab:
+            if target == tab:
                 print("Warning: OptionMenu (" + self.name + ") in Test tab reset to " + self.reset_value)
                 self.setValue(c.TEST_NONE)
-            elif target > deleted_tab:
-                self.setValue(target-1)
+            else:
+                additionalFunction(target, tab)
+
+    def decreaseLargerTabs(self, target, tab):
+        if target > tab:
+            self.setValue(target-1)
 
     def targetRemoved(self, deleted_tab):
         self.deleteOptions()
         self.addDefaultOptions()
-        self.target_count -= 1
+        del self.disabled_tabs[deleted_tab]
         self.addTargetOptions()
-        self.updateOptionMenu(deleted_tab)
+        self.updateAfterDeleteOrDisable(deleted_tab, self.decreaseLargerTabs)
+
+    def targetDisabled(self, tabs, current_tab):
+        self.disabled_tabs = copy.deepcopy(tabs)
+        self.deleteOptions()
+        self.addDefaultOptions()
+        self.addTargetOptions()
+        self.updateAfterDeleteOrDisable(current_tab)
+
+    def targetEnabled(self, tabs, current_tab):
+        self.disabled_tabs = copy.deepcopy(tabs)
+        self.deleteOptions()
+        self.addDefaultOptions()
+        self.addTargetOptions()

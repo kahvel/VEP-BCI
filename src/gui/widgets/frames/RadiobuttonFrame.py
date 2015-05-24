@@ -1,9 +1,8 @@
-from gui.widgets import Radiobutton
-
 __author__ = 'Anti'
 
 import Tkinter
 
+from gui.widgets import Radiobutton
 from gui.widgets.frames import Frame
 import constants as c
 

@@ -1,23 +1,34 @@
-from gui.widgets import Textboxes
-from gui.widgets.frames.tabs import DisableDeleteNotebookTab
-
 __author__ = 'Anti'
 
+from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 from gui.widgets.frames import Frame
+from gui.widgets import Textboxes
 import constants as c
 import math
 
 
 class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, getMonitorFreq, **kwargs):
+    def __init__(self, parent, disableTarget, enableTarget, getMonitorFreq, deleteTab, getEnabledTabs, getCurrentTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.TARGETS_TAB_TAB, **kwargs)
+        self.disableTarget = disableTarget
+        self.enableTarget = enableTarget
+        self.getEnabledTabs = getEnabledTabs
+        self.getCurrentTab = getCurrentTab
         self.addChildWidgets((
             TargetFrame(self.widget, 0, 0, getMonitorFreq, **kwargs),
-            self.getDisableDeleteFrame(1, 0, delete_tab=kwargs["delete_tab"])
+            self.getDisableDeleteFrame(1, 0, delete_tab=deleteTab)
         ))
 
     def changeFreq(self):
         self.widgets_dict[c.TARGET_FRAME].changeFreq()
+
+    def disable(self, disabler):  # Updates TargetChoosingMenus
+        DisableDeleteNotebookTab.DisableDeleteNotebookTab.disable(self, disabler)
+        self.disableTarget(self.getEnabledTabs(), self.getCurrentTab())  # MainNotebook's targetDisabled method
+
+    def enable(self, enabler):  # Updates TargetChoosingMenus
+        DisableDeleteNotebookTab.DisableDeleteNotebookTab.enable(self, enabler)
+        self.enableTarget(self.getEnabledTabs(), self.getCurrentTab())  # MainNotebook's targetEnabled method
 
 
 class TargetFrame(Frame.Frame):

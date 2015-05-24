@@ -22,11 +22,11 @@ class SameTabsNotebook(Notebook.Notebook):
         self.last_tab = self.addTab("+")
         self.plusTabClicked()
 
-    def newTab(self, row, column, **kwargs):
+    def newTab(self, deleteTab):
         raise NotImplementedError("newTab not implemented!")
 
     def addTab(self, text):
-        tab = self.newTab(0, 0, delete_tab=self.deleteTab)
+        tab = self.newTab(self.deleteTab)
         self.widget.add(tab.widget, text=text)
         return tab
 
@@ -55,8 +55,11 @@ class SameTabsNotebook(Notebook.Notebook):
             while self.tab_count > 0:
                 self.deleteTab()
 
+    def getCurrentTab(self):
+        return self.widget.index("current")
+
     def deleteTab(self):
-        current = self.widget.index("current")
+        current = self.getCurrentTab()
         del self.widgets_list[current]
         self.tab_count -= 1
         if self.tab_count != -1:
@@ -83,36 +86,41 @@ class ExtractionNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
 
-    def newTab(self, row, column, **kwargs):
-        return ExtractionPlotTabs.ExtractionTab(self.widget, row, column, **kwargs)
+    def newTab(self, deleteTab):
+        return ExtractionPlotTabs.ExtractionTab(self.widget, deleteTab)
 
 
 class PlotNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
 
-    def newTab(self, row, column, **kwargs):
-        return ExtractionPlotTabs.PlotTab(self.widget, row, column, **kwargs)
+    def newTab(self, deletaTab):
+        return ExtractionPlotTabs.PlotTab(self.widget, deletaTab)
 
 
 class TargetNotebook(SameTabsNotebook):
-    def __init__(self, parent, row, column, addTarget, removeTarget, getMonitorFreq, **kwargs):
+    def __init__(self, parent, row, column, addTarget, removeTarget, disableTarget, enableTarget, getMonitorFreq, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.TARGETS_NOTEBOOK, row, column, **kwargs)
         self.getMonitorFreq = getMonitorFreq
         self.addTarget = addTarget
         self.removeTarget = removeTarget
+        self.disableTarget = disableTarget
+        self.enableTarget = enableTarget
 
     def changeFreq(self):
         for widget in self.widgets_list:
             widget.changeFreq()
 
-    def plusTabClicked(self):
-        self.addTarget()
+    def plusTabClicked(self):  # Updates TargetChoosingMenus
+        self.addTarget()   # MainNotebook's targetAdded method
         SameTabsNotebook.plusTabClicked(self)
 
-    def newTab(self, row, column, **kwargs):
-        return TargetsTab.TargetsTab(self.widget, self.getMonitorFreq, **kwargs)
+    def getEnabledTabs(self):
+        return list(tab.disabled for tab in self.widgets_list)
 
-    def deleteTab(self):  # Updates TargetChoosinMenues
+    def newTab(self, deleteTab):
+        return TargetsTab.TargetsTab(self.widget, self.disableTarget, self.enableTarget, self.getMonitorFreq, deleteTab, self.getEnabledTabs, self.getCurrentTab)
+
+    def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = SameTabsNotebook.deleteTab(self)
-        self.removeTarget(deleted_tab)
+        self.removeTarget(deleted_tab)  # MainNotebook's targetRemoved method

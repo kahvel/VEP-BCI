@@ -1,31 +1,30 @@
-from gui.widgets import OptionMenu, Checkbutton, Buttons, Textboxes
-from gui.widgets.frames.tabs import DisableDeleteNotebookTab
-
 __author__ = 'Anti'
 
+from gui.widgets import OptionMenu, Checkbutton, Buttons, Textboxes
+from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 from gui.widgets.frames import Frame
 import constants as c
 
 
 class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
         self.addChildWidgets((
             SensorsFrame(self.widget, 0, 0),
             ExtractionTabButtonFrame(self.widget, 1, 0),
             OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=kwargs["delete_tab"])
+            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
         ))
 
 
 class PlotTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.PLOT_TAB_TAB, **kwargs)
         self.addChildWidgets((
             SensorsFrame(self.widget, 0, 0),
             PlotTabButtonFrame(self.widget, 1, 0),
             OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=kwargs["delete_tab"])
+            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
         ))
 
 

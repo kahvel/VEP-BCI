@@ -11,7 +11,7 @@ class MainNotebook(Notebook.Notebook):
         Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
         self.addChildWidgets((
             WindowTab.WindowTab(self.widget, 0, 0, self.monitorFreqChanged),
-            SameTabsNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, self.getMonitorFreq),
+            SameTabsNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq),
             SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0),
             SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
             TestTab.TestTab(self.widget, test_tab_buttons, 0, 0),

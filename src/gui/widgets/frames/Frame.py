@@ -1,6 +1,6 @@
-from gui.widgets import AbstractWidget
-
 __author__ = 'Anti'
+
+from gui.widgets import AbstractWidget
 
 import Tkinter
 
@@ -24,14 +24,17 @@ class AbstractFrame(AbstractWidget.Widget):
         del self.widgets_dict[widget.name]
 
     def enable(self, enabler):
+        AbstractWidget.Widget.enable(self, enabler)
         for child in self.widgets_list:
             child.enable(enabler)
 
     def disable(self, disabler):
+        AbstractWidget.Widget.disable(self, disabler)
         for child in self.widgets_list:
             child.disable(disabler)
 
     def loadDefaultValue(self):
+        AbstractWidget.Widget.loadDefaultValue(self)
         for child in self.widgets_list:
             child.loadDefaultValue()
 
@@ -43,10 +46,12 @@ class AbstractFrame(AbstractWidget.Widget):
                 widget.disable(disabler.name)
 
     def save(self, file):
+        AbstractWidget.Widget.save(self, file)
         for widget in self.widgets_list:
             widget.save(file)
 
     def load(self, file):
+        AbstractWidget.Widget.load(self, file)
         for widget in self.widgets_list:
             widget.load(file)
 
@@ -72,6 +77,14 @@ class AbstractFrame(AbstractWidget.Widget):
     def targetRemoved(self, deleted_tab):
         for widget in self.widgets_list:
             widget.targetRemoved(deleted_tab)
+
+    def targetDisabled(self, tabs, current_tab):
+        for widget in self.widgets_list:
+            widget.targetDisabled(tabs, current_tab)
+
+    def targetEnabled(self, tabs, current_tab):
+        for widget in self.widgets_list:
+            widget.targetEnabled(tabs, current_tab)
 
 
 class Frame(AbstractFrame):

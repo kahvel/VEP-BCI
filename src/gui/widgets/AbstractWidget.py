@@ -12,6 +12,11 @@ class Widget(object):
         self.pady = kwargs.get("pady", 5)
         self.widget = None
         self.name = name
+        self.disabled = None
+        self.default_disability = kwargs.get("default_disability", False)
+        self.default_disablers = kwargs.get("default_disablers", [])
+        self.disablers = None
+        self.always_enabled = kwargs.get("always_enabled", False)
 
     def setDefaultKwargs(self, kwargs, default_values):
         for key in default_values:
@@ -19,7 +24,8 @@ class Widget(object):
         return kwargs
 
     def loadDefaultValue(self):
-        raise NotImplementedError("loadDefaultValue not implemented!")
+        self.disabled = self.default_disability
+        self.disablers = self.default_disablers
 
     def create(self, widget):
         self.widget = widget
@@ -29,16 +35,25 @@ class Widget(object):
         raise NotImplementedError("createWidget not implemented!")
 
     def enable(self, enabler):
-        raise NotImplementedError("enable not implemented!")
+        if enabler in self.disablers:
+            self.disablers.remove(enabler)
+        if len(self.disablers) == 0:
+            self.disabled = False
 
     def disable(self, disabler):
-        raise NotImplementedError("disable not implemented!")
+        if not self.always_enabled:
+            if disabler not in self.disablers:
+                self.disablers.append(disabler)
+            self.disabled = True
 
     def save(self, file):
-        raise NotImplementedError("save not implemented!")
+        file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
     def load(self, file):
-        raise NotImplementedError("load not implemented!")
+        name, value, disabled, disablers = file.readline().strip().split(";")
+        self.setValue(value)
+        self.disabled = int(disabled)
+        self.disablers = disablers.split(", ") if disablers != "" else []
 
     def getValue(self):
         raise NotImplementedError("getValue not implemented!")
@@ -59,46 +74,24 @@ class Widget(object):
     def targetRemoved(self, deleted_tab):
         pass
 
+    def targetDisabled(self, tabs, current_tab):
+        pass
+
+    def targetEnabled(self, tabs, current_tab):
+        pass
+
 
 class WidgetWithCommand(Widget):
     def __init__(self, name, row, column, **kwargs):
         Widget.__init__(self, name, row, column, **kwargs)
         self.default_value = kwargs.get("default_value", 0)
-        self.default_disability = kwargs.get("default_disability", False)
-        self.default_disablers = kwargs.get("default_disablers", [])
-
         self.disabled_state = kwargs.get("disabled_state", "disabled")
         self.enabled_state = Tkinter.NORMAL
 
-        self.disabled = None
-        self.disablers = None
-        self.always_enabled = kwargs.get("always_enabled", False)
-
     def loadDefaultValue(self):
         self.setValue(self.default_value)
-        self.disabled = self.default_disability
-        self.disablers = self.default_disablers
+        Widget.loadDefaultValue(self)
         self.updateState()
-
-    def updateState(self):
-        self.widget.config(state=(self.disabled_state if self.disabled else self.enabled_state))
-
-    def enable(self, enabler):
-        if enabler in self.disablers:
-            self.disablers.remove(enabler)
-        if len(self.disablers) == 0:
-            self.disabled = False
-            self.widget.config(state=self.enabled_state)
-
-    def disable(self, disabler):
-        if not self.always_enabled:
-            if disabler not in self.disablers:
-                self.disablers.append(disabler)
-            self.disabled = True
-            self.widget.config(state=self.disabled_state)
-
-    def save(self, file):
-        file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
     def load(self, file):
         name, value, disabled, disablers = file.readline().strip().split(";")
@@ -106,3 +99,15 @@ class WidgetWithCommand(Widget):
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []
         self.updateState()
+
+    def updateState(self):
+        self.widget.config(state=(self.disabled_state if self.disabled else self.enabled_state))
+
+    def enable(self, enabler):
+        Widget.enable(self, enabler)
+        if len(self.disablers) == 0:
+            self.widget.config(state=self.enabled_state)
+
+    def disable(self, disabler):
+        if not self.always_enabled:
+            self.widget.config(state=self.disabled_state)
