@@ -11,6 +11,7 @@ RECORD_TAB = "Record"
 RESULTS_TAB = "Results"
 TEST_TAB = "Test"
 ROBOT_TAB = "Robot"
+EMOTIV_TAB = "Emotiv"
 
 TARGETS_TAB = "Targets"
 PLOT_TAB = "Plot"

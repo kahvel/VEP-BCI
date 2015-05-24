@@ -179,7 +179,7 @@ class MainWindow(MyWindows.TkWindow):
             c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB]),
             c.DATA_HARMONICS: self.getHarmonics(target_data),
             c.DATA_ROBOT: self.getDisableData(all_data, c.ROBOT_TAB),
-            c.DATA_EMOTIV: {c.DISABLE: 0}
+            c.DATA_EMOTIV: self.getDisableData(all_data, c.EMOTIV_TAB)
         }
 
     def getTestData(self, data):

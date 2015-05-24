@@ -33,7 +33,7 @@ class MyEmotiv(object):
         # self.lock.acquire()
         self.connection = connection
         """ @type : ConnectionProcessEnd.Connection """
-        self.devices = []
+        self.device = None
         self.serialNum = None
         self.packets = Queue.Queue()
         self.cipher = None
@@ -63,31 +63,19 @@ class MyEmotiv(object):
         for device in emokit.emotiv.hid.find_all_hid_devices():
             if device.vendor_id != 0x21A1 and device.vendor_id != 0x1234:
                 continue
-            if device.product_name == 'Brain Waves':
-                self.devices.append(device)
-                device.open()
-                self.serialNum = device.serial_number
-                device.set_raw_data_handler(self.handler)
-            elif device.product_name == 'EPOC BCI':
-                self.devices.append(device)
-                device.open()
-                self.serialNum = device.serial_number
-                device.set_raw_data_handler(self.handler)
-            elif device.product_name == '00000000000':
-                self.devices.append(device)
-                device.open()
-                self.serialNum = device.serial_number
-                device.set_raw_data_handler(self.handler)
-            elif device.product_name == 'Emotiv RAW DATA':
-                self.devices.append(device)
-                device.open()
-                self.serialNum = device.serial_number
-                device.set_raw_data_handler(self.handler)
+            if device.product_name in ('Brain Waves', 'EPOC BCI', '00000000000', 'Emotiv RAW DATA'):
+                return device, device.serial_number
+        return None, None
 
-    def closeDevices(self):
-        for i in range(len(self.devices)-1, -1, -1):
-            self.devices[i].close()
-            del self.devices[i]
+    def startDataHandling(self):
+        self.device, self.serialNum = self.setupWin()
+        self.device.open()
+        self.device.set_raw_data_handler(self.handler)
+
+    def closeDevice(self):
+        if self.device is not None:
+            self.device.close()
+            self.device = None
 
     def handler(self, data):
         assert data[0] == 0
@@ -95,7 +83,7 @@ class MyEmotiv(object):
         return True
 
     def cleanUp(self):
-        self.closeDevices()
+        self.closeDevice()
         self.connection.close()
 
     def setupCrypto(self, sn):
@@ -138,7 +126,21 @@ class MyEmotiv(object):
         self.cipher = AES.new(key, AES.MODE_ECB, iv)
 
     def connectionSetup(self):
-        # Clean up possible previous packets from the queue
+        self.device, self.serialNum = self.setupWin()
+        if self.serialNum is None:
+            print("Emotiv USB receiver not found")
+            self.closeDevice()
+            return c.FAIL_MESSAGE
+        self.setupCrypto(self.serialNum)
+        self.startDataHandling()
+        try:
+            self.packets.get(True, 0.1)
+        except:
+            self.closeDevice()
+            print("No packets. Is headset turned on and connected to receiver?")
+            return c.FAIL_MESSAGE
+        self.closeDevice()
+        # Clean up previous packets from the queue
         while True:
             try:
                 self.packets.get(False)
@@ -147,20 +149,7 @@ class MyEmotiv(object):
         return c.SUCCESS_MESSAGE
 
     def start(self):
-        self.setupWin()
-        if self.serialNum is None:
-            print("Emotiv USB receiver not found")
-            self.closeDevices()
-            return c.FAIL_MESSAGE
-        self.setupCrypto(self.serialNum)
-        # try:
-        #     task = self.packets.get(True, 0.1)
-        # except:
-        #     print "Turn on headset"
-        #     return "Stop"
-
-        # Mainloop
-        # self.lock.release()  # synchronising with psychopy
+        self.startDataHandling()
         while True:
             try:
                 task = self.packets.get(True, 0.01)
@@ -176,7 +165,7 @@ class MyEmotiv(object):
                 #print("No packet")
             message = self.connection.receiveMessageInstant()
             if message is not None:
-                self.closeDevices()
+                self.closeDevice()
                 return message
 
     def get_level(self, data, bits):
