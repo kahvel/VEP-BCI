@@ -39,9 +39,11 @@ class PostOffice(object):
                 elif message == c.SETUP_MESSAGE:
                     if self.setup() == c.SUCCESS_MESSAGE:
                         setup_successful = True
+                        self.main_connection.sendMessage(c.SUCCESS_MESSAGE)
                         print("Setup successful!")
                     else:
                         setup_successful = False
+                        self.connections.close()
                         print("Setup failed!")
                 elif message == c.STOP_MESSAGE:
                     print("Stop PostOffice")

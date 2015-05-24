@@ -104,7 +104,7 @@ class TargetsWindow(object):
     def __init__(self, connection):
         logging.console.setLevel(logging.ERROR )
         self.connection = connection
-        """ @type : ConnectionProcessEnd.PsychopyConnection """
+        """ @type : connections.ConnectionProcessEnd.PsychopyConnection """
         self.targets = None
         self.generators = None
         self.window = None

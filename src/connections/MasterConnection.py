@@ -18,9 +18,15 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_ROBOT:      ConnectionPostOfficeEnd.RobotConnection()
         }
 
+    # def sendExitMessage(self):
+    #     for key in self.connections:
+    #         self.connections[key].sendExitMessage()
+
     def sendRobotMessage(self, message):
         if not self.connections[c.CONNECTION_ROBOT].isClosed():
             self.connections[c.CONNECTION_ROBOT].sendMessage(message)
+        else:
+            print("Robot connection is closed. Did you click setup?")
 
     def sendTargetMessage(self, message):
         self.connections[c.CONNECTION_PSYCHOPY].sendMessage(message)
@@ -30,9 +36,6 @@ class MasterConnection(Connections.MultipleConnections):
 
     def sendPlotMessage(self, message):
         self.connections[c.CONNECTION_PLOT].sendMessage(message)
-
-    def sendGameMessage(self, message):
-        self.connections[c.CONNECTION_GAME].sendMessage(message)
 
     def sendExtractionMessage(self, message):
         self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
@@ -61,10 +64,11 @@ class MasterConnection(Connections.MultipleConnections):
             self.connections[key].setup(options)
 
     def setupSuccessful(self):
+        result = True
         for key in self.connections:
             if not self.connections[key].setupSuccessful():
-                return False
-        return True
+                result = False
+        return result
 
     def close(self, arg=None):
         for key in self.connections:

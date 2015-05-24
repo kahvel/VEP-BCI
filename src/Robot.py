@@ -15,7 +15,7 @@ class Robot(object):
         pass
 
     def exit(self):
-        pass
+        self.connection.close()
 
     def sendMessage(self, message):
         try:

@@ -11,6 +11,7 @@ from gui.main_window import MainWindow
 class PsychopyConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, TargetsWindow.TargetsWindow, ConnectionProcessEnd.PsychopyConnection)
+        self.connection = self.newProcess()
 
     def sendOptions(self, options):
         self.sendSetupMessage()
@@ -56,6 +57,7 @@ class EmotivConnection(Connections.Connection):
 class RobotConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, Robot.Robot, ConnectionProcessEnd.RobotConnection)
+        self.connection = self.newProcess()
 
     def sendOptions(self, options):
         self.sendSetupMessage()

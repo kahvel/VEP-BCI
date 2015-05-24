@@ -1,10 +1,10 @@
-from gui.main_window import MyWindows
-from gui.widgets.frames import MainFrame
-
 __author__ = 'Anti'
 
 import tkFileDialog
 import constants as c
+
+from gui.main_window import MyWindows
+from gui.widgets.frames import MainFrame
 
 
 class MainWindow(MyWindows.TkWindow):
@@ -44,8 +44,10 @@ class MainWindow(MyWindows.TkWindow):
     def mainloop(self, n=0):
         while True:
             message = self.connection.receiveMessagePoll(0.1)
-            if message is c.STOP_MESSAGE:
+            if message == c.STOP_MESSAGE:
                 self.stop()
+            elif message == c.SUCCESS_MESSAGE:  # Setup was successful
+                self.enableButton(c.START_BUTTON)
             if not self.exitFlag:
                 self.update()
             else:
@@ -196,7 +198,6 @@ class MainWindow(MyWindows.TkWindow):
         else:
             self.connection.sendSetupMessage()
             self.connection.sendMessage(self.setup_options)
-            self.enableButton(c.START_BUTTON)
 
     def disableButton(self, button_name):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].disableButton(button_name)

@@ -1,7 +1,6 @@
-from gui.widgets.frames.tabs import DisableDeleteNotebookTab
-
 __author__ = 'Anti'
 
+from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 from gui.widgets.frames import OptionsFrame
 import constants as c
 
