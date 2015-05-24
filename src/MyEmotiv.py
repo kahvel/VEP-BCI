@@ -5,7 +5,8 @@ import Queue
 from Crypto.Cipher import AES
 from Crypto import Random
 
-import emokit.emotiv
+import pywinusb.hid
+
 import constants as c
 
 
@@ -29,8 +30,6 @@ sensorBits = {
 
 class MyEmotiv(object):
     def __init__(self, connection):
-        # self.lock = args[0]
-        # self.lock.acquire()
         self.connection = connection
         """ @type : ConnectionProcessEnd.Connection """
         self.device = None
@@ -60,7 +59,7 @@ class MyEmotiv(object):
         self.connection.waitMessages(self.start, self.cleanUp, lambda: None, self.connectionSetup)
 
     def setupWin(self):
-        for device in emokit.emotiv.hid.find_all_hid_devices():
+        for device in pywinusb.hid.find_all_hid_devices():
             if device.vendor_id != 0x21A1 and device.vendor_id != 0x1234:
                 continue
             if device.product_name in ('Brain Waves', 'EPOC BCI', '00000000000', 'Emotiv RAW DATA'):
@@ -155,10 +154,9 @@ class MyEmotiv(object):
                 task = self.packets.get(True, 0.01)
                 data = self.cipher.decrypt(task[:16]) + self.cipher.decrypt(task[16:])
                 self.detectPacketLoss(self.getCounter(data))
-                #values = {name: self.get_level(data, bits) for name, bits in sensorBits.items()}
-                packet = emokit.emotiv.EmotivPacket(data, self.sensors)
+                packet = {name: self.get_level(data, bits) for name, bits in sensorBits.items()}
                 self.connection.sendMessage(packet)
-                self.printPacket(packet)
+                self.printPacket(packet, disable=True)
                 self.checkQueueSize()
             except Queue.Empty:
                 pass
@@ -180,9 +178,9 @@ class MyEmotiv(object):
         if self.packets.qsize() > 6:
             print (str(self.packets.qsize()) + " packets in queue.")
 
-    def printPacket(self, packet):
-        pass
-        #print(str(packet.sensors["O1"]["value"]))
+    def printPacket(self, packet, disable=False):
+        if not disable:
+            print(str(packet["O1"]))
 
     def getCounter(self, data):
         counter = ord(data[0])
