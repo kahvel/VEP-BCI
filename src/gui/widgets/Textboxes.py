@@ -73,10 +73,6 @@ class SequenceTextbox(LabelTextbox):
     def __init__(self, parent, name, row, column, **kwargs):
         LabelTextbox.__init__(self, parent, name, row, column, **kwargs)
 
-    def loadDefaultValue(self):
-        self.disabled = self.default_disability
-        self.disablers = self.default_disablers
-
 
 class PlusMinusTextboxFrame(Frame.Frame):
     def __init__(self, parent, name, row, column, increase, decrease, **kwargs):

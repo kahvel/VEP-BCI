@@ -34,6 +34,7 @@ class SameTabsNotebook(Notebook.Notebook):
         self.widgets_list[tab_index].loadDefaultValue()
 
     def loadDefaultValue(self):
+        Notebook.Notebook.loadDefaultValue(self)
         self.addInitialTabs()
         for i in range(self.tab_count+1):
             self.tabDefaultValues(i)
@@ -43,6 +44,7 @@ class SameTabsNotebook(Notebook.Notebook):
         Notebook.Notebook.save(self, file)
 
     def load(self, file):
+        self.addInitialTabs()
         self.deleteAllTabs()
         tab_count = int(file.readline())
         for i in range(tab_count):

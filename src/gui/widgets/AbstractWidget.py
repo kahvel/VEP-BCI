@@ -51,7 +51,6 @@ class Widget(object):
 
     def load(self, file):
         name, value, disabled, disablers = file.readline().strip().split(";")
-        self.setValue(value)
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []
 
@@ -109,5 +108,6 @@ class WidgetWithCommand(Widget):
             self.widget.config(state=self.enabled_state)
 
     def disable(self, disabler):
+        Widget.disable(self, disabler)
         if not self.always_enabled:
             self.widget.config(state=self.disabled_state)

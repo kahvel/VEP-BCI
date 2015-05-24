@@ -24,6 +24,7 @@ class RadiobuttonFrame(Frame.Frame):
         self.variable.set(value)
 
     def loadDefaultValue(self):
+        Frame.Frame.loadDefaultValue(self)
         self.setValue(self.default_value)
 
     # TODO add load and save
