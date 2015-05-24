@@ -9,7 +9,6 @@ class SameTabsNotebook(Notebook.Notebook):
     def __init__(self, parent, name, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, name, row, column, **kwargs)
         self.tab_count = -1
-        # self.default_tab_count = 0
         self.last_tab = None
         self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
 
@@ -35,7 +34,6 @@ class SameTabsNotebook(Notebook.Notebook):
 
     def loadDefaultValue(self):
         Notebook.Notebook.loadDefaultValue(self)
-        # self.addInitialTabs()
         for i in range(self.tab_count+1):
             self.tabDefaultValues(i)
 
@@ -86,7 +84,7 @@ class SameTabsNotebook(Notebook.Notebook):
 class ExtractionNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
-        self.addInitialTabs()
+        self.addInitialTabs()  # Cannot put this to load and loadDefaultValue methods
 
     def newTab(self, deleteTab):
         return ExtractionPlotTabs.ExtractionTab(self.widget, deleteTab)
@@ -95,7 +93,7 @@ class ExtractionNotebook(SameTabsNotebook):
 class PlotNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
-        self.addInitialTabs()
+        self.addInitialTabs()  # Cannot put this to load and loadDefaultValue methods
 
     def newTab(self, deletaTab):
         return ExtractionPlotTabs.PlotTab(self.widget, deletaTab)
@@ -109,7 +107,7 @@ class TargetNotebook(SameTabsNotebook):
         self.removeTarget = removeTarget
         self.disableTarget = disableTarget
         self.enableTarget = enableTarget
-        self.addInitialTabs()
+        self.addInitialTabs()  # Cannot put this to load and loadDefaultValue methods
 
     def changeFreq(self):
         for widget in self.widgets_list:

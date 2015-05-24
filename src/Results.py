@@ -21,7 +21,9 @@ class Results(object):
         self.results[self.trial_id]["Targets"] = len(target_freqs)
 
     def save(self):
-        pass
+        file = open("result.txt", "a")
+        file.write(self.__repr__()+"\n")
+        file.close()
 
     def addResult(self, current, detected):
         self.results[self.trial_id]["Results"][current][detected] += 1
