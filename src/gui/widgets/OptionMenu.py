@@ -101,3 +101,9 @@ class TargetChoosingMenu(OptionMenu):
         disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
         self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
         self.deleteAndAddAll()
+
+    def getValue(self):
+        try:
+            return int(self.variable.get())
+        except:
+            return self.variable.get()

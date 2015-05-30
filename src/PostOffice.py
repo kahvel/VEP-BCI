@@ -157,20 +157,20 @@ class PostOffice(object):
                                 self.connections.sendTargetMessage(max_freq)
                                 # self.connections.sendGameMessage(max_freq)
                                 if not self.results.isPrevResult(max_freq):
-                                    self.results.addResult(target_freqs[current_target-1], max_freq)
-                                    if max_freq != target_freqs[current_target-1]:
-                                        print("wrong", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target-1], max_freq, f1)
+                                    self.results.addResult(target_freqs[current_target], max_freq)
+                                    if max_freq != target_freqs[current_target]:
+                                        print("wrong", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target], max_freq, f1)
                                     else:
-                                        print("right", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target-1], max_freq, f1)
-                                if max_freq == target_freqs[current_target-1]:
+                                        print("right", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target], max_freq, f1)
+                                if max_freq == target_freqs[current_target]:
                                     self.need_new_target = True
 
     def getTotalTime(self, unlimited, test_time):
         return float("inf") if unlimited else test_time
 
-    def getTarget(self, test_target, target_count):
+    def getTarget(self, test_target, target_freqs):
         if self.isRandom(test_target):
-            return random.randint(1, target_count)
+            return random.choice(target_freqs.keys())
         elif test_target != c.TEST_NONE:
             return test_target
         else:
@@ -182,11 +182,11 @@ class PostOffice(object):
     def targetChangingLoop(self, options, target_freqs):
         total_time = self.getTotalTime(options[c.TEST_UNLIMITED], options[c.TEST_TIME])
         while self.message_counter < total_time:
-            target = self.getTarget(options[c.TEST_TARGET], len(target_freqs))
+            target = self.getTarget(options[c.TEST_TARGET], target_freqs)
             if target is not None:
                 self.connections.sendTargetMessage(target)
             self.need_new_target = False
-            message = self.startPacketSending(target_freqs, target, total_time)
+            message = self.startPacketSending(target_freqs.values(), target, total_time)
             if message is not None:
                 return message
         self.main_connection.sendMessage(c.STOP_MESSAGE)
@@ -195,7 +195,7 @@ class PostOffice(object):
     def setStandby(self, options):
         if self.isStandby(options[c.DATA_TEST][c.TEST_STANDBY]):
             self.no_standby = False
-            self.standby_freq = options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]-1]
+            self.standby_freq = options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]]
         else:
             self.no_standby = True
         self.standby_state = False
@@ -206,11 +206,11 @@ class PostOffice(object):
         self.setStandby(self.options)
         self.message_counter = 0
         self.prev_results = []
-        rounded_target_freqs = tuple(round(freq, 2) for freq in self.options[c.DATA_FREQS])
+        rounded_target_freqs = tuple(round(freq, 2) for freq in self.options[c.DATA_FREQS].values())
         self.prev_results_counter = {freq: 0 for freq in rounded_target_freqs}
         self.actual_results_counter = {freq: 0 for freq in rounded_target_freqs}
         if self.connections.setupSuccessful():
-            self.results.setup(self.options[c.DATA_FREQS])
+            self.results.setup(self.options[c.DATA_FREQS].values())
             return c.SUCCESS_MESSAGE
         else:
             return c.FAIL_MESSAGE

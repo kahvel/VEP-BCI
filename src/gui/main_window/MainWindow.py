@@ -70,10 +70,7 @@ class MainWindow(MyWindows.TkWindow):
         self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
 
     def getFrequencies(self, enabled_targets):
-        frequencies = []
-        for i in range(len(enabled_targets)):
-            frequencies.append(enabled_targets[i][c.DATA_FREQ])
-        return frequencies
+        return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
 
     def getHarmonics(self, data):
         result = []
@@ -89,7 +86,7 @@ class MainWindow(MyWindows.TkWindow):
         return {
             c.DATA_BACKGROUND: all_data[c.WINDOW_TAB],
             c.DATA_TARGETS: target_data,
-            c.DATA_FREQS: self.getFrequencies(target_data.values()),
+            c.DATA_FREQS: self.getFrequencies(target_data),
             c.DATA_PLOTS: all_data[c.PLOT_NOTEBOOK].values(),
             c.DATA_EXTRACTION: all_data[c.EXTRACTION_NOTEBOOK].values(),
             c.DATA_TEST: all_data[c.TEST_TAB],

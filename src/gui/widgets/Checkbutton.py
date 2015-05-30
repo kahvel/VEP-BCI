@@ -1,6 +1,6 @@
-from gui.widgets import AbstractWidget
-
 __author__ = 'Anti'
+
+from gui.widgets import AbstractWidget
 
 import Tkinter
 
@@ -13,7 +13,7 @@ class Checkbutton(AbstractWidget.WidgetWithCommand):
         self.create(Tkinter.Checkbutton(parent, text=self.name, command=self.command, variable=self.variable))
 
     def getValue(self):
-        return self.variable.get()
+        return int(self.variable.get())
 
     def setValue(self, value):
         self.variable.set(value)

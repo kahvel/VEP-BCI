@@ -9,7 +9,7 @@ import constants as c
 
 
 class Target(object):
-    def __init__(self, options, test_color, window):
+    def __init__(self, id, options, test_color, window):
         self.standby_target = False
         self.color1 = options[c.TARGET_COLOR1]
         self.color0 = options[c.TARGET_COLOR0]
@@ -23,8 +23,9 @@ class Target(object):
         self.fixation.setAutoDraw(True)
         self.current_target_signs = self.getSigns(window, options, self.test_color)
         self.detected_target_signs = self.getSigns(window, options, "#00ff00")
-        self.freq = float(options[c.DATA_FREQ])
-        self.sequence = str(options[c.TARGET_SEQUENCE])
+        self.freq = options[c.DATA_FREQ]
+        self.sequence = options[c.TARGET_SEQUENCE]
+        self.id = id
 
     def getRect(self, window, options, color):
         return visual.Rect(
@@ -149,7 +150,7 @@ class TargetsWindow(object):
         )
 
     def getTargets(self, targets_data, test_color, window):
-        return [Target(data, test_color, window) for data in targets_data]
+        return [Target(key, data, test_color, window) for key, data in targets_data.items()]
 
     def setupGenerator(self, generator):
         generator.send(None)
@@ -181,12 +182,12 @@ class TargetsWindow(object):
                     continue
                 elif isinstance(message, basestring):
                     return message
-                for i in range(len(self.targets)):
-                    if message == self.targets[i].freq and isinstance(message, float):
-                        self.setTargetDetected(self.targets[i])
+                for target in self.targets:
+                    if message == target.freq and isinstance(message, float):
+                        self.setTargetDetected(target)
                         break
-                    elif message == i+1 and isinstance(message, int):
-                        self.setCurrentTarget(self.targets[i])
+                    elif message == target.id and isinstance(message, int):
+                        self.setCurrentTarget(target)
                         break
             for i in range(len(self.targets)):
                 self.generators[i].send(standby)
