@@ -8,6 +8,7 @@ class Widget(object):
         self.row = row
         self.column = column
         self.columnspan = kwargs.get("columnspan", 1)
+        self.no_value = kwargs.get("no_value", False)
         self.padx = kwargs.get("padx", 5)
         self.pady = kwargs.get("pady", 5)
         self.widget = None

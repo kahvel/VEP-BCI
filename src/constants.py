@@ -110,21 +110,14 @@ OPTIONS_WINDOW = "Window"
 OPTIONS_BREAK = "Break"
 OPTIONS_INTERPOLATE = "Interp"
 
-EXTRACTION_TAB_BUTTON_FRAME = "ExtractionTabButtonFrame"
-PLOT_TAB_BUTTON_FRAME = "PlotTabButtonFrame"
+METHODS_FRAME = "Methods"
 
 MAIN_FRAME = "MainFrame"
 BOTTOM_FRAME = "BottomFrame"
 
 PLUS_MINUS_FRAME = "PlusMinusFrame"
-PLUS_MINUS_TEXTOX_FRAME = "PlusMinusTextboxFrame"
 RADIOBUTTON_FRAME = "RadiobuttonFrame"
 DISABLE_DELETE_FRAME = "DisableDeleteFrame"
-
-TARGET_COLOR1_FRAME = "Color1TextboxFrame"
-TARGET_COLOR2_FRAME = "Color2TextboxFrame"
-WINDOW_COLOR_FRAME = "ColorTextboxFrame"
-TEST_COLOR_FRAME = "TestColorTextboxFrame"
 
 TARGET_FRAME = "TargetFrame"
 RESULT_FRAME = "ResultFrame"
@@ -204,8 +197,8 @@ SINGLE_AVERAGE = "SingleAverage"
 ALL_TAB = "All"
 PLUS_TAB = "+"
 
-SENSORS_FRAME = "SensorFrame"
-OPTIONS_FRAME = "OptionsFrame"
+SENSORS_FRAME = "Sensors"
+OPTIONS_FRAME = "Options"
 
 # Sensor names in Plot and Extraction tab
 SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
@@ -238,9 +231,9 @@ DATA_HARMONICS = "Harmonics"
 DATA_ROBOT = "Robot"
 DATA_EMOTIV = "Emotiv"
 
-DATA_SENSORS = "Sensors"
-DATA_OPTIONS = "Options"
-DATA_METHODS = "Methods"
+DATA_SENSORS = SENSORS_FRAME
+DATA_OPTIONS = OPTIONS_FRAME
+DATA_METHODS = METHODS_FRAME
 
 DATA_METHOD = "Method"
 

@@ -83,6 +83,9 @@ class SameTabsNotebook(Notebook.Notebook):
         self.widget.tab(self.tab_count, text=self.tab_count+1)
         self.last_tab = self.addTab(c.PLUS_TAB)
 
+    def getValue(self):
+        return {i+1: widget.getValue() for i, widget in enumerate(self.widgets_list) if not widget.disabled}
+
 
 class ExtractionNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):

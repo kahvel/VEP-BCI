@@ -69,95 +69,11 @@ class MainWindow(MyWindows.TkWindow):
     def saveResults(self):
         self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
 
-    def calculateThreshold(self):
-        self.connection.sendMessage("Threshold")
-        self.connection.sendMessage(self.getChosenFreq())
-
-    def removeDisabledData(self, data, filter_function, frame_key):
-        result = []
-        for key in range(len(data)):
-            if not self.disabled(data[key]):
-                result.append(filter_function(data[key], frame_key))
-        return result
-
     def getFrequencies(self, enabled_targets):
         frequencies = []
         for i in range(len(enabled_targets)):
-            frequencies.append(float(enabled_targets[i][c.DATA_FREQ]))
+            frequencies.append(enabled_targets[i][c.DATA_FREQ])
         return frequencies
-
-    def disabled(self, data):
-        return data[c.DISABLE_DELETE_FRAME][c.DISABLE] == 1
-
-    def toFloat(self, value):  # Try to convert to float. If fails, return value itself.
-        try:
-            return float(value)
-        except ValueError:
-            return value
-
-    def toInt(self, value):  # Try to convert to int. If fails, try to convert to float.
-        try:
-            return int(value)
-        except ValueError:
-            return self.toFloat(value)
-
-    def filterData(self, data, filter=tuple()):
-        result = {}
-        for key in data:
-            if key not in filter:
-                result[key] = self.toInt(data[key])
-        return result
-
-    def getPlusMinusValue(self, data):
-        return float(data[c.PLUS_MINUS_TEXTOX_FRAME][c.TARGET_FREQ])
-
-    def filterTargetData(self, target_data, key):
-        result = self.filterData(
-            target_data[key],
-            (
-                c.TARGET_COLOR1_FRAME,
-                c.TARGET_COLOR2_FRAME,
-                c.PLUS_MINUS_TEXTOX_FRAME,
-                c.TARGET_SEQUENCE
-            )
-        )
-        result[c.TARGET_COLOR1] = target_data[key][c.TARGET_COLOR1_FRAME][c.TEXTBOX]
-        result[c.TARGET_COLOR0] = target_data[key][c.TARGET_COLOR2_FRAME][c.TEXTBOX]
-        result[c.DATA_FREQ] = self.getPlusMinusValue(target_data[key])
-        result[c.TARGET_SEQUENCE] = target_data[key][c.TARGET_SEQUENCE]
-        return result
-
-    def getTargetData(self, data):
-        return self.removeDisabledData(data, self.filterTargetData, c.TARGET_FRAME)
-
-    def getBackgroundData(self, data):
-        result = self.filterData(
-            data,
-            (
-                c.WINDOW_COLOR_FRAME,
-                c.WINDOW_MONITOR,
-                c.WINDOW_REFRESH
-            )
-        )
-        result[c.WINDOW_COLOR] = data[c.WINDOW_COLOR_FRAME][c.TEXTBOX]
-        result[c.DISABLE] = data[c.DISABLE]
-        return result
-
-    def getEnabledData(self, data):
-        return [key for key in data if data[key] != 0]
-
-    def getOptions(self, data, key):
-        return {
-            c.DATA_SENSORS: self.getEnabledData(data[c.SENSORS_FRAME]),
-            c.DATA_OPTIONS: self.filterData(data[c.OPTIONS_FRAME]),
-            c.DATA_METHODS: self.getEnabledData(data[key])
-        }
-
-    def getPlotData(self, data):
-        return self.removeDisabledData(data, self.getOptions, c.PLOT_TAB_BUTTON_FRAME)
-
-    def getExtractionData(self, data):
-        return self.removeDisabledData(data, self.getOptions, c.EXTRACTION_TAB_BUTTON_FRAME)
 
     def getHarmonics(self, data):
         result = []
@@ -165,30 +81,22 @@ class MainWindow(MyWindows.TkWindow):
             result.append(tuple(map(int, target[c.TARGET_HARMONICS].split(","))))
         return result
 
-    def getDisableData(self, data, tab):
-        return {c.DISABLE: data[tab][c.DISABLE]}
+    def getTargetData(self, targets_data):
+        return {key: value.values()[0] for key, value in targets_data.items()}
 
     def getData(self, all_data):
         target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
         return {
-            c.DATA_BACKGROUND: self.getBackgroundData(all_data[c.WINDOW_TAB]),
+            c.DATA_BACKGROUND: all_data[c.WINDOW_TAB],
             c.DATA_TARGETS: target_data,
-            c.DATA_FREQS: self.getFrequencies(target_data),
-            c.DATA_PLOTS: self.getPlotData(all_data[c.PLOT_NOTEBOOK]),
-            c.DATA_EXTRACTION: self.getExtractionData(all_data[c.EXTRACTION_NOTEBOOK]),
-            c.DATA_TEST: self.getTestData(all_data[c.TEST_TAB]),
-            c.DATA_HARMONICS: self.getHarmonics(target_data),
-            c.DATA_ROBOT: self.getDisableData(all_data, c.ROBOT_TAB),
-            c.DATA_EMOTIV: self.getDisableData(all_data, c.EMOTIV_TAB)
+            c.DATA_FREQS: self.getFrequencies(target_data.values()),
+            c.DATA_PLOTS: all_data[c.PLOT_NOTEBOOK].values(),
+            c.DATA_EXTRACTION: all_data[c.EXTRACTION_NOTEBOOK].values(),
+            c.DATA_TEST: all_data[c.TEST_TAB],
+            c.DATA_HARMONICS: self.getHarmonics(target_data.values()),
+            c.DATA_ROBOT: {c.DISABLE: all_data[c.ROBOT_TAB][c.DISABLE]},
+            c.DATA_EMOTIV: {c.DISABLE: all_data[c.EMOTIV_TAB][c.DISABLE]}
         }
-
-    def getTestData(self, data):
-        result = self.filterData(
-            data,
-            (c.TEST_COLOR_FRAME, c.RESULT_FRAME)
-        )
-        result[c.TEST_COLOR] = data[c.TEST_COLOR_FRAME][c.TEXTBOX]
-        return result
 
     def exit(self):
         self.exitFlag = True
@@ -199,6 +107,7 @@ class MainWindow(MyWindows.TkWindow):
     def setup(self):
         not_validated = self.main_frame.getNotValidated()
         self.setup_options = self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
+        print(self.setup_options)
         if len(not_validated) != 0:
             print(not_validated)
         else:

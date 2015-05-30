@@ -45,10 +45,10 @@ class TargetFrame(Frame.Frame):
             Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4, label_columnspan=2),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, c.TARGET_COLOR1_FRAME, 2, 4, default_value="#ffffff"),
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, 2, 4, default_value="#ffffff"),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_X,      3, 0, command=int, allow_negative=True, allow_zero=True),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      3, 2, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR0, c.TARGET_COLOR2_FRAME, 3, 4, default_value="#000000")
+            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR0, 3, 4, default_value="#000000")
         ))
 
     def harmonicsValidation(self, value):
@@ -62,7 +62,7 @@ class TargetFrame(Frame.Frame):
         self.getFrequencyTextbox().setValue(value)
 
     def getFrequencyTextbox(self):
-        return self.widgets_dict[c.PLUS_MINUS_TEXTOX_FRAME].widgets_dict[c.TARGET_FREQ]
+        return self.widgets_dict[c.TARGET_FREQ].widgets_dict[c.TEXTBOX]
 
     def getSequenceTextbox(self):
         return self.widgets_dict[c.TARGET_SEQUENCE]

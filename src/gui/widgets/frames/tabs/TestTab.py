@@ -10,7 +10,7 @@ import constants as c
 class ResultsFrame(Frame.Frame):
     def __init__(self, parent, buttons, row, column, **kwargs):
         show, reset, save = buttons
-        Frame.Frame.__init__(self, parent, c.RESULT_FRAME, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.RESULT_FRAME, row, column, no_value=True, **kwargs)
         Tkinter.Label(self.widget, text="Results").grid(row=0, column=0, padx=5, pady=5)
         self.addChildWidgets((
             Buttons.Button(self.widget, c.RESULT_SHOW_BUTTON,  0, 1, command=show),
@@ -24,7 +24,7 @@ class TestTab(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.addChildWidgets((
             OptionMenu.TargetChoosingMenu(self.widget, c.TEST_TARGET,    0, 1, (c.TEST_NONE, c.TEST_RANDOM), columnspan=2),
-            Textboxes.ColorTextboxFrame(self.widget, c.TEST_COLOR, c.TEST_COLOR_FRAME, 0, 3, default_value="#ffffb3"),
+            Textboxes.ColorTextboxFrame(self.widget, c.TEST_COLOR, 0, 3, default_value="#ffffb3"),
             OptionMenu.TargetChoosingMenu(self.widget, c.TEST_STANDBY,   1, 1, (c.TEST_NONE,), columnspan=2),
             Textboxes.LabelTextbox(self.widget, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
             Checkbutton.Checkbutton(self.widget, c.TEST_UNLIMITED, 2, 2, columnspan=2, command=self.enableTime, default_value=1),

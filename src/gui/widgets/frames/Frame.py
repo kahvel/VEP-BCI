@@ -66,9 +66,7 @@ class AbstractFrame(AbstractWidget.Widget):
 
     def getValue(self):
         if len(self.widgets_dict) != 0:
-            return {key: self.widgets_dict[key].getValue() for key in self.widgets_dict}
-        else:
-            return {index: self.widgets_list[index].getValue() for index in range(len(self.widgets_list))}
+            return {key: widget.getValue() for key, widget in self.widgets_dict.items() if not widget.no_value}
 
     def targetAdded(self):
         for widget in self.widgets_list:
