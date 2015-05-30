@@ -121,8 +121,15 @@ class PostOffice(object):
                 result[round(freq, 2)] = 0
         return result
 
+    def getDictKey(self, dict, value_arg):
+        for key, value in dict.items():
+            if value == value_arg:
+                return key
+
     def handleFreqMessages(self, message, target_freqs, current_target):
         results = message
+        target_freqs_dict = target_freqs
+        target_freqs = target_freqs_dict.values()
         rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         if results is not None:
             counted_freqs = self.findCorrectResults(results, target_freqs)
@@ -136,7 +143,6 @@ class PostOffice(object):
                     self.prev_results_counter[result] -= self.prev_results[0][result]
                 del self.prev_results[0]
                 f, m = max(self.prev_results_counter.items(), key=lambda x: x[1])
-                max_freq = target_freqs[rounded_target_freqs.index(f)]
                 if m >= 65:
                     self.actual_results.append(f)
                     self.actual_results_counter[f] += 1
@@ -144,6 +150,7 @@ class PostOffice(object):
                         self.actual_results_counter[self.actual_results[0]] -= 1
                         del self.actual_results[0]
                         f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
+                        max_freq = target_freqs[rounded_target_freqs.index(f1)]
                         if m1 >= 4:
                             # if max_freq == self.standby_freq:
                             #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
@@ -156,6 +163,7 @@ class PostOffice(object):
                                 # self.connections.sendGameMessage(max_freq)
                                 if not self.results.isPrevResult(max_freq):
                                     self.results.addResult(target_freqs[current_target], max_freq)
+                                    self.connections.sendRobotMessage(self.getDictKey(target_freqs_dict, max_freq))
                                     if max_freq != target_freqs[current_target]:
                                         print("wrong", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, target_freqs[current_target], max_freq, f1)
                                     else:
@@ -184,7 +192,7 @@ class PostOffice(object):
             if target is not None:
                 self.connections.sendTargetMessage(target)
             self.need_new_target = False
-            message = self.startPacketSending(target_freqs.values(), target, total_time)
+            message = self.startPacketSending(target_freqs, target, total_time)
             if message is not None:
                 return message
         self.main_connection.sendMessage(c.STOP_MESSAGE)
