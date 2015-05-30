@@ -134,3 +134,15 @@ class ColorTextboxFrame(Frame.Frame):
 
     def getValue(self):
         return self.widgets_dict[c.TEXTBOX].getValue()
+
+
+class HarmonicTextbox(LabelTextbox):
+    def __init__(self, parent, name, row, column, **kwargs):
+        LabelTextbox.__init__(self, parent, name, row, column, command=self.harmonicsValidation, **kwargs)
+
+    def getValue(self):
+        return tuple(map(int, self.widget.get().split(",")))
+
+    def harmonicsValidation(self, value):
+        for v in value.split(","):
+            assert int(v) > 0

@@ -71,10 +71,7 @@ class MainWindow(MyWindows.TkWindow):
         return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
 
     def getHarmonics(self, data):
-        result = []
-        for target in data:
-            result.append(tuple(map(int, target[c.TARGET_HARMONICS].split(","))))
-        return result
+        return [target[c.TARGET_HARMONICS] for target in data]
 
     def getTargetData(self, targets_data):
         return {key: value.values()[0] for key, value in targets_data.items()}
@@ -102,7 +99,6 @@ class MainWindow(MyWindows.TkWindow):
     def setup(self):
         not_validated = self.main_frame.getNotValidated()
         self.setup_options = self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
-        print(self.setup_options)
         if len(not_validated) != 0:
             print(not_validated)
         else:
