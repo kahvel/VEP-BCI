@@ -141,8 +141,11 @@ class HarmonicTextbox(LabelTextbox):
         LabelTextbox.__init__(self, parent, name, row, column, command=self.harmonicsValidation, **kwargs)
 
     def getValue(self):
-        return tuple(map(int, self.widget.get().split(",")))
+        return list(map(int, self.widget.get().split(",")))
 
     def harmonicsValidation(self, value):
         for v in value.split(","):
             assert int(v) > 0
+
+    def save(self, file):  # To save value as string, not as list
+        file.write(self.name+";"+str(self.widget.get())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")

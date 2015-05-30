@@ -8,7 +8,7 @@ class Connection(Connections.AbstractConnection):
         self.connection = connection
         self.name = name
 
-    def waitMessages(self, start, exit, update, setup, additional=lambda x: False):  # wait messages
+    def waitMessages(self, start, exit, update, setup, additional=None, poll=0.1):  # wait messages
         message = None
         while True:
             update()
@@ -27,9 +27,11 @@ class Connection(Connections.AbstractConnection):
                     exit()
                     return
                 else:
-                    if not additional(message):
+                    if additional is None:
                         print("Unknown message in " + self.name + ": " + str(message))
-            message = self.receiveMessagePoll(0.1)
+                    else:
+                        additional(message)
+            message = self.receiveMessagePoll(poll)
 
     def sendMessage(self, message):
         try:  # Without it some connections try to send message through closed pipe when exiting
