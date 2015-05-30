@@ -1,8 +1,5 @@
 from gui.widgets import Buttons
 from gui.widgets.frames.notebooks import MainNotebook
-
-__author__ = 'Anti'
-
 from gui.widgets.frames import Frame
 import constants as c
 

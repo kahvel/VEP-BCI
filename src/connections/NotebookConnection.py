@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import copy
 
 import Connections

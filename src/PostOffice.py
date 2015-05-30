@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import random
 
 import constants as c

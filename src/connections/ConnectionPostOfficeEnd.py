@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import Connections
 import ConnectionProcessEnd
 import MyEmotiv

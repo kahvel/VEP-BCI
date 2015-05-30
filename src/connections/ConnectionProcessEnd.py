@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import constants as c
 import Connections
 

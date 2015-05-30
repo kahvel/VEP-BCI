@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import socket
 import constants as c
 

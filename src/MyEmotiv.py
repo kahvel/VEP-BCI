@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import Queue
 
 from Crypto.Cipher import AES

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import multiprocessing
 
 import constants as c

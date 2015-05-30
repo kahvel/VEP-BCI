@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 from psychopy import visual, core, logging
 
 import constants as c

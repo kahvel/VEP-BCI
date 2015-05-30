@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 from gui.widgets.frames.notebooks import SameTabsNotebook, Notebook
 from gui.widgets.frames.tabs import TestTab, WindowTab, RobotTab, EmotivTab
 import constants as c

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 MAIN_NOTEBOOK = "MainNotebook"
 
 # Tab names

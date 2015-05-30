@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import copy
 
 from connections import NotebookConnection, ConnectionPostOfficeEnd

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 from gui.widgets import AbstractWidget
 
 import Tkinter

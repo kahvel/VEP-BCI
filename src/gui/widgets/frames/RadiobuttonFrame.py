@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import Tkinter
 
 from gui.widgets import Radiobutton

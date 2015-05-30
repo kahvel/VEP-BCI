@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 from gui.widgets.frames import Frame
 from gui.widgets import Textboxes

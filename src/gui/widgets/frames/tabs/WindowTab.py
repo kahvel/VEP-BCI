@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import win32api
 import Tkinter
 

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 from generators import SignalProcessing
 
 

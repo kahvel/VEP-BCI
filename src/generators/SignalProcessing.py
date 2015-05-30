@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import scipy.signal
 import numpy as np
 

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import tkFileDialog
 import constants as c
 

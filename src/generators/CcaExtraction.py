@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import numpy as np
 import sklearn.cross_decomposition
 
