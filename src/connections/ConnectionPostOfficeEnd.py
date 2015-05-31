@@ -3,7 +3,7 @@ import ConnectionProcessEnd
 import MyEmotiv
 import Robot
 from gui import TargetsWindow
-from gui.main_window import MainWindow
+from gui.windows import MainWindow
 
 
 class PsychopyConnection(Connections.Connection):

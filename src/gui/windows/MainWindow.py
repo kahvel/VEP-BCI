@@ -1,14 +1,13 @@
 import tkFileDialog
 import constants as c
 
-from gui.main_window import MyWindows
+from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
 
 
 class MainWindow(MyWindows.TkWindow):
     def __init__(self, connection):
-        MyWindows.TkWindow.__init__(self, "VEP-BCI", 310, 500)
-        self.exitFlag = False
+        MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.main_frame = MainFrame.MainFrame(self, (
@@ -34,7 +33,6 @@ class MainWindow(MyWindows.TkWindow):
         self.disableButton(c.START_BUTTON)
         self.disableButton(c.STOP_BUTTON)
         self.setup_options = None
-        self.protocol("WM_DELETE_WINDOW", self.exit)
         self.mainloop()
 
     def mainloop(self, n=0):

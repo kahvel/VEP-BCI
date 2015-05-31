@@ -1,11 +1,10 @@
-import socket
 import constants as c
+from gui.windows import VideoStream
 
+import socket
 import cv2
 import urllib
 import numpy as np
-from PIL import Image, ImageTk
-import Tkinter
 
 
 class Robot(object):
@@ -16,7 +15,6 @@ class Robot(object):
         self.stream = None
         self.bytes = None
         self.window = None
-        self.image_label = None
         self.psychopy_disabled = None
         self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.sendMessage, poll=0)
 
@@ -41,21 +39,25 @@ class Robot(object):
                 i = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.CV_LOAD_IMAGE_COLOR)
                 if self.psychopy_disabled is not None:
                     if self.psychopy_disabled:
-                        tki = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(i, cv2.COLOR_BGR2RGB)))
-                        self.image_label.configure(image=tki)
-                        self.image_label._backbuffer_ = tki  # avoid flicker caused by premature gc
+                        self.window.updateStream(i)
                     else:
                         self.connection.sendMessage(i)
 
     def updateWindow(self):
-        if self.psychopy_disabled:
+        if self.window is not None:
             self.window.update()
+
+    def exitWindow(self):
+        if self.window is not None:
+            self.window.exitFlag = True
+            self.window.exit()
 
     def update(self):
         self.updateVideo()
         self.updateWindow()
 
     def exit(self):
+        self.exitWindow()
         self.connection.close()
 
     def sendRobotMessage(self, message):
@@ -77,12 +79,13 @@ class Robot(object):
 
     def setup(self):
         options = self.connection.receiveMessageBlock()
+        self.exitWindow()
         if self.psychopyDisabled(options[c.DATA_BACKGROUND]):
-            self.window = Tkinter.Tk()
-            self.image_label = Tkinter.Label(self.window)
-            self.image_label.pack()
+            self.window = VideoStream.StreamWindow()
+            self.window.setup()
             self.psychopy_disabled = True
         else:
+            self.window = None
             self.psychopy_disabled = False
         try:
             self.stream = urllib.urlopen("http://192.168.42.1:8080/?action=stream")
