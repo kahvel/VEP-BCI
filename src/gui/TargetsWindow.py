@@ -98,7 +98,6 @@ class Target(object):
                     self.drawTriangles(standby, self.current_target_signs)
                 if state == "1":
                     self.drawRect(self.color1, standby)
-                    # self.fixation.draw()
                 elif state == "0":
                     self.drawRect(self.color0, standby)
 
@@ -130,7 +129,7 @@ class TargetsWindow(object):
         return c.SUCCESS_MESSAGE
 
     def getVideoStreamImage(self, window, options):
-        if options[c.ROBOT_STREAM]:
+        if options[c.ROBOT_STREAM] and not options[c.DISABLE]:
             image = visual.ImageStim(window, pos=(options[c.STREAM_X], options[c.STREAM_Y]), size=(options[c.STREAM_WIDTH], options[c.STREAM_HEIGHT]))
             image.autoDraw = True
             return image

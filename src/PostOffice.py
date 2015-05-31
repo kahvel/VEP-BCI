@@ -160,7 +160,6 @@ class PostOffice(object):
                             #     self.prev_results = []
                             if not self.standby_state or self.no_standby:
                                 self.connections.sendTargetMessage(max_freq)
-                                # self.connections.sendGameMessage(max_freq)
                                 if not self.results.isPrevResult(max_freq):
                                     self.results.addResult(target_freqs[current_target], max_freq)
                                     self.connections.sendRobotMessage(self.getDictKey(target_freqs_dict, max_freq))
