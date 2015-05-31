@@ -33,7 +33,10 @@ class MasterConnection(Connections.MultipleConnections):
         self.connections[c.CONNECTION_PSYCHOPY].sendMessage(message)
 
     def receiveEmotivMessage(self):
-        return self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.1)
+        return self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.01)
+
+    def receiveRobotMessage(self):
+        return self.connections[c.CONNECTION_ROBOT].receiveMessagePoll(0.01)
 
     def sendPlotMessage(self, message):
         self.connections[c.CONNECTION_PLOT].sendMessage(message)

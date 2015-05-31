@@ -34,7 +34,7 @@ class PostOffice(object):
                     setup_message = self.setup()
                     if setup_message == c.FAIL_MESSAGE:
                         self.connections.close()
-                        print("Setup failed!")
+                    print("Setup " + setup_message + "!")
                     self.main_connection.sendMessage(setup_message)
                 elif message == c.STOP_MESSAGE:
                     print("Stop PostOffice")
@@ -254,9 +254,15 @@ class PostOffice(object):
                 current_target
             )
 
+    def handleRobotMessages(self):
+        message = self.connections.receiveRobotMessage()
+        if message is not None:
+            self.connections.sendTargetMessage(message)
+
     def startPacketSending(self, target_freqs, current_target, total_time):
         while not self.need_new_target and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
             if main_message is not None:
                 return main_message
             self.handleEmotivMessages(target_freqs, current_target)
+            self.handleRobotMessages()

@@ -17,12 +17,13 @@ class Robot(object):
         self.bytes = None
         self.window = None
         self.image_label = None
+        self.psychopy_disabled = None
         self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.sendMessage, poll=0)
 
     def start(self):
         while True:
             self.update()
-            message = self.connection.receiveMessagePoll(0.3)
+            message = self.connection.receiveMessageInstant()
             if message is not None:
                 if isinstance(message, basestring):
                     return message
@@ -38,13 +39,16 @@ class Robot(object):
                 jpg = self.bytes[a:b+2]
                 self.bytes = self.bytes[b+2:]
                 i = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.CV_LOAD_IMAGE_COLOR)
-                tki = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(i, cv2.COLOR_BGR2RGB)))
-                self.image_label.configure(image=tki)
-                self.image_label._backbuffer_ = tki  # avoid flicker caused by premature gc
-                # cv2.imshow('i', i)
+                if self.psychopy_disabled is not None:
+                    if self.psychopy_disabled:
+                        tki = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(i, cv2.COLOR_BGR2RGB)))
+                        self.image_label.configure(image=tki)
+                        self.image_label._backbuffer_ = tki  # avoid flicker caused by premature gc
+                    else:
+                        self.connection.sendMessage(i)
 
     def updateWindow(self):
-        if self.window is not None:
+        if self.psychopy_disabled:
             self.window.update()
 
     def update(self):
@@ -68,12 +72,19 @@ class Robot(object):
         else:
             print("Unknown message in Robot: " + str(message))
 
+    def psychopyDisabled(self, options):
+        return options[c.DISABLE] == 1
+
     def setup(self):
         options = self.connection.receiveMessageBlock()
-        try:
+        if self.psychopyDisabled(options[c.DATA_BACKGROUND]):
             self.window = Tkinter.Tk()
             self.image_label = Tkinter.Label(self.window)
             self.image_label.pack()
+            self.psychopy_disabled = True
+        else:
+            self.psychopy_disabled = False
+        try:
             self.stream = urllib.urlopen("http://192.168.42.1:8080/?action=stream")
             self.bytes = ""
             return c.SUCCESS_MESSAGE

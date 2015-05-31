@@ -1,7 +1,11 @@
 from psychopy import visual, core, logging
 
-import constants as c
+from PIL import Image
 
+import cv2
+
+import numpy as np
+import constants as c
 
 # To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
 
@@ -109,6 +113,7 @@ class TargetsWindow(object):
         self.window = None
         self.monitor_frequency = None
         self.prev_current = None
+        self.video_stream = None
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
         #self.window.setRecordFrameIntervals(True)
@@ -121,7 +126,13 @@ class TargetsWindow(object):
         self.targets = self.getTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_COLOR], self.window)
         self.generators = self.getGenerators(self.targets)
         self.setStandbyTarget(options[c.DATA_TEST][c.TEST_STANDBY])
+        self.video_stream = self.getVideoStreamImage(self.window)
         return c.SUCCESS_MESSAGE
+
+    def getVideoStreamImage(self, window):
+        image = visual.ImageStim(window, pos=(0.0, 0.0))
+        image.autoDraw = True
+        return image
 
     def exit(self):
         self.connection.close()
@@ -170,6 +181,10 @@ class TargetsWindow(object):
     def setTargetDetected(self, target):
         target.detected()
 
+    def updateStream(self, message):
+        image = Image.fromarray(cv2.cvtColor(message, cv2.COLOR_BGR2RGB))
+        self.video_stream.setImage(image)
+
     def start(self, standby=False):
         while True:
             self.updateWindow()
@@ -180,12 +195,15 @@ class TargetsWindow(object):
                     continue
                 elif isinstance(message, basestring):
                     return message
-                for target in self.targets:
-                    if message == target.freq and isinstance(message, float):
-                        self.setTargetDetected(target)
-                        break
-                    elif message == target.id and isinstance(message, int):
-                        self.setCurrentTarget(target)
-                        break
+                elif isinstance(message, np.ndarray):
+                    self.updateStream(message)
+                else:
+                    for target in self.targets:
+                        if message == target.freq and isinstance(message, float):
+                            self.setTargetDetected(target)
+                            break
+                        elif message == target.id and isinstance(message, int):
+                            self.setCurrentTarget(target)
+                            break
             for i in range(len(self.targets)):
                 self.generators[i].send(standby)
