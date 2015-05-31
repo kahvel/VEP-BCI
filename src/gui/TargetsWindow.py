@@ -126,13 +126,14 @@ class TargetsWindow(object):
         self.targets = self.getTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_COLOR], self.window)
         self.generators = self.getGenerators(self.targets)
         self.setStandbyTarget(options[c.DATA_TEST][c.TEST_STANDBY])
-        self.video_stream = self.getVideoStreamImage(self.window)
+        self.video_stream = self.getVideoStreamImage(self.window, options[c.DATA_ROBOT])
         return c.SUCCESS_MESSAGE
 
-    def getVideoStreamImage(self, window):
-        image = visual.ImageStim(window, pos=(0.0, 0.0))
-        image.autoDraw = True
-        return image
+    def getVideoStreamImage(self, window, options):
+        if options[c.ROBOT_STREAM]:
+            image = visual.ImageStim(window, pos=(options[c.STREAM_X], options[c.STREAM_Y]), size=(options[c.STREAM_WIDTH], options[c.STREAM_HEIGHT]))
+            image.autoDraw = True
+            return image
 
     def exit(self):
         self.connection.close()
@@ -182,8 +183,9 @@ class TargetsWindow(object):
         target.detected()
 
     def updateStream(self, message):
-        image = Image.fromarray(cv2.cvtColor(message, cv2.COLOR_BGR2RGB))
-        self.video_stream.setImage(image)
+        if self.video_stream is not None:
+            image = Image.fromarray(cv2.cvtColor(message, cv2.COLOR_BGR2RGB))
+            self.video_stream.setImage(image)
 
     def start(self, standby=False):
         while True:

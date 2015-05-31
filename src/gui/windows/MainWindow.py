@@ -84,8 +84,8 @@ class MainWindow(MyWindows.TkWindow):
             c.DATA_EXTRACTION: all_data[c.EXTRACTION_NOTEBOOK].values(),
             c.DATA_TEST: all_data[c.TEST_TAB],
             c.DATA_HARMONICS: self.getHarmonics(target_data.values()),
-            c.DATA_ROBOT: {c.DISABLE: all_data[c.ROBOT_TAB][c.DISABLE]},
-            c.DATA_EMOTIV: {c.DISABLE: all_data[c.EMOTIV_TAB][c.DISABLE]}
+            c.DATA_ROBOT: all_data[c.ROBOT_TAB],
+            c.DATA_EMOTIV: all_data[c.EMOTIV_TAB]
         }
 
     def exit(self):

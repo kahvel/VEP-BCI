@@ -1,6 +1,6 @@
 from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 from gui.widgets.frames import Frame
-from gui.widgets import Buttons, OptionMenu
+from gui.widgets import Buttons, OptionMenu, Checkbutton, Textboxes
 import constants as c
 
 
@@ -18,5 +18,17 @@ class RobotTab(DisableDeleteNotebookTab.Disable):
             Buttons.Button(self.widget, c.ROBOT_TEST, 2, 3, command=lambda: sendMessage(c.MOVE_RIGHT)),
             Buttons.Button(self.widget, c.ROBOT_TEST, 3, 3, command=lambda: sendMessage(c.MOVE_LEFT)),
             Buttons.Button(self.widget, c.ROBOT_TEST, 4, 3, command=lambda: sendMessage(c.MOVE_STOP)),
-            self.getDisableButton(5, 0)
+            Textboxes.LabelTextbox(self.widget, c.STREAM_X, 5, 0, command=int, allow_negative=True, allow_zero=True),
+            Textboxes.LabelTextbox(self.widget, c.STREAM_Y, 5, 2, command=int, allow_negative=True, allow_zero=True),
+            Checkbutton.Checkbutton(self.widget, c.ROBOT_STREAM, 5, 4, command=self.enableCoordinates, default_value=1),
+            Textboxes.LabelTextbox(self.widget, c.STREAM_WIDTH, 6, 0, command=int, allow_negative=True, allow_zero=True, default_value=320),
+            Textboxes.LabelTextbox(self.widget, c.STREAM_HEIGHT, 6, 2, command=int, allow_negative=True, allow_zero=True, default_value=240),
+            self.getDisableButton(7, 0)
         ))
+
+    def enableCoordinates(self):
+        self.conditionalDisabling(
+            self.widgets_dict[c.ROBOT_STREAM],
+            (1,),
+            (self.widgets_dict[c.STREAM_X], self.widgets_dict[c.STREAM_Y], self.widgets_dict[c.STREAM_WIDTH], self.widgets_dict[c.STREAM_HEIGHT])
+        )

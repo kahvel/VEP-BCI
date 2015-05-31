@@ -16,6 +16,7 @@ class Robot(object):
         self.bytes = None
         self.window = None
         self.psychopy_disabled = None
+        self.stream_enabled = None
         self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.sendMessage, poll=0)
 
     def start(self):
@@ -29,19 +30,20 @@ class Robot(object):
                     self.sendMessage(message)
 
     def updateVideo(self):
-        if self.stream is not None:
-            self.bytes += self.stream.read(1024)
-            a = self.bytes.find('\xff\xd8')
-            b = self.bytes.find('\xff\xd9')
-            if a != -1 and b != -1:
-                jpg = self.bytes[a:b+2]
-                self.bytes = self.bytes[b+2:]
-                i = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.CV_LOAD_IMAGE_COLOR)
-                if self.psychopy_disabled is not None:
-                    if self.psychopy_disabled:
-                        self.window.updateStream(i)
-                    else:
-                        self.connection.sendMessage(i)
+        if self.stream_enabled:
+            if self.stream is not None:
+                self.bytes += self.stream.read(1024)
+                a = self.bytes.find('\xff\xd8')
+                b = self.bytes.find('\xff\xd9')
+                if a != -1 and b != -1:
+                    jpg = self.bytes[a:b+2]
+                    self.bytes = self.bytes[b+2:]
+                    i = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.CV_LOAD_IMAGE_COLOR)
+                    if self.psychopy_disabled is not None:
+                        if self.psychopy_disabled:
+                            self.window.updateStream(i)
+                        else:
+                            self.connection.sendMessage(i)
 
     def updateWindow(self):
         if self.window is not None:
@@ -77,16 +79,22 @@ class Robot(object):
     def psychopyDisabled(self, options):
         return options[c.DISABLE] == 1
 
+    def streamEnabled(self, options):
+        return options[c.ROBOT_STREAM] == 1
+
     def setup(self):
         options = self.connection.receiveMessageBlock()
         self.exitWindow()
-        if self.psychopyDisabled(options[c.DATA_BACKGROUND]):
-            self.window = VideoStream.StreamWindow()
-            self.window.setup()
-            self.psychopy_disabled = True
+        self.stream_enabled = self.streamEnabled(options[c.DATA_ROBOT])
+        if self.stream_enabled:
+            self.psychopy_disabled = self.psychopyDisabled(options[c.DATA_BACKGROUND])
+            if self.psychopy_disabled:
+                self.window = VideoStream.StreamWindow()
+                self.window.setup()
+            else:
+                self.window = None
         else:
             self.window = None
-            self.psychopy_disabled = False
         try:
             self.stream = urllib.urlopen("http://192.168.42.1:8080/?action=stream")
             self.bytes = ""
