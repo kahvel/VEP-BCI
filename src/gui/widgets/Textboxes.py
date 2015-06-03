@@ -98,8 +98,8 @@ class PlusMinusTextboxFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 3
         }))
-        increase_command = lambda: increase() if self.widgets_dict[name].validate() else None
-        decrease_command = lambda: decrease() if self.widgets_dict[name].validate() else None
+        increase_command = lambda: increase() if self.widgets_dict[c.TEXTBOX].validate() else None
+        decrease_command = lambda: decrease() if self.widgets_dict[c.TEXTBOX].validate() else None
         self.addChildWidgets((
             LabelTextbox(self.widget, c.TEXTBOX, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0),
             PlusMinusFrame.PlusMinusFrame(self.widget, 0, 2, increase_command, decrease_command)

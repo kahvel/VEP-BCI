@@ -14,7 +14,7 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
     def setup(self, options):
         Generator.AbstractExtracionGenerator.setup(self, options)
         self.cca = sklearn.cross_decomposition.CCA(n_components=1)
-        self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS])
+        self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS].values())
 
     def getReferenceSignals(self, length, target_freqs):
         reference_signals = []
@@ -44,7 +44,7 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
     def getGenerator(self, options):
         max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         generator_count = len(options[c.DATA_SENSORS])
-        target_freqs = options[c.DATA_FREQS]
+        target_freqs = options[c.DATA_FREQS].values()
         coordinates = [[] for _ in range(generator_count)]
         while True:
             for i in range(generator_count):

@@ -63,7 +63,7 @@ class PsdaExtraction(Generator.AbstractExtracionGenerator):
 
     def getGenerator(self, options):
         max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
-        target_freqs = options[c.DATA_FREQS]
+        target_freqs = options[c.DATA_FREQS].values()
         while True:
             coordinates = yield
             actual_length = len(coordinates)
