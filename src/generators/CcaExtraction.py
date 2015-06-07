@@ -39,7 +39,10 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
             return np.array(target_reference)
 
     def getResults(self, coordinates, length, target_freqs):
-        return {freq: self.getCorr(coordinates, self.getReferenceSignal(reference, length).T) for freq, reference in zip(target_freqs, self.reference_signals)}
+        return ((freq, self.getCorr(coordinates, self.getReferenceSignal(reference, length).T)) for freq, reference in zip(target_freqs, self.reference_signals))
+
+    def getRanking(self, results):
+        return sorted(results, key=lambda x: x[1], reverse=True)
 
     def getGenerator(self, options):
         max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
@@ -52,4 +55,4 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
             actual_length = len(coordinates[0])
             self.checkLength(actual_length, max_length)
             transposed_coordinates = np.array(coordinates).T
-            yield self.getResults(transposed_coordinates, actual_length, target_freqs)
+            yield self.getRanking(self.getResults(transposed_coordinates, actual_length, target_freqs))

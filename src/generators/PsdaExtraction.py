@@ -54,12 +54,29 @@ class PsdaExtraction(Generator.AbstractExtracionGenerator):
         else:
             return self.fft_bins
 
-    def getListOfMagnitudes(self, freq, harmonics, interpolation_func):
-        return {harmonic: self.getMagnitude(freq, harmonic, interpolation_func) for harmonic in harmonics}
+    def getListOfMagnitudes(self, target_freqs, harmonic, interpolation_func):
+        return {freq: self.getMagnitude(freq, harmonic, interpolation_func) for freq, harmonics in zip(target_freqs, self.harmonics) if harmonic in harmonics}
+
+    def concatenateMatrix(self, matrix):
+        concatenated = []
+        map(concatenated.extend, matrix)
+        return concatenated
+
+    def listToSet(self, list):
+        result_set = set()
+        map(result_set.add, list)
+        return result_set
 
     def getResults(self, target_freqs, coordinates):
         interpolation_func = self.interpolation(self.getFreqs(len(coordinates)), coordinates)
-        return {freq: self.getListOfMagnitudes(freq, harmonics, interpolation_func) for freq, harmonics in zip(target_freqs, self.harmonics)}
+        all_harmonics = self.concatenateMatrix(self.harmonics)
+        harmonics_set = self.listToSet(all_harmonics)
+        result = {harmonic: self.getListOfMagnitudes(target_freqs, harmonic, interpolation_func) for harmonic in harmonics_set}
+        result[c.RESULT_SUM] = {freq: sum(result[harmonic][freq] for harmonic in harmonics_set) for freq in target_freqs}
+        return {harmonic: self.getRanking(result[harmonic].items()) for harmonic in list(harmonics_set)+[c.RESULT_SUM]}
+
+    def getRanking(self, results):
+        return sorted(results, key=lambda x: x[1], reverse=True)
 
     def getGenerator(self, options):
         max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]

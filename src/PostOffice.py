@@ -20,6 +20,7 @@ class PostOffice(object):
         self.actual_results = []
         self.actual_results_counter = {}
         self.need_new_target = None
+        self.new_target_counter = None
         self.message_counter = None
         self.waitConnections()
 
@@ -53,73 +54,31 @@ class PostOffice(object):
                     print("Unknown message in PostOffice: " + str(message))
             message = self.main_connection.receiveMessagePoll(0.1)
 
-    def countFreqs(self, freqs, weight=None):
-        result = {}
-        for tab in freqs:
-            if freqs[tab] not in result:
-                if weight is None:
-                    result[freqs[tab]] = 1
-                else:
-                    result[freqs[tab]] = weight[tab]
-            else:
-                if weight is None:
-                    result[freqs[tab]] += 1
-                else:
-                    result[freqs[tab]] += weight[tab]
-        return result
+    def countCca(self, counted_freqs, results, weight):
+        counted_freqs[round(results[0][0], 2)] += weight
 
-    def countAllFreqs(self, *freqs_dicts):
-        result = {}
-        for dict in freqs_dicts:
-            for freq in dict:
-                if round(freq, 2) not in result:
-                    result[round(freq, 2)] = dict[freq]
-                else:
-                    result[round(freq, 2)] += dict[freq]
-        return result
+    def countSumPsda(self, counted_freqs, results, weight):
+        for harmonic in results:
+            if harmonic in weight:
+                self.countCca(counted_freqs, results[harmonic], weight[harmonic])
 
-    def getResults(self, results, current_target, method):
-        wrong = []
-        correct = []
-        all_results, max_freqs = results[:2]
-        if max_freqs != {}:
-            freq = max_freqs.values()[0]
-            if freq == current_target:
-                correct.append((method, freq))
-            else:
-                wrong.append((method, freq))
-        return correct, wrong
+    def countPsda(self, counted_freqs, results, weight):
+        for sensor in results:
+            if sensor in weight:
+                self.countSumPsda(counted_freqs, results[sensor], weight[sensor])
 
-    def getSumPsdaResults(self, results, current_target, method):
-        return {key: self.getResults(results[key], current_target, method) for key in results}
-
-    def getPsdaResults(self, results, current_target, method):
-        return {key: self.getSumPsdaResults(results[key], current_target, method) for key in results}
-
-    def findCorrectResults(self, results, target_freqs):
-        result = self.countAllFreqs(
-            self.countFreqs(results[c.CCA][1]),#, weight={2: 2, 4: 2, 6: 2, 8: 2}),
-            self.countFreqs(results[c.SUM_PSDA][1][1] if 1 in results[c.SUM_PSDA] else {}, weight={1: 0.5, 3: 0.5, 5: 0.5, 7: 0.5}),
-            # self.countFreqs(results[c.SUM_PSDA][2][1] if 2 in results[c.SUM_PSDA] else {}, sum_psda=True),
-            # self.countFreqs(results[c.SUM_PSDA][3][1] if 3 in results[c.SUM_PSDA] else {}, sum_psda=True),
-            self.countFreqs(results[c.SUM_PSDA][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.SUM_PSDA] else {}, weight={1: 0.5, 3: 0.5, 5: 0.5, 7: 0.5}),
-            # self.countFreqs(results[c.PSDA]["O1"][1][1] if "O1" in results[c.PSDA] and 1 in results[c.PSDA]["O1"] else {}),
-            # # self.countFreqs(results[c.PSDA]["O1"][2][1] if "O1" in results[c.PSDA] and 2 in results[c.PSDA]["O1"] else {}),
-            # # self.countFreqs(results[c.PSDA]["O1"][3][1] if "O1" in results[c.PSDA] and 3 in results[c.PSDA]["O1"] else {}),
-            # self.countFreqs(results[c.PSDA]["O1"][c.RESULT_SUM][1] if "O1" in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA]["O1"] else {}),
-            # self.countFreqs(results[c.PSDA]["O2"][1][1] if "O2" in results[c.PSDA] and 1 in results[c.PSDA]["O2"] else {}),
-            # # self.countFreqs(results[c.PSDA]["O2"][2][1] if "O2" in results[c.PSDA] and 2 in results[c.PSDA]["O2"] else {}),
-            # # self.countFreqs(results[c.PSDA]["O2"][3][1] if "O2" in results[c.PSDA] and 3 in results[c.PSDA]["O2"] else {}),
-            # self.countFreqs(results[c.PSDA]["O2"][c.RESULT_SUM][1] if "O2" in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA]["O2"] else {}),
-            # self.countFreqs(results[c.PSDA][c.RESULT_SUM][1][1] if c.RESULT_SUM in results[c.PSDA] and 1 in results[c.PSDA][c.RESULT_SUM] else {}),
-            # # self.countFreqs(results[c.PSDA][c.RESULT_SUM][2][1] if c.RESULT_SUM in results[c.PSDA] and 2 in results[c.PSDA][c.RESULT_SUM] else {}),
-            # # self.countFreqs(results[c.PSDA][c.RESULT_SUM][3][1] if c.RESULT_SUM in results[c.PSDA] and 3 in results[c.PSDA][c.RESULT_SUM] else {}),
-            # self.countFreqs(results[c.PSDA][c.RESULT_SUM][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.PSDA] and c.RESULT_SUM in results[c.PSDA][c.RESULT_SUM] else {}),
-        )
-        for freq in target_freqs:
-            if round(freq, 2) not in result:
-                result[round(freq, 2)] = 0
-        return result
+    def countAll(self, results, target_freqs, weight):
+        counted_results = {round(freq, 2): 0 for freq in target_freqs}
+        for tab in results:
+            for method in results[tab]:
+                if tab in weight and method[0] in weight[tab]:
+                    if method[0] == c.CCA:
+                        self.countCca(counted_results, results[tab][method], weight[tab][method[0]])
+                    elif method[0] == c.SUM_PSDA:
+                        self.countSumPsda(counted_results, results[tab][method], weight[tab][method[0]])
+                    elif method[0] == c.PSDA:
+                        self.countPsda(counted_results, results[tab][method], weight[tab][method[0]])
+        return counted_results
 
     def getDictKey(self, dict, value_arg):
         for key, value in dict.items():
@@ -132,9 +91,8 @@ class PostOffice(object):
         target_freqs = target_freqs_dict.values()
         rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         if results is not None:
-            counted_freqs = self.findCorrectResults(results, target_freqs)
-            # max_freq_rounded, max_count = max(counted_freqs.items(), key=lambda x: x[1])
-            # max_freq = target_freqs[rounded_target_freqs.index(max_freq_rounded)]
+            counted_freqs = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
+            print(counted_freqs)
             for freq in counted_freqs:
                 self.prev_results_counter[freq] += counted_freqs[freq]
             self.prev_results.append(counted_freqs)
@@ -168,7 +126,10 @@ class PostOffice(object):
                                         print("wrong", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, current, max_freq, f1)
                                     else:
                                         print("right", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, current, max_freq, f1)
-                                        self.need_new_target = True
+                                        self.new_target_counter += 1
+                                        if self.new_target_counter > 3:
+                                            self.need_new_target = True
+                                            self.new_target_counter = 0
 
     def getTotalTime(self, unlimited, test_time):
         return float("inf") if unlimited else test_time
@@ -192,10 +153,10 @@ class PostOffice(object):
         target = None
         while self.message_counter < total_time:
             target = self.getTarget(options[c.TEST_TARGET], target_freqs, target)
-            print("target", target)
             if target is not None:
                 self.connections.sendTargetMessage(target)
             self.need_new_target = False
+            self.new_target_counter = 0
             message = self.startPacketSending(target_freqs, target, total_time)
             if message is not None:
                 return message

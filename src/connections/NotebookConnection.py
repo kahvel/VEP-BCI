@@ -47,13 +47,13 @@ class TabConnection(Connections.MultipleConnections):
 
     def setup(self, options):
         self.close()
-        for tab_id, option in enumerate(options[self.options_key]):
+        for tab_id, option in options[self.options_key].items():
             new_connection = self.getConnection()
             dict_copy = copy.deepcopy(option)
             dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
             dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS]
             new_connection.setup(dict_copy)
-            new_connection.setId(tab_id+1)
+            new_connection.setId(tab_id)
             self.connections.append(new_connection)
 
     def getConnection(self):
