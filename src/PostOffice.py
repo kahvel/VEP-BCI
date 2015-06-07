@@ -22,6 +22,7 @@ class PostOffice(object):
         self.need_new_target = None
         self.new_target_counter = None
         self.message_counter = None
+        self.differences = []
         self.waitConnections()
 
     def waitConnections(self):
@@ -56,6 +57,7 @@ class PostOffice(object):
 
     def countCca(self, counted_freqs, results, weight):
         counted_freqs[round(results[0][0], 2)] += weight
+        self.differences.append(results[0][1]-results[1][1])
 
     def countSumPsda(self, counted_freqs, results, weight):
         for harmonic in results:
@@ -91,43 +93,46 @@ class PostOffice(object):
         target_freqs = target_freqs_dict.values()
         rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         if results is not None:
+            self.differences = []
             counted_freqs = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
-            print(counted_freqs)
-            for freq in counted_freqs:
-                self.prev_results_counter[freq] += counted_freqs[freq]
-            self.prev_results.append(counted_freqs)
-            if len(self.prev_results) > 3:
-                for result in self.prev_results[0]:
-                    self.prev_results_counter[result] -= self.prev_results[0][result]
-                del self.prev_results[0]
-                f, m = max(self.prev_results_counter.items(), key=lambda x: x[1])
-                if m >= 5:
-                    self.actual_results.append(f)
-                    self.actual_results_counter[f] += 1
-                    if len(self.actual_results) > 2:
-                        self.actual_results_counter[self.actual_results[0]] -= 1
-                        del self.actual_results[0]
-                        f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
-                        max_freq = target_freqs[rounded_target_freqs.index(f1)]
-                        if m1 >= 2:
-                            # if max_freq == self.standby_freq:
-                            #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
-                            #     self.standby_state = not self.standby_state
-                            #     self.connections.sendTargetMessage(self.standby_state)
-                            #     winsound.Beep(2500, 100)
-                            #     self.prev_results = []
-                            if not self.standby_state or self.no_standby:
-                                self.connections.sendTargetMessage(max_freq)
-                                current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None
-                                if not self.results.isPrevResult(max_freq):
-                                    self.results.addResult(current, max_freq)
-                                    self.connections.sendRobotMessage(self.getDictKey(target_freqs_dict, max_freq))
-                                    if max_freq != current:
-                                        print("wrong", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, current, max_freq, f1)
-                                    else:
-                                        print("right", m, self.actual_results, self.actual_results_counter, self.prev_results_counter, current, max_freq, f1)
+            if all(map(lambda x: x > 0.05, self.differences)):
+                for freq in counted_freqs:
+                    self.prev_results_counter[freq] += counted_freqs[freq]
+                self.prev_results.append(counted_freqs)
+                if len(self.prev_results) > 3:
+                    for result in self.prev_results[0]:
+                        self.prev_results_counter[result] -= self.prev_results[0][result]
+                    del self.prev_results[0]
+                    f, m = max(self.prev_results_counter.items(), key=lambda x: x[1])
+                    if m >= 3.5:
+                        self.actual_results.append(f)
+                        self.actual_results_counter[f] += 1
+                        if len(self.actual_results) > 3:
+                            self.actual_results_counter[self.actual_results[0]] -= 1
+                            del self.actual_results[0]
+                            f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
+                            max_freq = target_freqs[rounded_target_freqs.index(f1)]
+                            if m1 >= 2:
+                                # if max_freq == self.standby_freq:
+                                #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
+                                #     self.standby_state = not self.standby_state
+                                #     self.connections.sendTargetMessage(self.standby_state)
+                                #     winsound.Beep(2500, 100)
+                                #     self.prev_results = []
+                                if not self.standby_state or self.no_standby:
+                                    self.connections.sendTargetMessage(max_freq)
+                                    current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None
+                                    if not self.results.isPrevResult(max_freq):
+                                        self.results.addResult(current, max_freq)
+                                        self.connections.sendRobotMessage(self.getDictKey(target_freqs_dict, max_freq))
+                                        print(self.differences, sum(self.differences))
+                                        if max_freq != current:
+                                            print("wrong", self.actual_results, self.actual_results_counter, self.prev_results_counter, current, f1)
+                                        else:
+                                            print("right", self.actual_results, self.actual_results_counter, self.prev_results_counter, current, f1)
+                                    if max_freq == current:
                                         self.new_target_counter += 1
-                                        if self.new_target_counter > 3:
+                                        if self.new_target_counter > 0:
                                             self.need_new_target = True
                                             self.new_target_counter = 0
 

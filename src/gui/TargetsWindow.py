@@ -24,7 +24,7 @@ class Target(object):
         self.fixation = visual.GratingStim(window, size=1, pos=[options[c.TARGET_X], options[c.TARGET_Y]], sf=0, rgb=1)
         self.fixation.setAutoDraw(True)
         self.current_target_signs = self.getSigns(window, options, self.test_color)
-        self.detected_target_signs = self.getSigns(window, options, "#00ff00")
+        self.detected_target_signs = self.getSigns(window, options, "#00ff00", 40)
         self.freq = options[c.DATA_FREQ]
         self.sequence = options[c.TARGET_SEQUENCE]
         self.id = id
@@ -39,7 +39,7 @@ class Target(object):
             fillColor=color
         )
 
-    def getTriangle(self, window, options, color, x, y, ori=0):
+    def getTriangle(self, window, options, color, x, y, ori=0, offset=20):
         return visual.Polygon(
             window,
             edges=3,
@@ -47,17 +47,17 @@ class Target(object):
             fillColor=color,
             ori=ori,
             pos=(
-                options[c.TARGET_X]+(options[c.TARGET_WIDTH]/2 + 20)*x,
-                options[c.TARGET_Y]+(options[c.TARGET_HEIGHT]/2 + 20)*y
+                options[c.TARGET_X]+(options[c.TARGET_WIDTH]/2 + offset)*x,
+                options[c.TARGET_Y]+(options[c.TARGET_HEIGHT]/2 + offset)*y
             )
         )
 
-    def getSigns(self, window, options, color):
+    def getSigns(self, window, options, color, offset=20):
         return (
-            self.getTriangle(window, options, color, 0, 1, 60),
-            self.getTriangle(window, options, color, 1, 0, 30),
-            self.getTriangle(window, options, color, 0, -1),
-            self.getTriangle(window, options, color, -1, 0, -30)
+            self.getTriangle(window, options, color, 0, 1, 60, offset),
+            self.getTriangle(window, options, color, 1, 0, 30, offset),
+            self.getTriangle(window, options, color, 0, -1, 0, offset),
+            self.getTriangle(window, options, color, -1, 0, -30, offset)
         )
 
     def setCurrent(self, value):
