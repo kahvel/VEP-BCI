@@ -36,7 +36,7 @@ class MasterConnection(Connections.MultipleConnections):
         return self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.01)
 
     def receiveRobotMessage(self):
-        return self.connections[c.CONNECTION_ROBOT].receiveMessagePoll(0.01)
+        return self.connections[c.CONNECTION_ROBOT].receiveMessageInstant()
 
     def sendPlotMessage(self, message):
         self.connections[c.CONNECTION_PLOT].sendMessage(message)

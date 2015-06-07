@@ -17,6 +17,7 @@ class Robot(object):
         self.window = None
         self.psychopy_disabled = None
         self.stream_enabled = None
+        self.target_to_command = None
         self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.sendMessage, poll=0)
 
     def start(self):
@@ -24,10 +25,14 @@ class Robot(object):
             self.update()
             message = self.connection.receiveMessageInstant()
             if message is not None:
-                if isinstance(message, basestring):
+                if isinstance(message, int):
+                    self.sendMessage(self.target_to_command[message])
+                elif message in c.ROBOT_COMMANDS:
+                    self.sendMessage(message)
+                elif isinstance(message, basestring):
                     return message
                 else:
-                    self.sendMessage(message)
+                    print("Robot message: " + str(message))
 
     def updateVideo(self):
         if self.stream_enabled:
@@ -82,10 +87,20 @@ class Robot(object):
     def streamEnabled(self, options):
         return options[c.ROBOT_STREAM] == 1
 
+    def getTargetToCommand(self, options):
+        return {
+            options[c.ROBOT_OPTION_FORWARD]: c.MOVE_FORWARD,
+            options[c.ROBOT_OPTION_BACKWARD]: c.MOVE_BACKWARD,
+            options[c.ROBOT_OPTION_LEFT]: c.MOVE_LEFT,
+            options[c.ROBOT_OPTION_RIGHT]: c.MOVE_RIGHT,
+            options[c.ROBOT_OPTION_STOP]: c.MOVE_STOP
+        }
+
     def setup(self):
         options = self.connection.receiveMessageBlock()
         self.exitWindow()
         self.stream_enabled = self.streamEnabled(options[c.DATA_ROBOT])
+        self.target_to_command = self.getTargetToCommand(options[c.DATA_ROBOT])
         if self.stream_enabled:
             self.psychopy_disabled = self.psychopyDisabled(options[c.DATA_BACKGROUND])
             if self.psychopy_disabled:

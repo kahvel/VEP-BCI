@@ -33,7 +33,6 @@ class TargetFrame(Frame.Frame):
     def __init__(self, parent, row, column, getMonitorFreq, **kwargs):
         Frame.Frame.__init__(self, parent, c.TARGET_FRAME, row, column, **kwargs)
         self.getMonitorFreq = getMonitorFreq
-        self.loading_default_value = True
         validate = lambda: self.changeFreq()
         increase = lambda: self.changeFreq(increase=True)
         decrease = lambda: self.changeFreq(decrease=True)
@@ -61,8 +60,8 @@ class TargetFrame(Frame.Frame):
     def getSequenceTextbox(self):
         return self.widgets_dict[c.TARGET_SEQUENCE]
 
-    def setSequence(self, freq_on, freq_off):
-        self.getSequenceTextbox().setValue(self.calculateSequence(freq_on, freq_off))
+    def setSequence(self, value):
+        self.getSequenceTextbox().setValue(value)
 
     def calculateSequence(self, freq_on, freq_off):
         return ("1"*freq_on)+("0"*freq_off)
@@ -79,6 +78,9 @@ class TargetFrame(Frame.Frame):
                 prev = c
         return state_change_count
 
+    def freqFromSequence(self, sequence):
+        return self.getStateChangeCount(sequence)/(2*len(sequence)/self.getMonitorFreq())
+
     def sequenceChanged(self, sequence):
         if sequence.count("0") == len(sequence) or sequence.count("1") == len(sequence):
             self.setTargetFreq(self.getMonitorFreq())
@@ -86,7 +88,7 @@ class TargetFrame(Frame.Frame):
         elif sequence.count("0")+sequence.count("1") != len(sequence):
             return False
         else:
-            self.setTargetFreq(self.getStateChangeCount(sequence)/(2*len(sequence)/self.getMonitorFreq()))
+            self.setTargetFreq(self.freqFromSequence(sequence))
             return True
 
     def calculateOnOffFreq(self, increase=False, decrease=False):
@@ -109,10 +111,11 @@ class TargetFrame(Frame.Frame):
         freq_on, freq_off = self.calculateOnOffFreq(increase, decrease)
         if freq_off+freq_on != 0:
             new_freq = self.calculateNewFreq(freq_on, freq_off)
-            if new_freq != self.getTargetFreq():
+            new_sequence = self.calculateSequence(freq_on, freq_off)
+            current_freq = self.freqFromSequence(self.getSequence())
+            if increase or decrease or current_freq != self.getTargetFreq():
                 self.setTargetFreq(new_freq)
-                self.setSequence(freq_on, freq_off)
-            self.loading_default_value = False
+                self.setSequence(new_sequence)
             return True
         else:
             return False

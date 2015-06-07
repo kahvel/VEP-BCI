@@ -98,11 +98,11 @@ class PostOffice(object):
 
     def findCorrectResults(self, results, target_freqs):
         result = self.countAllFreqs(
-            self.countFreqs(results[c.CCA][1], weight={2: 2, 4: 2, 6: 2}),
-            self.countFreqs(results[c.SUM_PSDA][1][1] if 1 in results[c.SUM_PSDA] else {}, weight={1: 1, 3: 1, 5: 1}),
+            self.countFreqs(results[c.CCA][1]),#, weight={2: 2, 4: 2, 6: 2, 8: 2}),
+            self.countFreqs(results[c.SUM_PSDA][1][1] if 1 in results[c.SUM_PSDA] else {}, weight={1: 0.5, 3: 0.5, 5: 0.5, 7: 0.5}),
             # self.countFreqs(results[c.SUM_PSDA][2][1] if 2 in results[c.SUM_PSDA] else {}, sum_psda=True),
             # self.countFreqs(results[c.SUM_PSDA][3][1] if 3 in results[c.SUM_PSDA] else {}, sum_psda=True),
-            self.countFreqs(results[c.SUM_PSDA][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.SUM_PSDA] else {}, weight={1: 1, 3: 1, 5: 1}),
+            self.countFreqs(results[c.SUM_PSDA][c.RESULT_SUM][1] if c.RESULT_SUM in results[c.SUM_PSDA] else {}, weight={1: 0.5, 3: 0.5, 5: 0.5, 7: 0.5}),
             # self.countFreqs(results[c.PSDA]["O1"][1][1] if "O1" in results[c.PSDA] and 1 in results[c.PSDA]["O1"] else {}),
             # # self.countFreqs(results[c.PSDA]["O1"][2][1] if "O1" in results[c.PSDA] and 2 in results[c.PSDA]["O1"] else {}),
             # # self.countFreqs(results[c.PSDA]["O1"][3][1] if "O1" in results[c.PSDA] and 3 in results[c.PSDA]["O1"] else {}),
@@ -138,20 +138,20 @@ class PostOffice(object):
             for freq in counted_freqs:
                 self.prev_results_counter[freq] += counted_freqs[freq]
             self.prev_results.append(counted_freqs)
-            if len(self.prev_results) > 1:
+            if len(self.prev_results) > 3:
                 for result in self.prev_results[0]:
                     self.prev_results_counter[result] -= self.prev_results[0][result]
                 del self.prev_results[0]
                 f, m = max(self.prev_results_counter.items(), key=lambda x: x[1])
-                if m >= 8:
+                if m >= 5:
                     self.actual_results.append(f)
                     self.actual_results_counter[f] += 1
-                    if len(self.actual_results) > 1:
+                    if len(self.actual_results) > 2:
                         self.actual_results_counter[self.actual_results[0]] -= 1
                         del self.actual_results[0]
                         f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
                         max_freq = target_freqs[rounded_target_freqs.index(f1)]
-                        if m1 >= 1:
+                        if m1 >= 2:
                             # if max_freq == self.standby_freq:
                             #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
                             #     self.standby_state = not self.standby_state
@@ -192,6 +192,7 @@ class PostOffice(object):
         target = None
         while self.message_counter < total_time:
             target = self.getTarget(options[c.TEST_TARGET], target_freqs, target)
+            print("target", target)
             if target is not None:
                 self.connections.sendTargetMessage(target)
             self.need_new_target = False
@@ -265,7 +266,9 @@ class PostOffice(object):
     def startPacketSending(self, target_freqs, current_target, total_time):
         while not self.need_new_target and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
-            if main_message is not None:
+            if main_message in c.ROBOT_COMMANDS:
+                self.connections.sendRobotMessage(main_message)
+            elif main_message is not None:
                 return main_message
             self.handleEmotivMessages(target_freqs, current_target)
             self.handleRobotMessages()
