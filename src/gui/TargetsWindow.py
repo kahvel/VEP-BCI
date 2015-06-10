@@ -63,8 +63,8 @@ class Target(object):
     def setCurrent(self, value):
         self.current_target = value
 
-    def detected(self):
-        self.detected_target = True
+    def setDetected(self, value):
+        self.detected_target = value
 
     def setStandbyTarget(self, value):
         self.standby_target = value
@@ -79,22 +79,18 @@ class Target(object):
         if not standby:
             for triangle in triangles:
                 triangle.draw()
+                # triangle.autoDraw = self.detected_target
 
     def drawDetectedSigns(self, standby):
         self.drawTriangles(standby, self.detected_target_signs)
-        if self.detected_counter < self.detected_length:
-            self.detected_counter = 0
-            self.detected_target = False
-        else:
-            self.detected_counter += 1
 
     def generator(self):
         while True:
             for state in self.sequence:
                 standby = yield
                 if self.detected_target:
-                    self.drawDetectedSigns(standby)
-                elif self.current_target:
+                    self.drawTriangles(standby, self.detected_target_signs)
+                if self.current_target:
                     self.drawTriangles(standby, self.current_target_signs)
                 if state == "1":
                     self.drawRect(self.color1, standby)
@@ -112,6 +108,7 @@ class TargetsWindow(object):
         self.window = None
         self.monitor_frequency = None
         self.prev_current = None
+        self.prev_detected = None
         self.video_stream = None
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
@@ -179,7 +176,10 @@ class TargetsWindow(object):
         self.prev_current = target
 
     def setTargetDetected(self, target):
-        target.detected()
+        if self.prev_detected is not None:
+            self.prev_detected.setDetected(False)
+        target.setDetected(True)
+        self.prev_detected = target
 
     def updateStream(self, message):
         if self.video_stream is not None:

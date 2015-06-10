@@ -95,24 +95,24 @@ class PostOffice(object):
         if results is not None:
             self.differences = []
             counted_freqs = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
-            if all(map(lambda x: x > 0.05, self.differences)):
+            if all(map(lambda x: x > 0.1, self.differences)):
                 for freq in counted_freqs:
                     self.prev_results_counter[freq] += counted_freqs[freq]
                 self.prev_results.append(counted_freqs)
-                if len(self.prev_results) > 3:
+                if len(self.prev_results) > 1:
                     for result in self.prev_results[0]:
                         self.prev_results_counter[result] -= self.prev_results[0][result]
                     del self.prev_results[0]
                     f, m = max(self.prev_results_counter.items(), key=lambda x: x[1])
-                    if m >= 3.5:
+                    if m >= 1.5:
                         self.actual_results.append(f)
                         self.actual_results_counter[f] += 1
-                        if len(self.actual_results) > 3:
+                        if len(self.actual_results) > 1:
                             self.actual_results_counter[self.actual_results[0]] -= 1
                             del self.actual_results[0]
                             f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
                             max_freq = target_freqs[rounded_target_freqs.index(f1)]
-                            if m1 >= 2:
+                            if m1 >= 1:
                                 # if max_freq == self.standby_freq:
                                 #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
                                 #     self.standby_state = not self.standby_state
