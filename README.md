@@ -20,15 +20,16 @@ The Python version that has been tested is Python 2.7.6 32 bit. Additional libra
 * numpy 1.8.1
 * scipy 0.14.0
 * scikit-learn 0.16.1
-* psychopy 1.80.06
+* psychopy 1.82.01
 * wxpython  2.8.12.1
 * lxml 3.3.5
-* pillow 2.5.0
+* pillow 2.8.1
 * pyopengl 3.1.0
 * pyglet 1.1.4
 * pywin32 219
 * PyQT 4.11.3
 * pyqtgraph 0.9.10
+* OpenCV 2.4.11
 
 Code from emokit library (https://github.com/openyou/emokit/tree/master/python/emokit) was used to access Emotiv EPOC data. 
 
