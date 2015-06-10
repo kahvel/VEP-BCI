@@ -1,9 +1,6 @@
-from gui.widgets import Radiobutton
-
-__author__ = 'Anti'
-
 import Tkinter
 
+from gui.widgets import Radiobutton
 from gui.widgets.frames import Frame
 import constants as c
 
@@ -25,6 +22,7 @@ class RadiobuttonFrame(Frame.Frame):
         self.variable.set(value)
 
     def loadDefaultValue(self):
+        Frame.Frame.loadDefaultValue(self)
         self.setValue(self.default_value)
 
     # TODO add load and save

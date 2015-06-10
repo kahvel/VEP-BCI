@@ -1,7 +1,4 @@
 from gui.widgets import Buttons
-
-__author__ = 'Anti'
-
 from gui.widgets.frames import Frame
 import constants as c
 
@@ -19,12 +16,12 @@ class Disable(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, 0, 0, **kwargs)
 
     def getDisableButton(self, row, column, **kwargs):
-        return Buttons.DisableButton(self.widget, c.DISABLE_METHOD, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
+        return Buttons.DisableButton(self.widget, c.DISABLE, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
 
 
 class DisableDeleteFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.DISABLE_DELETE_FRAME, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.DISABLE_DELETE_FRAME, row, column, no_value=True, **kwargs)
         self.addChildWidgets((
             Buttons.DisableButton(self.widget, c.DISABLE, 0, 0, enable=kwargs["enable"], disable=kwargs["disable"], always_enabled=True),
             Buttons.Button       (self.widget, c.DELETE,  0, 1, command=kwargs["delete_tab"],  always_enabled=True)

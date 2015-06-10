@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import ttk
 
 from gui.widgets.frames import Frame

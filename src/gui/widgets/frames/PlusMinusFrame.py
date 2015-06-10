@@ -1,8 +1,5 @@
-from gui.widgets import Buttons
-
-__author__ = 'Anti'
-
 from gui.widgets.frames import Frame
+from gui.widgets import Buttons
 import constants as c
 
 

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import multiprocessing
 
 import constants as c
@@ -68,7 +66,8 @@ class Connection(AbstractConnection):
         self.connection_other_end = connection_other_end
 
     def sendMessage(self, message):
-        self.connection.send(message)
+        if not self.isClosed():
+            self.connection.send(message)
 
     def receiveMessage(self):
         return self.connection.recv()
@@ -87,14 +86,17 @@ class Connection(AbstractConnection):
         return self.connection is None
 
     def setupSuccessful(self):
-        while True:
-            message = self.receiveMessageBlock()
-            if message == c.SUCCESS_MESSAGE:
-                return True
-            elif message == c.FAIL_MESSAGE:
-                return False
-            else:
-                print("Connection.setupSuccessful: " + str(message))
+        if not self.isClosed():
+            while True:
+                message = self.receiveMessageBlock()
+                if message == c.SUCCESS_MESSAGE:
+                    return True
+                elif message == c.FAIL_MESSAGE:
+                    return False
+                else:
+                    print("Connection.setupSuccessful: " + str(message))
+        else:
+            return True
 
     def close(self):
         self.sendExitMessage()

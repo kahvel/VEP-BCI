@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import pyqtgraph as pg
 
 import constants as c
@@ -24,7 +22,7 @@ class Plot(Generator.AbstractMyGenerator):
                 return message
             if message is not None:
                 for sensor in self.sensors:
-                    coordinates = self.generator.send(message.sensors[sensor]["value"])
+                    coordinates = self.generator.send(message[sensor])
                 if coordinates is not None:
                     self.pw.plot(coordinates, clear=True)
                     self.generator.next()

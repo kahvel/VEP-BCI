@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import numpy as np
 import sklearn.cross_decomposition
 
@@ -16,7 +14,7 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
     def setup(self, options):
         Generator.AbstractExtracionGenerator.setup(self, options)
         self.cca = sklearn.cross_decomposition.CCA(n_components=1)
-        self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS])
+        self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS].values())
 
     def getReferenceSignals(self, length, target_freqs):
         reference_signals = []
@@ -41,12 +39,15 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
             return np.array(target_reference)
 
     def getResults(self, coordinates, length, target_freqs):
-        return {freq: self.getCorr(coordinates, self.getReferenceSignal(reference, length).T) for freq, reference in zip(target_freqs, self.reference_signals)}
+        return ((freq, self.getCorr(coordinates, self.getReferenceSignal(reference, length).T)) for freq, reference in zip(target_freqs, self.reference_signals))
+
+    def getRanking(self, results):
+        return sorted(results, key=lambda x: x[1], reverse=True)
 
     def getGenerator(self, options):
         max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         generator_count = len(options[c.DATA_SENSORS])
-        target_freqs = options[c.DATA_FREQS]
+        target_freqs = options[c.DATA_FREQS].values()
         coordinates = [[] for _ in range(generator_count)]
         while True:
             for i in range(generator_count):
@@ -54,4 +55,4 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
             actual_length = len(coordinates[0])
             self.checkLength(actual_length, max_length)
             transposed_coordinates = np.array(coordinates).T
-            yield self.getResults(transposed_coordinates, actual_length, target_freqs)
+            yield self.getRanking(self.getResults(transposed_coordinates, actual_length, target_freqs))

@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import constants as c
 import Connections
 
@@ -10,27 +8,30 @@ class Connection(Connections.AbstractConnection):
         self.connection = connection
         self.name = name
 
-    def waitMessages(self, start_function, exit_function, update_function, setup_function):  # wait messages
+    def waitMessages(self, start, exit, update, setup, additional=None, poll=0.1):  # wait messages
         message = None
         while True:
-            update_function()
+            update()
             if message is not None:
                 if message == c.START_MESSAGE:
                     # print("Start", self.name)
-                    message = start_function()
+                    message = start()
                     continue
                 elif message == c.STOP_MESSAGE:
                     pass
                     # print("Stop", self.name)
                 elif message == c.SETUP_MESSAGE:
-                    self.sendMessage(setup_function())
+                    self.sendMessage(setup())
                 elif message == c.EXIT_MESSAGE:
                     # print("Exit", self.name)
-                    exit_function()
+                    exit()
                     return
                 else:
-                    print("Unknown message in " + self.name + ": " + str(message))
-            message = self.receiveMessagePoll(0.1)
+                    if additional is None:
+                        print("Unknown message in " + self.name + ": " + str(message))
+                    else:
+                        additional(message)
+            message = self.receiveMessagePoll(poll)
 
     def sendMessage(self, message):
         try:  # Without it some connections try to send message through closed pipe when exiting
@@ -74,14 +75,6 @@ class PlotConnection(Connection):
         return self.receiveMessageBlock()
 
 
-class GameConnection(Connection):
-    def __init__(self, connection):
-        Connection.__init__(self, connection, c.CONNECTION_GAME_NAME)
-
-    def sendOptions(self, options):
-        self.connection.send(options[c.DATA_FREQS])
-
-
 class MainConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_MAIN_NAME)
@@ -93,3 +86,8 @@ class MainConnection(Connection):
 class EmotivConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_EMOTIV_NAME)
+
+
+class RobotConnection(Connection):
+    def __init__(self, connection):
+        Connection.__init__(self, connection, c.CONNECTION_ROBOT_NAME)

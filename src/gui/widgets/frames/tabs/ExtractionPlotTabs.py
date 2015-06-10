@@ -1,37 +1,39 @@
 from gui.widgets import OptionMenu, Checkbutton, Buttons, Textboxes
 from gui.widgets.frames.tabs import DisableDeleteNotebookTab
-
-__author__ = 'Anti'
-
 from gui.widgets.frames import Frame
 import constants as c
 
 
 class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
         self.addChildWidgets((
             SensorsFrame(self.widget, 0, 0),
             ExtractionTabButtonFrame(self.widget, 1, 0),
             OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=kwargs["delete_tab"])
+            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
         ))
 
 
 class PlotTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.PLOT_TAB_TAB, **kwargs)
         self.addChildWidgets((
             SensorsFrame(self.widget, 0, 0),
             PlotTabButtonFrame(self.widget, 1, 0),
             OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=kwargs["delete_tab"])
+            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
         ))
 
 
-class SensorsFrame(Frame.Frame):
+class OptionsFrameFrame(Frame.Frame):
+    def getValue(self):
+        return [widget.name for widget in self.widgets_list if widget.getValue() == 1]
+
+
+class SensorsFrame(OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.SENSORS_FRAME, row, column, **kwargs)
+        OptionsFrameFrame.__init__(self, parent, c.SENSORS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Checkbutton.Checkbutton(self.widget, c.SENSORS[0], 0, 0, pady=0, padx=0),
             Checkbutton.Checkbutton(self.widget, c.SENSORS[1], 0, 1, pady=0, padx=0),
@@ -58,10 +60,10 @@ class OptionsFrame(Frame.Frame):
         filters = c.FILTER_NAMES
         interpolations = c.INTERPOLATE_NAMES
         self.addChildWidgets((
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,     0, 1, values=detrends, command=self.enableBreak),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,      0, 4, command=self.enableWindow, values=windows),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_INTERPOLATE, 1, 1, values=interpolations),
-            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_FILTER,      1, 4, values=filters, command=self.enableFilter),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_DETREND,     0, 1, detrends, command=self.enableBreak),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_WINDOW,      0, 4, windows, command=self.enableWindow),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_INTERPOLATE, 1, 1, interpolations),
+            OptionMenu.OptionMenu  (self.widget, c.OPTIONS_FILTER,      1, 4, filters, command=self.enableFilter),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_STEP,        2, 0, command=int,    default_value=32),
             Textboxes.LabelTextbox (self.widget, c.OPTIONS_LENGTH,      2, 2, command=int,    default_value=512),
             Checkbutton.Checkbutton(self.widget, c.OPTIONS_NORMALISE,   2, 4, columnspan=2),
@@ -113,9 +115,9 @@ class OptionsFrame(Frame.Frame):
         )
 
 
-class ExtractionTabButtonFrame(Frame.Frame):
+class ExtractionTabButtonFrame(OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent,c.EXTRACTION_TAB_BUTTON_FRAME, row, column, **kwargs)
+        OptionsFrameFrame.__init__(self, parent,c.METHODS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.SunkenButton(self.widget, c.PSDA,     0, 0),
             Buttons.SunkenButton(self.widget, c.SUM_PSDA, 0, 1),
@@ -123,9 +125,9 @@ class ExtractionTabButtonFrame(Frame.Frame):
         ))
 
 
-class PlotTabButtonFrame(Frame.Frame):
+class PlotTabButtonFrame(OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.PLOT_TAB_BUTTON_FRAME, row, column, **kwargs)
+        OptionsFrameFrame.__init__(self, parent, c.METHODS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.SunkenButton(self.widget, c.SIGNAL,         0, 0, default_value=1),
             Buttons.SunkenButton(self.widget, c.SUM_SIGNAL,     0, 1),

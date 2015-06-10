@@ -1,7 +1,4 @@
 from generators import Plot
-
-__author__ = 'Anti'
-
 from connections import NotebookConnection, ConnectionPostOfficeEnd
 import constants as c
 

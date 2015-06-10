@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import numpy as np
 
 import constants as c
@@ -16,12 +14,15 @@ class Results(object):
 
     def setup(self, target_freqs):
         self.trial_id += 1
+        self.prev_result = None
         self.results[self.trial_id] = {}
         self.results[self.trial_id]["Results"] = {current: {detected: 0 for detected in target_freqs} for current in target_freqs+[None]}
         self.results[self.trial_id]["Targets"] = len(target_freqs)
 
     def save(self):
-        pass
+        file = open("result.txt", "a")
+        file.write(self.__repr__()+"\n")
+        file.close()
 
     def addResult(self, current, detected):
         self.results[self.trial_id]["Results"][current][detected] += 1

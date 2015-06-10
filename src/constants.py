@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 MAIN_NOTEBOOK = "MainNotebook"
 
 # Tab names
@@ -10,6 +8,8 @@ EXTRACTION_NOTEBOOK = "Extraction"
 RECORD_TAB = "Record"
 RESULTS_TAB = "Results"
 TEST_TAB = "Test"
+ROBOT_TAB = "Robot"
+EMOTIV_TAB = "Emotiv"
 
 TARGETS_TAB = "Targets"
 PLOT_TAB = "Plot"
@@ -108,21 +108,14 @@ OPTIONS_WINDOW = "Window"
 OPTIONS_BREAK = "Break"
 OPTIONS_INTERPOLATE = "Interp"
 
-EXTRACTION_TAB_BUTTON_FRAME = "ExtractionTabButtonFrame"
-PLOT_TAB_BUTTON_FRAME = "PlotTabButtonFrame"
+METHODS_FRAME = "Methods"
 
 MAIN_FRAME = "MainFrame"
 BOTTOM_FRAME = "BottomFrame"
 
 PLUS_MINUS_FRAME = "PlusMinusFrame"
-PLUS_MINUS_TEXTOX_FRAME = "PlusMinusTextboxFrame"
 RADIOBUTTON_FRAME = "RadiobuttonFrame"
 DISABLE_DELETE_FRAME = "DisableDeleteFrame"
-
-TARGET_COLOR1_FRAME = "Color1TextboxFrame"
-TARGET_COLOR2_FRAME = "Color2TextboxFrame"
-WINDOW_COLOR_FRAME = "ColorTextboxFrame"
-TEST_COLOR_FRAME = "TestColorTextboxFrame"
 
 TARGET_FRAME = "TargetFrame"
 RESULT_FRAME = "ResultFrame"
@@ -164,7 +157,6 @@ MINUS = " -"
 # Disable and Delete frame buttons
 DISABLE = "Disable"
 DELETE = "Delete"
-DISABLE_METHOD = "Disable method"
 
 # Bottom frame buttons
 START_BUTTON = "Start"
@@ -203,8 +195,8 @@ SINGLE_AVERAGE = "SingleAverage"
 ALL_TAB = "All"
 PLUS_TAB = "+"
 
-SENSORS_FRAME = "SensorFrame"
-OPTIONS_FRAME = "OptionsFrame"
+SENSORS_FRAME = "Sensors"
+OPTIONS_FRAME = "Options"
 
 # Sensor names in Plot and Extraction tab
 SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
@@ -234,10 +226,12 @@ DATA_PLOTS = "Plots"
 DATA_EXTRACTION = "Extraction"
 DATA_TEST = "Test"
 DATA_HARMONICS = "Harmonics"
+DATA_ROBOT = "Robot"
+DATA_EMOTIV = "Emotiv"
 
-DATA_SENSORS = "Sensors"
-DATA_OPTIONS = "Options"
-DATA_METHODS = "Methods"
+DATA_SENSORS = SENSORS_FRAME
+DATA_OPTIONS = OPTIONS_FRAME
+DATA_METHODS = METHODS_FRAME
 
 DATA_METHOD = "Method"
 
@@ -245,15 +239,38 @@ DATA_FREQ = "Freq"
 
 CONNECTION_EMOTIV = "Emotiv"
 CONNECTION_PSYCHOPY = "Psychopy"
-CONNECTION_GAME = "Game"
+CONNECTION_ROBOT = "Robot"
 CONNECTION_PLOT = "Plot"
 CONNECTION_EXTRACTION = "Extraction"
 
 CONNECTION_EMOTIV_NAME = "Emotiv"
 CONNECTION_PSYCHOPY_NAME = "Psychopy"
-CONNECTION_GAME_NAME = "Game"
 CONNECTION_PLOT_NAME = "Plot"
 CONNECTION_EXTRACTION_NAME = "Extraction"
 CONNECTION_MAIN_NAME = "Main"
+CONNECTION_ROBOT_NAME = "Robot"
 
 RESULT_SUM = "Sum"
+
+ROBOT_OPTION_FORWARD = "Forward"
+ROBOT_OPTION_BACKWARD = "Backward"
+ROBOT_OPTION_RIGHT = "Right"
+ROBOT_OPTION_LEFT = "Left"
+ROBOT_OPTION_STOP = "Stop"
+
+MOVE_LEFT = "1"
+MOVE_RIGHT = "2"
+MOVE_FORWARD = "3"
+MOVE_BACKWARD = "4"
+MOVE_STOP = "0"
+
+ROBOT_COMMANDS = (MOVE_BACKWARD, MOVE_FORWARD, MOVE_LEFT, MOVE_RIGHT, MOVE_STOP)
+
+ROBOT_TEST = "Test"
+ROBOT_NONE = "None"
+
+ROBOT_STREAM = "Stream"
+STREAM_X = "x"
+STREAM_Y = "y"
+STREAM_WIDTH = "Width"
+STREAM_HEIGHT = "Height"

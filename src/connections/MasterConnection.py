@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import Connections
 import constants as c
 import ConnectionPostOfficeEnd
@@ -14,21 +12,34 @@ class MasterConnection(Connections.MultipleConnections):
             c.CONNECTION_EMOTIV:     ConnectionPostOfficeEnd.EmotivConnection(),
             c.CONNECTION_PSYCHOPY:   ConnectionPostOfficeEnd.PsychopyConnection(),
             c.CONNECTION_PLOT:       PlotConnection.PlotTabConnection(),
-            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection()
-            # c.CONNECTION_GAME:       ConnectionPostOfficeEnd.GameConnection()
+            c.CONNECTION_EXTRACTION: ExtractionConnection.ExtractionTabConnection(),
+            c.CONNECTION_ROBOT:      ConnectionPostOfficeEnd.RobotConnection()
         }
+        self.connection_to_data = {
+            c.CONNECTION_EMOTIV:     c.DATA_EMOTIV,
+            c.CONNECTION_PSYCHOPY:   c.DATA_BACKGROUND,
+            c.CONNECTION_PLOT:       c.DATA_PLOTS,
+            c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
+            c.CONNECTION_ROBOT:      c.DATA_ROBOT
+        }
+
+    def sendRobotMessage(self, message):
+        if not self.connections[c.CONNECTION_ROBOT].isClosed():
+            self.connections[c.CONNECTION_ROBOT].sendMessage(message)
+        else:
+            print("Robot connection is closed. Did you click setup?")
 
     def sendTargetMessage(self, message):
         self.connections[c.CONNECTION_PSYCHOPY].sendMessage(message)
 
     def receiveEmotivMessage(self):
-        return self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.1)
+        return self.connections[c.CONNECTION_EMOTIV].receiveMessagePoll(0.01)
+
+    def receiveRobotMessage(self):
+        return self.connections[c.CONNECTION_ROBOT].receiveMessageInstant()
 
     def sendPlotMessage(self, message):
         self.connections[c.CONNECTION_PLOT].sendMessage(message)
-
-    def sendGameMessage(self, message):
-        self.connections[c.CONNECTION_GAME].sendMessage(message)
 
     def sendExtractionMessage(self, message):
         self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
@@ -54,13 +65,18 @@ class MasterConnection(Connections.MultipleConnections):
 
     def setup(self, options):
         for key in self.connections:
-            self.connections[key].setup(options)
+            if key == c.CONNECTION_EXTRACTION or key == c.CONNECTION_PLOT or\
+                    not options[self.connection_to_data[key]][c.DISABLE]:
+                self.connections[key].setup(options)
+            else:
+                self.connections[key].close()
 
     def setupSuccessful(self):
+        result = True
         for key in self.connections:
             if not self.connections[key].setupSuccessful():
-                return False
-        return True
+                result = False
+        return result
 
     def close(self, arg=None):
         for key in self.connections:

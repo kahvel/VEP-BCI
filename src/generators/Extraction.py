@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import constants as c
 from generators import Signal, PSD, Generator, PsdaExtraction, CcaExtraction
 
@@ -30,7 +28,7 @@ class Extraction(Generator.AbstractMyGenerator):
                 return message
             if message is not None:
                 for sensor in self.sensors:
-                    coordinates = self.coordinates_generator.send(message.sensors[sensor]["value"])
+                    coordinates = self.coordinates_generator.send(message[sensor])
                 if coordinates is not None:
                     self.coordinates_generator.next()
                     result = self.generator.send(coordinates)
@@ -102,7 +100,7 @@ class Cca(Extraction):
             if message is not None:
                 results = None
                 for sensor, generator in zip(self.sensors, self.coordinates_generators):
-                    signal = generator.send(message.sensors[sensor]["value"])
+                    signal = generator.send(message[sensor])
                     if signal is not None:
                         generator.next()
                         results = self.generator.send(signal)

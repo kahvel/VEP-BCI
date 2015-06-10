@@ -1,5 +1,3 @@
-__author__ = 'Anti'
-
 import Tkinter
 import tkColorChooser
 
@@ -10,7 +8,7 @@ import constants as c
 
 class Textbox(AbstractWidget.WidgetWithCommand):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column+1, **self.setDefaultKwargs(kwargs, {
+        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.setDefaultKwargs(kwargs, {
             "disabled_state": "readonly"
         }))
         self.width = kwargs.get("width", 5)
@@ -32,7 +30,19 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         self.auto_update()
 
     def getValue(self):
-        return self.widget.get()
+        return self.toInt(self.widget.get())
+
+    def toFloat(self, value):  # Try to convert to float. If fails, return value itself.
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+    def toInt(self, value):  # Try to convert to int. If fails, try to convert to float.
+        try:
+            return int(value)
+        except ValueError:
+            return self.toFloat(value)
 
     def validate(self):
         if not self.disabled:
@@ -55,11 +65,12 @@ class Textbox(AbstractWidget.WidgetWithCommand):
 
 class LabelTextbox(Textbox):
     def __init__(self, parent, name, row, column, **kwargs):
-        Textbox.__init__(self, parent, name, row, column, **kwargs)
+        label_columnspan = kwargs.get("label_columnspan", 1)
+        Textbox.__init__(self, parent, name, row, column+label_columnspan, **kwargs)
         self.allow_negative = kwargs.get("allow_negative", False)
         self.allow_zero = kwargs.get("allow_zero", False)
         label = Tkinter.Label(parent, text=self.name)
-        label.grid(row=self.row, column=self.column-1, padx=self.padx, pady=self.pady)
+        label.grid(row=self.row, column=column, padx=self.padx, pady=self.pady, columnspan=label_columnspan)
 
     def validationFunction(self):
         if not self.allow_negative:
@@ -73,27 +84,34 @@ class SequenceTextbox(LabelTextbox):
     def __init__(self, parent, name, row, column, **kwargs):
         LabelTextbox.__init__(self, parent, name, row, column, **kwargs)
 
-    def loadDefaultValue(self):
+    def loadDefaultValue(self):  # This is needed to get correct default values to frequency and this textbox
         self.disabled = self.default_disability
         self.disablers = self.default_disablers
+        self.updateState()
+
+    def getValue(self):  # This is needed to keep value as string
+        return self.widget.get()
 
 
 class PlusMinusTextboxFrame(Frame.Frame):
     def __init__(self, parent, name, row, column, increase, decrease, **kwargs):
-        Frame.Frame.__init__(self, parent, c.PLUS_MINUS_TEXTOX_FRAME, row, column, **self.setDefaultKwargs(kwargs, {
+        Frame.Frame.__init__(self, parent, name, row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 3
         }))
-        increase_command = lambda: increase() if self.widgets_dict[name].validate() else None
-        decrease_command = lambda: decrease() if self.widgets_dict[name].validate() else None
+        increase_command = lambda: increase() if self.widgets_dict[c.TEXTBOX].validate() else None
+        decrease_command = lambda: decrease() if self.widgets_dict[c.TEXTBOX].validate() else None
         self.addChildWidgets((
-            LabelTextbox(self.widget, name, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0),
+            LabelTextbox(self.widget, c.TEXTBOX, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0),
             PlusMinusFrame.PlusMinusFrame(self.widget, 0, 2, increase_command, decrease_command)
         ))
 
+    def getValue(self):
+        return self.widgets_dict[c.TEXTBOX].getValue()
+
 
 class ColorTextboxFrame(Frame.Frame):
-    def __init__(self, parent, button_name, frame_name, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, frame_name, row, column, **self.setDefaultKwargs(kwargs, {
+    def __init__(self, parent, button_name, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, button_name, row, column, **self.setDefaultKwargs(kwargs, {
             "columnspan": 2
         }))
         button_command = lambda: self.chooseColor(self.widgets_dict[c.TEXTBOX])
@@ -113,3 +131,21 @@ class ColorTextboxFrame(Frame.Frame):
         if color is None:
             color = previous
         textbox.setValue(color)
+
+    def getValue(self):
+        return self.widgets_dict[c.TEXTBOX].getValue()
+
+
+class HarmonicTextbox(LabelTextbox):
+    def __init__(self, parent, name, row, column, **kwargs):
+        LabelTextbox.__init__(self, parent, name, row, column, command=self.harmonicsValidation, **kwargs)
+
+    def getValue(self):
+        return list(map(float, self.widget.get().split(",")))
+
+    def harmonicsValidation(self, value):
+        for v in value.split(","):
+            assert float(v) > 0
+
+    def save(self, file):  # To save value as string, not as list
+        file.write(self.name+";"+str(self.widget.get())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")

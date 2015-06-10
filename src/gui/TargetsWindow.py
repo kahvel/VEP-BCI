@@ -1,15 +1,17 @@
-__author__ = 'Anti'
-
 from psychopy import visual, core, logging
 
-import constants as c
+from PIL import Image
 
+import cv2
+
+import numpy as np
+import constants as c
 
 # To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
 
 
 class Target(object):
-    def __init__(self, options, test_color, window):
+    def __init__(self, id, options, test_color, window):
         self.standby_target = False
         self.color1 = options[c.TARGET_COLOR1]
         self.color0 = options[c.TARGET_COLOR0]
@@ -22,9 +24,10 @@ class Target(object):
         self.fixation = visual.GratingStim(window, size=1, pos=[options[c.TARGET_X], options[c.TARGET_Y]], sf=0, rgb=1)
         self.fixation.setAutoDraw(True)
         self.current_target_signs = self.getSigns(window, options, self.test_color)
-        self.detected_target_signs = self.getSigns(window, options, "#00ff00")
-        self.freq = float(options[c.DATA_FREQ])
-        self.sequence = str(options[c.TARGET_SEQUENCE])
+        self.detected_target_signs = self.getSigns(window, options, "#00ff00", 40)
+        self.freq = options[c.DATA_FREQ]
+        self.sequence = options[c.TARGET_SEQUENCE]
+        self.id = id
 
     def getRect(self, window, options, color):
         return visual.Rect(
@@ -36,7 +39,7 @@ class Target(object):
             fillColor=color
         )
 
-    def getTriangle(self, window, options, color, x, y, ori=0):
+    def getTriangle(self, window, options, color, x, y, ori=0, offset=20):
         return visual.Polygon(
             window,
             edges=3,
@@ -44,24 +47,24 @@ class Target(object):
             fillColor=color,
             ori=ori,
             pos=(
-                options[c.TARGET_X]+(options[c.TARGET_WIDTH]/2 + 20)*x,
-                options[c.TARGET_Y]+(options[c.TARGET_HEIGHT]/2 + 20)*y
+                options[c.TARGET_X]+(options[c.TARGET_WIDTH]/2 + offset)*x,
+                options[c.TARGET_Y]+(options[c.TARGET_HEIGHT]/2 + offset)*y
             )
         )
 
-    def getSigns(self, window, options, color):
+    def getSigns(self, window, options, color, offset=20):
         return (
-            self.getTriangle(window, options, color, 0, 1, 60),
-            self.getTriangle(window, options, color, 1, 0, 30),
-            self.getTriangle(window, options, color, 0, -1),
-            self.getTriangle(window, options, color, -1, 0, -30)
+            self.getTriangle(window, options, color, 0, 1, 60, offset),
+            self.getTriangle(window, options, color, 1, 0, 30, offset),
+            self.getTriangle(window, options, color, 0, -1, 0, offset),
+            self.getTriangle(window, options, color, -1, 0, -30, offset)
         )
 
     def setCurrent(self, value):
         self.current_target = value
 
-    def detected(self):
-        self.detected_target = True
+    def setDetected(self, value):
+        self.detected_target = value
 
     def setStandbyTarget(self, value):
         self.standby_target = value
@@ -76,26 +79,21 @@ class Target(object):
         if not standby:
             for triangle in triangles:
                 triangle.draw()
+                # triangle.autoDraw = self.detected_target
 
     def drawDetectedSigns(self, standby):
         self.drawTriangles(standby, self.detected_target_signs)
-        if self.detected_counter < self.detected_length:
-            self.detected_counter = 0
-            self.detected_target = False
-        else:
-            self.detected_counter += 1
 
     def generator(self):
         while True:
             for state in self.sequence:
                 standby = yield
                 if self.detected_target:
-                    self.drawDetectedSigns(standby)
-                elif self.current_target:
+                    self.drawTriangles(standby, self.detected_target_signs)
+                if self.current_target:
                     self.drawTriangles(standby, self.current_target_signs)
                 if state == "1":
                     self.drawRect(self.color1, standby)
-                    # self.fixation.draw()
                 elif state == "0":
                     self.drawRect(self.color0, standby)
 
@@ -104,12 +102,14 @@ class TargetsWindow(object):
     def __init__(self, connection):
         logging.console.setLevel(logging.ERROR )
         self.connection = connection
-        """ @type : ConnectionProcessEnd.PsychopyConnection """
+        """ @type : connections.ConnectionProcessEnd.PsychopyConnection """
         self.targets = None
         self.generators = None
         self.window = None
         self.monitor_frequency = None
         self.prev_current = None
+        self.prev_detected = None
+        self.video_stream = None
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
         #self.window.setRecordFrameIntervals(True)
@@ -122,7 +122,14 @@ class TargetsWindow(object):
         self.targets = self.getTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_COLOR], self.window)
         self.generators = self.getGenerators(self.targets)
         self.setStandbyTarget(options[c.DATA_TEST][c.TEST_STANDBY])
+        self.video_stream = self.getVideoStreamImage(self.window, options[c.DATA_ROBOT])
         return c.SUCCESS_MESSAGE
+
+    def getVideoStreamImage(self, window, options):
+        if options[c.ROBOT_STREAM] and not options[c.DISABLE]:
+            image = visual.ImageStim(window, pos=(options[c.STREAM_X], options[c.STREAM_Y]), size=(options[c.STREAM_WIDTH], options[c.STREAM_HEIGHT]))
+            image.autoDraw = True
+            return image
 
     def exit(self):
         self.connection.close()
@@ -149,7 +156,7 @@ class TargetsWindow(object):
         )
 
     def getTargets(self, targets_data, test_color, window):
-        return [Target(data, test_color, window) for data in targets_data]
+        return [Target(key, data, test_color, window) for key, data in targets_data.items()]
 
     def setupGenerator(self, generator):
         generator.send(None)
@@ -169,7 +176,15 @@ class TargetsWindow(object):
         self.prev_current = target
 
     def setTargetDetected(self, target):
-        target.detected()
+        if self.prev_detected is not None:
+            self.prev_detected.setDetected(False)
+        target.setDetected(True)
+        self.prev_detected = target
+
+    def updateStream(self, message):
+        if self.video_stream is not None:
+            image = Image.fromarray(cv2.cvtColor(message, cv2.COLOR_BGR2RGB))
+            self.video_stream.setImage(image)
 
     def start(self, standby=False):
         while True:
@@ -181,12 +196,15 @@ class TargetsWindow(object):
                     continue
                 elif isinstance(message, basestring):
                     return message
-                for i in range(len(self.targets)):
-                    if message == self.targets[i].freq and isinstance(message, float):
-                        self.setTargetDetected(self.targets[i])
-                        break
-                    elif message == i+1 and isinstance(message, int):
-                        self.setCurrentTarget(self.targets[i])
-                        break
+                elif isinstance(message, np.ndarray):
+                    self.updateStream(message)
+                else:
+                    for target in self.targets:
+                        if message == target.freq and isinstance(message, float):
+                            self.setTargetDetected(target)
+                            break
+                        elif message == target.id and isinstance(message, int):
+                            self.setCurrentTarget(target)
+                            break
             for i in range(len(self.targets)):
                 self.generators[i].send(standby)

@@ -1,17 +1,15 @@
-from gui.widgets import OptionMenu, Buttons, Textboxes
-
-__author__ = 'Anti'
-
 import win32api
 import Tkinter
 
 import win32con
 
+from gui.widgets import OptionMenu, Buttons, Textboxes
 from gui.widgets.frames import Frame
+from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 import constants as c
 
 
-class WindowTab(Frame.Frame):
+class WindowTab(DisableDeleteNotebookTab.Disable):
     def __init__(self, parent, row, column, monitorFreqChanged, **kwargs):
         Frame.Frame.__init__(self, parent, c.WINDOW_TAB, row, column, **kwargs)
         self.monitorFreqChanged = monitorFreqChanged
@@ -23,10 +21,11 @@ class WindowTab(Frame.Frame):
         self.addChildWidgets((
             Textboxes.LabelTextbox     (self.widget, c.WINDOW_WIDTH,   0, 0, command=int,   default_value=800),
             Textboxes.LabelTextbox     (self.widget, c.WINDOW_HEIGHT,  0, 2, command=int,   default_value=600),
-            Textboxes.ColorTextboxFrame(self.widget, c.WINDOW_COLOR, c.WINDOW_COLOR_FRAME,   0, 4,                default_value="#000000"),
+            Textboxes.ColorTextboxFrame(self.widget, c.WINDOW_COLOR,   0, 4,                default_value="#000000"),
             Textboxes.LabelTextbox     (self.widget, c.WINDOW_FREQ,    1, 0, command=self.freqTextboxCommand, default_value=self.getMonitorFrequency(monitor_names[0])),
             Buttons.Button             (self.widget, c.WINDOW_REFRESH, 1, 2, command=refresh_command),
-            OptionMenu.OptionMenu      (self.widget, c.WINDOW_MONITOR, 2, 1, command=monitor_command, values=monitor_names, columnspan=3)
+            OptionMenu.OptionMenu      (self.widget, c.WINDOW_MONITOR, 2, 1, monitor_names, command=monitor_command, columnspan=3),
+            self.getDisableButton      (2, 4)
         ))
 
     def freqTextboxCommand(self, value):
