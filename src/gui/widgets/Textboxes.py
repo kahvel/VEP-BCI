@@ -69,7 +69,7 @@ class LabelTextbox(Textbox):
         Textbox.__init__(self, parent, name, row, column+label_columnspan, **kwargs)
         self.allow_negative = kwargs.get("allow_negative", False)
         self.allow_zero = kwargs.get("allow_zero", False)
-        label = Tkinter.Label(parent, text=self.name)
+        label = Tkinter.Label(parent, text=kwargs.get("label", self.name))
         label.grid(row=self.row, column=column, padx=self.padx, pady=self.pady, columnspan=label_columnspan)
 
     def validationFunction(self):
@@ -101,7 +101,7 @@ class PlusMinusTextboxFrame(Frame.Frame):
         increase_command = lambda: increase() if self.widgets_dict[c.TEXTBOX].validate() else None
         decrease_command = lambda: decrease() if self.widgets_dict[c.TEXTBOX].validate() else None
         self.addChildWidgets((
-            LabelTextbox(self.widget, c.TEXTBOX, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0),
+            LabelTextbox(self.widget, c.TEXTBOX, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0, label=name),
             PlusMinusFrame.PlusMinusFrame(self.widget, 0, 2, increase_command, decrease_command)
         ))
 
