@@ -8,7 +8,9 @@ In addition to controlling a robot, the application is a good tool for testing h
 
 The novelty of the application is that it is able to use multiple feature extraction methods at the same time. Multiple methods complement each other and this approach improves the performance of the BCI.
 
-The application was written by Anti Ingel as a practical part of his thesis in University of Tartu. The thesis Control a Robot via VEP using Emotiv EPOC can be found [here](http://comserv.cs.ut.ee/forms/ati_report/downloader.php?file=FF16189169B7081D7F8121C4E2736D6C8384C450).
+The application was written by Anti Ingel (antiingel@gmail.com) as a practical part of his thesis in University of Tartu. The thesis Control a Robot via VEP using Emotiv EPOC can be found [here](http://comserv.cs.ut.ee/forms/ati_report/downloader.php?file=FF16189169B7081D7F8121C4E2736D6C8384C450).
+
+For a very brief overview of the thesis see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster.pdf).
 
 ## Getting started
 
