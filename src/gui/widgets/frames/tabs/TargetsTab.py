@@ -112,7 +112,8 @@ class TargetFrame(Frame.Frame):
         if freq_off+freq_on != 0:
             new_freq = self.calculateNewFreq(freq_on, freq_off)
             new_sequence = self.calculateSequence(freq_on, freq_off)
-            current_freq = self.freqFromSequence(self.getSequence())
+            sequence = self.getSequence()
+            current_freq = self.freqFromSequence(sequence) if sequence != "" else None
             if increase or decrease or current_freq != self.getTargetFreq():
                 self.setTargetFreq(new_freq)
                 self.setSequence(new_sequence)

@@ -1,5 +1,7 @@
 import tkFileDialog
 import constants as c
+import __main__
+import os
 
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
@@ -52,7 +54,7 @@ class MainWindow(MyWindows.TkWindow):
 
     def loadValues(self, default_file_name):
         try:
-            self.main_frame.load(open(default_file_name))
+            self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), default_file_name)))
         except IOError:
             self.main_frame.loadDefaultValue()
 
