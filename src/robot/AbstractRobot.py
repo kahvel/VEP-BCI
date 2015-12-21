@@ -1,9 +1,6 @@
 import constants as c
 from gui.windows import VideoStream
 
-from PIL import Image, ImageTk
-import io
-
 
 class AbstractRobot(object):
     def __init__(self, connection):
@@ -11,11 +8,12 @@ class AbstractRobot(object):
         """ @type : Connections.ConnectionProcessEnd.RobotConnection """
         self.socket = None
         self.stream = None
-        self.bytes = None
+        self.bytes = ""
         self.window = None
         self.psychopy_disabled = None
         self.stream_enabled = None
-        self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.sendMessage, poll=0)
+        self.target_to_command_dictionary = None
+        self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.handleMessage, poll=0)
 
     def handleMessage(self, message):
         raise NotImplementedError("handleMessage not implemented!")
@@ -28,12 +26,14 @@ class AbstractRobot(object):
             self.update()
             message = self.connection.receiveMessageInstant()
             if message is not None:
-                if self.handleMessage(message):
-                    pass
+                if isinstance(message, int):
+                    self.handleMessage(self.target_to_command_dictionary[message])
+                elif message in c.ROBOT_COMMANDS:
+                    self.handleMessage(message)
                 elif isinstance(message, basestring):
                     return message
                 else:
-                    print("Robot message: " + str(message))
+                    print("Unknown message in AbstractRobot: " + str(message))
 
     def updateVideo(self):
         if self.stream_enabled:
@@ -45,8 +45,7 @@ class AbstractRobot(object):
                 if start != -1 and end != -1:
                     bytes_start_to_end = self.bytes[start:end+2]
                     self.bytes = self.bytes[end+2:]
-                    image = ImageTk.PhotoImage(Image.open(io.BytesIO(bytes_start_to_end)))
-                    self.sendImageToStreamingWindow(image)
+                    self.sendImageToStreamingWindow(bytes_start_to_end)
 
     def sendImageToStreamingWindow(self, image):
         if self.psychopy_disabled is not None:
@@ -72,15 +71,6 @@ class AbstractRobot(object):
         self.exitWindow()
         self.connection.close()
 
-    def sendRobotMessage(self, message):
-        raise NotImplementedError("sendRobotMessage not implemented!")
-
-    def sendMessage(self, message):
-        if message in c.ROBOT_COMMANDS:
-            self.sendRobotMessage(message)
-        else:
-            print("Unknown message in Robot: " + str(message))
-
     def psychopyDisabled(self, options):
         return options[c.DISABLE] == 1 if c.DISABLE in options else None
 
@@ -104,14 +94,20 @@ class AbstractRobot(object):
         else:
             return None
 
-    def subclassSetup(self, options):
-        raise NotImplementedError("subclassSetup not implemented!")
+    def targetNumberToCommandDictionary(self, options):
+        return {
+            options[c.ROBOT_OPTION_FORWARD]: c.MOVE_FORWARD,
+            options[c.ROBOT_OPTION_BACKWARD]: c.MOVE_BACKWARD,
+            options[c.ROBOT_OPTION_LEFT]: c.MOVE_LEFT,
+            options[c.ROBOT_OPTION_RIGHT]: c.MOVE_RIGHT,
+            options[c.ROBOT_OPTION_STOP]: c.MOVE_STOP
+        }
 
     def setup(self):
         options = self.connection.receiveMessageBlock()
         self.exitWindow()
         self.stream_enabled = self.streamEnabled(options[c.DATA_ROBOT])
         self.psychopy_disabled = self.psychopyDisabled(options[c.DATA_BACKGROUND])
-        self.subclassSetup(options)
+        self.target_to_command_dictionary = self.targetNumberToCommandDictionary(options[c.DATA_ROBOT])
         self.window = self.setupStreaming(self.stream_enabled, self.psychopy_disabled)
         return self.setupVideoStream()

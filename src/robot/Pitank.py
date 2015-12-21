@@ -8,7 +8,6 @@ import urllib
 class Pitank(AbstractRobot.AbstractRobot):
     def __init__(self, connection):
         AbstractRobot.AbstractRobot.__init__(self, connection)
-        self.target_to_command_dictionary = None
 
     def getVideoStreamBytes(self):
         if self.stream is not None:
@@ -17,26 +16,10 @@ class Pitank(AbstractRobot.AbstractRobot):
             return None
 
     def handleMessage(self, message):
-        if isinstance(message, int):
-            self.sendMessage(self.target_to_command_dictionary[message])
-            return True
-        elif message in c.ROBOT_COMMANDS:
-            self.sendMessage(message)
-            return True
+        if message in c.ROBOT_COMMANDS:
+            self.sendRobotMessage(message)
         else:
-            return False
-
-    def subclassSetup(self, options):
-        self.target_to_command_dictionary = self.targetNumberToCommandDictionary(options[c.DATA_ROBOT])
-
-    def targetNumberToCommandDictionary(self, options):
-        return {
-            options[c.ROBOT_OPTION_FORWARD]: c.MOVE_FORWARD,
-            options[c.ROBOT_OPTION_BACKWARD]: c.MOVE_BACKWARD,
-            options[c.ROBOT_OPTION_LEFT]: c.MOVE_LEFT,
-            options[c.ROBOT_OPTION_RIGHT]: c.MOVE_RIGHT,
-            options[c.ROBOT_OPTION_STOP]: c.MOVE_STOP
-        }
+            print("Unknown message in Robot: " + str(message))
 
     def sendRobotMessage(self, message):
         try:  # seems like PiTank closes the socket after receiving message
@@ -44,7 +27,7 @@ class Pitank(AbstractRobot.AbstractRobot):
             robot_socket.connect(("192.168.42.1", 12345))
             robot_socket.send(message)
         except Exception, e:
-            print("Could not send message to robot (did you click setup? Is PiTank switched on and computer connected to PiTank?): " + str(e))
+            print("Could not send message to PiTank. Is it switched on and computer connected to it?: " + str(e))
 
     def setupVideoStream(self):
         try:

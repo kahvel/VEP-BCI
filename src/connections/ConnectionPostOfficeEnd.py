@@ -1,7 +1,7 @@
 import Connections
 import ConnectionProcessEnd
 import MyEmotiv
-import Robot
+from robot import JumpingSumo
 from gui import TargetsWindow
 from gui.windows import MainWindow
 
@@ -54,7 +54,7 @@ class EmotivConnection(Connections.Connection):
 
 class RobotConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, Robot.Robot, ConnectionProcessEnd.RobotConnection)
+        Connections.Connection.__init__(self, JumpingSumo.JumpingSumo, ConnectionProcessEnd.RobotConnection)
         self.connection = self.newProcess()
 
     def sendOptions(self, options):
