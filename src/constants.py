@@ -5,11 +5,11 @@ WINDOW_TAB = "Window"
 PLOT_NOTEBOOK = "Plot"
 TARGETS_NOTEBOOK = "Targets"
 EXTRACTION_NOTEBOOK = "Extraction"
-RECORD_TAB = "Record"
 RESULTS_TAB = "Results"
 TEST_TAB = "Test"
 ROBOT_TAB = "Robot"
 EMOTIV_TAB = "Emotiv"
+TRAINING_TAB = "Train"
 
 TARGETS_TAB = "Targets"
 PLOT_TAB = "Plot"
@@ -46,11 +46,10 @@ RESULT_SHOW_BUTTON = "Show"
 RESULT_RESET_BUTTON = "Reset"
 RESULT_SAVE_BUTTON = "Save"
 
-# Record tab buttons
-RECORD_LENGTH = "Length"
-RECORD_NEUTRAL = "Neutral"
-RECORD_TARGET = "Target"
-RECORD_THRESHOLD = "Threshold"
+# Training tab buttons
+TRAINING_LENGTH = "Length"
+TRAINING_RECORD = "Record"
+TRAINING_START = "Train"
 
 # Window function names
 WINDOW_NONE = "None"
