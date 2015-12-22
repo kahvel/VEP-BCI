@@ -45,7 +45,7 @@ class PostOffice(object):
                 elif message == c.SHOW_RESULTS_MESSAGE:
                     print(self.results)
                 elif message == c.SAVE_RESULTS_MESSAGE:
-                    self.results.save()
+                    self.results.askSaveFile()
                 elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return

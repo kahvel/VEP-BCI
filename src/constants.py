@@ -44,12 +44,12 @@ WINDOW_MONITOR = "Monitor"
 # Result tab buttons
 RESULT_SHOW_BUTTON = "Show"
 RESULT_RESET_BUTTON = "Reset"
-RESULT_SAVE_BUTTON = "Save"
+RESULT_SAVE_BUTTON = "Save EEG"
 
 # Training tab buttons
-TRAINING_LENGTH = "Length"
 TRAINING_RECORD = "Record"
 TRAINING_START = "Train"
+TRAINING_SAVE_EEG = "Save EEG"
 
 # Window function names
 WINDOW_NONE = "None"

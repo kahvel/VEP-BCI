@@ -1,13 +1,13 @@
-import tkFileDialog
 import constants as c
 import __main__
 import os
 
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
+import Savable
 
 
-class MainWindow(MyWindows.TkWindow):
+class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def __init__(self, connection):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
@@ -128,20 +128,8 @@ class MainWindow(MyWindows.TkWindow):
         self.disableButton(c.STOP_BUTTON)
         self.connection.sendStopMessage()
 
-    # Save and Load
+    def save(self, file):
+        self.main_frame.save(file)
 
-    def askSaveFile(self):
-        self.saveFile(tkFileDialog.asksaveasfile())
-
-    def saveFile(self, file):
-        if file is not None:
-            self.main_frame.save(file)
-            file.close()
-
-    def askLoadFile(self):
-        self.loadFile(tkFileDialog.askopenfile())
-
-    def loadFile(self, file):
-        if file is not None:
-            self.main_frame.load(file)
-            file.close()
+    def load(self, file):
+        self.main_frame.load(file)
