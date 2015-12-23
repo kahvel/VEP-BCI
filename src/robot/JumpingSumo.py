@@ -30,6 +30,7 @@ class JumpingSumo(AbstractRobot.AbstractRobot):
     def setupVideoStream(self):
         try:
             self.controller = stream.SumoController()
+            self.bytes = ""
             return c.SUCCESS_MESSAGE
         except stream.InitTimeoutException, e:
             print("Could not connect to Jumping Sumo. Is it switched on and computer connected to it?: " + str(e))

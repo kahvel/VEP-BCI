@@ -24,7 +24,7 @@ class AbstractRobot(object):
     def start(self):
         while True:
             self.update()
-            message = self.connection.receiveMessageInstant()
+            message = self.connection.receiveMessageBlock()
             if message is not None:
                 if isinstance(message, int):
                     self.handleMessage(self.target_to_command_dictionary[message])
@@ -42,7 +42,9 @@ class AbstractRobot(object):
                 self.bytes += new_bytes
                 start = self.bytes.find('\xff\xd8')
                 end = self.bytes.find('\xff\xd9')
-                if start != -1 and end != -1:
+                if start > end:
+                    self.bytes = self.bytes[start:]
+                elif start != -1 and end != -1:
                     bytes_start_to_end = self.bytes[start:end+2]
                     self.bytes = self.bytes[end+2:]
                     self.sendImageToStreamingWindow(bytes_start_to_end)

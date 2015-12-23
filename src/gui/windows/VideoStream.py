@@ -19,10 +19,7 @@ class StreamWindow(MyWindows.TkWindow):
             self.destroy()
 
     def updateStream(self, bytes):
-        try:
-            image = Image.open(io.BytesIO(bytes))
-            tki = ImageTk.PhotoImage(image)
-            self.image_label.configure(image=tki)
-            self.image_label._backbuffer_ = tki  # avoid flicker caused by premature gc
-        except IOError, e:
-            print(str(e))
+        image = Image.open(io.BytesIO(bytes))
+        tki = ImageTk.PhotoImage(image)
+        self.image_label.configure(image=tki)
+        self.image_label._backbuffer_ = tki  # avoid flicker caused by premature gc
