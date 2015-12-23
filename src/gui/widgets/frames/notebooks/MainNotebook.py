@@ -4,18 +4,17 @@ import constants as c
 
 
 class MainNotebook(Notebook.Notebook):
-    def __init__(self, parent, buttons, row, column, **kwargs):
-        test_tab_buttons, robot_buttons, training_tab_buttons = buttons
+    def __init__(self, parent, button_commands, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
         self.addChildWidgets((
             WindowTab.WindowTab(self.widget, 0, 0, self.monitorFreqChanged),
             SameTabsNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq),
             SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0),
             SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
-            TestTab.TestTab(self.widget, test_tab_buttons, 0, 0),
-            RobotTab.RobotTab(self.widget, robot_buttons),
+            TestTab.TestTab(self.widget, button_commands[c.TEST_TAB], 0, 0),
+            RobotTab.RobotTab(self.widget, button_commands[c.ROBOT_TAB]),
             EmotivTab.EmotivTab(self.widget),
-            TrainingTab.TrainingTab(self.widget, training_tab_buttons)
+            TrainingTab.TrainingTab(self.widget, button_commands[c.TRAINING_TAB])
         ))
 
     def getMonitorFreq(self):

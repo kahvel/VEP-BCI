@@ -12,48 +12,51 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
-        self.main_frame = MainFrame.MainFrame(self, (
-            (
-                self.start,
-                self.stop,
-                self.setup,
-                self.askSaveFile,
-                self.askLoadFile,
-                self.exit
+        button_commands = {
+            c.BOTTOM_FRAME: (
+                    self.start,
+                    self.stop,
+                    self.setup,
+                    self.askSaveFile,
+                    self.askLoadFile,
+                    self.exit
             ),
-            (
-                (
-                    self.showResults,
-                    self.resetResults,
-                    self.saveResults
-                ),
-                self.connection.sendMessage,
-                (
-                    self.saveEeg,
-                )
+            c.TEST_TAB: (
+                self.showResults,
+                self.resetResults,
+                self.saveResults
+            ),
+            c.ROBOT_TAB: (
+                lambda: self.connection.sendMessage(c.MOVE_FORWARD),
+                lambda: self.connection.sendMessage(c.MOVE_BACKWARD),
+                lambda: self.connection.sendMessage(c.MOVE_RIGHT),
+                lambda: self.connection.sendMessage(c.MOVE_LEFT),
+                lambda: self.connection.sendMessage(c.MOVE_STOP),
+            ),
+            c.TRAINING_TAB: (
+                self.saveEeg,
             )
-        )
-        )
+        }
+        self.main_frame = MainFrame.MainFrame(self, button_commands)
         self.loadValues(c.DEFAULT_FILE)
         self.disableButton(c.START_BUTTON)
         self.disableButton(c.STOP_BUTTON)
         self.setup_options = None
+        self.checkMessages()
         self.mainloop()
 
-    def mainloop(self, n=0):
-        while True:
-            message = self.connection.receiveMessagePoll(0.1)
-            if message == c.STOP_MESSAGE:
-                self.stop()
-            elif message == c.SUCCESS_MESSAGE:  # Setup was successful
-                self.enableButton(c.START_BUTTON)
-            elif message == c.FAIL_MESSAGE:  # Setup failed
-                self.disableButton(c.START_BUTTON)
-            if not self.exitFlag:
-                self.update()
-            else:
-                self.connection.close()
-                return
+    def checkMessages(self):
+        message = self.connection.receiveMessageInstant()
+        if message == c.STOP_MESSAGE:
+            self.stop()
+        elif message == c.SUCCESS_MESSAGE:  # Setup was successful
+            self.enableButton(c.START_BUTTON)
+        elif message == c.FAIL_MESSAGE:  # Setup failed
+            self.disableButton(c.START_BUTTON)
+        if not self.exitFlag:
+            self.after(100, self.checkMessages)
+        else:
+            self.connection.close()
 
     def loadValues(self, default_file_name):
         try:

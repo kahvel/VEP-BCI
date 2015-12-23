@@ -5,18 +5,17 @@ import constants as c
 
 
 class MainFrame(Frame.Frame):
-    def __init__(self, parent, buttons, row=0, column=0, **kwargs):
-        bottom_frame_buttons, notebook_buttons = buttons
+    def __init__(self, parent, button_commands, row=0, column=0, **kwargs):
         Frame.Frame.__init__(self, parent, c.MAIN_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            MainNotebook.MainNotebook(self.widget, notebook_buttons, 0, 0),
-            BottomFrame(self.widget, bottom_frame_buttons, 1, 0)
+            MainNotebook.MainNotebook(self.widget, button_commands, 0, 0),
+            BottomFrame(self.widget, button_commands, 1, 0)
         ))
 
 
 class BottomFrame(Frame.Frame):
-    def __init__(self, parent, buttons, row, column, **kwargs):
-        start, stop, setup, save, load, exit = buttons
+    def __init__(self, parent, button_commands, row, column, **kwargs):
+        start, stop, setup, save, load, exit = button_commands[c.BOTTOM_FRAME]
         Frame.Frame.__init__(self, parent, c.BOTTOM_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.Button(self.widget, c.START_BUTTON, 0, 0, command=start),
