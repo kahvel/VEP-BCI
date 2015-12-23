@@ -3,6 +3,7 @@ import random
 import constants as c
 from connections import MasterConnection, ConnectionPostOfficeEnd
 import Results
+import Training
 
 
 class PostOffice(object):
@@ -11,6 +12,7 @@ class PostOffice(object):
         self.connections = MasterConnection.MasterConnection()
         self.options = None
         self.results = Results.Results()
+        self.training = Training.Training()
         self.standby_state = None
         self.standby_freq = None
         self.no_standby = None
@@ -45,7 +47,9 @@ class PostOffice(object):
                 elif message == c.SHOW_RESULTS_MESSAGE:
                     print(self.results)
                 elif message == c.SAVE_RESULTS_MESSAGE:
-                    self.results.askSaveFile()
+                    self.main_connection.sendMessage(self.results.__repr__())
+                elif message == c.SAVE_EEG_MESSAGE:
+                    self.main_connection.sendMessage(self.training.save_eeg())
                 elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return

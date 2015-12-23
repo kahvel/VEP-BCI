@@ -1,20 +1,17 @@
-import Savable
 
 
-class EEG(Savable.Savable, Savable.Loadable):
+class EEG(object):
     def __init__(self):
         self.packets = []
         self.expected_targets = []
 
-    def save(self, file):
-        file.write(self.packets)
-        file.write(";")
-        file.write(self.expected_targets)
+    def save(self):
+        return str(self.packets) + ";" + str(self.expected_targets)
 
-    def load(self, file):
-        file_content = file.read().split(";")
-        self.packets = eval(file_content[0])
-        self.expected_targets = eval(file_content[1])
+    def load(self, file_content):
+        split_content = file_content.split(";")
+        self.packets = eval(split_content[0])
+        self.expected_targets = eval(split_content[1])
 
     def add_packet(self, packet):
         self.packets.append(packet)
@@ -34,7 +31,7 @@ class Training(object):
         self.eeg.new_target(message_counter, expected_target)
 
     def save_eeg(self):
-        self.eeg.askSaveFile()
+        return self.eeg.save()
 
-    def load_eeg(self):
-        self.eeg.askLoadFile()
+    def load_eeg(self, file_content):
+        self.eeg.load(file_content)

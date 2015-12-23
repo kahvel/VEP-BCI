@@ -3,18 +3,23 @@ import Tkinter
 from gui.widgets.frames import Frame
 from gui.widgets import OptionMenu, Checkbutton, Buttons, Textboxes
 import constants as c
+import Savable
 
 
-class ResultsFrame(Frame.Frame):
+class ResultsFrame(Frame.Frame, Savable.Savable):
     def __init__(self, parent, buttons, row, column, **kwargs):
         show, reset, save = buttons
+        self.main_window_save_results_function = save
         Frame.Frame.__init__(self, parent, c.RESULT_FRAME, row, column, no_value=True, **kwargs)
         Tkinter.Label(self.widget, text="Results").grid(row=0, column=0, padx=5, pady=5)
         self.addChildWidgets((
             Buttons.Button(self.widget, c.RESULT_SHOW_BUTTON,  0, 1, command=show),
             Buttons.Button(self.widget, c.RESULT_RESET_BUTTON, 0, 2, command=reset),
-            Buttons.Button(self.widget, c.RESULT_SAVE_BUTTON, 0, 3, command=save)
+            Buttons.Button(self.widget, c.RESULT_SAVE_BUTTON, 0, 3, command=self.askSaveFile)
         ))
+
+    def save(self, file):
+        self.main_window_save_results_function(file)
 
 
 class TestTab(Frame.Frame):

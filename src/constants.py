@@ -44,7 +44,7 @@ WINDOW_MONITOR = "Monitor"
 # Result tab buttons
 RESULT_SHOW_BUTTON = "Show"
 RESULT_RESET_BUTTON = "Reset"
-RESULT_SAVE_BUTTON = "Save EEG"
+RESULT_SAVE_BUTTON = "Save"
 
 # Training tab buttons
 TRAINING_RECORD = "Record"
@@ -214,6 +214,8 @@ SUCCESS_MESSAGE = "Success"
 SHOW_RESULTS_MESSAGE = "Show results"
 RESET_RESULTS_MESSAGE = "Reset results"
 SAVE_RESULTS_MESSAGE = "Save results"
+
+SAVE_EEG_MESSAGE = "Save eeg"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"

@@ -1,10 +1,9 @@
 import numpy as np
 
 import constants as c
-import Savable
 
 
-class Results(Savable.Savable):
+class Results(object):
     def __init__(self):
         self.results = {}
         self.prev_result = None
@@ -19,9 +18,6 @@ class Results(Savable.Savable):
         self.results[self.trial_id] = {}
         self.results[self.trial_id]["Results"] = {current: {detected: 0 for detected in target_freqs} for current in target_freqs+[None]}
         self.results[self.trial_id]["Targets"] = len(target_freqs)
-
-    def save(self, file):
-        file.write(self.__repr__())
 
     def addResult(self, current, detected):
         self.results[self.trial_id]["Results"][current][detected] += 1

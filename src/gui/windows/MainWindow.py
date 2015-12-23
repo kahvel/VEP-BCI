@@ -27,7 +27,10 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
                     self.resetResults,
                     self.saveResults
                 ),
-                self.connection.sendMessage
+                self.connection.sendMessage,
+                (
+                    self.saveEeg,
+                )
             )
         )
         )
@@ -64,8 +67,15 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def showResults(self):
         self.connection.sendMessage(c.SHOW_RESULTS_MESSAGE)
 
-    def saveResults(self):
+    def saveResults(self, file):
         self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
+        result_string = self.connection.receiveMessageBlock()
+        file.write(result_string)
+
+    def saveEeg(self, file):
+        self.connection.sendMessage(c.SAVE_EEG_MESSAGE)
+        result_string = self.connection.receiveMessageBlock()
+        file.write(result_string)
 
     def getFrequencies(self, enabled_targets):
         return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
