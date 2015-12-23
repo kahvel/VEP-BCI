@@ -17,9 +17,9 @@ class JumpingSumo(AbstractRobot.AbstractRobot):
     def handleMessage(self, command):
         if self.controller is not None:
             if command == c.MOVE_FORWARD:
-                self.controller.move(10, block=False)
+                self.controller.move(20, block=False)
             elif command == c.MOVE_BACKWARD:
-                self.controller.move(-10, block=False)
+                self.controller.move(-20, block=False)
             elif command == c.MOVE_STOP:
                 self.controller.move(0, block=False)
             elif command == c.MOVE_LEFT:

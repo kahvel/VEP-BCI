@@ -181,11 +181,8 @@ class TargetsWindow(object):
 
     def updateStream(self, bytes):
         if self.video_stream is not None:
-            try:
-                image = Image.open(io.BytesIO(bytes))
-                self.video_stream.setImage(image)
-            except IOError, e:
-                print(str(e))
+            image = Image.open(io.BytesIO(bytes))
+            self.video_stream.setImage(image)
 
     def start(self, standby=False):
         while True:

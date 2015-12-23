@@ -13,7 +13,7 @@ class AbstractRobot(object):
         self.psychopy_disabled = None
         self.stream_enabled = None
         self.target_to_command_dictionary = None
-        self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.handleMessage, poll=0)
+        self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.handleMessage, poll=0.1)
 
     def handleMessage(self, message):
         raise NotImplementedError("handleMessage not implemented!")
@@ -24,7 +24,7 @@ class AbstractRobot(object):
     def start(self):
         while True:
             self.update()
-            message = self.connection.receiveMessageBlock()
+            message = self.connection.receiveMessagePoll(0.1)
             if message is not None:
                 if isinstance(message, int):
                     self.handleMessage(self.target_to_command_dictionary[message])
@@ -42,9 +42,14 @@ class AbstractRobot(object):
                 self.bytes += new_bytes
                 start = self.bytes.find('\xff\xd8')
                 end = self.bytes.find('\xff\xd9')
+                print len(self.bytes), start, end
+                if start == -1 and end != -1:
+                    self.bytes = self.bytes[end+2:]
+                    return
                 if start > end:
                     self.bytes = self.bytes[start:]
-                elif start != -1 and end != -1:
+                    return
+                if start != -1 and end != -1:
                     bytes_start_to_end = self.bytes[start:end+2]
                     self.bytes = self.bytes[end+2:]
                     self.sendImageToStreamingWindow(bytes_start_to_end)
