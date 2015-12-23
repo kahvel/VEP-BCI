@@ -50,6 +50,7 @@ RESULT_SAVE_BUTTON = "Save"
 TRAINING_RECORD = "Record"
 TRAINING_START = "Train"
 TRAINING_SAVE_EEG = "Save EEG"
+TRAINING_LOAD_EEG = "Load EEG"
 
 # Window function names
 WINDOW_NONE = "None"
@@ -215,7 +216,8 @@ SHOW_RESULTS_MESSAGE = "Show results"
 RESET_RESULTS_MESSAGE = "Reset results"
 SAVE_RESULTS_MESSAGE = "Save results"
 
-SAVE_EEG_MESSAGE = "Save eeg"
+SAVE_EEG_MESSAGE = "Save EEG"
+LOAD_EEG_MESSAGE = "Load EEG"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"
