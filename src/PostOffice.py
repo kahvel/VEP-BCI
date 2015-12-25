@@ -16,7 +16,7 @@ class PostOffice(object):
         self.results = Results.Results()
         self.training = Training.Training()
         self.standby = Standby.Standby()
-        self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results)
+        self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.standby)
         self.message_counter = None
         self.waitConnections()
 
@@ -94,25 +94,31 @@ class PostOffice(object):
             self.standby.enable()
 
     def setTraining(self, options):
-        if options[c.DATA_TRAINING][c.TRAINING_RECORD_NORMAL]:
+        if options[c.DATA_TRAINING][c.TRAINING_RECORD] == c.TRAINING_RECORD_NORMAL:
             self.training.enableNormal()
-        elif options[c.DATA_TRAINING][c.TRAINING_RECORD_NORMAL]:
+        elif options[c.DATA_TRAINING][c.TRAINING_RECORD] == c.TRAINING_RECORD_NEUTRAL:
             self.training.enableNeutral()
+        elif options[c.DATA_TRAINING][c.TRAINING_RECORD] == c.TRAINING_RECORD_DISABLED:
+            self.training.disableRecording()
         else:
-            raise Exception("Recording buttons in invalid state!")
+            raise Exception("Recording option menu in invalid state!")
 
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
         self.connections.setup(self.options)
         self.setTraining(self.options)
         self.setStandby(self.options)
-        self.standby.setup(self.options[c.DATA_FREQS][self.options[c.DATA_TEST][c.TEST_STANDBY]])
+        self.setupStandby(self.options)
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS].values())
             self.training.setup()
             return c.SUCCESS_MESSAGE
         else:
             return c.FAIL_MESSAGE
+
+    def setupStandby(self, options):
+        if self.standby.enabled:
+            self.standby.setup(options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]])
 
     def exit(self):
         self.connections.close()

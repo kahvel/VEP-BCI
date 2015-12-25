@@ -56,6 +56,11 @@ class Training(object):
         self.neutral_eeg.reset()
         self.expected_targets.reset()
 
+    def disableRecording(self):
+        self.normal_eeg.disable()
+        self.expected_targets.disable()
+        self.neutral_eeg.disable()
+
     def enableNormal(self):
         self.normal_eeg.enable()
         self.expected_targets.enable()
