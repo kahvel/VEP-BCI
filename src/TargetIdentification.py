@@ -86,12 +86,12 @@ class TargetIdentification(object):
                             f1, m1 = max(self.actual_results_counter.items(), key=lambda x: x[1])
                             max_freq = target_freqs[rounded_target_freqs.index(f1)]
                             if m1 >= 1:
-                                # if max_freq == self.standby_freq:
-                                #     # self.connections.sendPlotMessage(self.standby_state and not self.no_standby)
-                                #     self.standby_state = not self.standby_state
-                                #     self.connections.sendTargetMessage(self.standby_state)
-                                #     winsound.Beep(2500, 100)
-                                #     self.prev_results = []
+                                if self.standby.enabled and self.standby.choseStandbyFreq(max_freq):
+                                    # self.connections.sendPlotMessage(self.standby.in_standby_state and not self.standby.enabled)
+                                    self.standby.switchStandby()
+                                    self.master_connection.sendTargetMessage(self.standby.in_standby_state)
+                                    # winsound.Beep(2500, 100)
+                                    self.prev_results = []
                                 if self.standby.notInStandby():
                                     self.master_connection.sendTargetMessage(max_freq)
                                     current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None

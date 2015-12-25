@@ -1,46 +1,62 @@
+import Switchable
 
 
-class EEG(object):
+class EEG(Switchable.Switchable):
     def __init__(self):
-        self.packets = []
-        self.expected_targets = []
+        Switchable.Switchable.__init__(self)
+        self.signal = []
+
+    def addPacket(self, packet):
+        self.signal.append(packet)
 
     def save(self):
-        return str(self.packets) + ";" + str(self.expected_targets)
+        return str(self.signal)
 
     def load(self, file_content):
-        split_content = file_content.split(";")
-        self.packets = eval(split_content[0])
-        self.expected_targets = eval(split_content[1])
+        self.signal = eval(file_content)
 
-    def add_packet(self, packet):
-        self.packets.append(packet)
+
+class NormalEEG(EEG):
+    def __init__(self):
+        EEG.__init__(self)
+        self.expected_targets = []
 
     def new_target(self, target, time):
         self.expected_targets.append((target, time))
 
+    def save(self):
+        return EEG.save(self) + ";" + str(self.expected_targets)
+
+    def load(self, file_content):
+        split_content = file_content.split(";")
+        EEG.load(self, split_content[0])
+        self.expected_targets = eval(self.expected_targets)
+
+
+class NeutralEEG(EEG):
+    def __init__(self):
+        EEG.__init__(self)
+
 
 class Training(object):
     def __init__(self):
-        self.eeg = EEG()
-        self.enabled = False
-
-    def enable(self):
-        self.enabled = True
-
-    def disable(self):
-        self.enabled = False
+        self.normal_eeg = NormalEEG()
+        self.neutral_eeg = NeutralEEG()
 
     def collect_packet(self, packet):
-        if self.enabled:
-            self.eeg.add_packet(packet)
+        if self.normal_eeg.enabled:
+            self.normal_eeg.addPacket(packet)
+        if self.neutral_eeg.enabled:
+            self.neutral_eeg.addPacket(packet)
 
     def collect_expected_target(self, expected_target, message_counter):
-        if self.enabled:
-            self.eeg.new_target(message_counter, expected_target)
+        if self.normal_eeg.enabled:
+            self.normal_eeg.new_target(message_counter, expected_target)
 
     def save_eeg(self):
-        return self.eeg.save()
+        return self.normal_eeg.save() + ";;" + self.neutral_eeg.save()
 
     def load_eeg(self, file_content):
-        self.eeg.load(file_content)
+        split_content = file_content.split(";;")
+        self.normal_eeg.load(split_content[0])
+        self.neutral_eeg.load(split_content[1])
