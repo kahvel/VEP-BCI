@@ -1,62 +1,83 @@
 import Switchable
+import ListByTrials
 
 
-class EEG(Switchable.Switchable):
+class EEG(Switchable.Switchable, ListByTrials.ListByTrials):
     def __init__(self):
         Switchable.Switchable.__init__(self)
-        self.signal = []
+        ListByTrials.ListByTrials.__init__(self)
 
-    def addPacket(self, packet):
-        self.signal.append(packet)
+    def getTrialCollection(self, *args):
+        return []
 
-    def save(self):
-        return str(self.signal)
-
-    def load(self, file_content):
-        self.signal = eval(file_content)
-
-
-class NormalEEG(EEG):
-    def __init__(self):
-        EEG.__init__(self)
-        self.expected_targets = []
-
-    def new_target(self, target, time):
-        self.expected_targets.append((target, time))
+    def add(self, packet):
+        if self.enabled:
+            self.list[-1].append(packet)
 
     def save(self):
-        return EEG.save(self) + ";" + str(self.expected_targets)
+        return str(self.list)
 
     def load(self, file_content):
-        split_content = file_content.split(";")
-        EEG.load(self, split_content[0])
-        self.expected_targets = eval(self.expected_targets)
+        self.list = eval(file_content)
 
 
-class NeutralEEG(EEG):
+class ExpectedTargets(Switchable.Switchable, ListByTrials.ListByTrials):
     def __init__(self):
-        EEG.__init__(self)
+        Switchable.Switchable.__init__(self)
+        ListByTrials.ListByTrials.__init__(self)
+
+    def getTrialCollection(self, *args):
+        return []
+
+    def add(self, target, time):
+        if self.enabled:
+            self.list.append((target, time))
+
+    def save(self):
+        return str(self.list)
+
+    def load(self, file_content):
+        self.list = eval(file_content)
 
 
 class Training(object):
     def __init__(self):
-        self.normal_eeg = NormalEEG()
-        self.neutral_eeg = NeutralEEG()
+        self.normal_eeg = EEG()
+        self.neutral_eeg = EEG()
+        self.expected_targets = ExpectedTargets()
 
-    def collect_packet(self, packet):
-        if self.normal_eeg.enabled:
-            self.normal_eeg.addPacket(packet)
-        if self.neutral_eeg.enabled:
-            self.neutral_eeg.addPacket(packet)
+    def setup(self):
+        self.normal_eeg.setup()
+        self.neutral_eeg.setup()
+        self.expected_targets.setup()
 
-    def collect_expected_target(self, expected_target, message_counter):
-        if self.normal_eeg.enabled:
-            self.normal_eeg.new_target(message_counter, expected_target)
+    def reset(self):
+        self.normal_eeg.reset()
+        self.neutral_eeg.reset()
+        self.expected_targets.reset()
 
-    def save_eeg(self):
-        return self.normal_eeg.save() + ";;" + self.neutral_eeg.save()
+    def enableNormal(self):
+        self.normal_eeg.enable()
+        self.expected_targets.enable()
+        self.neutral_eeg.disable()
 
-    def load_eeg(self, file_content):
-        split_content = file_content.split(";;")
+    def enableNeutral(self):
+        self.normal_eeg.disable()
+        self.expected_targets.disable()
+        self.neutral_eeg.enable()
+
+    def collectPacket(self, packet):
+        self.normal_eeg.add(packet)
+        self.neutral_eeg.add(packet)
+
+    def collectExpectedTarget(self, expected_target, message_counter):
+        self.expected_targets.add(expected_target, message_counter)
+
+    def saveEeg(self):
+        return self.normal_eeg.save() + ";" + self.neutral_eeg.save() + ";" + self.expected_targets.save()
+
+    def loadEeg(self, file_content):
+        split_content = file_content.split(";")
         self.normal_eeg.load(split_content[0])
         self.neutral_eeg.load(split_content[1])
+        self.expected_targets.load(split_content[2])

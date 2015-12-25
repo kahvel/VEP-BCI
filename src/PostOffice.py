@@ -43,9 +43,9 @@ class PostOffice(object):
                     self.main_connection.sendMessage(self.results.__repr__())
                 elif message == c.LOAD_EEG_MESSAGE:
                     file_content = self.main_connection.receiveMessageBlock()
-                    self.training.load_eeg(file_content)
+                    self.training.loadEeg(file_content)
                 elif message == c.SAVE_EEG_MESSAGE:
-                    self.main_connection.sendMessage(self.training.save_eeg())
+                    self.main_connection.sendMessage(self.training.saveEeg())
                 elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return
@@ -78,7 +78,7 @@ class PostOffice(object):
         while self.message_counter < total_time:
             target = self.getTarget(options[c.TEST_TARGET], target_freqs, target)
             if target is not None:
-                self.training.collect_expected_target(target, self.message_counter)
+                self.training.collectExpectedTarget(target, self.message_counter)
                 self.connections.sendTargetMessage(target)
             self.target_identification.resetTargetVariables()
             message = self.startPacketSending(target_freqs, target, total_time)
@@ -94,10 +94,12 @@ class PostOffice(object):
             self.standby.enable()
 
     def setTraining(self, options):
-        if options[c.DATA_TRAINING][c.TRAINING_RECORD]:
-            self.training.enable()
+        if options[c.DATA_TRAINING][c.TRAINING_RECORD_NORMAL]:
+            self.training.enableNormal()
+        elif options[c.DATA_TRAINING][c.TRAINING_RECORD_NORMAL]:
+            self.training.enableNeutral()
         else:
-            self.training.disable()
+            raise Exception("Recording buttons in invalid state!")
 
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
@@ -107,6 +109,7 @@ class PostOffice(object):
         self.standby.setup(self.options[c.DATA_FREQS][self.options[c.DATA_TEST][c.TEST_STANDBY]])
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS].values())
+            self.training.setup()
             return c.SUCCESS_MESSAGE
         else:
             return c.FAIL_MESSAGE
@@ -131,7 +134,7 @@ class PostOffice(object):
         message = self.connections.receiveEmotivMessage()
         if message is not None:
             self.message_counter += 1
-            self.training.collect_packet(message)
+            self.training.collectPacket(message)
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
             self.target_identification.handleFreqMessages(

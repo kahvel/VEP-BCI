@@ -47,7 +47,8 @@ RESULT_RESET_BUTTON = "Reset"
 RESULT_SAVE_BUTTON = "Save"
 
 # Training tab buttons
-TRAINING_RECORD = "Record"
+TRAINING_RECORD_NORMAL = "Record normal"
+TRAINING_RECORD_NEUTRAL = " Record neutral"
 TRAINING_START = "Train"
 TRAINING_SAVE_EEG = "Save EEG"
 TRAINING_LOAD_EEG = "Load EEG"
