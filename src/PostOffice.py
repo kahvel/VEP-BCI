@@ -5,6 +5,7 @@ from connections import MasterConnection, ConnectionPostOfficeEnd
 import Results
 import Training
 import TargetIdentification
+import Standby
 
 
 class PostOffice(object):
@@ -14,10 +15,8 @@ class PostOffice(object):
         self.options = None
         self.results = Results.Results()
         self.training = Training.Training()
+        self.standby = Standby.Standby()
         self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results)
-        self.standby_state = None
-        self.standby_freq = None
-        self.no_standby = None
         self.message_counter = None
         self.waitConnections()
 
@@ -89,12 +88,10 @@ class PostOffice(object):
         return c.STOP_MESSAGE
 
     def setStandby(self, options):
-        if self.isStandby(options[c.DATA_TEST][c.TEST_STANDBY]):
-            self.no_standby = False
-            self.standby_freq = options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]]
+        if options[c.DATA_TEST][c.TEST_STANDBY] == c.TEST_NONE:
+            self.standby.disable()
         else:
-            self.no_standby = True
-        self.standby_state = False
+            self.standby.enable()
 
     def setTraining(self, options):
         if options[c.DATA_TRAINING][c.TRAINING_RECORD]:
@@ -107,6 +104,7 @@ class PostOffice(object):
         self.connections.setup(self.options)
         self.setTraining(self.options)
         self.setStandby(self.options)
+        self.standby.setup(self.options[c.DATA_FREQS][self.options[c.DATA_TEST][c.TEST_STANDBY]])
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS].values())
             return c.SUCCESS_MESSAGE
@@ -116,12 +114,6 @@ class PostOffice(object):
     def exit(self):
         self.connections.close()
         self.main_connection.close()
-
-    def isStandby(self, standby):
-        if standby == c.TEST_NONE:
-            return False
-        else:
-            return True
 
     def start(self):
         self.message_counter = 0

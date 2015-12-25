@@ -2,7 +2,7 @@ import constants as c
 
 
 class TargetIdentification(object):
-    def __init__(self, master_connection, results):
+    def __init__(self, master_connection, results, standby):
         self.prev_results = []
         self.prev_results_counter = {}
         self.actual_results = []
@@ -12,6 +12,7 @@ class TargetIdentification(object):
         self.differences = []
         self.master_connection = master_connection
         self.results = results
+        self.standby = standby
 
     def resetTargetVariables(self):
         self.need_new_target = False
@@ -91,7 +92,7 @@ class TargetIdentification(object):
                                 #     self.connections.sendTargetMessage(self.standby_state)
                                 #     winsound.Beep(2500, 100)
                                 #     self.prev_results = []
-                                if not self.standby_state or self.no_standby:
+                                if self.standby.notInStandby():
                                     self.master_connection.sendTargetMessage(max_freq)
                                     current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None
                                     if not self.results.isPrevResult(max_freq):
