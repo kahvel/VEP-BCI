@@ -23,12 +23,21 @@ class EEG(object):
 class Training(object):
     def __init__(self):
         self.eeg = EEG()
+        self.enabled = False
+
+    def enable(self):
+        self.enabled = True
+
+    def disable(self):
+        self.enabled = False
 
     def collect_packet(self, packet):
-        self.eeg.add_packet(packet)
+        if self.enabled:
+            self.eeg.add_packet(packet)
 
     def collect_expected_target(self, expected_target, message_counter):
-        self.eeg.new_target(message_counter, expected_target)
+        if self.enabled:
+            self.eeg.new_target(message_counter, expected_target)
 
     def save_eeg(self):
         return self.eeg.save()

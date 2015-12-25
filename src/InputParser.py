@@ -25,5 +25,6 @@ class InputParser(object):
             c.DATA_TEST: all_data[c.TEST_TAB],
             c.DATA_HARMONICS: self.getHarmonics(target_data.values()),
             c.DATA_ROBOT: all_data[c.ROBOT_TAB],
-            c.DATA_EMOTIV: all_data[c.EMOTIV_TAB]
+            c.DATA_EMOTIV: all_data[c.EMOTIV_TAB],
+            c.DATA_TRAINING: all_data[c.TRAINING_TAB]
         }

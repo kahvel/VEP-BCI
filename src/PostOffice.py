@@ -166,6 +166,7 @@ class PostOffice(object):
         while self.message_counter < total_time:
             target = self.getTarget(options[c.TEST_TARGET], target_freqs, target)
             if target is not None:
+                self.training.collect_expected_target(target, self.message_counter)
                 self.connections.sendTargetMessage(target)
             self.need_new_target = False
             self.new_target_counter = 0
@@ -183,9 +184,16 @@ class PostOffice(object):
             self.no_standby = True
         self.standby_state = False
 
+    def setTraining(self, options):
+        if options[c.DATA_TRAINING][c.TRAINING_RECORD]:
+            self.training.enable()
+        else:
+            self.training.disable()
+
     def setup(self):
         self.options = self.main_connection.receiveMessageBlock()
         self.connections.setup(self.options)
+        self.setTraining(self.options)
         self.setStandby(self.options)
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS].values())
@@ -223,6 +231,7 @@ class PostOffice(object):
         message = self.connections.receiveEmotivMessage()
         if message is not None:
             self.message_counter += 1
+            self.training.collect_packet(message)
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
             self.handleFreqMessages(
