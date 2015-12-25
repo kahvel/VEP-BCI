@@ -23,9 +23,9 @@ class JumpingSumo(AbstractRobot.AbstractRobot):
             elif command == c.MOVE_STOP:
                 self.controller.move(0, block=False)
             elif command == c.MOVE_LEFT:
-                self.controller.move(10, -10, block=False)
+                self.controller.move(0, -12, block=False)
             elif command == c.MOVE_RIGHT:
-                self.controller.move(10, 10, block=False)
+                self.controller.move(0, 12, block=False)
 
     def setupVideoStream(self):
         try:
