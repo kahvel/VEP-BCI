@@ -38,23 +38,3 @@ class MethodConnection(Connections.MultipleConnections):
             new_connection.setup(dict_copy)
             new_connection.setId((method, tuple(options[c.DATA_SENSORS])))
             self.connections.append(new_connection)
-
-
-class TabConnection(Connections.MultipleConnections):
-    def __init__(self, options_key):
-        Connections.MultipleConnections.__init__(self)
-        self.options_key = options_key
-
-    def setup(self, options):
-        self.close()
-        for tab_id, option in options[self.options_key].items():
-            new_connection = self.getConnection()
-            dict_copy = copy.deepcopy(option)
-            dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
-            dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS]
-            new_connection.setup(dict_copy)
-            new_connection.setId(tab_id)
-            self.connections.append(new_connection)
-
-    def getConnection(self):
-        raise NotImplementedError("getConnection not implemented!")

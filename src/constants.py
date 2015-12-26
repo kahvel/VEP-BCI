@@ -149,7 +149,6 @@ TARGET_X = "x"
 TARGET_Y = "y"
 TARGET_COLOR0 = "Color0"
 TARGET_SEQUENCE = "Sequence"
-TARGET_HARMONICS = "Harmonics"
 
 # Detrend optionmenu
 CONSTANT_DETREND = "Constant"

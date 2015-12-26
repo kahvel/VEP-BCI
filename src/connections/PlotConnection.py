@@ -1,14 +1,26 @@
 from generators import Plot
-from connections import NotebookConnection, ConnectionPostOfficeEnd
+from connections import NotebookConnection, ConnectionPostOfficeEnd, Connections
 import constants as c
 
+import copy
 
-class PlotTabConnection(NotebookConnection.TabConnection):
+
+class PlotTabConnection(Connections.MultipleConnections):
     def __init__(self):
-        NotebookConnection.TabConnection.__init__(self, c.DATA_PLOTS)
+        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self):
         return PlotMethodConnection()
+
+    def setup(self, options):
+        self.close()
+        for tab_id, option in options[c.DATA_PLOTS].items():
+            new_connection = self.getConnection()
+            dict_copy = copy.deepcopy(option)
+            dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
+            new_connection.setup(dict_copy)
+            new_connection.setId(tab_id)
+            self.connections.append(new_connection)
 
 
 class PlotMethodConnection(NotebookConnection.MethodConnection):

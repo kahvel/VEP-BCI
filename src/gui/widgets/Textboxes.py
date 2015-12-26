@@ -134,18 +134,3 @@ class ColorTextboxFrame(Frame.Frame):
 
     def getValue(self):
         return self.widgets_dict[c.TEXTBOX].getValue()
-
-
-class HarmonicTextbox(LabelTextbox):
-    def __init__(self, parent, name, row, column, **kwargs):
-        LabelTextbox.__init__(self, parent, name, row, column, command=self.harmonicsValidation, **kwargs)
-
-    def getValue(self):
-        return list(map(float, self.widget.get().split(",")))
-
-    def harmonicsValidation(self, value):
-        for v in value.split(","):
-            assert float(v) > 0
-
-    def save(self, file):  # To save value as string, not as list
-        file.write(self.name+";"+str(self.widget.get())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")

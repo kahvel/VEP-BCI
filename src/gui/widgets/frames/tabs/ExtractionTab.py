@@ -30,19 +30,20 @@ class OptionsTab(Frame.Frame):
 class HarmonicsTab(Frame.Frame):
     def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_HARMONICS_TAB, 0, 0, **kwargs)
-        Tkinter.Label(self.widget, text="Weight").grid(row=0, column=1)
-        Tkinter.Label(self.widget, text="Diff").grid(row=0, column=2)
+        Tkinter.Label(self.widget, text="              Weight  Diff").grid(row=0, column=0)
         for i in range(1, 8):
-            checkbutton_name = str(i)
-            self.addChildWidgets((
-                Checkbutton.Checkbutton(self.widget, checkbutton_name,                       i, 0),
-                Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT+checkbutton_name,     i, 1),
-                Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE+checkbutton_name, i, 2)
-            ))
-        Tkinter.Label(self.widget, text="All").grid(row=8, column=0)
+            checkbutton_name = str(i)+"      "
+            self.addChildWidgets((HarmonicFrame(self.widget, checkbutton_name, i),))
+        self.addChildWidgets((HarmonicFrame(self.widget, c.RESULT_SUM, 8),))
+
+
+class HarmonicFrame(Frame.Frame):
+    def __init__(self, parent, name, row, **kwargs):
+        Frame.Frame.__init__(self, parent, name, row, 0, padx=0, pady=0, **kwargs)
         self.addChildWidgets((
-            Textboxes.Textbox(self.widget, c.HARMONIC_WEIGHT+c.RESULT_SUM, 8, 1),
-            Textboxes.Textbox(self.widget, c.HARMONIC_DIFFERENCE+c.RESULT_SUM, 8, 2)
+            Checkbutton.Checkbutton(self.widget, name,                  0, 0),
+            Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT,     0, 1),
+            Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE, 0, 2)
         ))
 
 

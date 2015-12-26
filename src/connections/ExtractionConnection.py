@@ -1,8 +1,8 @@
-import copy
-
-from connections import NotebookConnection, ConnectionPostOfficeEnd
+from connections import NotebookConnection, ConnectionPostOfficeEnd, Connections
 from generators import Extraction
 import constants as c
+
+import copy
 
 
 class ExtractionConnection(object):
@@ -15,10 +15,10 @@ class ExtractionConnection(object):
         return result if result != {} else None
 
 
-class ExtractionTabConnection(ExtractionConnection, NotebookConnection.TabConnection):
+class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnections):
     def __init__(self):
         ExtractionConnection.__init__(self)
-        NotebookConnection.TabConnection.__init__(self, c.DATA_EXTRACTION)
+        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self):
         return ExtractionMethodConnection()
@@ -27,6 +27,17 @@ class ExtractionTabConnection(ExtractionConnection, NotebookConnection.TabConnec
         message = self.receiveExtractionMessages()
         if message is not None:
             return message
+
+    def setup(self, options):
+        self.close()
+        for tab_id, tab_options in options[c.DATA_EXTRACTION].items():
+            new_connection = self.getConnection()
+            dict_copy = copy.deepcopy(tab_options)
+            dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
+            dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS][tab_id]
+            new_connection.setup(dict_copy)
+            new_connection.setId(tab_id)
+            self.connections.append(new_connection)
 
 
 class ExtractionMethodConnection(ExtractionConnection, NotebookConnection.MethodConnection):
