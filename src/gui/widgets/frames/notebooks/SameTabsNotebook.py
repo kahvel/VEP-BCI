@@ -1,5 +1,5 @@
 from gui.widgets.frames.notebooks import Notebook
-from gui.widgets.frames.tabs import ExtractionPlotTabs, TargetsTab
+from gui.widgets.frames.tabs import TargetsTab, ExtractionTab, PlotTab
 import constants as c
 
 
@@ -90,7 +90,7 @@ class ExtractionNotebook(SameTabsNotebook):
         SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
 
     def newTab(self, deleteTab):
-        return ExtractionPlotTabs.ExtractionTab(self.widget, deleteTab)
+        return ExtractionTab.ExtractionTab(self.widget, deleteTab)
 
 
 class PlotNotebook(SameTabsNotebook):
@@ -98,7 +98,7 @@ class PlotNotebook(SameTabsNotebook):
         SameTabsNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
 
     def newTab(self, deletaTab):
-        return ExtractionPlotTabs.PlotTab(self.widget, deletaTab)
+        return PlotTab.PlotTab(self.widget, deletaTab)
 
 
 class TargetNotebook(SameTabsNotebook):

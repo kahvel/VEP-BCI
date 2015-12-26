@@ -96,7 +96,7 @@ class TargetIdentification(object):
                                     self.master_connection.sendTargetMessage(max_freq)
                                     current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None
                                     if not self.results.isPrevResult(max_freq):
-                                        self.results.addResult(current, max_freq)
+                                        self.results.add(current, max_freq)
                                         self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, max_freq))
                                         print(self.differences, sum(self.differences))
                                         if max_freq != current:

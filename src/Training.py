@@ -31,7 +31,7 @@ class ExpectedTargets(Switchable.Switchable, ListByTrials.ListByTrials):
 
     def add(self, target, time):
         if self.enabled:
-            self.list.append((target, time))
+            self.list[-1].append((target, time))
 
     def save(self):
         return str(self.list)

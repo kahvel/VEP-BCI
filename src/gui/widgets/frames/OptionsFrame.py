@@ -1,29 +1,7 @@
-from gui.widgets import OptionMenu, Checkbutton, Buttons, Textboxes
-from gui.widgets.frames.tabs import DisableDeleteNotebookTab
+from gui.widgets import Checkbutton, Textboxes, OptionMenu
 from gui.widgets.frames import Frame
+
 import constants as c
-
-
-class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, deleteTab, **kwargs):
-        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
-        self.addChildWidgets((
-            SensorsFrame(self.widget, 0, 0),
-            ExtractionTabButtonFrame(self.widget, 1, 0),
-            OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
-        ))
-
-
-class PlotTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, deleteTab, **kwargs):
-        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.PLOT_TAB_TAB, **kwargs)
-        self.addChildWidgets((
-            SensorsFrame(self.widget, 0, 0),
-            PlotTabButtonFrame(self.widget, 1, 0),
-            OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
-        ))
 
 
 class OptionsFrameFrame(Frame.Frame):
@@ -113,28 +91,3 @@ class OptionsFrame(Frame.Frame):
             (c.WINDOW_KAISER,),
             (self.widgets_dict[c.OPTIONS_ARG],)
         )
-
-
-class ExtractionTabButtonFrame(OptionsFrameFrame):
-    def __init__(self, parent, row, column, **kwargs):
-        OptionsFrameFrame.__init__(self, parent,c.METHODS_FRAME, row, column, **kwargs)
-        self.addChildWidgets((
-            Buttons.SunkenButton(self.widget, c.PSDA,     0, 0),
-            Buttons.SunkenButton(self.widget, c.SUM_PSDA, 0, 1),
-            Buttons.SunkenButton(self.widget, c.CCA,      0, 2),
-        ))
-
-
-class PlotTabButtonFrame(OptionsFrameFrame):
-    def __init__(self, parent, row, column, **kwargs):
-        OptionsFrameFrame.__init__(self, parent, c.METHODS_FRAME, row, column, **kwargs)
-        self.addChildWidgets((
-            Buttons.SunkenButton(self.widget, c.SIGNAL,         0, 0, default_value=1),
-            Buttons.SunkenButton(self.widget, c.SUM_SIGNAL,     0, 1),
-            Buttons.SunkenButton(self.widget, c.AVG_SIGNAL,     0, 2),
-            Buttons.SunkenButton(self.widget, c.SUM_AVG_SIGNAL, 0, 3),
-            Buttons.SunkenButton(self.widget, c.POWER,          1, 0),
-            Buttons.SunkenButton(self.widget, c.SUM_POWER,      1, 1),
-            Buttons.SunkenButton(self.widget, c.AVG_POWER,      1, 2),
-            Buttons.SunkenButton(self.widget, c.SUM_AVG_POWER,  1, 3)
-        ))

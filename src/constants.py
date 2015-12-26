@@ -19,6 +19,12 @@ TARGETS_TAB_TAB = "TargetsTab"
 PLOT_TAB_TAB = "PlotTab"
 EXTRACTION_TAB_TAB = "ExtractionTab"
 
+EXTRACTION_TAB_NOTEBOOK = "ExtractionTabNotebook"
+
+# Extraction tab notebook tab names
+EXTRACTION_TAB_HARMONICS_TAB = "Harmonics"
+EXTRACTION_TAB_OPTIONS_TAB = "Options"
+
 PSDA_METHOD_TAB = "PSDA"
 CCA_METHOD_TAB = "CCA"
 
