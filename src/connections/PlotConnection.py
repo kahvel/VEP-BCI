@@ -1,5 +1,5 @@
 from generators import Plot
-from connections import NotebookConnection, ConnectionPostOfficeEnd, Connections
+from connections import ConnectionPostOfficeEnd, Connections
 import constants as c
 
 import copy
@@ -23,9 +23,9 @@ class PlotTabConnection(Connections.MultipleConnections):
             self.connections.append(new_connection)
 
 
-class PlotMethodConnection(NotebookConnection.MethodConnection):
+class PlotMethodConnection(Connections.MultipleConnections):
     def __init__(self):
-        NotebookConnection.MethodConnection.__init__(self)
+        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self, method):
         if method == c.SUM_SIGNAL:
@@ -41,10 +41,20 @@ class PlotMethodConnection(NotebookConnection.MethodConnection):
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
+    def setup(self, options):
+        self.close()
+        for method in options[c.DATA_METHODS]:
+            new_connection = self.getConnection(method)
+            dict_copy = copy.deepcopy(options)
+            dict_copy[c.DATA_METHOD] = method
+            new_connection.setup(dict_copy)
+            new_connection.setId((method, tuple(options[c.DATA_SENSORS])))
+            self.connections.append(new_connection)
 
-class PlotSensorConnection(NotebookConnection.SensorConnection):
+
+class PlotSensorConnection(Connections.MultipleConnections):
     def __init__(self):
-        NotebookConnection.SensorConnection.__init__(self)
+        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self, method):
         if method == c.SIGNAL:
@@ -57,3 +67,13 @@ class PlotSensorConnection(NotebookConnection.SensorConnection):
             return ConnectionPostOfficeEnd.PlotConnection(Plot.NotSumAvgPower)
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
+
+    def setup(self, options):
+        self.close()
+        for sensor in options[c.DATA_SENSORS]:
+            new_connection = self.getConnection(options[c.DATA_METHOD])
+            dict_copy = copy.deepcopy(options)
+            dict_copy[c.DATA_SENSORS] = [sensor]
+            new_connection.setup(dict_copy)
+            new_connection.setId(sensor)
+            self.connections.append(new_connection)

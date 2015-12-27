@@ -31,9 +31,6 @@ EXTRACTION_TAB_TARGETS_FRAME = "TargetsFrame"
 HARMONIC_WEIGHT = "Weight"
 HARMONIC_DIFFERENCE = "Difference"
 
-PSDA_METHOD_TAB = "PSDA"
-CCA_METHOD_TAB = "CCA"
-
 # Test tab buttons
 TEST_TIME = "Time"
 TEST_MIN = "Min"
@@ -259,8 +256,13 @@ DATA_METHOD = "Method"
 
 DATA_FREQ = "Freq"
 
-DATA_WEIGHTS = "Weights"
-DATA_DIFFERENCES = "Differences"
+DATA_EXTRACTION_WEIGHTS = "Weights"
+DATA_EXTRACTION_DIFFERENCES = "Differences"
+
+DATA_EXTRACTION_TARGETS = "ExtractionTargets"
+DATA_EXTRACTION_SENSORS = "ExtractionSensors"
+DATA_EXTRACTION_METHODS = "ExtractionMethods"
+DATA_EXTRACTION_OPTIONS = "ExtractionOptions"
 
 CONNECTION_EMOTIV = "Emotiv"
 CONNECTION_PSYCHOPY = "Psychopy"
