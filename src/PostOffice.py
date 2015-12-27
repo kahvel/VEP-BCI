@@ -112,6 +112,7 @@ class PostOffice(object):
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS].values())
             self.training.setup()
+            self.target_identification.setup(self.options[c.DATA_WEIGHTS], self.options[c.DATA_DIFFERENCES])
             return c.SUCCESS_MESSAGE
         else:
             return c.FAIL_MESSAGE

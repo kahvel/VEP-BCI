@@ -20,6 +20,7 @@ class AbstractFrame(AbstractWidget.Widget):
     def removeWidget(self, widget):
         self.widgets_list.remove(widget)
         del self.widgets_dict[widget.name]
+        widget.widget.destroy()
 
     def enable(self, enabler):
         AbstractWidget.Widget.enable(self, enabler)

@@ -13,6 +13,12 @@ class TargetIdentification(object):
         self.master_connection = master_connection
         self.results = results
         self.standby = standby
+        self.method_weights = None
+        self.method_differences = None
+
+    def setup(self, weights, differences):
+        self.method_weights = weights
+        self.method_differences = differences
 
     def resetTargetVariables(self):
         self.need_new_target = False
@@ -62,10 +68,10 @@ class TargetIdentification(object):
 
     def handleFreqMessages(self, message, target_freqs, current_target):
         results = message
-        target_freqs_dict = target_freqs
-        target_freqs = target_freqs_dict.values()
-        rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         if results is not None:
+            target_freqs_dict = target_freqs
+            target_freqs = target_freqs_dict.values()
+            rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
             self.differences = []
             freq_weights = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
             if all(map(lambda x: x > 0.1, self.differences)):

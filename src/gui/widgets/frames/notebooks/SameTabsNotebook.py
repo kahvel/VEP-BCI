@@ -115,7 +115,7 @@ class TargetNotebook(SameTabsNotebook):
             widget.changeFreq()
 
     def plusTabClicked(self):  # Updates TargetChoosingMenus
-        self.addTarget()   # MainNotebook's targetAdded method
+        self.addTarget()   # MainNotebook's targetAdded method which calls TargetChoosingMenu's targetAdded
         SameTabsNotebook.plusTabClicked(self)
 
     def getEnabledTabs(self):

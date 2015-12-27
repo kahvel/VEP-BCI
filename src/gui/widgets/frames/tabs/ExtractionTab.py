@@ -21,9 +21,7 @@ class OptionsTab(Frame.Frame):
     def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_OPTIONS_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
-            OptionsFrame.SensorsFrame(self.widget, 0, 0),
-            ExtractionTabButtonFrame(self.widget, 1, 0),
-            OptionsFrame.OptionsFrame(self.widget, 2, 0)
+            OptionsFrame.OptionsFrame(self.widget, 2, 0),
         ))
 
 
@@ -57,18 +55,83 @@ class HarmonicFrame(Frame.Frame):
         return [self.name] if disabled else []
 
 
+class ActiveTab(Frame.Frame):
+    def __init__(self, parent, **kwargs):
+        Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_ACTIVE_TAB, 0, 0, **kwargs)
+        self.addChildWidgets((
+            OptionsFrame.SensorsFrame(self.widget, 0, 0),
+            ExtractionTabButtonFrame(self.widget, 1, 0),
+            TargetsFrame(self.widget, 2, 0)
+        ))
+
+
+class TargetsFrame(Frame.Frame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, **kwargs)
+        self.disabled_tabs = []
+        self.targetAdded()
+
+    def addOption(self, option, disabled, state):
+        new_widget = Checkbutton.Checkbutton(self.widget, option, option // 7, option % 7, default_value=state)
+        self.addChildWidgets((new_widget,))
+        new_widget.loadDefaultValue()
+        if disabled:
+            new_widget.disable("TargetTab")
+
+    def addDefaultOptions(self):
+        pass
+
+    def addTargetOptions(self, button_states):
+        for i, disabled in enumerate(self.disabled_tabs):
+            self.addOption(i+1, disabled, button_states[i])
+
+    def targetAdded(self):
+        self.disabled_tabs.append(False)
+        self.addOption(len(self.disabled_tabs), False, 1)
+
+    def deleteOptions(self):
+        for i in range(len(self.widgets_list)-1, -1, -1):
+            self.removeWidget(self.widgets_list[i])
+
+    def getCheckbuttonStates(self, deleted_tab):
+        states = []
+        for i in range(len(self.widgets_list)):
+            if i != deleted_tab:
+                states.append(self.widgets_list[i].getValue())
+        return states
+
+    def deleteAndAddAll(self, deleted_tab):
+        button_states = self.getCheckbuttonStates(deleted_tab)
+        self.deleteOptions()
+        self.addDefaultOptions()
+        self.addTargetOptions(button_states)
+
+    def targetRemoved(self, deleted_tab):
+        del self.disabled_tabs[deleted_tab]
+        self.deleteAndAddAll(deleted_tab)
+
+    def targetDisabled(self, tabs, current_tab):
+        self.widgets_list[current_tab].disable("TargetTab")
+        self.disabled_tabs[current_tab] = True
+
+    def targetEnabled(self, tabs, current_tab):
+        self.widgets_list[current_tab].enable("TargetTab")
+        self.disabled_tabs[current_tab] = False
+
+
 class ExtractionTabNotebook(Notebook.Notebook):
     def __init__(self, parent, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.EXTRACTION_TAB_NOTEBOOK, 0, 0, **kwargs)
         self.addChildWidgets((
             OptionsTab(self.widget),
-            HarmonicsTab(self.widget)
+            HarmonicsTab(self.widget),
+            ActiveTab(self.widget)
         ))
 
 
 class ExtractionTabButtonFrame(OptionsFrame.OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):
-        OptionsFrame.OptionsFrameFrame.__init__(self, parent,c.METHODS_FRAME, row, column, **kwargs)
+        OptionsFrame.OptionsFrameFrame.__init__(self, parent, c.METHODS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.SunkenButton(self.widget, c.PSDA,     0, 0),
             Buttons.SunkenButton(self.widget, c.SUM_PSDA, 0, 1),
