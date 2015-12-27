@@ -58,14 +58,13 @@ class HarmonicFrame(Frame.Frame):
 class ActiveTab(Frame.Frame):
     def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_ACTIVE_TAB, 0, 0, **kwargs)
-        Tkinter.Label(self.widget, text="Sensors").grid(row=0, column=0)
-        Tkinter.Label(self.widget, text="Targets").grid(row=2, column=0)
-        Tkinter.Label(self.widget, text="Methods").grid(row=4, column=0)
+        Tkinter.Label(self.widget, text="Methods").grid(row=0, column=0)
+        Tkinter.Label(self.widget, text="Sensors").grid(row=2, column=0)
+        Tkinter.Label(self.widget, text="Targets").grid(row=4, column=0)
         self.addChildWidgets((
-            OptionsFrame.SensorsFrame(self.widget, 1, 0),
-            TargetsFrame(self.widget, 3, 0),
-            ExtractionTabButtonFrame(self.widget, 5, 0),
-
+            ExtractionTabButtonFrame(self.widget, 1, 0),
+            OptionsFrame.SensorsFrame(self.widget, 3, 0),
+            TargetsFrame(self.widget, 5, 0),
         ))
 
 

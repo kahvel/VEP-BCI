@@ -111,7 +111,7 @@ class PostOffice(object):
         self.setupStandby(self.options)
         if self.connections.setupSuccessful():
             self.results.setup(self.options[c.DATA_FREQS].values())
-            self.training.setup()
+            self.training.setup(self.options[c.DATA_FREQS].values())
             self.target_identification.setup(self.options[c.DATA_EXTRACTION_WEIGHTS], self.options[c.DATA_EXTRACTION_DIFFERENCES])
             return c.SUCCESS_MESSAGE
         else:

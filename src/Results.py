@@ -38,6 +38,7 @@ class Results(ListByTrials.ListByTrials):
         return result
 
     def trialEnded(self, total_time):
+        ListByTrials.ListByTrials.trialEnded(self)
         self.list[-1]["TotalTime"] += total_time
         time_sec = self.getTimeInSec(total_time)
         self.list[-1]["TotalTimeSec"] += time_sec
