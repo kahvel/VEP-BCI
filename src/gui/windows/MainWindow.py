@@ -94,8 +94,7 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
 
     def setup(self):
         not_validated = self.main_frame.getNotValidated()
-        self.setup_options = self.input_parser.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
-        print self.setup_options
+        self.setup_options = self.input_parser.parseData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
         if len(not_validated) != 0:
             print(not_validated)
         else:
@@ -109,7 +108,7 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         self.main_frame.widgets_dict[c.BOTTOM_FRAME].enableButton(button_name)
 
     def start(self):
-        if self.setup_options != self.input_parser.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]):
+        if self.setup_options != self.input_parser.parseData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]):
             print("Warning: options were changed, but setup was not clicked")
         self.disableButton(c.SETUP_BUTTON)
         self.disableButton(c.START_BUTTON)

@@ -257,6 +257,7 @@ DATA_METHOD = "Method"
 DATA_FREQ = "Freq"
 
 DATA_WEIGHTS = "Weights"
+DATA_DIFFERENCES = "Differences"
 
 CONNECTION_EMOTIV = "Emotiv"
 CONNECTION_PSYCHOPY = "Psychopy"

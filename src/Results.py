@@ -10,28 +10,31 @@ class Results(ListByTrials.ListByTrials):
         self.prev_result = None
 
     def setup(self, target_freqs):
+        ListByTrials.ListByTrials.setup(self, target_freqs)
         self.prev_result = None
-        self.list.append({
+
+    def getTrialCollection(self, target_freqs):
+        return {
             "Results": {current: {detected: 0 for detected in target_freqs} for current in target_freqs+[None]},
             "Targets": len(target_freqs),
             "TotalTime": 0,
             "TotalTimeSec": 0
-        })
+        }
 
     def add(self, current, detected):
         self.list[-1]["Results"][current][detected] += 1
         self.prev_result = detected
 
     def trialtoString(self, trial_id):
-        res = self.list[trial_id]
-        if len(res) == 2:
+        trial = self.list[trial_id]
+        if len(trial) == 4:
             return "No results"
-        result = "Total time: " + str(res["TotalTime"]) + " Packets; " + str(res["TotalTimeSec"]) + " sec"
-        result += "\nTime per target: " + str(res["TimePerTarget"])
-        result += "\nAcc: " + str(res["Accuracy"]) + " (Correct: " + str(res["Correct"]) + " Wrong: " + str(res["Wrong"]) + " Total: " + str(res["Correct"]+res["Wrong"]) + ")"
-        result += "\nITR: " + str(res["ITR"]) + " bit/trial; " + str(res["ITRt"]) + " bits/min\n"
-        for freq in res["Results"]:
-            result += str(freq) + " " + str(res["Results"][freq]) + "\n"
+        result = "Total time: " + str(trial["TotalTime"]) + " Packets; " + str(trial["TotalTimeSec"]) + " sec"
+        result += "\nTime per target: " + str(trial["TimePerTarget"])
+        result += "\nAcc: " + str(trial["Accuracy"]) + " (Correct: " + str(trial["Correct"]) + " Wrong: " + str(trial["Wrong"]) + " Total: " + str(trial["Correct"]+trial["Wrong"]) + ")"
+        result += "\nITR: " + str(trial["ITR"]) + " bit/trial; " + str(trial["ITRt"]) + " bits/min\n"
+        for freq in trial["Results"]:
+            result += str(freq) + " " + str(trial["Results"][freq]) + "\n"
         return result
 
     def trialEnded(self, total_time):
