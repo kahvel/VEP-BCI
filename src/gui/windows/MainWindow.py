@@ -95,6 +95,7 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def setup(self):
         not_validated = self.main_frame.getNotValidated()
         self.setup_options = self.input_parser.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
+        print self.setup_options
         if len(not_validated) != 0:
             print(not_validated)
         else:

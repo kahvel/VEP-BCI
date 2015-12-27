@@ -11,6 +11,12 @@ class InputParser(object):
     def parseHarmonicData(self, data):
         return [int(key) for key, value in data.items() if key.strip().isdigit() and value[key] == 1]
 
+    def parseWeights(self, data):
+        return {key: self.parseWeightData(value[c.EXTRACTION_TAB_NOTEBOOK][c.EXTRACTION_TAB_HARMONICS_TAB]) for key, value in data.items()}
+
+    def parseWeightData(self, data):
+        return {key if key == c.RESULT_SUM else int(key): value[c.HARMONIC_WEIGHT] for key, value in data.items() if value[key] == 1}
+
     def getTargetData(self, data):
         return {key: value.values()[0] for key, value in data.items()}
 
@@ -32,5 +38,6 @@ class InputParser(object):
             c.DATA_HARMONICS: self.getHarmonics(all_data[c.EXTRACTION_NOTEBOOK]),
             c.DATA_ROBOT: all_data[c.ROBOT_TAB],
             c.DATA_EMOTIV: all_data[c.EMOTIV_TAB],
-            c.DATA_TRAINING: all_data[c.TRAINING_TAB]
+            c.DATA_TRAINING: all_data[c.TRAINING_TAB],
+            c.DATA_WEIGHTS: self.parseWeights(all_data[c.EXTRACTION_NOTEBOOK])
         }

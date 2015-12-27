@@ -33,18 +33,28 @@ class HarmonicsTab(Frame.Frame):
         Tkinter.Label(self.widget, text="              Weight  Diff").grid(row=0, column=0)
         for i in range(1, 8):
             checkbutton_name = str(i)+"      "
-            self.addChildWidgets((HarmonicFrame(self.widget, checkbutton_name, i),))
-        self.addChildWidgets((HarmonicFrame(self.widget, c.RESULT_SUM, 8),))
+            self.addChildWidgets((HarmonicFrame(self.widget, checkbutton_name, i > 3, i),))
+        self.addChildWidgets((HarmonicFrame(self.widget, c.RESULT_SUM, False, 8),))
 
 
 class HarmonicFrame(Frame.Frame):
-    def __init__(self, parent, name, row, **kwargs):
+    def __init__(self, parent, name, disabled, row, **kwargs):
         Frame.Frame.__init__(self, parent, name, row, 0, padx=0, pady=0, **kwargs)
         self.addChildWidgets((
-            Checkbutton.Checkbutton(self.widget, name,                  0, 0),
-            Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT,     0, 1),
-            Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE, 0, 2)
+            Checkbutton.Checkbutton(self.widget, name,                  0, 0, command=self.enableTextboxes, default_value=not disabled),
+            Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled)),
+            Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled))
         ))
+
+    def enableTextboxes(self):
+        self.conditionalDisabling(
+            self.widgets_dict[self.name],
+            (1,),
+            (self.widgets_dict[c.HARMONIC_WEIGHT], self.widgets_dict[c.HARMONIC_DIFFERENCE])
+        )
+
+    def getDefaultDisabler(self, disabled):
+        return [self.name] if disabled else []
 
 
 class ExtractionTabNotebook(Notebook.Notebook):

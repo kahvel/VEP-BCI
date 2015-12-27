@@ -67,11 +67,11 @@ class TargetIdentification(object):
         rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         if results is not None:
             self.differences = []
-            counted_freqs = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
+            freq_weights = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
             if all(map(lambda x: x > 0.1, self.differences)):
-                for freq in counted_freqs:
-                    self.prev_results_counter[freq] += counted_freqs[freq]
-                self.prev_results.append(counted_freqs)
+                for freq in freq_weights:
+                    self.prev_results_counter[freq] += freq_weights[freq]
+                self.prev_results.append(freq_weights)
                 if len(self.prev_results) > 1:
                     for result in self.prev_results[0]:
                         self.prev_results_counter[result] -= self.prev_results[0][result]
