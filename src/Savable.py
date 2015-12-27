@@ -2,7 +2,7 @@ import tkFileDialog
 
 
 class Savable(object):
-    def save(self, file):
+    def saveToFile(self, file):
         raise NotImplementedError("save not implemented!")
 
     def askSaveFile(self):
@@ -10,12 +10,12 @@ class Savable(object):
 
     def saveFile(self, file):
         if file is not None:
-            self.save(file)
+            self.saveToFile(file)
             file.close()
 
 
 class Loadable(object):
-    def load(self, file):
+    def loadFromFile(self, file):
         raise NotImplementedError("load not implemented!")
 
     def askLoadFile(self):
@@ -23,5 +23,5 @@ class Loadable(object):
 
     def loadFile(self, file):
         if file is not None:
-            self.load(file)
+            self.loadFromFile(file)
             file.close()

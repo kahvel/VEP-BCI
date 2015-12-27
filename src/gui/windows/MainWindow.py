@@ -121,8 +121,14 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         self.disableButton(c.STOP_BUTTON)
         self.connection.sendStopMessage()
 
-    def save(self, file):
+    def setInitialBottomFrameButtonsState(self):
+        self.disableButton(c.START_BUTTON)
+        self.disableButton(c.STOP_BUTTON)
+        self.enableButton(c.SETUP_BUTTON)
+
+    def saveToFile(self, file):
         self.main_frame.save(file)
 
-    def load(self, file):
+    def loadFromFile(self, file):
         self.main_frame.load(file)
+        self.setInitialBottomFrameButtonsState()

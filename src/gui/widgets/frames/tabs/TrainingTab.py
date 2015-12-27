@@ -17,8 +17,8 @@ class TrainingTab(Frame.Frame, Savable.Savable, Savable.Loadable):
             Buttons.Button       (self.widget, c.TRAINING_START,    1, 0)
         ))
 
-    def save(self, file):
+    def saveToFile(self, file):
         self.main_window_save_eeg_function(file)
 
-    def load(self, file):
+    def loadFromFile(self, file):
         self.main_window_load_eeg_function(file)

@@ -18,7 +18,7 @@ class ResultsFrame(Frame.Frame, Savable.Savable):
             Buttons.Button(self.widget, c.RESULT_SAVE_BUTTON, 0, 3, command=self.askSaveFile)
         ))
 
-    def save(self, file):
+    def saveToFile(self, file):
         self.main_window_save_results_function(file)
 
 
