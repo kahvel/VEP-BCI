@@ -62,7 +62,7 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
             dict_copy = copy.deepcopy(options)
             dict_copy[c.DATA_METHOD] = method
             new_connection.setup(dict_copy)
-            new_connection.setId((method, tuple(options[c.DATA_SENSORS])))
+            new_connection.setId((method, tuple(options[c.DATA_EXTRACTION_SENSORS])))
             self.connections.append(new_connection)
 
 

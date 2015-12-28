@@ -26,28 +26,29 @@ class InputParser(object):
     def parsePlotNotebookData(self, data):
         return {key: value for key, value in data.items()}
 
-    def parseExtractionTargets(self, data):
-        return sorted(int(key) for key, value in data.items() if data[key] == 1)
+    def parseExtractionTargets(self, data, target_freqs):
+        return {int(key): target_freqs[int(key)] for key, value in data.items() if data[key] == 1}
 
-    def parseExtractionTab(self, data):
+    def parseExtractionTab(self, data, target_freqs):
         return {
             c.DATA_EXTRACTION_OPTIONS: data[c.EXTRACTION_TAB_OPTIONS_TAB][c.OPTIONS_FRAME],
             c.DATA_EXTRACTION_SENSORS: data[c.EXTRACTION_TAB_ACTIVE_TAB][c.SENSORS_FRAME],
             c.DATA_EXTRACTION_METHODS: data[c.EXTRACTION_TAB_ACTIVE_TAB][c.METHODS_FRAME],
-            c.DATA_EXTRACTION_TARGETS: self.parseExtractionTargets(data[c.EXTRACTION_TAB_ACTIVE_TAB][c.EXTRACTION_TAB_TARGETS_FRAME])
+            c.DATA_EXTRACTION_TARGETS: self.parseExtractionTargets(data[c.EXTRACTION_TAB_ACTIVE_TAB][c.EXTRACTION_TAB_TARGETS_FRAME], target_freqs)
         }
 
-    def parseExtractionOptions(self, data):
-        return {key: self.parseExtractionTab(value[c.EXTRACTION_TAB_NOTEBOOK]) for key, value in data.items()}
+    def parseExtractionOptions(self, data, target_data):
+        return {key: self.parseExtractionTab(value[c.EXTRACTION_TAB_NOTEBOOK], target_data) for key, value in data.items()}
 
     def parseData(self, all_data):
         target_data = self.parseTargetData(all_data[c.TARGETS_NOTEBOOK])
+        target_freqs = self.parseFrequencies(target_data)
         return {
             c.DATA_BACKGROUND: all_data[c.WINDOW_TAB],
             c.DATA_TARGETS: target_data,
-            c.DATA_FREQS: self.parseFrequencies(target_data),
+            c.DATA_FREQS: target_freqs,
             c.DATA_PLOTS: self.parsePlotNotebookData(all_data[c.PLOT_NOTEBOOK]),
-            c.DATA_EXTRACTION: self.parseExtractionOptions(all_data[c.EXTRACTION_NOTEBOOK]),
+            c.DATA_EXTRACTION: self.parseExtractionOptions(all_data[c.EXTRACTION_NOTEBOOK], target_freqs),
             c.DATA_TEST: all_data[c.TEST_TAB],
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.ROBOT_TAB],

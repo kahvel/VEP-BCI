@@ -73,6 +73,7 @@ class TargetIdentification(object):
             target_freqs = target_freqs_dict.values()
             rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
             self.differences = []
+            print results
             freq_weights = self.countAll(results, target_freqs, {6: {c.CCA: 1}, 5: {c.SUM_PSDA: {1.0: 0.5, c.RESULT_SUM: 0.5}}})
             if all(map(lambda x: x > 0.1, self.differences)):
                 for freq in freq_weights:
