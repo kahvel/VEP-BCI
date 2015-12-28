@@ -34,19 +34,19 @@ class TargetIdentification(object):
     def initialiseCounter(self, rounded_target_freqs):
         return {freq: 0 for freq in rounded_target_freqs}
 
-    def countCca(self, counted_freqs, results, weight):
+    def countFrequencyResults(self, counted_freqs, results, weight):
         counted_freqs[round(results[0][0], 2)] += weight
         self.differences.append(results[0][1]-results[1][1])
 
-    def countSumPsda(self, counted_freqs, results, weight):
+    def countHarmonicResults(self, counted_freqs, results, weight):
         for harmonic in results:
             if harmonic in weight:
-                self.countCca(counted_freqs, results[harmonic], weight[harmonic])
+                self.countFrequencyResults(counted_freqs, results[harmonic], weight[harmonic])
 
-    def countPsda(self, counted_freqs, results, weight):
+    def countSensorResults(self, counted_freqs, results, weight):
         for sensor in results:
             if sensor in weight:
-                self.countSumPsda(counted_freqs, results[sensor], weight[sensor])
+                self.countHarmonicResults(counted_freqs, results[sensor], weight[sensor])
 
     def countAll(self, results, target_freqs, weight):
         counted_results = {round(freq, 2): 0 for freq in target_freqs}
@@ -54,11 +54,11 @@ class TargetIdentification(object):
             for method in results[tab]:
                 if tab in weight and method[0] in weight[tab]:
                     if method[0] == c.CCA:
-                        self.countCca(counted_results, results[tab][method], weight[tab][method[0]])
+                        self.countFrequencyResults(counted_results, results[tab][method], weight[tab][method[0]])
                     elif method[0] == c.SUM_PSDA:
-                        self.countSumPsda(counted_results, results[tab][method], weight[tab][method[0]])
+                        self.countHarmonicResults(counted_results, results[tab][method], weight[tab][method[0]])
                     elif method[0] == c.PSDA:
-                        self.countPsda(counted_results, results[tab][method], weight[tab][method[0]])
+                        self.countSensorResults(counted_results, results[tab][method], weight[tab][method[0]])
         return counted_results
 
     def getDictKey(self, dict, value_arg):

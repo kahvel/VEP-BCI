@@ -40,6 +40,12 @@ class InputParser(object):
     def parseExtractionOptions(self, data, target_data):
         return {key: self.parseExtractionTab(value[c.EXTRACTION_TAB_NOTEBOOK], target_data) for key, value in data.items()}
 
+    def parseIdentificationResultParameters(self, data, frame_name):
+        return {
+            c.DATA_RESULT_COUNTER: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_COUNTER],
+            c.DATA_RESULT_THRESHOLD: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_THRESHOLD],
+        }
+
     def parseData(self, all_data):
         target_data = self.parseTargetData(all_data[c.TARGETS_NOTEBOOK])
         target_freqs = self.parseFrequencies(target_data)
@@ -55,5 +61,8 @@ class InputParser(object):
             c.DATA_EMOTIV: all_data[c.EMOTIV_TAB],
             c.DATA_TRAINING: all_data[c.TRAINING_TAB],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseWeightData),
-            c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseDifferenceData)
+            c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseDifferenceData),
+            c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.RESULT_COUNTER_FRAME),
+            c.DATA_PREV_RESULTS: self.parseIdentificationResultParameters(all_data, c.PREV_RESULT_COUNTER_FRAME),
+            c.DATA_CLEAR_BUFFERS: all_data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][c.CLEAR_BUFFERS]
         }
