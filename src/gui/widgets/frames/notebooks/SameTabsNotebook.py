@@ -86,11 +86,12 @@ class SameTabsNotebook(Notebook.Notebook):
 
 
 class ExtractionNotebook(SameTabsNotebook):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, row, column, target_notebook_widgets, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
+        self.target_notebook_widgets = target_notebook_widgets
 
     def newTab(self, deleteTab):
-        return ExtractionTab.ExtractionTab(self.widget, deleteTab)
+        return ExtractionTab.ExtractionTab(self.widget, deleteTab, self.target_notebook_widgets)
 
 
 class PlotNotebook(SameTabsNotebook):
@@ -126,4 +127,4 @@ class TargetNotebook(SameTabsNotebook):
 
     def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = SameTabsNotebook.deleteTab(self)
-        self.removeTarget(deleted_tab)  # MainNotebook's targetRemoved method
+        self.removeTarget(deleted_tab)  # MainNotebook's targetRemoved method which calls TargetChoosingMenu's targetAdded

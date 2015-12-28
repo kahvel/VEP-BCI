@@ -9,10 +9,10 @@ import Tkinter
 
 
 class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, delete_tab, **kwargs):
+    def __init__(self, parent, delete_tab, target_notebook_widgets, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
         self.addChildWidgets((
-            ExtractionTabNotebook(self.widget),
+            ExtractionTabNotebook(self.widget, target_notebook_widgets),
             self.getDisableDeleteFrame(3, 0, delete_tab=delete_tab)
         ))
 
@@ -56,7 +56,7 @@ class HarmonicFrame(Frame.Frame):
 
 
 class ActiveTab(Frame.Frame):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, target_notebook_widgets, **kwargs):
         Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_ACTIVE_TAB, 0, 0, **kwargs)
         Tkinter.Label(self.widget, text="Methods").grid(row=0, column=0)
         Tkinter.Label(self.widget, text="Sensors").grid(row=2, column=0)
@@ -64,15 +64,19 @@ class ActiveTab(Frame.Frame):
         self.addChildWidgets((
             ExtractionTabButtonFrame(self.widget, 1, 0),
             OptionsFrame.SensorsFrame(self.widget, 3, 0),
-            TargetsFrame(self.widget, 5, 0),
+            TargetsFrame(self.widget, 5, 0, target_notebook_widgets),
         ))
 
 
 class TargetsFrame(Frame.Frame):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, row, column, target_notebook_widgets, **kwargs):
         Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, **kwargs)
         self.disabled_tabs = []
-        self.targetAdded()
+        self.target_notebook_widgets = target_notebook_widgets
+
+    def loadDefaultValue(self):
+        for widget in self.target_notebook_widgets:
+            self.targetAdded(widget.disabled)
 
     def addOption(self, option, disabled, state):
         new_widget = Checkbutton.Checkbutton(self.widget, str(option), (option-1) // 7, (option-1) % 7, default_value=state, padx=0, pady=0)
@@ -88,9 +92,9 @@ class TargetsFrame(Frame.Frame):
         for i, disabled in enumerate(self.disabled_tabs):
             self.addOption(i+1, disabled, button_states[i])
 
-    def targetAdded(self):
-        self.disabled_tabs.append(False)
-        self.addOption(len(self.disabled_tabs), False, 1)
+    def targetAdded(self, disabled=False):
+        self.disabled_tabs.append(disabled)
+        self.addOption(len(self.disabled_tabs), disabled, 1)
 
     def deleteOptions(self):
         for i in range(len(self.widgets_list)-1, -1, -1):
@@ -134,10 +138,10 @@ class TargetsFrame(Frame.Frame):
 
 
 class ExtractionTabNotebook(Notebook.Notebook):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, target_notebook_widgets, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.EXTRACTION_TAB_NOTEBOOK, 0, 0, **kwargs)
         self.addChildWidgets((
-            ActiveTab(self.widget),
+            ActiveTab(self.widget, target_notebook_widgets),
             OptionsTab(self.widget),
             HarmonicsTab(self.widget)
         ))
