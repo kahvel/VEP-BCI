@@ -75,6 +75,7 @@ class TargetsFrame(Frame.Frame):
         self.target_notebook_widgets = target_notebook_widgets
 
     def loadDefaultValue(self):
+        Frame.Frame.loadDefaultValue(self)
         for widget in self.target_notebook_widgets:
             self.targetAdded(widget.disabled)
 
