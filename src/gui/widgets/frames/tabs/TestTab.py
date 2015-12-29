@@ -47,9 +47,10 @@ class IdentificationOptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.IDENTIFICATION_OPTIONS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            ResultCounterFrame     (self.widget, c.TEST_RESULT_COUNTER_FRAME,      0, 0, columnspan=2),
-            ResultCounterFrame     (self.widget, c.TEST_PREV_RESULT_COUNTER_FRAME, 1, 0, columnspan=2),
-            Checkbutton.Checkbutton(self.widget, c.TEST_CLEAR_BUFFERS,             2, 0),
+            Checkbutton.Checkbutton(self.widget, c.TEST_CLEAR_BUFFERS,             0, 0),
+            Checkbutton.Checkbutton(self.widget, c.TEST_PROCESS_SHORT_SIGNALS,     1, 0),
+            ResultCounterFrame     (self.widget, c.TEST_RESULT_COUNTER_FRAME,      2, 0, columnspan=2),
+            ResultCounterFrame     (self.widget, c.TEST_PREV_RESULT_COUNTER_FRAME, 3, 0, columnspan=2),
         ))
 
 

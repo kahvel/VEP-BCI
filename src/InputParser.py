@@ -66,4 +66,5 @@ class InputParser(object):
             c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.TEST_RESULT_COUNTER_FRAME),
             c.DATA_PREV_RESULTS: self.parseIdentificationResultParameters(all_data, c.TEST_PREV_RESULT_COUNTER_FRAME),
             c.DATA_CLEAR_BUFFERS: all_data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][c.TEST_CLEAR_BUFFERS],
+            c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][c.TEST_PROCESS_SHORT_SIGNALS],
         }

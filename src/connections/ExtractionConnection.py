@@ -35,6 +35,7 @@ class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnecti
             dict_copy = copy.deepcopy(tab_options)
             dict_copy[c.DATA_FREQS] = tab_options[c.DATA_EXTRACTION_TARGETS]
             dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS][tab_id]
+            dict_copy[c.DATA_PROCESS_SHORT_SIGNAL] = options[c.DATA_PROCESS_SHORT_SIGNAL]
             new_connection.setup(dict_copy)
             new_connection.setId(tab_id)
             self.connections.append(new_connection)

@@ -144,6 +144,7 @@ TEST_RESULT_COUNTER_FRAME = "Results"
 TEST_PREV_RESULT_COUNTER_FRAME = "Prev results"
 TEST_CLEAR_BUFFERS = "Clear buffers"
 TEST_ALWAYS_DELETE = "Always delete"
+TEST_PROCESS_SHORT_SIGNALS = "Process short signals"
 
 # Color textbox's textbox name
 TEXTBOX = "Textbox"
@@ -281,6 +282,7 @@ DATA_WEIGHT_THRESHOLD = "Counter"
 DATA_TARGET_THRESHOLD = "Result"
 DATA_CLEAR_BUFFERS = "ClearBuffer"
 DATA_ALWAYS_DELETE = "AlwaysDelete"
+DATA_PROCESS_SHORT_SIGNAL = "ProcessShortSignal"
 
 CONNECTION_EMOTIV = "Emotiv"
 CONNECTION_PSYCHOPY = "Psychopy"

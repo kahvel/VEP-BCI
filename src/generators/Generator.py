@@ -36,6 +36,11 @@ class Generator(AbstractPythonGenerator):
         self.processSignal = processSignal
         self.processShortSignal = processShortSignal
         self.signalPipeline = signalPipeline
+        self.yieldShortSignalResults = None
+
+    def setup(self, options):
+        AbstractPythonGenerator.setup(self, options)
+        self.yieldShortSignalResults = options[c.DATA_PROCESS_SHORT_SIGNAL]
 
     def getGenerator(self, options):
         step = options[c.DATA_OPTIONS][c.OPTIONS_STEP]
@@ -47,7 +52,10 @@ class Generator(AbstractPythonGenerator):
                 y = yield
                 segment.append(y)
             signal.extend(segment)
-        yield self.processShortSignal(signal, i, self.signalPipeline)
+            if self.yieldShortSignalResults:
+                yield self.processShortSignal(signal, i, self.signalPipeline)
+        if not self.yieldShortSignalResults:
+            yield self.processShortSignal(signal, i, self.signalPipeline)
         counter = 1
         while True:
             counter += 1

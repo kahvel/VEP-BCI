@@ -18,6 +18,7 @@ class PlotTabConnection(Connections.MultipleConnections):
             new_connection = self.getConnection()
             dict_copy = copy.deepcopy(option)
             dict_copy[c.DATA_FREQS] = options[c.DATA_FREQS]
+            dict_copy[c.DATA_PROCESS_SHORT_SIGNAL] = options[c.DATA_PROCESS_SHORT_SIGNAL]
             new_connection.setup(dict_copy)
             new_connection.setId(tab_id)
             self.connections.append(new_connection)
