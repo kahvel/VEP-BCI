@@ -44,6 +44,7 @@ class InputParser(object):
         return {
             c.DATA_TARGET_THRESHOLD: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_COUNTER],
             c.DATA_WEIGHT_THRESHOLD: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_THRESHOLD],
+            c.DATA_ALWAYS_DELETE:    data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_ALWAYS_DELETE],
         }
 
     def parseData(self, all_data):
@@ -62,7 +63,7 @@ class InputParser(object):
             c.DATA_TRAINING: all_data[c.TRAINING_TAB],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseDifferenceData),
-            c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.RESULT_COUNTER_FRAME),
-            c.DATA_PREV_RESULTS: self.parseIdentificationResultParameters(all_data, c.PREV_RESULT_COUNTER_FRAME),
-            c.DATA_CLEAR_BUFFERS: all_data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][c.CLEAR_BUFFERS]
+            c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.TEST_RESULT_COUNTER_FRAME),
+            c.DATA_PREV_RESULTS: self.parseIdentificationResultParameters(all_data, c.TEST_PREV_RESULT_COUNTER_FRAME),
+            c.DATA_CLEAR_BUFFERS: all_data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][c.TEST_CLEAR_BUFFERS],
         }

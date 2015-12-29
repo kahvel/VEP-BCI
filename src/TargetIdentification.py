@@ -7,10 +7,12 @@ class ResultCounter(object):
         self.summed_weights = {}
         self.target_count_threshold = None
         self.weight_threshold = None
+        self.always_remove_results = None
 
-    def setup(self, target_threshold, weight_threshold):
-        self.target_count_threshold = target_threshold
-        self.weight_threshold = weight_threshold
+    def setup(self, options):
+        self.target_count_threshold = options[c.DATA_TARGET_THRESHOLD]
+        self.weight_threshold = options[c.DATA_WEIGHT_THRESHOLD]
+        self.always_remove_results = options[c.DATA_ALWAYS_DELETE]
 
     def initialiseCounter(self, target_freqs):
         return {freq: 0 for freq in target_freqs}
@@ -32,8 +34,22 @@ class ResultCounter(object):
             self.summed_weights[result] -= self.weights[0][result]
         del self.weights[0]
 
+    def findMax(self):  # Let's find max if there is only one max.
+        tie = False
+        max_frequency, max_weight = None, -float("inf")
+        for frequency, weight in self.summed_weights.items():
+            if weight > max_weight:
+                max_frequency, max_weight = frequency, weight
+                tie = False
+            elif weight == max_weight:
+                tie = True
+        if not tie:
+            return max_frequency, max_weight
+        else:
+            return None, -float("inf")
+
     def maxFrequencyAboveThreshold(self):
-        frequency, weight = max(self.summed_weights.items(), key=lambda x: x[1])
+        frequency, weight = self.findMax()
         if weight >= self.weight_threshold:
             return frequency
 
@@ -136,12 +152,14 @@ class TargetIdentification(object):
         self.master_connection = master_connection
         self.results = results
         self.standby = standby
+        self.clear_buffers = None
 
     def setup(self, options):
         self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
         self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
-        self.prev_results.setup(options[c.DATA_PREV_RESULTS][c.DATA_TARGET_THRESHOLD], options[c.DATA_PREV_RESULTS][c.DATA_WEIGHT_THRESHOLD])
-        self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS][c.DATA_TARGET_THRESHOLD], options[c.DATA_ACTUAL_RESULTS][c.DATA_WEIGHT_THRESHOLD])
+        self.prev_results.setup(options[c.DATA_PREV_RESULTS])
+        self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS])
+        self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
 
     def resetTargetVariables(self):
         self.need_new_target = False
@@ -198,9 +216,7 @@ class TargetIdentification(object):
             if all(self.difference_finder.comparison):
                 frequency = self.prev_results.getFrequency(freq_weights)
                 if frequency is not None:
-                    print frequency
                     result_frequency = self.actual_results.getFrequency({frequency: 1})
                     if result_frequency is not None:
-                        print result_frequency
                         self.handleStandby(result_frequency, target_freqs.values())
                         self.handleFinalResult(result_frequency, target_freqs, current_target)

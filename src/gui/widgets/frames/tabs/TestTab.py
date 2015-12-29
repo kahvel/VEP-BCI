@@ -47,9 +47,9 @@ class IdentificationOptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.IDENTIFICATION_OPTIONS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            ResultCounterFrame     (self.widget, c.RESULT_COUNTER_FRAME,      0, 0),
-            ResultCounterFrame     (self.widget, c.PREV_RESULT_COUNTER_FRAME, 1, 0),
-            Checkbutton.Checkbutton(self.widget, c.CLEAR_BUFFERS,             2, 0),
+            ResultCounterFrame     (self.widget, c.TEST_RESULT_COUNTER_FRAME,      0, 0, columnspan=2),
+            ResultCounterFrame     (self.widget, c.TEST_PREV_RESULT_COUNTER_FRAME, 1, 0, columnspan=2),
+            Checkbutton.Checkbutton(self.widget, c.TEST_CLEAR_BUFFERS,             2, 0),
         ))
 
 
@@ -58,6 +58,7 @@ class ResultCounterFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
         Tkinter.Label(self.widget, text=name).grid(row=0, column=0)
         self.addChildWidgets((
-            Textboxes.LabelTextbox(self.widget, c.TEST_RESULT_COUNTER,   1, 0, default_value=1),
-            Textboxes.LabelTextbox(self.widget, c.TEST_RESULT_THRESHOLD, 1, 2, allow_zero=True),
+            Checkbutton.Checkbutton(self.widget, c.TEST_ALWAYS_DELETE,    0, 2, columnspan=2),
+            Textboxes.LabelTextbox (self.widget, c.TEST_RESULT_COUNTER,   1, 0, default_value=1),
+            Textboxes.LabelTextbox (self.widget, c.TEST_RESULT_THRESHOLD, 1, 2, allow_zero=True),
         ))

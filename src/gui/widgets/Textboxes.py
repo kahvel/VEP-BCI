@@ -11,6 +11,8 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.setDefaultKwargs(kwargs, {
             "disabled_state": "readonly"
         }))
+        self.allow_negative = kwargs.get("allow_negative", False)
+        self.allow_zero = kwargs.get("allow_zero", False)
         self.width = kwargs.get("width", 5)
         self.arg_command = kwargs.get("command", lambda x: None)
         self.auto_update = kwargs.get("auto_update", lambda: True)
@@ -58,6 +60,10 @@ class Textbox(AbstractWidget.WidgetWithCommand):
             return True
 
     def validationFunction(self):
+        if not self.allow_negative:
+            assert float(self.widget.get()) >= 0
+        if not self.allow_zero:
+            assert float(self.widget.get()) != 0
         ret = self.arg_command(self.widget.get())
         if isinstance(ret, bool):
             assert ret
@@ -67,17 +73,8 @@ class LabelTextbox(Textbox):
     def __init__(self, parent, name, row, column, **kwargs):
         label_columnspan = kwargs.get("label_columnspan", 1)
         Textbox.__init__(self, parent, name, row, column+label_columnspan, **kwargs)
-        self.allow_negative = kwargs.get("allow_negative", False)
-        self.allow_zero = kwargs.get("allow_zero", False)
         label = Tkinter.Label(parent, text=kwargs.get("label", self.name))
         label.grid(row=self.row, column=column, padx=self.padx, pady=self.pady, columnspan=label_columnspan)
-
-    def validationFunction(self):
-        if not self.allow_negative:
-            assert float(self.widget.get()) >= 0
-        if not self.allow_zero:
-            assert float(self.widget.get()) != 0
-        Textbox.validationFunction(self)
 
 
 class SequenceTextbox(LabelTextbox):
@@ -119,7 +116,7 @@ class ColorTextboxFrame(Frame.Frame):
         default_value = kwargs.get("default_value", "#eeeeee")
         self.addChildWidgets((
             Buttons.Button(self.widget, button_name, 0, 0, command=button_command),
-            Textbox(self.widget, c.TEXTBOX, 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7)
+            Textbox(self.widget, c.TEXTBOX, 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7, allow_negative=True, allow_zero=True)
         ))
 
     def chooseColor(self, textbox):

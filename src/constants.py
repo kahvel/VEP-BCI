@@ -140,9 +140,10 @@ TARGET_FRAME = "TargetFrame"
 RESULT_FRAME = "ResultFrame"
 IDENTIFICATION_OPTIONS_FRAME = "IdentificationOptionsFrame"
 
-RESULT_COUNTER_FRAME = "Results"
-PREV_RESULT_COUNTER_FRAME = "Prev results"
-CLEAR_BUFFERS = "Clear buffers"
+TEST_RESULT_COUNTER_FRAME = "Results"
+TEST_PREV_RESULT_COUNTER_FRAME = "Prev results"
+TEST_CLEAR_BUFFERS = "Clear buffers"
+TEST_ALWAYS_DELETE = "Always delete"
 
 # Color textbox's textbox name
 TEXTBOX = "Textbox"
@@ -277,6 +278,7 @@ DATA_PREV_RESULTS = "PrevResults"
 DATA_WEIGHT_THRESHOLD = "Counter"
 DATA_TARGET_THRESHOLD = "Result"
 DATA_CLEAR_BUFFERS = "ClearBuffer"
+DATA_ALWAYS_DELETE = "AlwaysDelete"
 
 CONNECTION_EMOTIV = "Emotiv"
 CONNECTION_PSYCHOPY = "Psychopy"

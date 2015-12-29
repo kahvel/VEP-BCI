@@ -40,8 +40,8 @@ class HarmonicFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, row, 0, padx=0, pady=0, **kwargs)
         self.addChildWidgets((
             Checkbutton.Checkbutton(self.widget, name,                  0, 0, command=self.enableTextboxes, default_value=not disabled),
-            Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled)),
-            Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled))
+            Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
+            Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
         ))
 
     def enableTextboxes(self):
