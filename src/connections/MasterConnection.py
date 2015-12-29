@@ -44,6 +44,9 @@ class MasterConnection(Connections.MultipleConnections):
     def sendExtractionMessage(self, message):
         self.connections[c.CONNECTION_EXTRACTION].sendMessage(message)
 
+    def sendClearBuffersMessage(self):
+        self.connections[c.CONNECTION_EXTRACTION].sendMessage(c.CLEAR_BUFFER_MESSAGE)
+
     def receiveExtractionMessage(self):
         return self.connections[c.CONNECTION_EXTRACTION].getMessages()
 

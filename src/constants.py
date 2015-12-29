@@ -236,6 +236,8 @@ SETUP_MESSAGE = "Setup"
 FAIL_MESSAGE = "Fail"
 SUCCESS_MESSAGE = "Success"
 
+CLEAR_BUFFER_MESSAGE = "ClearBuffer"
+
 SHOW_RESULTS_MESSAGE = "Show results"
 RESET_RESULTS_MESSAGE = "Reset results"
 SAVE_RESULTS_MESSAGE = "Save results"

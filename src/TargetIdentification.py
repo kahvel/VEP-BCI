@@ -30,9 +30,10 @@ class ResultCounter(object):
         return len(self.weights) >= self.target_count_threshold
 
     def removeWeight(self):
-        for result in self.weights[0]:
-            self.summed_weights[result] -= self.weights[0][result]
-        del self.weights[0]
+        if len(self.weights) > 0:
+            for result in self.weights[0]:
+                self.summed_weights[result] -= self.weights[0][result]
+            del self.weights[0]
 
     def findMax(self):  # Let's find max if there is only one max.
         tie = False
@@ -186,13 +187,25 @@ class TargetIdentification(object):
             self.prev_results.reset(target_freqs)
 
     def filterRepeatingResults(self, result_frequency, current, target_freqs_dict):
-        if not self.results.isPrevResult(result_frequency):
-            self.results.add(current, result_frequency)
-            self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
-            if result_frequency != current:
-                print("wrong", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
-            else:
-                print("right", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
+        if not self.clear_buffers:
+            if not self.results.isPrevResult(result_frequency):
+                self.addResultAndSendCommand(result_frequency, current, target_freqs_dict)
+        else:
+            self.addResultAndSendCommand(result_frequency, current, target_freqs_dict)
+            self.clearBuffers(target_freqs_dict.values())
+
+    def clearBuffers(self, target_freq):
+        self.master_connection.sendClearBuffersMessage()
+        self.actual_results.reset(target_freq)
+        self.prev_results.reset(target_freq)
+
+    def addResultAndSendCommand(self, result_frequency, current, target_freqs_dict):
+        self.results.add(current, result_frequency)
+        self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
+        if result_frequency != current:
+            print("wrong", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
+        else:
+            print("right", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
 
     def holdResultTarget(self, result_frequency, current):
         if result_frequency == current:
@@ -220,3 +233,8 @@ class TargetIdentification(object):
                     if result_frequency is not None:
                         self.handleStandby(result_frequency, target_freqs.values())
                         self.handleFinalResult(result_frequency, target_freqs, current_target)
+                elif self.actual_results.always_remove_results:
+                    self.actual_results.removeWeight()
+            elif self.prev_results.always_remove_results:
+                self.prev_results.removeWeight()
+                self.actual_results.removeWeight()
