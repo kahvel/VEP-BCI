@@ -1,6 +1,6 @@
 import numpy as np
 
-from generators import SignalProcessing
+from generators.coordinates import SignalProcessing
 
 
 class AbstractPSD(object):

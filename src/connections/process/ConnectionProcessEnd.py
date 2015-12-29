@@ -1,5 +1,5 @@
 import constants as c
-import Connections
+from connections import Connections
 
 
 class Connection(Connections.AbstractConnection):

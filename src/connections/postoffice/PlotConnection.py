@@ -1,8 +1,9 @@
-from generators import Plot
-from connections import ConnectionPostOfficeEnd, Connections
-import constants as c
-
 import copy
+from generators.result.plot import Plot
+from connections import Connections
+from connections.postoffice import ConnectionPostOfficeEnd
+
+import constants as c
 
 
 class PlotTabConnection(Connections.MultipleConnections):

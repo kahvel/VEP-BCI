@@ -1,8 +1,9 @@
-import Connections
+from connections import Connections
+from connections.postoffice import ConnectionPostOfficeEnd
+from connections.postoffice import PlotConnection
+from connections.postoffice import ExtractionConnection
+
 import constants as c
-import ConnectionPostOfficeEnd
-import PlotConnection
-import ExtractionConnection
 
 
 class MasterConnection(Connections.MultipleConnections):

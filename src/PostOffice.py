@@ -1,7 +1,7 @@
 import random
 
 import constants as c
-from connections import MasterConnection, ConnectionPostOfficeEnd
+from connections.postoffice import MasterConnection, ConnectionPostOfficeEnd
 import Results
 import Training
 import TargetIdentification

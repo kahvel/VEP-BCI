@@ -1,5 +1,7 @@
 import constants as c
-from generators import Signal, PSD, Generator, PsdaExtraction, CcaExtraction
+from generators import Generator
+from generators.result.extraction import CcaExtraction, PsdaExtraction
+from generators.coordinates import Signal, PSD
 
 
 class Extraction(Generator.AbstractMyGenerator):

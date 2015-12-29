@@ -1,9 +1,10 @@
-import Connections
-import ConnectionProcessEnd
-import MyEmotiv
-import Robot
+from connections import Connections
+from connections.process import ConnectionProcessEnd
 from gui import TargetsWindow
 from gui.windows import MainWindow
+
+import MyEmotiv
+import Robot
 
 
 class PsychopyConnection(Connections.Connection):

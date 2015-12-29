@@ -1,8 +1,9 @@
-from connections import ConnectionPostOfficeEnd, Connections
-from generators import Extraction
-import constants as c
-
 import copy
+
+from connections import Connections
+from connections.postoffice import ConnectionPostOfficeEnd
+from generators.result.extraction import Extraction
+import constants as c
 
 
 class ExtractionConnection(object):
