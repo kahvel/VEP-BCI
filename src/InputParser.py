@@ -42,8 +42,8 @@ class InputParser(object):
 
     def parseIdentificationResultParameters(self, data, frame_name):
         return {
-            c.DATA_RESULT_COUNTER: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_COUNTER],
-            c.DATA_RESULT_THRESHOLD: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_THRESHOLD],
+            c.DATA_TARGET_THRESHOLD: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_COUNTER],
+            c.DATA_WEIGHT_THRESHOLD: data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_RESULT_THRESHOLD],
         }
 
     def parseData(self, all_data):

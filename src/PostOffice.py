@@ -113,7 +113,7 @@ class PostOffice(object):
             target_freqs = self.options[c.DATA_FREQS].values()
             self.results.setup(target_freqs)
             self.training.setup(target_freqs)
-            self.target_identification.setup(self.options[c.DATA_EXTRACTION_WEIGHTS], self.options[c.DATA_EXTRACTION_DIFFERENCES])
+            self.target_identification.setup(self.options)
             return c.SUCCESS_MESSAGE
         else:
             return c.FAIL_MESSAGE

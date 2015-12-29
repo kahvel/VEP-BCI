@@ -32,7 +32,7 @@ class ResultCounter(object):
             self.summed_weights[result] -= self.weights[0][result]
         del self.weights[0]
 
-    def frequencyWeightAboveThreshold(self):
+    def maxFrequencyAboveThreshold(self):
         frequency, weight = max(self.summed_weights.items(), key=lambda x: x[1])
         if weight >= self.weight_threshold:
             return frequency
@@ -40,8 +40,9 @@ class ResultCounter(object):
     def getFrequency(self, weights):
         self.addWeights(weights)
         if self.targetCountAboveThreshold():
+            max_freq = self.maxFrequencyAboveThreshold()
             self.removeWeight()
-            return self.frequencyWeightAboveThreshold()
+            return max_freq
 
 
 class ResultsParser(object):
@@ -103,9 +104,14 @@ class WeightFinder(ResultsParser):
 class DifferenceFinder(ResultsParser):
     def __init__(self):
         ResultsParser.__init__(self)
+        self.comparison = []
 
     def setup(self, data):
         self.data = data
+
+    def parseResults(self, results):
+        self.comparison = []
+        return ResultsParser.parseResults(self, results)
 
     def parseResultValue(self, parse_result, key):
         if key not in parse_result:
@@ -114,7 +120,9 @@ class DifferenceFinder(ResultsParser):
 
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) > 1:  # If we have at least 2 targets in the result dict
-            parse_result[result[0][0], result[1][0]] = result[0][1]-result[1][1]
+            difference = result[0][1]-result[1][1]
+            parse_result[result[0][0], result[1][0]] = difference
+            self.comparison.append(difference > data)
 
 
 class TargetIdentification(object):
@@ -129,9 +137,11 @@ class TargetIdentification(object):
         self.results = results
         self.standby = standby
 
-    def setup(self, weights, differences):
-        self.difference_finder.setup(differences)
-        self.weight_finder.setup(weights)
+    def setup(self, options):
+        self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
+        self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
+        self.prev_results.setup(options[c.DATA_PREV_RESULTS][c.DATA_TARGET_THRESHOLD], options[c.DATA_PREV_RESULTS][c.DATA_WEIGHT_THRESHOLD])
+        self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS][c.DATA_TARGET_THRESHOLD], options[c.DATA_ACTUAL_RESULTS][c.DATA_WEIGHT_THRESHOLD])
 
     def resetTargetVariables(self):
         self.need_new_target = False
@@ -185,10 +195,12 @@ class TargetIdentification(object):
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
             differences = self.difference_finder.parseResults(results)
-            if True or all(map(lambda x: x > 0.1, self.differences)):  # TODO fix this
+            if all(self.difference_finder.comparison):
                 frequency = self.prev_results.getFrequency(freq_weights)
                 if frequency is not None:
+                    print frequency
                     result_frequency = self.actual_results.getFrequency({frequency: 1})
                     if result_frequency is not None:
+                        print result_frequency
                         self.handleStandby(result_frequency, target_freqs.values())
                         self.handleFinalResult(result_frequency, target_freqs, current_target)
