@@ -12,13 +12,12 @@ class ResultCounter(object):
         self.target_count_threshold = target_threshold
         self.weight_threshold = weight_threshold
 
-    def initialiseCounter(self, rounded_target_freqs):
-        return {freq: 0 for freq in rounded_target_freqs}
+    def initialiseCounter(self, target_freqs):
+        return {freq: 0 for freq in target_freqs}
 
     def reset(self, target_freqs):
-        rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
         self.weights = []
-        self.summed_weights = self.initialiseCounter(rounded_target_freqs)
+        self.summed_weights = self.initialiseCounter(target_freqs)
 
     def addWeights(self, weights):
         for freq in weights:
@@ -45,62 +44,105 @@ class ResultCounter(object):
             return self.frequencyWeightAboveThreshold()
 
 
+class ResultsParser(object):
+    def __init__(self):
+        self.data = None
+        self.parse_result = None
+
+    def setup(self, *args):
+        raise NotImplementedError("setup not implemented!")
+
+    def parseSensorResults(self, parse_result, results, data):
+        for sensor in results:
+            # if sensor in data:  # Currently data does not contain sensors
+                self.parseHarmonicResults(self.parseResultValue(parse_result, sensor), results[sensor], data)
+
+    def parseHarmonicResults(self, parse_result, results, data):
+        for harmonic in results:
+            # if harmonic in self.data:
+                self.parseFrequencyResults(self.parseResultValue(parse_result, harmonic), results[harmonic], data[harmonic])
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        raise NotImplementedError("parseFrequencyResult not implemented!")
+
+    def parseResultValue(self, parse_result, key):
+        raise NotImplementedError("parseResultValue not implemented!")
+
+    def parseResults(self, results):
+        self.parse_result = {}
+        for tab in results:
+            for method in results[tab]:
+                # if tab in self.data:
+                    parse_result = self.parseResultValue(self.parse_result, tab)
+                    if method[0] == c.CCA:
+                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
+                    elif method[0] == c.SUM_PSDA:
+                        self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
+                    elif method[0] == c.PSDA:
+                        self.parseSensorResults(parse_result, results[tab][method], self.data[tab])
+        return self.parse_result
+
+
+class WeightFinder(ResultsParser):
+    def __init__(self):
+        ResultsParser.__init__(self)
+
+    def setup(self, data):
+        self.data = data
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        if result[0][0] in parse_result:
+            parse_result[result[0][0]] += data
+        else:
+            parse_result[result[0][0]] = data
+
+    def parseResultValue(self, parse_result, key):
+        return parse_result
+
+
+class DifferenceFinder(ResultsParser):
+    def __init__(self):
+        ResultsParser.__init__(self)
+
+    def setup(self, data):
+        self.data = data
+
+    def parseResultValue(self, parse_result, key):
+        if key not in parse_result:
+            parse_result[key] = {}
+        return parse_result[key]
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        if len(result) > 1:  # If we have at least 2 targets in the result dict
+            parse_result[result[0][0], result[1][0]] = result[0][1]-result[1][1]
+
+
 class TargetIdentification(object):
     def __init__(self, master_connection, results, standby):
         self.prev_results = ResultCounter()
         self.actual_results = ResultCounter()
+        self.difference_finder = DifferenceFinder()
+        self.weight_finder = WeightFinder()
         self.need_new_target = None
         self.new_target_counter = None
-        self.differences = []
         self.master_connection = master_connection
         self.results = results
         self.standby = standby
-        self.method_weights = None
-        self.method_differences = None
 
     def setup(self, weights, differences):
-        self.method_weights = weights
-        self.method_differences = differences
+        self.difference_finder.setup(differences)
+        self.weight_finder.setup(weights)
 
     def resetTargetVariables(self):
         self.need_new_target = False
         self.new_target_counter = 0
 
     def resetResults(self, freqs):
-        rounded_target_freqs = tuple(round(freq, 2) for freq in freqs)
-        self.prev_results.reset(rounded_target_freqs)
-        self.actual_results.reset(rounded_target_freqs)
+        self.prev_results.reset(freqs)
+        self.actual_results.reset(freqs)
 
     def initialiseCounter(self, rounded_target_freqs):
         return {freq: 0 for freq in rounded_target_freqs}
-
-    def countFrequencyResults(self, summed_weights, results, weight):
-        summed_weights[round(results[0][0], 2)] += weight
-        if len(results) > 1:  # If we have at least 2 targets in the result dict
-            self.differences.append(results[0][1]-results[1][1])
-
-    def countHarmonicResults(self, summed_weights, results, weight):
-        for harmonic in results:
-            if harmonic in weight:
-                self.countFrequencyResults(summed_weights, results[harmonic], weight[harmonic])
-
-    def countSensorResults(self, summed_weights, results, weight):
-        for sensor in results:
-            if sensor in weight:
-                self.countHarmonicResults(summed_weights, results[sensor], weight)
-
-    def countAll(self, results, target_freqs, weights):
-        summed_weights = {round(freq, 2): 0 for freq in target_freqs}
-        for tab in results:
-            for method in results[tab]:
-                if tab in weights:
-                    if method[0] == c.CCA:
-                        self.countFrequencyResults(summed_weights, results[tab][method], weights[tab][c.RESULT_SUM])
-                    elif method[0] == c.SUM_PSDA:
-                        self.countHarmonicResults(summed_weights, results[tab][method], weights[tab])
-                    elif method[0] == c.PSDA:
-                        self.countSensorResults(summed_weights, results[tab][method], weights[tab])
-        return summed_weights
 
     def getDictKey(self, dict, value_arg):
         for key, value in dict.items():
@@ -119,7 +161,6 @@ class TargetIdentification(object):
         if not self.results.isPrevResult(result_frequency):
             self.results.add(current, result_frequency)
             self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
-            print(self.differences, sum(self.differences))
             if result_frequency != current:
                 print("wrong", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
             else:
@@ -142,16 +183,12 @@ class TargetIdentification(object):
     def handleFreqMessages(self, message, target_freqs, current_target):
         results = message
         if results is not None:
-            target_freqs_dict = target_freqs
-            target_freqs = target_freqs_dict.values()
-            rounded_target_freqs = tuple(round(freq, 2) for freq in target_freqs)
-            self.differences = []
-            freq_weights = self.countAll(results, target_freqs, self.method_weights)
-            if all(map(lambda x: x > 0.1, self.differences)):
+            freq_weights = self.weight_finder.parseResults(results)
+            differences = self.difference_finder.parseResults(results)
+            if True or all(map(lambda x: x > 0.1, self.differences)):  # TODO fix this
                 frequency = self.prev_results.getFrequency(freq_weights)
                 if frequency is not None:
-                    result_frequency_rounded = self.actual_results.getFrequency({frequency: 1})
-                    if result_frequency_rounded is not None:
-                        result_frequency = target_freqs[rounded_target_freqs.index(result_frequency_rounded)]
-                        self.handleStandby(result_frequency, target_freqs)
-                        self.handleFinalResult(result_frequency, target_freqs_dict, current_target)
+                    result_frequency = self.actual_results.getFrequency({frequency: 1})
+                    if result_frequency is not None:
+                        self.handleStandby(result_frequency, target_freqs.values())
+                        self.handleFinalResult(result_frequency, target_freqs, current_target)

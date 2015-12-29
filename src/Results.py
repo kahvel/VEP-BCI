@@ -25,8 +25,7 @@ class Results(ListByTrials.ListByTrials):
         self.list[-1]["Results"][current][detected] += 1
         self.prev_result = detected
 
-    def trialtoString(self, trial_id):
-        trial = self.list[trial_id]
+    def trialtoString(self, trial):
         if len(trial) == 4:
             return "No results"
         result = "Total time: " + str(trial["TotalTime"]) + " Packets; " + str(trial["TotalTimeSec"]) + " sec"
@@ -100,7 +99,7 @@ class Results(ListByTrials.ListByTrials):
     def __repr__(self):
         result = ""
         for i in range(len(self.list)):
-            result += str(i) + "\n" + self.trialtoString(i)
+            result += str(i) + "\n" + self.trialtoString(self.list[i])
         return result
 
     def isPrevResult(self, result):
