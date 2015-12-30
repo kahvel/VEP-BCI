@@ -4,6 +4,7 @@ import os
 
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
+import MainFrameButtonCommands
 import Savable
 import InputParser
 
@@ -13,39 +14,14 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
-        button_commands = {
-            c.BOTTOM_FRAME: (
-                    self.start,
-                    self.stop,
-                    self.setup,
-                    self.askSaveFile,
-                    self.askLoadFile,
-                    self.exit
-            ),
-            c.TEST_TAB: (
-                self.showResults,
-                self.resetResults,
-                self.saveResults
-            ),
-            c.ROBOT_TAB: (
-                lambda: self.connection.sendMessage(c.MOVE_FORWARD),
-                lambda: self.connection.sendMessage(c.MOVE_BACKWARD),
-                lambda: self.connection.sendMessage(c.MOVE_RIGHT),
-                lambda: self.connection.sendMessage(c.MOVE_LEFT),
-                lambda: self.connection.sendMessage(c.MOVE_STOP),
-            ),
-            c.TRAINING_TAB: (
-                self.saveEeg,
-                self.loadEeg,
-                self.resetEeg,
-            )
-        }
-        self.main_frame = MainFrame.MainFrame(self, button_commands)
+        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self)
+        self.main_frame = MainFrame.MainFrame(self, button_commands.commands)
         self.input_parser = InputParser.InputParser()
         self.loadValuesAtStartup()
         self.disableButton(c.START_BUTTON)
         self.disableButton(c.STOP_BUTTON)
         self.setup_options = None
+        self.stopped = True
         self.checkMessages()
         self.mainloop()
 
@@ -118,12 +94,17 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         self.disableButton(c.START_BUTTON)
         self.enableButton(c.STOP_BUTTON)
         self.connection.sendStartMessage()
+        self.stopped = False
 
     def stop(self):
         self.enableButton(c.SETUP_BUTTON)
         self.enableButton(c.START_BUTTON)
         self.disableButton(c.STOP_BUTTON)
         self.connection.sendStopMessage()
+        self.stopped = True
+
+    def isStopped(self):
+        return self.stopped
 
     def setInitialBottomFrameButtonsState(self):
         self.disableButton(c.START_BUTTON)
