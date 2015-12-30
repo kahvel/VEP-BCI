@@ -36,7 +36,8 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
             ),
             c.TRAINING_TAB: (
                 self.saveEeg,
-                self.loadEeg
+                self.loadEeg,
+                self.resetEeg,
             )
         }
         self.main_frame = MainFrame.MainFrame(self, button_commands)
@@ -84,6 +85,9 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def loadEeg(self, file):
         self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
         self.connection.sendMessage(file.read())
+
+    def resetEeg(self):
+        self.connection.sendMessage(c.RESET_EEG_MESSAGE)
 
     def exit(self):
         self.exitFlag = True

@@ -63,6 +63,7 @@ TRAINING_START = "Train"
 TRAINING_RECORD = "Record"
 TRAINING_SAVE_EEG = "Save EEG"
 TRAINING_LOAD_EEG = "Load EEG"
+TRAINING_RESET_EEG = "Reset EEG"
 
 # Training tab options menu
 TRAINING_RECORD_NORMAL = "Normal"
@@ -245,6 +246,7 @@ SAVE_RESULTS_MESSAGE = "Save results"
 
 SAVE_EEG_MESSAGE = "Save EEG"
 LOAD_EEG_MESSAGE = "Load EEG"
+RESET_EEG_MESSAGE = "Reset EEG"
 
 # By default load values from this file
 DEFAULT_FILE = "default.txt"

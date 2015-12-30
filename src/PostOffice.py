@@ -46,6 +46,8 @@ class PostOffice(object):
                     self.training.loadEeg(file_content)
                 elif message == c.SAVE_EEG_MESSAGE:
                     self.main_connection.sendMessage(self.training.saveEeg())
+                elif message == c.RESET_EEG_MESSAGE:
+                    self.training.reset()
                 elif message == c.EXIT_MESSAGE:
                     self.exit()
                     return
