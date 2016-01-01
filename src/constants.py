@@ -248,6 +248,8 @@ SAVE_EEG_MESSAGE = "Save EEG"
 LOAD_EEG_MESSAGE = "Load EEG"
 RESET_EEG_MESSAGE = "Reset EEG"
 
+TRAIN_WITH_CURRENT_OPTIONS_MESSAGE = "TrainCurrentOptions"
+
 # By default load values from this file
 DEFAULT_FILE = "default.txt"
 

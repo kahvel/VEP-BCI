@@ -65,6 +65,10 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def resetEeg(self):
         self.connection.sendMessage(c.RESET_EEG_MESSAGE)
 
+    def trainWithCurrentOptions(self):
+        self.connection.sendMessage(c.TRAIN_WITH_CURRENT_OPTIONS_MESSAGE)
+        self.connection.sendMessage(self.setup_options)
+
     def exit(self):
         self.exitFlag = True
         self.connection.sendExitMessage()

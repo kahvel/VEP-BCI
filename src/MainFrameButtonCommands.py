@@ -28,6 +28,7 @@ class MainFrameButtonCommands(object):
                 StoppedButtonCommand(main_window.saveEeg, main_window.isStopped),
                 StoppedButtonCommand(main_window.loadEeg, main_window.isStopped),
                 StoppedButtonCommand(main_window.resetEeg, main_window.isStopped),
+                StoppedButtonCommand(main_window.trainWithCurrentOptions, main_window.isStopped),
             )
         }
 
@@ -39,6 +40,6 @@ class StoppedButtonCommand(object):
 
     def __call__(self, *args, **kwargs):
         if self.isStopped():
-            self.function()
+            self.function(*args)
         else:
             print("This functionality can only be used if BCI is stopped")
