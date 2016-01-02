@@ -203,10 +203,15 @@ class TargetIdentification(object):
     def addResultAndSendCommand(self, result_frequency, current, target_freqs_dict):
         self.results.add(current, result_frequency)
         self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
+        self.printResult(result_frequency, current)
+        self.holdResultTarget(result_frequency, current)
+
+    def printResult(self, result_frequency, current):
         if result_frequency != current:
-            print("wrong", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
+            print "wrong",
         else:
-            print("right", self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency)
+            print "right",
+        print self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency
 
     def holdResultTarget(self, result_frequency, current):
         if result_frequency == current:
@@ -220,7 +225,6 @@ class TargetIdentification(object):
             self.master_connection.sendTargetMessage(result_frequency)
             current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None
             self.filterRepeatingResults(result_frequency, current, target_freqs_dict)
-            self.holdResultTarget(result_frequency, current)
 
     def handleFreqMessages(self, message, target_freqs, current_target):
         results = message
