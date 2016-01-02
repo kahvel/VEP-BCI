@@ -13,11 +13,11 @@ class Connection(Connections.AbstractConnection):
         while True:
             update()
             if message is not None:
-                if message == c.START_MESSAGE:
+                if message == c.START_MESSAGE or message == c.TRAIN_START_MESSAGE:
                     # print("Start", self.name)
                     message = start()
                     continue
-                elif message == c.STOP_MESSAGE:
+                elif message == c.STOP_MESSAGE or message == c.TRAIN_STOP_MESSAGE:
                     pass
                     # print("Stop", self.name)
                 elif message == c.SETUP_MESSAGE:

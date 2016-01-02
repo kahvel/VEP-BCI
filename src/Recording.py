@@ -1,6 +1,8 @@
 import Switchable
 import ListByTrials
 
+import constants as c
+
 
 class RecordingListByTrials(Switchable.Switchable, ListByTrials.ListByTrials):
     def __init__(self):
@@ -9,11 +11,11 @@ class RecordingListByTrials(Switchable.Switchable, ListByTrials.ListByTrials):
 
     def trialEnded(self, *args):
         if self.enabled:
-            ListByTrials.ListByTrials.trialEnded(*args)
+            ListByTrials.ListByTrials.trialEnded(self, *args)
 
     def start(self, *args):
         if self.enabled:
-            ListByTrials.ListByTrials.start(*args)
+            ListByTrials.ListByTrials.start(self, *args)
 
     def save(self):
         return str(self.list)
@@ -28,13 +30,13 @@ class EEG(RecordingListByTrials):
 
     def getTrialCollection(self, target_freqs):
         return {
-            "target_freqs": target_freqs,
-            "packets": []
+            c.EEG_RECORDING_FREQS: target_freqs,
+            c.EEG_RECORDING_PACKETS: []
         }
 
     def add(self, packet):
         if self.enabled:
-            self.current_data["target_freqs"].append(packet)
+            self.current_data[c.EEG_RECORDING_PACKETS].append(packet)
 
 
 class ExpectedTargets(RecordingListByTrials):
