@@ -208,10 +208,9 @@ class TargetIdentification(object):
 
     def printResult(self, result_frequency, current):
         if result_frequency != current:
-            print "wrong",
+            print "wrong", current, result_frequency
         else:
-            print "right",
-        print self.actual_results.weights, self.actual_results.summed_weights, self.prev_results.summed_weights, current, result_frequency
+            print "right", current, result_frequency
 
     def holdResultTarget(self, result_frequency, current):
         if result_frequency == current:

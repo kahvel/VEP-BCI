@@ -27,7 +27,7 @@ class InputParser(object):
         return {key: value for key, value in data.items()}
 
     def parseExtractionTargets(self, data, target_freqs):
-        return {int(key): target_freqs[int(key)] for key, value in data.items() if key in target_freqs and data[key] == 1}
+        return {int(key): target_freqs[int(key)] for key, value in data.items() if int(key) in target_freqs and data[key] == 1}
 
     def parseExtractionTab(self, data, target_freqs):
         return {
