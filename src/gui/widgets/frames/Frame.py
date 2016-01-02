@@ -83,6 +83,18 @@ class AbstractFrame(AbstractWidget.Widget):
         for widget in self.widgets_list:
             widget.targetEnabled(tabs, current_tab)
 
+    def disableWidget(self, path_to_widget, disabler="PostOffice"):
+        if len(path_to_widget) > 1:
+            self.widgets_dict[path_to_widget[0]].disableWidget(path_to_widget[1:], disabler)
+        else:
+            self.widgets_dict[path_to_widget[0]].disable(disabler)
+
+    def enableWidget(self, path_to_widget, enabler="PostOffice"):
+        if len(path_to_widget) > 1:
+            self.widgets_dict[path_to_widget[0]].enableWidget(path_to_widget[1:], enabler)
+        else:
+            self.widgets_dict[path_to_widget[0]].enable(enabler)
+
 
 class Frame(AbstractFrame):
     def __init__(self, parent, name, row, column, **kwargs):

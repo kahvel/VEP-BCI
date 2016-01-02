@@ -6,7 +6,7 @@ import Savable
 
 class TrainingTab(Frame.Frame, Savable.Savable, Savable.Loadable):
     def __init__(self, parent, buttons, **kwargs):
-        save, load, reset, train_with_current_options = buttons
+        save, load, reset, train_frame_buttons = buttons
         self.main_window_save_eeg_function = save
         self.main_window_load_eeg_function = load
         Frame.Frame.__init__(self, parent, c.TRAINING_TAB, 0, 0, **kwargs)
@@ -15,7 +15,7 @@ class TrainingTab(Frame.Frame, Savable.Savable, Savable.Loadable):
             Buttons.Button       (self.widget, c.TRAINING_SAVE_EEG,  1, 0, command=self.askSaveFile),
             Buttons.Button       (self.widget, c.TRAINING_LOAD_EEG,  1, 1, command=self.askLoadFile),
             Buttons.Button       (self.widget, c.TRAINING_RESET_EEG, 1, 2, command=reset),
-            Buttons.Button       (self.widget, c.TRAINING_START,     2, 0, command=train_with_current_options),
+            TrainFrame           (self.widget, train_frame_buttons[c.TRAIN_FRAME], 2, 0, columnspan=3)
         ))
 
     def saveToFile(self, file):
@@ -23,3 +23,14 @@ class TrainingTab(Frame.Frame, Savable.Savable, Savable.Loadable):
 
     def loadFromFile(self, file):
         self.main_window_load_eeg_function(file)
+
+
+class TrainFrame(Frame.Frame):
+    def __init__(self, parent, buttons, row, column, **kwargs):
+        start, stop, setup = buttons
+        Frame.Frame.__init__(self, parent, c.TRAIN_FRAME, row, column, **kwargs)
+        self.addChildWidgets((
+            Buttons.Button(self.widget, c.START_BUTTON, 0, 0, command=start),
+            Buttons.Button(self.widget, c.STOP_BUTTON,  0, 1, command=stop),
+            Buttons.Button(self.widget, c.SETUP_BUTTON, 0, 2, command=setup)
+        ))

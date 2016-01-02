@@ -25,9 +25,3 @@ class BottomFrame(Frame.Frame):
             Buttons.Button(self.widget, c.LOAD_BUTTON,  0, 4, command=load),
             Buttons.Button(self.widget, c.EXIT_BUTTON,  0, 5, command=exit)
         ))
-
-    def disableButton(self, button_name):
-        self.widgets_dict[button_name].disable("PostOffice")
-
-    def enableButton(self, button_name):
-        self.widgets_dict[button_name].enable("PostOffice")

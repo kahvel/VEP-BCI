@@ -51,6 +51,10 @@ class MasterConnection(Connections.MultipleConnections):
     def receiveExtractionMessage(self):
         return self.connections[c.CONNECTION_EXTRACTION].getMessages()
 
+    def sendMessage(self, message):
+        for key in self.connections:
+            self.connections[key].sendMessage(message)
+
     def sendStartMessage(self):
         for key in self.connections:
             self.connections[key].sendStartMessage()

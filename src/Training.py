@@ -5,8 +5,8 @@ import copy
 
 
 class Training(BCI.BCI):
-    def __init__(self, connections, main_connection, recording):
-        BCI.BCI.__init__(self, connections, main_connection, recording)
+    def __init__(self, connections, main_connection, recording, messages):
+        BCI.BCI.__init__(self, connections, main_connection, recording, messages)
         self.packets = []
         self.packet_index = -1
         self.expected_targets = []
@@ -19,10 +19,10 @@ class Training(BCI.BCI):
         self.packet_index = -1
 
     def setup(self, options):
-        BCI.BCI.setup(self, self.changeOptions(options))
+        return BCI.BCI.setup(self, self.changeOptions(options))
 
     def start(self, options):
-        BCI.BCI.start(self, self.changeOptions(options))
+        return BCI.BCI.start(self, self.changeOptions(options))
 
     def changeOptions(self, options):
         options = copy.deepcopy(options)
