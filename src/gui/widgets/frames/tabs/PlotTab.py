@@ -12,7 +12,7 @@ class PlotTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
             OptionsFrame.SensorsFrame(self.widget, 0, 0),
             PlotTabButtonFrame(self.widget, 1, 0),
             OptionsFrame.OptionsFrame(self.widget, 2, 0),
-            self.getDisableDeleteFrame(3, 0, delete_tab=deleteTab)
+            self.getDisableDeleteFrame(3, 0, deleteTab)
         ))
 
 

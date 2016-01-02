@@ -3,22 +3,19 @@
 class ListByTrials(object):
     def __init__(self):
         self.list = []
-        self.start_new_trial = True
+        self.current_data = None
 
     def reset(self):
         self.list = []
-        self.start_new_trial = True
 
     def add(self, *args):
         raise NotImplementedError("add not implemented!")
 
-    def setup(self, *args):
-        if self.start_new_trial:
-            self.list.append(self.getTrialCollection(*args))
-            self.start_new_trial = False
+    def start(self, *args):
+        self.current_data = self.getTrialCollection(*args)
 
     def getTrialCollection(self, *args):
         raise NotImplementedError("getTrialCollection not implemented!")
 
     def trialEnded(self, *args):
-        self.start_new_trial = True
+        self.list.append(self.current_data)

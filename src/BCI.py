@@ -16,6 +16,7 @@ class BCI(object):
         self.recording = recording
         self.standby = Standby.Standby()
         self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.standby)
+        self.message_counter = 0
 
     def setup(self, options):
         self.connections.setup(options)
@@ -23,9 +24,6 @@ class BCI(object):
         self.setStandby(options)
         self.setupStandby(options)
         if self.connections.setupSuccessful():
-            target_freqs = options[c.DATA_FREQS].values()
-            self.results.setup(target_freqs)
-            self.recording.setup(target_freqs)
             self.target_identification.setup(options)
             return self.messages[c.SUCCESS_MESSAGE]
         else:
@@ -34,13 +32,17 @@ class BCI(object):
     def start(self, options):
         self.message_counter = 0
         self.target_identification.resetResults(options[c.DATA_FREQS].values())
+        target_freqs = options[c.DATA_FREQS]
+        self.results.start(target_freqs.values())
+        self.recording.start(target_freqs)
         self.connections.sendMessage(self.messages[c.START_MESSAGE])
         message = self.targetChangingLoop(
             options[c.DATA_TEST],
-            options[c.DATA_FREQS],
+            target_freqs,
         )
-        self.results.trialEnded(self.message_counter)
         self.connections.sendMessage(self.messages[c.STOP_MESSAGE])
+        self.results.trialEnded(self.message_counter)
+        self.recording.trialEnded()
         return message
 
     def getTotalTime(self, unlimited, test_time):
@@ -76,20 +78,20 @@ class BCI(object):
         return c.STOP_MESSAGE
 
     def handleEmotivMessages(self, target_freqs, current_target):
-        message = self.connections.receiveEmotivMessage()
+        message = self.getNextPacket()
         if message is not None:
             self.message_counter += 1
             self.recording.collectPacket(message)
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
             self.target_identification.handleFreqMessages(
-                self.getNextPacket(),
+                self.connections.receiveExtractionMessage(),
                 target_freqs,
                 current_target
             )
 
     def getNextPacket(self):
-        return self.connections.receiveExtractionMessage()
+        return self.connections.receiveEmotivMessage()
 
     def handleRobotMessages(self):
         message = self.connections.receiveRobotMessage()

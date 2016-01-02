@@ -9,11 +9,11 @@ import Tkinter
 
 
 class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, delete_tab, target_notebook_widgets, **kwargs):
+    def __init__(self, parent, deleteTab, target_notebook_widgets, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
         self.addChildWidgets((
             ExtractionTabNotebook(self.widget, target_notebook_widgets),
-            self.getDisableDeleteFrame(3, 0, delete_tab=delete_tab)
+            self.getDisableDeleteFrame(3, 0, deleteTab)
         ))
 
 

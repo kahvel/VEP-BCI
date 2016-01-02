@@ -14,7 +14,7 @@ class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
         self.getCurrentTab = getCurrentTab
         self.addChildWidgets((
             TargetFrame(self.widget, 0, 0, getMonitorFreq, **kwargs),
-            self.getDisableDeleteFrame(1, 0, delete_tab=deleteTab)
+            self.getDisableDeleteFrame(1, 0, deleteTab)
         ))
 
     def changeFreq(self):

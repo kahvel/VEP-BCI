@@ -21,6 +21,11 @@ EXTRACTION_TAB_TAB = "ExtractionTab"
 
 EXTRACTION_TAB_NOTEBOOK = "ExtractionTabNotebook"
 
+TRAINING_NOTEBOOK = "TrainingNotebook"
+
+NORMAL_EEG_TAB = "NormalEegTab"
+NEUTRAL_EEG_TAB = "NeutralEegTab"
+
 # Extraction tab notebook tab names
 EXTRACTION_TAB_HARMONICS_TAB = "Harmonics"
 EXTRACTION_TAB_OPTIONS_TAB = "Options"
@@ -70,6 +75,8 @@ TRAINING_RECORD_NEUTRAL = "Neutral"
 TRAINING_RECORD_DISABLED = "Disabled"
 
 TRAINING_RECORD_NAMES = (TRAINING_RECORD_DISABLED, TRAINING_RECORD_NORMAL, TRAINING_RECORD_NEUTRAL)
+
+RECORDING_LENGTH = "Packets"
 
 # Window function names
 WINDOW_NONE = "None"
@@ -348,3 +355,8 @@ STREAM_X = "x"
 STREAM_Y = "y"
 STREAM_WIDTH = "Width"
 STREAM_HEIGHT = "Height"
+
+
+EEG_RECORDING_FREQS = "TargetFreqs"
+EEG_RECORDING_PACKETS = "Packets"
+EEG_RECORDING_EXPECTED_TARGETS = "ExpectedTargets"

@@ -8,17 +8,18 @@ class Training(BCI.BCI):
     def __init__(self, connections, main_connection, recording, messages):
         BCI.BCI.__init__(self, connections, main_connection, recording, messages)
         self.packets = []
-        self.packet_index = -1
         self.expected_targets = []
         self.expected_target_index = -1
+        self.target_freqs = {}
 
     def setupPackets(self):
-        self.packets = self.recording.normal_eeg.list[0]
+        self.packets = self.recording.normal_eeg.list[0][c.EEG_RECORDING_PACKETS]
+        self.target_freqs = self.recording.normal_eeg[0][c.EEG_RECORDING_FREQS]
         self.expected_targets = self.recording.expected_targets.list[0]
         self.expected_target_index = -1
-        self.packet_index = -1
 
     def setup(self, options):
+        self.setupPackets()
         return BCI.BCI.setup(self, self.changeOptions(options))
 
     def start(self, options):
@@ -28,6 +29,7 @@ class Training(BCI.BCI):
         options = copy.deepcopy(options)
         self.disableUnnecessaryOptions(options)
         self.setTrainingTime(options)
+        options[c.DATA_FREQS] = self.target_freqs
         return options
 
     def disableUnnecessaryOptions(self, options):
@@ -52,5 +54,4 @@ class Training(BCI.BCI):
                 return self.expected_targets[self.expected_target_index]
 
     def getNextPacket(self):
-        self.packet_index += 1
-        return self.packets[self.packet_index]
+        return self.packets[self.message_counter]
