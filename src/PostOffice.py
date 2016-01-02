@@ -1,19 +1,12 @@
 import constants as c
-from connections.postoffice import MasterConnection, ConnectionPostOfficeEnd
-import BCI
-import Training
-import Recording
 
 
 class PostOffice(object):
-    def __init__(self):
-        self.main_connection = ConnectionPostOfficeEnd.MainConnection()
-        self.connections = MasterConnection.MasterConnection()
-        self.recording = Recording.Recording()
-        self.bci = BCI.BCI(self.connections, self.main_connection, self.recording, c.BCI_MESSAGES)
-        self.training = Training.Training(self.connections, self.main_connection, self.recording, c.TRAINING_MESSAGES)
-        self.bci_message_handler = StartStopSetupHandler(self.bci, self.main_connection, self.connections, c.BCI_MESSAGES, self.setExitFlag)
-        self.training_message_handler = StartStopSetupHandler(self.training, self.main_connection, self.connections, c.TRAINING_MESSAGES, self.setExitFlag)
+    def __init__(self, main_connection, connections, bci_controller):
+        self.main_connection = main_connection
+        self.connections = connections
+        self.bci_controller = bci_controller
+        self.bci_message_handler = StartStopSetupHandler(self.bci_controller, self.main_connection, self.connections, self.setExitFlag)
         self.exit_flag = False
         self.waitConnections()
 
@@ -23,21 +16,19 @@ class PostOffice(object):
             if message is not None:
                 if self.bci_message_handler.canHandle(message):
                     self.bci_message_handler.handle(message)
-                elif self.training_message_handler.canHandle(message):
-                    self.training_message_handler.handle(message)
                 elif message == c.RESET_RESULTS_MESSAGE:
-                    self.bci.resetResults()
+                    self.bci_controller.resetResults()
                 elif message == c.SHOW_RESULTS_MESSAGE:
-                    print(self.bci.getResults())
+                    print(self.bci_controller.getResults())
                 elif message == c.SAVE_RESULTS_MESSAGE:
-                    self.main_connection.sendMessage(self.bci.getResults())
+                    self.main_connection.sendMessage(self.bci_controller.getResults())
                 elif message == c.LOAD_EEG_MESSAGE:
                     file_content = self.main_connection.receiveMessageBlock()
-                    self.bci.loadEeg(file_content)
+                    self.bci_controller.loadEeg(file_content)
                 elif message == c.SAVE_EEG_MESSAGE:
-                    self.main_connection.sendMessage(self.bci.saveEeg())
+                    self.main_connection.sendMessage(self.bci_controller.saveEeg())
                 elif message == c.RESET_EEG_MESSAGE:
-                    self.bci.resetRecording()
+                    self.bci_controller.resetRecording()
                 elif message in c.ROBOT_COMMANDS:
                     self.connections.sendRobotMessage(message)
                 else:
@@ -50,8 +41,7 @@ class PostOffice(object):
 
 
 class StartStopSetupHandler(object):
-    def __init__(self, controller, main_connection, connections, messages, setExitFlag):
-        self.messages = messages
+    def __init__(self, controller, main_connection, connections, setExitFlag):
         self.controller = controller
         self.options = None
         self.main_connection = main_connection
@@ -59,13 +49,13 @@ class StartStopSetupHandler(object):
         self.setExitFlag = setExitFlag
 
     def handle(self, message):
-        if message == self.messages[c.START_MESSAGE]:
+        if message == c.START_MESSAGE:
             self.handleStart()
-        elif message == self.messages[c.SETUP_MESSAGE]:
+        elif message == c.SETUP_MESSAGE:
             self.handleSetup()
-        elif message == self.messages[c.STOP_MESSAGE]:
+        elif message == c.STOP_MESSAGE:
             print("Stop PostOffice")
-        elif message == self.messages[c.EXIT_MESSAGE]:
+        elif message == c.EXIT_MESSAGE:
             self.setExitFlag(True)
 
     def handleStart(self):
@@ -76,10 +66,10 @@ class StartStopSetupHandler(object):
     def handleSetup(self):
         self.options = self.main_connection.receiveMessageBlock()
         setup_message = self.controller.setup(self.options)
-        if setup_message == self.messages[c.FAIL_MESSAGE]:
+        if setup_message == c.FAIL_MESSAGE:
             self.connections.close()
         print("Setup " + setup_message + "!")
         self.main_connection.sendMessage(setup_message)
 
     def canHandle(self, message):
-        return message in self.messages.values()
+        return message in c.BCI_MESSAGES

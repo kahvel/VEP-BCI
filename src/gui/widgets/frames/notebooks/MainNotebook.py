@@ -15,7 +15,6 @@ class MainNotebook(Notebook.Notebook):
             TestTab.TestTab(self.widget, button_commands[c.TEST_TAB], 0, 0),
             RobotTab.RobotTab(self.widget, button_commands[c.ROBOT_TAB]),
             EmotivTab.EmotivTab(self.widget),
-            TrainingTab.TrainingTab(self.widget, button_commands[c.TRAINING_TAB])
         ))
 
     def getMonitorFreq(self):

@@ -8,10 +8,9 @@ import random
 
 
 class BCI(object):
-    def __init__(self, connections, main_connection, recording, messages):
+    def __init__(self, connections, main_connection, recording):
         self.connections = connections
         self.main_connection = main_connection
-        self.messages = messages
         self.results = Results.Results()
         self.recording = recording
         self.standby = Standby.Standby()
@@ -25,9 +24,9 @@ class BCI(object):
         self.setupStandby(options)
         if self.connections.setupSuccessful():
             self.target_identification.setup(options)
-            return self.messages[c.SUCCESS_MESSAGE]
+            return c.SUCCESS_MESSAGE
         else:
-            return self.messages[c.FAIL_MESSAGE]
+            return c.FAIL_MESSAGE
 
     def start(self, options):
         self.message_counter = 0
@@ -35,12 +34,12 @@ class BCI(object):
         target_freqs = options[c.DATA_FREQS]
         self.results.start(target_freqs.values())
         self.recording.start(target_freqs)
-        self.connections.sendMessage(self.messages[c.START_MESSAGE])
+        self.connections.sendMessage(c.START_MESSAGE)
         message = self.targetChangingLoop(
             options[c.DATA_TEST],
             target_freqs,
         )
-        self.connections.sendMessage(self.messages[c.STOP_MESSAGE])
+        self.connections.sendMessage(c.STOP_MESSAGE)
         self.results.trialEnded(self.message_counter)
         self.recording.trialEnded()
         return message
@@ -74,7 +73,7 @@ class BCI(object):
             message = self.startPacketSending(target_freqs, target, total_time)
             if message is not None:
                 return message
-        self.main_connection.sendMessage(self.messages[c.STOP_MESSAGE])
+        self.main_connection.sendMessage(c.STOP_MESSAGE)
         return c.STOP_MESSAGE
 
     def handleEmotivMessages(self, target_freqs, current_target):

@@ -1,5 +1,4 @@
 import constants as c
-import __main__
 import os
 
 from gui import ButtonsStateController
@@ -7,7 +6,7 @@ from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
 import MainFrameButtonCommands
 import Savable
-import BciController
+import PostOfficeMessageHandler
 
 
 class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
@@ -16,26 +15,22 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.bottom_frame_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.BOTTOM_FRAME,))
-        self.training_tab_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.MAIN_NOTEBOOK, c.TRAINING_TAB, c.TRAIN_FRAME))
-        self.bci_controller = BciController.BciController(self, self.bottom_frame_buttons_states, c.BCI_MESSAGES)
-        self.training_controller = BciController.BciController(self, self.training_tab_buttons_states, c.TRAINING_MESSAGES)
-        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, self.bci_controller, self.training_controller)
+        self.message_handler = PostOfficeMessageHandler.PostOfficeMessageHandler(self, self.bottom_frame_buttons_states)
+        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, self.message_handler)
         self.main_frame = MainFrame.MainFrame(self, button_commands.commands)
         self.loadValuesAtStartup()
         self.bottom_frame_buttons_states.setInitialStates()
-        self.training_tab_buttons_states.setInitialStates()
         self.checkMessages()
         self.mainloop()
 
     def checkMessages(self):
         message = self.connection.receiveMessageInstant()
-        if self.bci_controller.canHandle(message):
-            self.bci_controller.handle(message)
-        elif self.training_controller.canHandle(message):
-            self.training_controller.handle(message)
+        if self.message_handler.canHandle(message):
+            self.message_handler.handle(message)
         self.after(100, self.checkMessages)
 
     def loadValuesAtStartup(self):
+        import __main__
         try:
             self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), c.DEFAULT_FILE)))
         except IOError:
@@ -77,4 +72,3 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def loadFromFile(self, file):
         self.main_frame.load(file)
         self.bottom_frame_buttons_states.setInitialStates()
-        self.training_tab_buttons_states.setInitialStates()

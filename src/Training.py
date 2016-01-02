@@ -5,8 +5,8 @@ import copy
 
 
 class Training(BCI.BCI):
-    def __init__(self, connections, main_connection, recording, messages):
-        BCI.BCI.__init__(self, connections, main_connection, recording, messages)
+    def __init__(self, connections, main_connection, recording):
+        BCI.BCI.__init__(self, connections, main_connection, recording)
         self.packets = []
         self.expected_targets = []
         self.expected_target_index = 0
