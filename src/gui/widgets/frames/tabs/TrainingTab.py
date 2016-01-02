@@ -15,7 +15,8 @@ class TrainingTab(Frame.Frame, Savable.Savable, Savable.Loadable):
             Buttons.Button       (self.widget, c.TRAINING_SAVE_EEG,  1, 0, command=self.askSaveFile),
             Buttons.Button       (self.widget, c.TRAINING_LOAD_EEG,  1, 1, command=self.askLoadFile),
             Buttons.Button       (self.widget, c.TRAINING_RESET_EEG, 1, 2, command=reset),
-            TrainFrame           (self.widget, train_frame_buttons[c.TRAIN_FRAME], 2, 0, columnspan=3)
+            OptionMenu.OptionMenu(self.widget, c.TRAINING_METHOD,    2, 1, c.TRAINING_METHOD_NAMES),
+            TrainFrame           (self.widget, train_frame_buttons[c.TRAIN_FRAME], 3, 0, columnspan=3)
         ))
 
     def saveToFile(self, file):

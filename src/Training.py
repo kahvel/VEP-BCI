@@ -23,7 +23,14 @@ class Training(BCI.BCI):
         return BCI.BCI.setup(self, self.changeOptions(options))
 
     def start(self, options):
-        return BCI.BCI.start(self, self.changeOptions(options))
+        method = options[c.DATA_TRAINING][c.TRAINING_METHOD]
+        if method == c.TRAINING_METHOD_SINGLE:
+            return BCI.BCI.start(self, self.changeOptions(options))
+        elif method == c.TRAINING_METHOD_DE:
+            return self.differentialEvolution(self.changeOptions(options))
+
+    def differentialEvolution(self, options):
+        pass
 
     def changeOptions(self, options):
         options = copy.deepcopy(options)
