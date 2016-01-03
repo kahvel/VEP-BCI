@@ -8,7 +8,7 @@ class BruteForce(object):
         self.detrend = [c.LINEAR_DETREND, c.CONSTANT_DETREND, c.NONE_DETREND]
         self.length_range = tuple(16*2**i for i in range(6))  # (16, 512)
         self.step_range = tuple(16*2**i for i in range(6))
-        self.break_range = tuple(i for i in range(33))
+        self.break_range = tuple(i for i in range(0, 33, 4))
 
     def optionsGenerator(self):
         for window in self.windows:

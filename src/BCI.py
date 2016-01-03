@@ -83,11 +83,14 @@ class BCI(object):
             self.recording.collectPacket(message)
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
-            self.target_identification.handleFreqMessages(
-                self.connections.receiveExtractionMessage(),
-                target_freqs,
-                current_target
-            )
+            self.handleExtractionMessages(target_freqs, current_target)
+
+    def handleExtractionMessages(self, target_freqs, current_target):
+        self.target_identification.handleFreqMessages(
+            self.connections.receiveExtractionMessage(),
+            target_freqs,
+            current_target
+        )
 
     def getNextPacket(self):
         return self.connections.receiveEmotivMessage()

@@ -15,7 +15,8 @@ class PostOfficeMessageHandler(object):
 
     def handle(self, message):
         if message == c.STOP_MESSAGE:
-            self.stop()
+            self.buttons_state_controller.stopClicked()
+            self.stopped = True
         elif message == c.SUCCESS_MESSAGE:  # Setup was successful
             self.buttons_state_controller.enableStart()
         elif message == c.FAIL_MESSAGE:  # Setup failed
