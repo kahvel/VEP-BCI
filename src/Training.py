@@ -28,8 +28,13 @@ class Training(BCI.BCI):
             return BCI.BCI.start(self, self.changeOptions(options))
         elif method == c.TRAINING_METHOD_DE:
             return self.differentialEvolution(self.changeOptions(options))
+        elif method == c.TRAINING_METHOD_BRUTE_FORCE:
+            return self.bruteForce(self.changeOptions(options))
 
     def differentialEvolution(self, options):
+        pass
+
+    def bruteForce(self, options):
         pass
 
     def changeOptions(self, options):

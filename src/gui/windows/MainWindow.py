@@ -10,10 +10,11 @@ import PostOfficeMessageHandler
 
 
 class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
-    def __init__(self, connection):
+    def __init__(self, connection, default_settings_file_name):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
+        self.default_settings_file_name = default_settings_file_name
         self.bottom_frame_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.BOTTOM_FRAME,))
         self.message_handler = PostOfficeMessageHandler.PostOfficeMessageHandler(self, self.bottom_frame_buttons_states)
         self.main_frame = self.getMainFrame(self.message_handler)
@@ -34,7 +35,7 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def loadValuesAtStartup(self):
         import __main__
         try:
-            self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), c.DEFAULT_FILE)))
+            self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), self.default_settings_file_name)))
         except IOError:
             self.main_frame.loadDefaultValue()
 
@@ -77,10 +78,36 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
 
 
 class MainWindow(AbstractMainWindow):
+    def __init__(self, connection):
+        AbstractMainWindow.__init__(self, connection, c.DEFAULT_SETTINGS_FILE_NAME)
+
     def getMainFrame(self, message_handler):
         return MainFrame.MainFrame(self, MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands)
 
 
 class TrainingWindow(AbstractMainWindow):
+    def __init__(self, connection):
+        AbstractMainWindow.__init__(self, connection, c.DEFAULT_TRAINING_SETTINGS_FILE_NAME)
+
     def getMainFrame(self, message_handler):
         return MainFrame.TrainingMainFrame(self, MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands)
+
+    def loadEeg(self, file):
+        AbstractMainWindow.loadEeg(self, file)
+        self.removeAllTargets()
+        file.seek(0)
+        self.addTargets(file)
+
+    def addTargets(self, file):
+        split_content = file.read().split(";")
+        packets = eval(split_content[0])
+        target_freqs = packets[0][c.EEG_RECORDING_FREQS]
+        for _ in range(len(target_freqs)):
+            self.main_frame.targetAdded()
+
+    def removeAllTargets(self):
+        try:
+            while True:
+                self.main_frame.targetRemoved(0)
+        except IndexError:
+            pass
