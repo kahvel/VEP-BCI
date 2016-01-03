@@ -19,7 +19,7 @@ class BCI(object):
 
     def setup(self, options):
         self.connections.setup(options)
-        self.setRecording(options)
+        self.setRecording(options[c.DATA_RECORD][c.TRAINING_RECORD])
         self.setStandby(options)
         self.setupStandby(options)
         if self.connections.setupSuccessful():
@@ -113,12 +113,12 @@ class BCI(object):
         else:
             self.standby.enable()
 
-    def setRecording(self, options):
-        if options[c.DATA_TRAINING][c.TRAINING_RECORD] == c.TRAINING_RECORD_NORMAL:
+    def setRecording(self, record_option):
+        if record_option == c.TRAINING_RECORD_NORMAL:
             self.recording.enableNormal()
-        elif options[c.DATA_TRAINING][c.TRAINING_RECORD] == c.TRAINING_RECORD_NEUTRAL:
+        elif record_option == c.TRAINING_RECORD_NEUTRAL:
             self.recording.enableNeutral()
-        elif options[c.DATA_TRAINING][c.TRAINING_RECORD] == c.TRAINING_RECORD_DISABLED:
+        elif record_option == c.TRAINING_RECORD_DISABLED:
             self.recording.disableRecording()
         else:
             raise Exception("Recording option menu in invalid state!")

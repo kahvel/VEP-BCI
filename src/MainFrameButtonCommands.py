@@ -24,7 +24,7 @@ class MainFrameButtonCommands(object):
                 lambda: main_window.connection.sendMessage(c.MOVE_LEFT),
                 lambda: main_window.connection.sendMessage(c.MOVE_STOP),
             ),
-            c.TRAINING_TAB: (
+            c.RECORD_TAB: (
                 StoppedButtonCommand(main_window.saveEeg, bci_controller.isStopped),
                 StoppedButtonCommand(main_window.loadEeg, bci_controller.isStopped),
                 StoppedButtonCommand(main_window.resetEeg, bci_controller.isStopped),

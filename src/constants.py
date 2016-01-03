@@ -9,6 +9,7 @@ RESULTS_TAB = "Results"
 TEST_TAB = "Test"
 ROBOT_TAB = "Robot"
 EMOTIV_TAB = "Emotiv"
+RECORD_TAB = "Record"
 TRAINING_TAB = "Train"
 
 TARGETS_TAB = "Targets"
@@ -277,6 +278,7 @@ DATA_TEST = "Test"
 DATA_HARMONICS = "Harmonics"
 DATA_ROBOT = "Robot"
 DATA_EMOTIV = "Emotiv"
+DATA_RECORD = "Record"
 DATA_TRAINING = "Training"
 
 DATA_SENSORS = SENSORS_FRAME
