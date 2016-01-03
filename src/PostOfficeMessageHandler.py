@@ -1,13 +1,12 @@
 import constants as c
-import InputParser
 
 
 class PostOfficeMessageHandler(object):
-    def __init__(self, main_window, buttons_state_controller):
+    def __init__(self, main_window, buttons_state_controller, input_parser):
         self.main_window = main_window
         self.buttons_state_controller = buttons_state_controller
         self.options = None
-        self.input_parser = InputParser.InputParser()
+        self.input_parser = input_parser
         self.connection = main_window.connection
         self.stopped = True
 

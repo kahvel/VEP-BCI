@@ -7,6 +7,7 @@ from gui.widgets.frames import MainFrame
 import MainFrameButtonCommands
 import Savable
 import PostOfficeMessageHandler
+import InputParser
 
 
 class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
@@ -16,7 +17,7 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.default_settings_file_name = default_settings_file_name
         self.bottom_frame_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.BOTTOM_FRAME,))
-        self.message_handler = PostOfficeMessageHandler.PostOfficeMessageHandler(self, self.bottom_frame_buttons_states)
+        self.message_handler = self.getMessageHandler(self.bottom_frame_buttons_states)
         self.main_frame = self.getMainFrame(self.message_handler)
         self.loadValuesAtStartup()
         self.bottom_frame_buttons_states.setInitialStates()
@@ -25,6 +26,9 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
 
     def getMainFrame(self, message_handler):
         raise NotImplementedError("getMainFrame not implemented!")
+
+    def getMessageHandler(self, bottom_frame_buttons_states):
+        raise NotImplementedError("getMessageHandler not implemented!")
 
     def checkMessages(self):
         message = self.connection.receiveMessageInstant()
@@ -82,7 +86,12 @@ class MainWindow(AbstractMainWindow):
         AbstractMainWindow.__init__(self, connection, c.DEFAULT_SETTINGS_FILE_NAME)
 
     def getMainFrame(self, message_handler):
-        return MainFrame.MainFrame(self, MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands)
+        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands
+        return MainFrame.MainFrame(self, button_commands)
+
+    def getMessageHandler(self, bottom_frame_buttons_states):
+        input_parser = InputParser.MainInputParser()
+        return PostOfficeMessageHandler.PostOfficeMessageHandler(self, bottom_frame_buttons_states, input_parser)
 
 
 class TrainingWindow(AbstractMainWindow):
@@ -90,7 +99,12 @@ class TrainingWindow(AbstractMainWindow):
         AbstractMainWindow.__init__(self, connection, c.DEFAULT_TRAINING_SETTINGS_FILE_NAME)
 
     def getMainFrame(self, message_handler):
-        return MainFrame.TrainingMainFrame(self, MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands)
+        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands
+        return MainFrame.TrainingMainFrame(self, button_commands)
+
+    def getMessageHandler(self, bottom_frame_buttons_states):
+        input_parser = InputParser.TrainingInputParser()
+        return PostOfficeMessageHandler.PostOfficeMessageHandler(self, bottom_frame_buttons_states, input_parser)
 
     def loadEeg(self, file):
         AbstractMainWindow.loadEeg(self, file)

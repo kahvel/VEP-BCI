@@ -1,5 +1,6 @@
 import constants as c
 import BCI
+import ParameterHandler
 
 import copy
 
@@ -23,7 +24,7 @@ class Training(BCI.BCI):
         return BCI.BCI.setup(self, self.changeOptions(options))
 
     def start(self, options):
-        method = options[c.DATA_RECORD][c.TRAINING_METHOD]
+        method = options[c.DATA_TRAINING][c.TRAINING_METHOD]
         if method == c.TRAINING_METHOD_SINGLE:
             return BCI.BCI.start(self, self.changeOptions(options))
         elif method == c.TRAINING_METHOD_DE:
@@ -35,7 +36,12 @@ class Training(BCI.BCI):
         pass
 
     def bruteForce(self, options):
-        pass
+        options_generator = ParameterHandler.BruteForce().optionsGenerator()
+        for signal_processing_options in options_generator:
+            options[c.DATA_OPTIONS] = signal_processing_options
+            BCI.BCI.setup(self, options)
+            BCI.BCI.start(self, options)
+            counter += 1
 
     def changeOptions(self, options):
         options = copy.deepcopy(options)
@@ -47,9 +53,9 @@ class Training(BCI.BCI):
     def disableUnnecessaryOptions(self, options):
         options[c.DATA_RECORD][c.TRAINING_RECORD] = c.TRAINING_RECORD_DISABLED
         options[c.DATA_TEST][c.TEST_STANDBY] = c.TEST_NONE
-        options[c.DATA_BACKGROUND][c.DISABLE] = 1
-        options[c.DATA_ROBOT][c.DISABLE] = 1
-        options[c.DATA_EMOTIV][c.DISABLE] = 1
+        options[c.DATA_BACKGROUND] = {c.DISABLE: 1}
+        options[c.DATA_ROBOT] = {c.DISABLE: 1}
+        options[c.DATA_EMOTIV] = {c.DISABLE: 1}
         options[c.DATA_PLOTS] = {}
 
     def setTrainingTime(self, options):
@@ -78,4 +84,3 @@ class Training(BCI.BCI):
                 return main_message
             current_target = self.getTarget(None, None, current_target)  # Override for only this line
             self.handleEmotivMessages(target_freqs, current_target)
-            self.handleRobotMessages()

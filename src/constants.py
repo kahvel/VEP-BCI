@@ -162,8 +162,6 @@ TEST_CLEAR_BUFFERS = "Clear buffers"
 TEST_ALWAYS_DELETE = "Always delete"
 TEST_PROCESS_SHORT_SIGNALS = "Process short signals"
 
-TRAIN_FRAME = "TrainFrame"
-
 # Color textbox's textbox name
 TEXTBOX = "Textbox"
 
