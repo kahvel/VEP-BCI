@@ -23,7 +23,7 @@ class Training(BCI.BCI):
         return BCI.BCI.setup(self, self.changeOptions(options))
 
     def start(self, options):
-        method = options[c.DATA_TRAINING][c.TRAINING_METHOD]
+        method = options[c.DATA_RECORD][c.TRAINING_METHOD]
         if method == c.TRAINING_METHOD_SINGLE:
             return BCI.BCI.start(self, self.changeOptions(options))
         elif method == c.TRAINING_METHOD_DE:
@@ -40,7 +40,7 @@ class Training(BCI.BCI):
         return options
 
     def disableUnnecessaryOptions(self, options):
-        options[c.DATA_TRAINING][c.TRAINING_RECORD] = c.TRAINING_RECORD_DISABLED
+        options[c.DATA_RECORD][c.TRAINING_RECORD] = c.TRAINING_RECORD_DISABLED
         options[c.DATA_TEST][c.TEST_STANDBY] = c.TEST_NONE
         options[c.DATA_BACKGROUND][c.DISABLE] = 1
         options[c.DATA_ROBOT][c.DISABLE] = 1

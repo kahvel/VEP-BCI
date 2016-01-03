@@ -44,6 +44,12 @@ class MainConnection(Connections.Connection):
         self.connection = self.newProcess()
 
 
+class TrainingConnection(Connections.Connection):
+    def __init__(self):
+        Connections.Connection.__init__(self, MainWindow.TrainingWindow, ConnectionProcessEnd.MainConnection)
+        self.connection = self.newProcess()
+
+
 class EmotivConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, MyEmotiv.MyEmotiv, ConnectionProcessEnd.EmotivConnection)

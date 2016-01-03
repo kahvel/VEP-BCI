@@ -9,19 +9,21 @@ import Savable
 import PostOfficeMessageHandler
 
 
-class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
+class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def __init__(self, connection):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.bottom_frame_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.BOTTOM_FRAME,))
         self.message_handler = PostOfficeMessageHandler.PostOfficeMessageHandler(self, self.bottom_frame_buttons_states)
-        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, self.message_handler)
-        self.main_frame = MainFrame.MainFrame(self, button_commands.commands)
+        self.main_frame = self.getMainFrame(self.message_handler)
         self.loadValuesAtStartup()
         self.bottom_frame_buttons_states.setInitialStates()
         self.checkMessages()
         self.mainloop()
+
+    def getMainFrame(self, message_handler):
+        raise NotImplementedError("getMainFrame not implemented!")
 
     def checkMessages(self):
         message = self.connection.receiveMessageInstant()
@@ -72,3 +74,13 @@ class MainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def loadFromFile(self, file):
         self.main_frame.load(file)
         self.bottom_frame_buttons_states.setInitialStates()
+
+
+class MainWindow(AbstractMainWindow):
+    def getMainFrame(self, message_handler):
+        return MainFrame.MainFrame(self, MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands)
+
+
+class TrainingWindow(AbstractMainWindow):
+    def getMainFrame(self, message_handler):
+        return MainFrame.TrainingMainFrame(self, MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands)
