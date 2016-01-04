@@ -5,6 +5,7 @@ import TargetIdentification
 
 import copy
 import os
+import scipy.optimize
 
 
 class Training(BCI.BCI):
@@ -46,28 +47,49 @@ class Training(BCI.BCI):
             return self.bruteForce(self.changeOptions(options))
 
     def differentialEvolution(self, options):
-        pass
+        self.options_handler = ParameterHandler.DifferentialEvolution()
+        options = options
+        self.all_results = {}
+        scipy.optimize.differential_evolution(
+            self.differentialEvolutionCostFunction,
+            self.options_handler.getBounds(),
+            args=(self.options_handler, options),
+            popsize=3,
+            callback=self.differentialEvolutionCallback,
+        )
+
+    def differentialEvolutionCallback(self, x, convergence=None):
+        signal_processing_options = self.options_handler.numbersToOptions(x)
+        print "callback", signal_processing_options, self.all_results[str(" ".join(str(signal_processing_options[key]) for key in sorted(signal_processing_options)))]
+
+    def differentialEvolutionCostFunction(self, numbers, options_handler, all_options):
+        signal_processing_options = options_handler.numbersToOptions(numbers)
+        return self.costFunction(all_options, signal_processing_options)
+
+    def costFunction(self, options, signal_processing_options):
+        self.expected_target_index = 0
+        self.result = 0
+        for tab in options[c.DATA_EXTRACTION]:
+            options[c.DATA_EXTRACTION][tab][c.DATA_EXTRACTION_OPTIONS] = copy.deepcopy(signal_processing_options)
+        options[c.DATA_EXTRACTION][2][c.DATA_EXTRACTION_OPTIONS][c.OPTIONS_WINDOW] = c.WINDOW_NONE
+        BCI.BCI.setup(self, options)
+        BCI.BCI.start(self, options)
+        self.result *= signal_processing_options[c.OPTIONS_STEP]
+        self.all_results[str(" ".join(str(signal_processing_options[key]) for key in sorted(signal_processing_options)))] = self.result
+        print signal_processing_options, self.result
+        return self.result
 
     def bruteForce(self, options):
         options_generator = ParameterHandler.BruteForce().optionsGenerator()
-        import time
-        start = time.time()
         counter = 0
         for signal_processing_options in options_generator:
-            self.expected_target_index = 0
-            self.result = 0
-            file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results\\_" + str(counter) + ".txt"
+            file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results1\\_" + str(counter) + ".txt"
             self.results_file = open(file_name, "w")
             self.results_file.write(str(signal_processing_options) + "\n")
-            for tab in options[c.DATA_EXTRACTION]:
-                options[c.DATA_EXTRACTION][tab][c.DATA_EXTRACTION_OPTIONS] = signal_processing_options
-            BCI.BCI.setup(self, options)
-            BCI.BCI.start(self, options)
-            self.results_file.write(str(self.result))
+            result = self.costFunction(options, signal_processing_options)
+            self.results_file.write(str(result))
             self.results_file.close()
-            # os.rename(file_name, file_name[:58] + str(self.result) + file_name[58:])
             counter += 1
-        print time.time() - start, counter
 
     def changeOptions(self, options):
         options = copy.deepcopy(options)
@@ -120,10 +142,9 @@ class Training(BCI.BCI):
     def handleExtractionMessages(self, target_freqs, current_target):
         results = self.connections.receiveExtractionMessage()
         if results is not None:
-            self.results_file.write(str(results) + "\n")
+            # self.results_file.write(str(results) + "\n")
             added = self.result_finder.parseResults(results)
             current = target_freqs[current_target]
-            print added, current
             for freq in added:
                 if freq == current:
                     self.result -= added[freq]
@@ -135,6 +156,6 @@ class ResultAdder(TargetIdentification.WeightFinder):
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
             if result[0][0] in parse_result:
-                parse_result[result[0][0]] += result[0][1]
+                parse_result[result[0][0]] += result[0][1] * data
             else:
-                parse_result[result[0][0]] = result[0][1]
+                parse_result[result[0][0]] = result[0][1] * data

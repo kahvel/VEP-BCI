@@ -6,7 +6,7 @@ class BruteForce(object):
         self.windows = [c.WINDOW_NONE, c.WINDOW_HANNING, c.WINDOW_HAMMING, c.WINDOW_BLACKMAN, c.WINDOW_BARTLETT]
         self.interpolation = [c.INTERPOLATE_LINEAR, c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC, c.INTERPOLATE_BARYCENTRIC]
         self.detrend = [c.LINEAR_DETREND, c.CONSTANT_DETREND, c.NONE_DETREND]
-        self.length_range = tuple(16*2**i for i in range(6))  # (16, 512)
+        self.length_range = tuple(32*2**i for i in range(5))
         self.step_range = tuple(16*2**i for i in range(6))
         self.break_range = tuple(i for i in range(0, 33, 4))
 
@@ -34,3 +34,34 @@ class BruteForce(object):
                                         break
                             else:
                                 break
+
+
+class DifferentialEvolution(object):
+    def __init__(self):
+        self.interpolation = [c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_LINEAR, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC, c.INTERPOLATE_BARYCENTRIC]
+        self.length_range = tuple(128*2**i for i in range(2))
+        self.step_range = tuple(32*2**i for i in range(3))
+        self.break_range = tuple(i for i in range(0, 9, 2))
+        self.bounds = (
+            (0, 6.99),
+            (0, 1.99),
+            (0, 2.99),
+            (0, 4.99),
+            (0, 14),
+        )
+
+    def getBounds(self):
+        return self.bounds
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.OPTIONS_WINDOW: c.WINDOW_KAISER,
+            c.OPTIONS_INTERPOLATE: self.interpolation[int(numbers[0])],
+            c.OPTIONS_DETREND: c.LINEAR_DETREND,
+            c.OPTIONS_LENGTH: self.length_range[int(numbers[1])],
+            c.OPTIONS_STEP: self.step_range[int(numbers[2])],
+            c.OPTIONS_BREAK: self.break_range[int(numbers[3])],
+            c.OPTIONS_FILTER: c.NONE_FILTER,
+            c.OPTIONS_NORMALISE: 0,
+            c.OPTIONS_ARG: numbers[4],
+        }
