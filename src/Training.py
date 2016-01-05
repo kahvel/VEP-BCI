@@ -77,7 +77,7 @@ class Training(BCI.BCI):
         wrong_result_count = self.target_identification.results.list[-1]["Wrong"]
         correct_result_count = self.target_identification.results.list[-1]["Correct"]
         result = self.target_identification.results.list[-1]["Wrong"] - self.target_identification.results.list[-1]["Correct"]
-        result = float("inf") if wrong_result_count == 0 and correct_result_count == 0 else result
+        result = len(self.packets) if wrong_result_count == 0 and correct_result_count == 0 else result
         f = open(self.directory + "__" + str(self.counter) + ".txt", "w")
         f.write(str(new_options) + "\n")
         f.write(str(wrong_result_count) + " " + str(correct_result_count) + "\n")
