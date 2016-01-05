@@ -45,10 +45,42 @@ class Training(BCI.BCI):
             return self.differentialEvolution(self.changeOptions(options))
         elif method == c.TRAINING_METHOD_BRUTE_FORCE:
             return self.bruteForce(self.changeOptions(options))
+        elif method == c.TRAINING_METHOD_DE_IDENTIFICATION:
+            return self.differentialEvolutionIdentification(self.changeOptions(options))
+
+    def differentialEvolutionIdentification(self, options):
+        self.options_handler = ParameterHandler.DifferentialEvolutionIdentification()
+        self.counter = 1
+        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_de_i\\act_prev_del_clear\\"
+        f = open(self.directory + "options.txt", "w")
+        f.write(str(options))
+        f.close()
+        scipy.optimize.differential_evolution(
+            self.differentialEvolutionIdentificationCostFunction,
+            self.options_handler.getBounds(),
+            args=(self.options_handler, options),
+        )
+
+    def differentialEvolutionIdentificationCostFunction(self, numbers, options_handler, all_options):
+        self.expected_target_index = 0
+        new_options = options_handler.numbersToOptions(numbers)
+        all_options[c.DATA_EXTRACTION_WEIGHTS] = new_options[c.DATA_EXTRACTION_WEIGHTS]
+        all_options[c.DATA_EXTRACTION_DIFFERENCES] = new_options[c.DATA_EXTRACTION_DIFFERENCES]
+        new_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE]
+        new_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE]
+        all_options[c.DATA_ACTUAL_RESULTS] = new_options[c.DATA_ACTUAL_RESULTS]
+        all_options[c.DATA_PREV_RESULTS] = new_options[c.DATA_PREV_RESULTS]
+        BCI.BCI.setup(self, all_options)
+        BCI.BCI.start(self, all_options)
+        result = self.target_identification.results.list[-1]["Wrong"] - self.target_identification.results.list[-1]["Correct"]
+        f = open(self.directory + str(self.counter) + ".txt", "w")
+        f.write(str(new_options) + "\n")
+        f.write(str(result))
+        f.close()
+        return result
 
     def differentialEvolution(self, options):
         self.options_handler = ParameterHandler.DifferentialEvolution()
-        options = options
         self.all_results = {}
         scipy.optimize.differential_evolution(
             self.differentialEvolutionCostFunction,
@@ -139,17 +171,17 @@ class Training(BCI.BCI):
             current_target = self.getTarget(None, None, current_target)  # Override for this line
             self.handleEmotivMessages(target_freqs, current_target)
 
-    def handleExtractionMessages(self, target_freqs, current_target):
-        results = self.connections.receiveExtractionMessage()
-        if results is not None:
-            # self.results_file.write(str(results) + "\n")
-            added = self.result_finder.parseResults(results)
-            current = target_freqs[current_target]
-            for freq in added:
-                if freq == current:
-                    self.result -= added[freq]
-                else:
-                    self.result += added[freq]
+    # def handleExtractionMessages(self, target_freqs, current_target):  # for brute force and DE
+    #     results = self.connections.receiveExtractionMessage()
+    #     if results is not None:
+    #         # self.results_file.write(str(results) + "\n")
+    #         added = self.result_finder.parseResults(results)
+    #         current = target_freqs[current_target]
+    #         for freq in added:
+    #             if freq == current:
+    #                 self.result -= added[freq]
+    #             else:
+    #                 self.result += added[freq]
 
 
 class ResultAdder(TargetIdentification.WeightFinder):
