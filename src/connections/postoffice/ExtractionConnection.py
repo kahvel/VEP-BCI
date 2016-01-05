@@ -1,7 +1,7 @@
 import copy
 
 from connections import Connections
-from connections.postoffice import ConnectionPostOfficeEnd
+from connections.postoffice import ConnectionPostOfficeEnd, MyQueue
 from generators.result.extraction import Extraction
 import constants as c
 
@@ -42,6 +42,14 @@ class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnecti
             self.connections.append(new_connection)
 
 
+class TrainingExtractionTabConnection(ExtractionTabConnection):
+    def __init__(self):
+        ExtractionTabConnection.__init__(self)
+
+    def getConnection(self):
+        return TrainingExtractionMethodConnection()
+
+
 class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConnections):
     def __init__(self):
         ExtractionConnection.__init__(self)
@@ -49,13 +57,19 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
 
     def getConnection(self, method):
         if method == c.SUM_PSDA:
-            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsda)
+            return self.getSumPsda()
         elif method == c.CCA:
-            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Cca)
+            return self.getCca()
         elif method in (c.PSDA,):
             return ExtractionSensorConnection()
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
+
+    def getSumPsda(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsda)
+
+    def getCca(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Cca)
 
     def setup(self, options):
         self.close()
@@ -68,6 +82,17 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
             self.connections.append(new_connection)
 
 
+class TrainingExtractionMethodConnection(ExtractionMethodConnection):
+    def __init__(self):
+        ExtractionMethodConnection.__init__(self)
+
+    def getSumPsda(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)
+
+    def getCca(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.Cca)
+
+
 class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConnections):
     def __init__(self):
         ExtractionConnection.__init__(self)
@@ -75,9 +100,12 @@ class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConne
 
     def getConnection(self, method):
         if method == c.PSDA:
-            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
+            return self.getPsda()
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
+
+    def getPsda(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
 
     def setup(self, options):
         self.close()
@@ -88,3 +116,11 @@ class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConne
             new_connection.setup(dict_copy)
             new_connection.setId(sensor)
             self.connections.append(new_connection)
+
+
+class TrainingExtractionSensorConnection(ExtractionSensorConnection):
+    def __init__(self):
+        ExtractionSensorConnection.__init__(self)
+
+    def getPsda(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)

@@ -26,7 +26,7 @@ class Extraction(Generator.AbstractMyGenerator):
     def start(self):
         while True:
             # self.updateWindow()
-            message = self.connection.receiveMessagePoll(0.1)
+            message = self.connection.receiveMessageInstant()
             if message == c.CLEAR_BUFFER_MESSAGE:
                 self.setupCoordinatesGenerator()
             elif isinstance(message, basestring):
@@ -105,7 +105,7 @@ class Cca(Extraction):
     def start(self):
         while True:
             # self.updateWindow()
-            message = self.connection.receiveMessagePoll(0.1)
+            message = self.connection.receiveMessageInstant()
             if message == c.CLEAR_BUFFER_MESSAGE:
                 self.setupCoordinatesGenerator()
             elif isinstance(message, basestring):

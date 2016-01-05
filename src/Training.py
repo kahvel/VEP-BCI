@@ -51,7 +51,7 @@ class Training(BCI.BCI):
     def differentialEvolutionIdentification(self, options):
         self.options_handler = ParameterHandler.DifferentialEvolutionIdentification()
         self.counter = 1
-        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_de_i\\clear\\"
+        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_de_i\\dummy\\"
         f = open(self.directory + "options.txt", "w")
         f.write(str(options))
         f.close()
@@ -78,7 +78,7 @@ class Training(BCI.BCI):
         correct_result_count = self.target_identification.results.list[-1]["Correct"]
         result = self.target_identification.results.list[-1]["Wrong"] - self.target_identification.results.list[-1]["Correct"]
         result = float("inf") if wrong_result_count == 0 and correct_result_count == 0 else result
-        f = open(self.directory + "_" + str(self.counter) + ".txt", "w")
+        f = open(self.directory + "__" + str(self.counter) + ".txt", "w")
         f.write(str(new_options) + "\n")
         f.write(str(wrong_result_count) + " " + str(correct_result_count) + "\n")
         f.write(str(result))

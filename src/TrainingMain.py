@@ -6,7 +6,7 @@ import PostOffice
 
 if __name__ == "__main__":
     main_connection = ConnectionPostOfficeEnd.TrainingConnection()
-    connections = MasterConnection.MasterConnection()
+    connections = MasterConnection.TrainingMasterConnection()
     recording = Recording.Recording()
     bci_controller = Training.Training(connections, main_connection, recording)
     PostOffice.PostOffice(main_connection, connections, bci_controller)
