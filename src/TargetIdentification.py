@@ -140,7 +140,7 @@ class DifferenceFinder(ResultsParser):
         if len(result) > 1:  # If we have at least 2 targets in the result dict
             difference = result[0][1]-result[1][1]
             parse_result[result[0][0], result[1][0]] = difference
-            self.comparison.append(difference > data)
+            self.comparison.append(difference >= data)
 
 
 class TargetIdentification(object):

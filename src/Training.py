@@ -51,10 +51,12 @@ class Training(BCI.BCI):
     def differentialEvolutionIdentification(self, options):
         self.options_handler = ParameterHandler.DifferentialEvolutionIdentification()
         self.counter = 1
-        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_de_i\\act_prev_del_clear\\"
+        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_de_i\\dummy\\"
         f = open(self.directory + "options.txt", "w")
         f.write(str(options))
         f.close()
+        # For timing cost function evaluation
+        # self.differentialEvolutionIdentificationCostFunction((1,1,1,1,1,0.1,0.1,0.1,0.1,0.1,1,3), self.options_handler, options)
         scipy.optimize.differential_evolution(
             self.differentialEvolutionIdentificationCostFunction,
             self.options_handler.getBounds(),
@@ -66,9 +68,9 @@ class Training(BCI.BCI):
         new_options = options_handler.numbersToOptions(numbers)
         all_options[c.DATA_EXTRACTION_WEIGHTS] = new_options[c.DATA_EXTRACTION_WEIGHTS]
         all_options[c.DATA_EXTRACTION_DIFFERENCES] = new_options[c.DATA_EXTRACTION_DIFFERENCES]
-        new_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE]
+        # new_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE]
         new_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE]
-        all_options[c.DATA_ACTUAL_RESULTS] = new_options[c.DATA_ACTUAL_RESULTS]
+        # all_options[c.DATA_ACTUAL_RESULTS] = new_options[c.DATA_ACTUAL_RESULTS]
         all_options[c.DATA_PREV_RESULTS] = new_options[c.DATA_PREV_RESULTS]
         BCI.BCI.setup(self, all_options)
         BCI.BCI.start(self, all_options)
@@ -77,6 +79,7 @@ class Training(BCI.BCI):
         f.write(str(new_options) + "\n")
         f.write(str(result))
         f.close()
+        self.counter += 1
         return result
 
     def differentialEvolution(self, options):

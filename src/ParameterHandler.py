@@ -69,8 +69,21 @@ class DifferentialEvolution(object):
 
 class DifferentialEvolutionIdentification(object):
     def __init__(self):
-        self.bounds = tuple(
-            (0, 5) for _ in range(14)
+        self.bounds = (
+            (0, 5),
+            (0, 5),
+            (0, 5),
+            (0, 5),
+            (0, 25),
+            (0, 0.3),
+            (0, 0.3),
+            (0, 0.3),
+            (0, 0.3),
+            (0, 0.3),
+            # (0, 5),
+            # (0, 5),
+            (0, 5),
+            (0, 35),
         )
 
     def numbersToOptions(self, numbers):
@@ -97,13 +110,13 @@ class DifferentialEvolutionIdentification(object):
                     c.RESULT_SUM: numbers[9],
                 }
             },
-            c.DATA_ACTUAL_RESULTS: {
+            # c.DATA_ACTUAL_RESULTS: {
+            #     c.DATA_TARGET_THRESHOLD: numbers[10],
+            #     c.DATA_WEIGHT_THRESHOLD: numbers[11],
+            # },
+            c.DATA_PREV_RESULTS: {
                 c.DATA_TARGET_THRESHOLD: numbers[10],
                 c.DATA_WEIGHT_THRESHOLD: numbers[11],
-            },
-            c.DATA_PREV_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: numbers[12],
-                c.DATA_WEIGHT_THRESHOLD: numbers[13],
             }
         }
 
