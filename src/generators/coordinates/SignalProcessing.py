@@ -45,6 +45,8 @@ class SignalProcessing(Generator.AbstractMyGenerator):
             raise ValueError("Illegal window value in getWindowFunction: " + options[c.OPTIONS_WINDOW])
 
     def getFilter(self, options):
+        if options[c.OPTIONS_FILTER] == c.NONE_FILTER:
+            return None
         nyq = c.HEADSET_FREQ/2.0
         to_value = options[c.OPTIONS_TO]
         from_value = options[c.OPTIONS_FROM]
@@ -55,8 +57,6 @@ class SignalProcessing(Generator.AbstractMyGenerator):
             return scipy.signal.firwin(num_taps, from_value/nyq, pass_zero=False)
         elif options[c.OPTIONS_FILTER] == c.BANDPASS_FILTER:
             return scipy.signal.firwin(num_taps, [from_value/nyq, to_value/nyq], pass_zero=False)
-        elif options[c.OPTIONS_FILTER] == c.NONE_FILTER:
-            return None
         else:
             raise ValueError("Illegal filter value in getFilter: " + options[c.OPTIONS_FILTER])
 

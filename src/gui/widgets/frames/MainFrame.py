@@ -1,16 +1,19 @@
 from gui.widgets import Buttons
-from gui.widgets.frames.notebooks import MainNotebook
+from gui.widgets.frames.notebooks import MainNotebook, TrainingNotebook
 from gui.widgets.frames import Frame
 import constants as c
 
 
-class MainFrame(Frame.Frame):
+class AbstractMainFrame(Frame.Frame):
     def __init__(self, parent, button_commands, row=0, column=0, **kwargs):
         Frame.Frame.__init__(self, parent, c.MAIN_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            MainNotebook.MainNotebook(self.widget, button_commands, 0, 0),
+            self.getMainNotebook(button_commands),
             BottomFrame(self.widget, button_commands, 1, 0)
         ))
+
+    def getMainNotebook(self, button_commands):
+        raise NotImplementedError("getMainNotebook not implemented!")
 
 
 class BottomFrame(Frame.Frame):
@@ -25,3 +28,13 @@ class BottomFrame(Frame.Frame):
             Buttons.Button(self.widget, c.LOAD_BUTTON,  0, 4, command=load),
             Buttons.Button(self.widget, c.EXIT_BUTTON,  0, 5, command=exit)
         ))
+
+
+class MainFrame(AbstractMainFrame):
+    def getMainNotebook(self, button_commands):
+        return MainNotebook.MainNotebook(self.widget, button_commands, 0, 0)
+
+
+class TrainingMainFrame(AbstractMainFrame):
+    def getMainNotebook(self, button_commands):
+        return TrainingNotebook.TrainingNotebook(self.widget, button_commands, 0, 0)

@@ -1,7 +1,7 @@
 import copy
 
 from connections import Connections
-from connections.postoffice import ConnectionPostOfficeEnd
+from connections.postoffice import ConnectionPostOfficeEnd, MyQueue
 from generators.result.extraction import Extraction
 import constants as c
 
@@ -14,6 +14,10 @@ class ExtractionConnection(object):
             if message is not None:
                 result[connection.id] = message
         return result if result != {} else None
+    
+    def setupConnection(self, connection, options, id):
+        connection.setup(options)
+        connection.setId(id)
 
 
 class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnections):
@@ -29,17 +33,28 @@ class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnecti
         if message is not None:
             return message
 
-    def setup(self, options):
-        self.close()
-        for tab_id, tab_options in options[c.DATA_EXTRACTION].items():
+    def setup(self, all_options):
+        self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed
+        for tab_id, tab_options in all_options[c.DATA_EXTRACTION].items():
             new_connection = self.getConnection()
-            dict_copy = copy.deepcopy(tab_options)
-            dict_copy[c.DATA_FREQS] = tab_options[c.DATA_EXTRACTION_TARGETS]
-            dict_copy[c.DATA_HARMONICS] = options[c.DATA_HARMONICS][tab_id]
-            dict_copy[c.DATA_PROCESS_SHORT_SIGNAL] = options[c.DATA_PROCESS_SHORT_SIGNAL]
-            new_connection.setup(dict_copy)
-            new_connection.setId(tab_id)
+            new_options = self.changeOptions(tab_options, tab_id, all_options)
+            self.setupConnection(new_connection, new_options, tab_id)
             self.connections.append(new_connection)
+    
+    def changeOptions(self, tab_options, tab_id, all_options):
+        dict_copy = copy.deepcopy(tab_options)
+        dict_copy[c.DATA_FREQS] = tab_options[c.DATA_EXTRACTION_TARGETS]
+        dict_copy[c.DATA_HARMONICS] = all_options[c.DATA_HARMONICS][tab_id]
+        dict_copy[c.DATA_PROCESS_SHORT_SIGNAL] = all_options[c.DATA_PROCESS_SHORT_SIGNAL]
+        return dict_copy
+
+
+class TrainingExtractionTabConnection(ExtractionTabConnection):
+    def __init__(self):
+        ExtractionTabConnection.__init__(self)
+
+    def getConnection(self):
+        return TrainingExtractionMethodConnection()
 
 
 class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConnections):
@@ -49,23 +64,46 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
 
     def getConnection(self, method):
         if method == c.SUM_PSDA:
-            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsda)
+            return self.getSumPsda()
         elif method == c.CCA:
-            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Cca)
+            return self.getCca()
         elif method in (c.PSDA,):
             return ExtractionSensorConnection()
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
-    def setup(self, options):
-        self.close()
-        for method in options[c.DATA_EXTRACTION_METHODS]:
+    def getSumPsda(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsda)
+
+    def getCca(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Cca)
+
+    def setup(self, all_options):
+        self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed
+        for method in all_options[c.DATA_EXTRACTION_METHODS]:
             new_connection = self.getConnection(method)
-            dict_copy = copy.deepcopy(options)
-            dict_copy[c.DATA_METHOD] = method
-            new_connection.setup(dict_copy)
-            new_connection.setId((method, tuple(options[c.DATA_EXTRACTION_SENSORS])))
+            new_options = self.changeOptions(method, all_options)
+            self.setupConnection(new_connection, new_options, self.getId(method, all_options))
             self.connections.append(new_connection)
+    
+    def getId(self, method, all_options):
+        return (method, tuple(all_options[c.DATA_EXTRACTION_SENSORS]))
+    
+    def changeOptions(self, method, all_options):
+        dict_copy = copy.deepcopy(all_options)
+        dict_copy[c.DATA_METHOD] = method
+        return dict_copy
+
+
+class TrainingExtractionMethodConnection(ExtractionMethodConnection):
+    def __init__(self):
+        ExtractionMethodConnection.__init__(self)
+
+    def getSumPsda(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)
+
+    def getCca(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.Cca)
 
 
 class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConnections):
@@ -75,16 +113,30 @@ class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConne
 
     def getConnection(self, method):
         if method == c.PSDA:
-            return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
+            return self.getPsda()
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
-    def setup(self, options):
-        self.close()
-        for sensor in options[c.DATA_EXTRACTION_SENSORS]:
-            new_connection = self.getConnection(options[c.DATA_METHOD])
-            dict_copy = copy.deepcopy(options)
-            dict_copy[c.DATA_SENSORS] = [sensor]
-            new_connection.setup(dict_copy)
-            new_connection.setId(sensor)
+    def getPsda(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
+
+    def setup(self, all_options):
+        self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed
+        for sensor in all_options[c.DATA_EXTRACTION_SENSORS]:
+            new_connection = self.getConnection(all_options[c.DATA_METHOD])
+            new_options = self.changeOptions(sensor, all_options)
+            self.setupConnection(new_connection, new_options, sensor)
             self.connections.append(new_connection)
+    
+    def changeOptions(self, sensor, all_options):
+        dict_copy = copy.deepcopy(all_options)
+        dict_copy[c.DATA_SENSORS] = [sensor]
+        return dict_copy
+
+
+class TrainingExtractionSensorConnection(ExtractionSensorConnection):
+    def __init__(self):
+        ExtractionSensorConnection.__init__(self)
+
+    def getPsda(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)

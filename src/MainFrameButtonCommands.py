@@ -2,22 +2,20 @@ import constants as c
 
 
 class MainFrameButtonCommands(object):
-    def __init__(self, main_window, bci_controller, training_controller):
-        self.bci_controller = bci_controller
-        self.training_controller = training_controller
+    def __init__(self, main_window, bci_controller):
         self.commands = {
             c.BOTTOM_FRAME: (
-                    StoppedButtonCommand(bci_controller.start, training_controller.isStopped),
-                    StoppedButtonCommand(bci_controller.stop, training_controller.isStopped),
-                    StoppedButtonCommand(bci_controller.setup, training_controller.isStopped),
+                    bci_controller.start,
+                    bci_controller.stop,
+                    bci_controller.setup,
                     main_window.askSaveFile,
                     main_window.askLoadFile,
                     main_window.exit,
             ),
             c.TEST_TAB: (
-                StoppedButtonCommand(main_window.showResults, self.isStopped),
-                StoppedButtonCommand(main_window.resetResults, self.isStopped),
-                StoppedButtonCommand(main_window.saveResults, self.isStopped),
+                StoppedButtonCommand(main_window.showResults, bci_controller.isStopped),
+                StoppedButtonCommand(main_window.resetResults, bci_controller.isStopped),
+                StoppedButtonCommand(main_window.saveResults, bci_controller.isStopped),
             ),
             c.ROBOT_TAB: (
                 lambda: main_window.connection.sendMessage(c.MOVE_FORWARD),
@@ -26,22 +24,12 @@ class MainFrameButtonCommands(object):
                 lambda: main_window.connection.sendMessage(c.MOVE_LEFT),
                 lambda: main_window.connection.sendMessage(c.MOVE_STOP),
             ),
-            c.TRAINING_TAB: (
-                StoppedButtonCommand(main_window.saveEeg, self.isStopped),
-                StoppedButtonCommand(main_window.loadEeg, self.isStopped),
-                StoppedButtonCommand(main_window.resetEeg, self.isStopped),
-                {
-                    c.TRAIN_FRAME: (
-                        StoppedButtonCommand(training_controller.start, bci_controller.isStopped),
-                        StoppedButtonCommand(training_controller.stop, bci_controller.isStopped),
-                        StoppedButtonCommand(training_controller.setup, bci_controller.isStopped),
-                    )
-                }
+            c.RECORD_TAB: (
+                StoppedButtonCommand(main_window.saveEeg, bci_controller.isStopped),
+                StoppedButtonCommand(main_window.loadEeg, bci_controller.isStopped),
+                StoppedButtonCommand(main_window.resetEeg, bci_controller.isStopped),
             )
         }
-
-    def isStopped(self):
-        return self.bci_controller.isStopped() and self.training_controller.isStopped()
 
 
 class StoppedButtonCommand(object):
