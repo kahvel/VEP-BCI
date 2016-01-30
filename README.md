@@ -12,6 +12,12 @@ The application was written by Anti Ingel (antiingel@gmail.com) as a practical p
 
 For a very brief overview of the thesis see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster.pdf).
 
+## Parameter learning
+
+The BCI was further improved as a part of Algorithmics course in University of Tartu. This project layed the foundation on automatically finding good parameters for the BCI, which could reveal the true potential of the BCI. Currently the parameter learning uses brute force for a small set of discrete variables and differential evolution for continuous parameters.
+
+For an overview of the project see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster_algorithmics.pdf).
+
 ## Getting started
 
 The application is written in Python 2.7 and can be started by running Main.py in src folder. Currently there is no executable file and to use the application the source code has to be downloaded. For required libraries see [Required additional libraries](https://github.com/kahvel/VEP-BCI#required-additional-libraries). To actually use the application, brain activity has to be [recorded](https://github.com/kahvel/VEP-BCI#recording-brain-activity). The application is designed to control [PiTank](https://github.com/kahvel/VEP-BCI#the-robot).
@@ -35,13 +41,17 @@ The Python version that has been tested is Python 2.7.6 32 bit. Additional libra
 * pyqtgraph 0.9.10
 * OpenCV 2.4.11
 
-Code from emokit library (https://github.com/openyou/emokit/tree/master/python/emokit) was used to access Emotiv EPOC data. 
+Code from emokit library (https://github.com/openyou/emokit/tree/master/python/emokit) is used to access Emotiv EPOC data. 
+Code from Parrot Jumping Sumo interface repository (https://github.com/thisismyrobot/sumo-py) is used to control the Jumping Sumo.
 
 ## The robot
 
 <img align="right" src="/docs/images/robot.png" width="200">
+<img align="right" src="/docs/images/sumo_transparent.png" width="200">
 
-The application can control PiTank (https://github.com/kuz/Garage48-PiTank). The possible commands are move forward, move backward, turn left, turn right and stop. The PiTank has a camera on it and sends the video stream to computer screen.
+The application can control PiTank (https://github.com/kuz/Garage48-PiTank) and Parrot MiniDrone Jumping Sumo. Currently the possible commands are move forward, move backward, turn left, turn right and stop. Both robots have a camera and are able to send the video stream to computer screen.
+
+
 
 ## Recording brain activity
 
