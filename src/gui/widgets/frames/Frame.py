@@ -20,6 +20,7 @@ class AbstractFrame(AbstractWidget.Widget):
     def removeWidget(self, widget):
         self.widgets_list.remove(widget)
         del self.widgets_dict[widget.name]
+        widget.widget.destroy()
 
     def enable(self, enabler):
         AbstractWidget.Widget.enable(self, enabler)
@@ -81,6 +82,18 @@ class AbstractFrame(AbstractWidget.Widget):
     def targetEnabled(self, tabs, current_tab):
         for widget in self.widgets_list:
             widget.targetEnabled(tabs, current_tab)
+
+    def disableWidget(self, path_to_widget, disabler="PostOffice"):
+        if len(path_to_widget) > 1:
+            self.widgets_dict[path_to_widget[0]].disableWidget(path_to_widget[1:], disabler)
+        else:
+            self.widgets_dict[path_to_widget[0]].disable(disabler)
+
+    def enableWidget(self, path_to_widget, enabler="PostOffice"):
+        if len(path_to_widget) > 1:
+            self.widgets_dict[path_to_widget[0]].enableWidget(path_to_widget[1:], enabler)
+        else:
+            self.widgets_dict[path_to_widget[0]].enable(enabler)
 
 
 class Frame(AbstractFrame):

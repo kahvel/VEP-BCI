@@ -14,7 +14,7 @@ class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
         self.getCurrentTab = getCurrentTab
         self.addChildWidgets((
             TargetFrame(self.widget, 0, 0, getMonitorFreq, **kwargs),
-            self.getDisableDeleteFrame(1, 0, delete_tab=deleteTab)
+            self.getDisableDeleteFrame(1, 0, deleteTab)
         ))
 
     def changeFreq(self):
@@ -38,7 +38,6 @@ class TargetFrame(Frame.Frame):
         decrease = lambda: self.changeFreq(decrease=True)
         self.addChildWidgets((
             Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
-            Textboxes.HarmonicTextbox      (self.widget, c.TARGET_HARMONICS, 0, 3, default_value="1,2,3", allow_zero=True, allow_negative=True, label_columnspan=2, width=7),
             Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4, label_columnspan=2),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),

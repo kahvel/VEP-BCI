@@ -1,4 +1,4 @@
-from generators import SignalProcessing
+from generators.coordinates import SignalProcessing
 
 
 class AbstractSignal(object):

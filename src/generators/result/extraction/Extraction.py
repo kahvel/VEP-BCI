@@ -1,5 +1,7 @@
 import constants as c
-from generators import Signal, PSD, Generator, PsdaExtraction, CcaExtraction
+from generators import Generator
+from generators.result.extraction import CcaExtraction, PsdaExtraction
+from generators.coordinates import Signal, PSD
 
 
 class Extraction(Generator.AbstractMyGenerator):
@@ -11,6 +13,7 @@ class Extraction(Generator.AbstractMyGenerator):
         self.sensors = None
         self.coordinates_generator = None
         self.target_freqs = None
+        self.options = None
         # self.pw = pg.plot()
         self.connection.waitMessages(self.start, self.exit, lambda: None, self.setup)
 
@@ -23,10 +26,12 @@ class Extraction(Generator.AbstractMyGenerator):
     def start(self):
         while True:
             # self.updateWindow()
-            message = self.connection.receiveMessagePoll(0.1)
-            if isinstance(message, basestring):
+            message = self.connection.receiveMessageInstant()
+            if message == c.CLEAR_BUFFER_MESSAGE:
+                self.setupCoordinatesGenerator()
+            elif isinstance(message, basestring):
                 return message
-            if message is not None:
+            elif message is not None:
                 for sensor in self.sensors:
                     coordinates = self.coordinates_generator.send(message[sensor])
                 if coordinates is not None:
@@ -37,12 +42,15 @@ class Extraction(Generator.AbstractMyGenerator):
                 else:
                     self.connection.sendMessage(None)
 
-    def setup(self, options=None):
-        options = self.connection.receiveOptions()
-        self.sensors = tuple(options[c.DATA_SENSORS])
+    def setupCoordinatesGenerator(self): # Used for resetting and setting up the generator (options has to be attribute)
         self.coordinates_generator = self.getCoordinatesGenerator()
-        self.coordinates_generator.setup(options)
-        Generator.AbstractMyGenerator.setup(self, options)
+        self.coordinates_generator.setup(self.options)
+
+    def setup(self, options=None):
+        self.options = self.connection.receiveOptions()
+        self.sensors = tuple(self.options[c.DATA_SENSORS])
+        self.setupCoordinatesGenerator()
+        Generator.AbstractMyGenerator.setup(self, self.options)
         return c.SUCCESS_MESSAGE
 
     def getCoordinatesGenerator(self):
@@ -83,21 +91,26 @@ class Cca(Extraction):
         return CcaExtraction.CcaExtraction()
 
     def setup(self, options=None):
-        options = self.connection.receiveOptions()
-        self.sensors = tuple(options[c.DATA_SENSORS])
+        self.options = self.connection.receiveOptions()
+        self.sensors = tuple(self.options[c.DATA_SENSORS])
+        self.setupCoordinatesGenerator()
+        Generator.AbstractMyGenerator.setup(self, self.options)
+        return c.SUCCESS_MESSAGE
+
+    def setupCoordinatesGenerator(self):
         self.coordinates_generators = self.getCoordinatesGenerator()
         for generator in self.coordinates_generators:
-            generator.setup(options)
-        Generator.AbstractMyGenerator.setup(self, options)
-        return c.SUCCESS_MESSAGE
+            generator.setup(self.options)
 
     def start(self):
         while True:
             # self.updateWindow()
-            message = self.connection.receiveMessagePoll(0.1)
-            if isinstance(message, basestring):
+            message = self.connection.receiveMessageInstant()
+            if message == c.CLEAR_BUFFER_MESSAGE:
+                self.setupCoordinatesGenerator()
+            elif isinstance(message, basestring):
                 return message
-            if message is not None:
+            elif message is not None:
                 results = None
                 for sensor, generator in zip(self.sensors, self.coordinates_generators):
                     signal = generator.send(message[sensor])

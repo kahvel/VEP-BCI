@@ -1,7 +1,8 @@
 import pyqtgraph as pg
 
 import constants as c
-from generators import Signal, PSD, Generator
+from generators import Generator
+from generators.coordinates import Signal, PSD
 
 
 class Plot(Generator.AbstractMyGenerator):

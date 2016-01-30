@@ -1,9 +1,10 @@
-import Connections
-import ConnectionProcessEnd
-import MyEmotiv
-import Robot
+from connections import Connections
+from connections.process import ConnectionProcessEnd
 from gui import TargetsWindow
 from gui.windows import MainWindow
+
+import MyEmotiv
+import Robot
 
 
 class PsychopyConnection(Connections.Connection):
@@ -40,6 +41,12 @@ class PlotConnection(Connections.Connection):
 class MainConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, MainWindow.MainWindow, ConnectionProcessEnd.MainConnection)
+        self.connection = self.newProcess()
+
+
+class TrainingConnection(Connections.Connection):
+    def __init__(self):
+        Connections.Connection.__init__(self, MainWindow.TrainingWindow, ConnectionProcessEnd.MainConnection)
         self.connection = self.newProcess()
 
 

@@ -1,5 +1,5 @@
 from gui.widgets.frames.notebooks import Notebook
-from gui.widgets.frames.tabs import ExtractionPlotTabs, TargetsTab
+from gui.widgets.frames.tabs import TargetsTab, ExtractionTab, PlotTab
 import constants as c
 
 
@@ -86,11 +86,12 @@ class SameTabsNotebook(Notebook.Notebook):
 
 
 class ExtractionNotebook(SameTabsNotebook):
-    def __init__(self, parent, row, column, **kwargs):
+    def __init__(self, parent, row, column, target_notebook_widgets, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
+        self.target_notebook_widgets = target_notebook_widgets
 
     def newTab(self, deleteTab):
-        return ExtractionPlotTabs.ExtractionTab(self.widget, deleteTab)
+        return ExtractionTab.ExtractionTab(self.widget, deleteTab, self.target_notebook_widgets)
 
 
 class PlotNotebook(SameTabsNotebook):
@@ -98,7 +99,7 @@ class PlotNotebook(SameTabsNotebook):
         SameTabsNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
 
     def newTab(self, deletaTab):
-        return ExtractionPlotTabs.PlotTab(self.widget, deletaTab)
+        return PlotTab.PlotTab(self.widget, deletaTab)
 
 
 class TargetNotebook(SameTabsNotebook):
@@ -115,7 +116,7 @@ class TargetNotebook(SameTabsNotebook):
             widget.changeFreq()
 
     def plusTabClicked(self):  # Updates TargetChoosingMenus
-        self.addTarget()   # MainNotebook's targetAdded method
+        self.addTarget()   # MainNotebook's targetAdded method which calls TargetChoosingMenu's targetAdded
         SameTabsNotebook.plusTabClicked(self)
 
     def getEnabledTabs(self):
@@ -126,4 +127,4 @@ class TargetNotebook(SameTabsNotebook):
 
     def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = SameTabsNotebook.deleteTab(self)
-        self.removeTarget(deleted_tab)  # MainNotebook's targetRemoved method
+        self.removeTarget(deleted_tab)  # MainNotebook's targetRemoved method which calls TargetChoosingMenu's targetAdded

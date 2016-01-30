@@ -1,14 +1,24 @@
-from gui.widgets import Buttons, Textboxes
+from gui.widgets import Buttons, OptionMenu
 from gui.widgets.frames import Frame
 import constants as c
+import Savable
 
 
-class RecordTab(Frame.Frame):
-    def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.RECORD_TAB, row, column, **kwargs)
+class RecordTab(Frame.Frame, Savable.Savable, Savable.Loadable):
+    def __init__(self, parent, buttons, **kwargs):
+        save, load, reset = buttons
+        self.main_window_save_eeg_function = save
+        self.main_window_load_eeg_function = load
+        Frame.Frame.__init__(self, parent, c.RECORD_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
-            Textboxes.LabelTextbox(self.widget, c.RECORD_LENGTH,    0, 3, command=int, default_value=1),
-            Buttons.Button        (self.widget, c.RECORD_NEUTRAL,   0, 0),
-            Buttons.Button        (self.widget, c.RECORD_TARGET,    0, 1),
-            Buttons.Button        (self.widget, c.RECORD_THRESHOLD, 0, 2)
+            OptionMenu.OptionMenu(self.widget, c.TRAINING_RECORD,    0, 1, c.TRAINING_RECORD_NAMES),
+            Buttons.Button       (self.widget, c.TRAINING_SAVE_EEG,  1, 0, command=self.askSaveFile),
+            Buttons.Button       (self.widget, c.TRAINING_LOAD_EEG,  1, 1, command=self.askLoadFile),
+            Buttons.Button       (self.widget, c.TRAINING_RESET_EEG, 1, 2, command=reset),
         ))
+
+    def saveToFile(self, file):
+        self.main_window_save_eeg_function(file)
+
+    def loadFromFile(self, file):
+        self.main_window_load_eeg_function(file)

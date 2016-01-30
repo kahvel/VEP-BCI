@@ -1,60 +1,45 @@
-import tkFileDialog
 import constants as c
-import __main__
 import os
 
+from gui import ButtonsStateController
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
+import MainFrameButtonCommands
+import Savable
+import PostOfficeMessageHandler
+import InputParser
 
 
-class MainWindow(MyWindows.TkWindow):
-    def __init__(self, connection):
+class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
+    def __init__(self, connection, default_settings_file_name):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
-        self.main_frame = MainFrame.MainFrame(self, (
-            (
-                self.start,
-                self.stop,
-                self.setup,
-                self.askSaveFile,
-                self.askLoadFile,
-                self.exit
-            ),
-            (
-                (
-                    self.showResults,
-                    self.resetResults,
-                    self.saveResults
-                ),
-                self.connection.sendMessage
-            )
-        )
-        )
-        self.loadValues(c.DEFAULT_FILE)
-        self.disableButton(c.START_BUTTON)
-        self.disableButton(c.STOP_BUTTON)
-        self.setup_options = None
+        self.default_settings_file_name = default_settings_file_name
+        self.bottom_frame_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.BOTTOM_FRAME,))
+        self.message_handler = self.getMessageHandler(self.bottom_frame_buttons_states)
+        self.main_frame = self.getMainFrame(self.message_handler)
+        self.loadValuesAtStartup()
+        self.bottom_frame_buttons_states.setInitialStates()
+        self.checkMessages()
         self.mainloop()
 
-    def mainloop(self, n=0):
-        while True:
-            message = self.connection.receiveMessagePoll(0.1)
-            if message == c.STOP_MESSAGE:
-                self.stop()
-            elif message == c.SUCCESS_MESSAGE:  # Setup was successful
-                self.enableButton(c.START_BUTTON)
-            elif message == c.FAIL_MESSAGE:  # Setup failed
-                self.disableButton(c.START_BUTTON)
-            if not self.exitFlag:
-                self.update()
-            else:
-                self.connection.close()
-                return
+    def getMainFrame(self, message_handler):
+        raise NotImplementedError("getMainFrame not implemented!")
 
-    def loadValues(self, default_file_name):
+    def getMessageHandler(self, bottom_frame_buttons_states):
+        raise NotImplementedError("getMessageHandler not implemented!")
+
+    def checkMessages(self):
+        message = self.connection.receiveMessageInstant()
+        if self.message_handler.canHandle(message):
+            self.message_handler.handle(message)
+        self.after(100, self.checkMessages)
+
+    def loadValuesAtStartup(self):
+        import __main__
         try:
-            self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), default_file_name)))
+            self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), self.default_settings_file_name)))
         except IOError:
             self.main_frame.loadDefaultValue()
 
@@ -64,84 +49,79 @@ class MainWindow(MyWindows.TkWindow):
     def showResults(self):
         self.connection.sendMessage(c.SHOW_RESULTS_MESSAGE)
 
-    def saveResults(self):
+    def saveResults(self, file):
         self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
+        result_string = self.connection.receiveMessageBlock()
+        file.write(result_string)
 
-    def getFrequencies(self, enabled_targets):
-        return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
+    def saveEeg(self, file):
+        self.connection.sendMessage(c.SAVE_EEG_MESSAGE)
+        result_string = self.connection.receiveMessageBlock()
+        file.write(result_string)
 
-    def getHarmonics(self, data):
-        return [target[c.TARGET_HARMONICS] for target in data]
+    def loadEeg(self, file):
+        self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
+        self.connection.sendMessage(file.read())
 
-    def getTargetData(self, data):
-        return {key: value.values()[0] for key, value in data.items()}
-
-    def getNotebookData(self, data):
-        return {key: value for key, value in data.items()}
-
-    def getData(self, all_data):
-        target_data = self.getTargetData(all_data[c.TARGETS_NOTEBOOK])
-        return {
-            c.DATA_BACKGROUND: all_data[c.WINDOW_TAB],
-            c.DATA_TARGETS: target_data,
-            c.DATA_FREQS: self.getFrequencies(target_data),
-            c.DATA_PLOTS: self.getNotebookData(all_data[c.PLOT_NOTEBOOK]),
-            c.DATA_EXTRACTION: self.getNotebookData(all_data[c.EXTRACTION_NOTEBOOK]),
-            c.DATA_TEST: all_data[c.TEST_TAB],
-            c.DATA_HARMONICS: self.getHarmonics(target_data.values()),
-            c.DATA_ROBOT: all_data[c.ROBOT_TAB],
-            c.DATA_EMOTIV: all_data[c.EMOTIV_TAB]
-        }
+    def resetEeg(self):
+        self.connection.sendMessage(c.RESET_EEG_MESSAGE)
 
     def exit(self):
         self.exitFlag = True
-        print("Exiting main window")
         self.connection.sendExitMessage()
+        self.connection.close()
         self.destroy()
+        print("Exited main window")
 
-    def setup(self):
-        not_validated = self.main_frame.getNotValidated()
-        self.setup_options = self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
-        if len(not_validated) != 0:
-            print(not_validated)
-        else:
-            self.connection.sendSetupMessage()
-            self.connection.sendMessage(self.setup_options)
+    def saveToFile(self, file):
+        self.main_frame.save(file)
 
-    def disableButton(self, button_name):
-        self.main_frame.widgets_dict[c.BOTTOM_FRAME].disableButton(button_name)
+    def loadFromFile(self, file):
+        self.main_frame.load(file)
+        self.bottom_frame_buttons_states.setInitialStates()
 
-    def enableButton(self, button_name):
-        self.main_frame.widgets_dict[c.BOTTOM_FRAME].enableButton(button_name)
 
-    def start(self):
-        if self.setup_options != self.getData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]):
-            print("Warning: options were changed, but setup was not clicked")
-        self.disableButton(c.SETUP_BUTTON)
-        self.disableButton(c.START_BUTTON)
-        self.enableButton(c.STOP_BUTTON)
-        self.connection.sendStartMessage()
+class MainWindow(AbstractMainWindow):
+    def __init__(self, connection):
+        AbstractMainWindow.__init__(self, connection, c.DEFAULT_SETTINGS_FILE_NAME)
 
-    def stop(self):
-        self.enableButton(c.SETUP_BUTTON)
-        self.enableButton(c.START_BUTTON)
-        self.disableButton(c.STOP_BUTTON)
-        self.connection.sendStopMessage()
+    def getMainFrame(self, message_handler):
+        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands
+        return MainFrame.MainFrame(self, button_commands)
 
-    # Save and Load
+    def getMessageHandler(self, bottom_frame_buttons_states):
+        input_parser = InputParser.MainInputParser()
+        return PostOfficeMessageHandler.PostOfficeMessageHandler(self, bottom_frame_buttons_states, input_parser)
 
-    def askSaveFile(self):
-        self.saveFile(tkFileDialog.asksaveasfile())
 
-    def saveFile(self, file):
-        if file is not None:
-            self.main_frame.save(file)
-            file.close()
+class TrainingWindow(AbstractMainWindow):
+    def __init__(self, connection):
+        AbstractMainWindow.__init__(self, connection, c.DEFAULT_TRAINING_SETTINGS_FILE_NAME)
 
-    def askLoadFile(self):
-        self.loadFile(tkFileDialog.askopenfile())
+    def getMainFrame(self, message_handler):
+        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands
+        return MainFrame.TrainingMainFrame(self, button_commands)
 
-    def loadFile(self, file):
-        if file is not None:
-            self.main_frame.load(file)
-            file.close()
+    def getMessageHandler(self, bottom_frame_buttons_states):
+        input_parser = InputParser.TrainingInputParser()
+        return PostOfficeMessageHandler.PostOfficeMessageHandler(self, bottom_frame_buttons_states, input_parser)
+
+    def loadEeg(self, file):
+        AbstractMainWindow.loadEeg(self, file)
+        self.removeAllTargets()
+        file.seek(0)
+        self.addTargets(file)
+
+    def addTargets(self, file):
+        split_content = file.read().split(";")
+        packets = eval(split_content[0])
+        target_freqs = packets[0][c.EEG_RECORDING_FREQS]
+        for _ in range(len(target_freqs)):
+            self.main_frame.targetAdded()
+
+    def removeAllTargets(self):
+        try:
+            while True:
+                self.main_frame.targetRemoved(0)
+        except IndexError:
+            pass

@@ -1,60 +1,57 @@
 import numpy as np
 
 import constants as c
+import ListByTrials
 
 
-class Results(object):
+class Results(ListByTrials.ListByTrials):
     def __init__(self):
-        self.results = {}
+        ListByTrials.ListByTrials.__init__(self)
         self.prev_result = None
-        self.trial_id = 0
 
-    def reset(self):
-        self.results = {}
-
-    def setup(self, target_freqs):
-        self.trial_id += 1
+    def start(self, target_freqs):
+        ListByTrials.ListByTrials.start(self, target_freqs)
         self.prev_result = None
-        self.results[self.trial_id] = {}
-        self.results[self.trial_id]["Results"] = {current: {detected: 0 for detected in target_freqs} for current in target_freqs+[None]}
-        self.results[self.trial_id]["Targets"] = len(target_freqs)
 
-    def save(self):
-        file = open("result.txt", "a")
-        file.write(self.__repr__()+"\n")
-        file.close()
+    def getTrialCollection(self, target_freqs):
+        return {
+            "Results": {current: {detected: 0 for detected in target_freqs} for current in target_freqs+[None]},
+            "Targets": len(target_freqs),
+            "TotalTime": 0,
+            "TotalTimeSec": 0
+        }
 
-    def addResult(self, current, detected):
-        self.results[self.trial_id]["Results"][current][detected] += 1
+    def add(self, current, detected):
+        self.current_data["Results"][current][detected] += 1
         self.prev_result = detected
 
-    def trialtoString(self, trial_id):
-        res = self.results[trial_id]
-        if len(res) == 2:
+    def trialtoString(self, trial):
+        if len(trial) == 4:
             return "No results"
-        result = "Total time: " + str(res["TotalTime"]) + " Packets; " + str(res["TotalTimeSec"]) + " sec"
-        result += "\nTime per target: " + str(res["TimePerTarget"])
-        result += "\nAcc: " + str(res["Accuracy"]) + " (Correct: " + str(res["Correct"]) + " Wrong: " + str(res["Wrong"]) + " Total: " + str(res["Correct"]+res["Wrong"]) + ")"
-        result += "\nITR: " + str(res["ITR"]) + " bit/trial; " + str(res["ITRt"]) + " bits/min\n"
-        for freq in res["Results"]:
-            result += str(freq) + " " + str(res["Results"][freq]) + "\n"
+        result = "Total time: " + str(trial["TotalTime"]) + " Packets; " + str(trial["TotalTimeSec"]) + " sec"
+        result += "\nTime per target: " + str(trial["TimePerTarget"])
+        result += "\nAcc: " + str(trial["Accuracy"]) + " (Correct: " + str(trial["Correct"]) + " Wrong: " + str(trial["Wrong"]) + " Total: " + str(trial["Correct"]+trial["Wrong"]) + ")"
+        result += "\nITR: " + str(trial["ITR"]) + " bit/trial; " + str(trial["ITRt"]) + " bits/min\n"
+        for freq in trial["Results"]:
+            result += str(freq) + " " + str(trial["Results"][freq]) + "\n"
         return result
 
     def trialEnded(self, total_time):
-        self.results[self.trial_id]["TotalTime"] = total_time
+        self.current_data["TotalTime"] += total_time
         time_sec = self.getTimeInSec(total_time)
-        self.results[self.trial_id]["TotalTimeSec"] = time_sec
-        correct, wrong = self.getCorrectAndWrong()
-        self.results[self.trial_id]["Correct"] = correct
-        self.results[self.trial_id]["Wrong"] = wrong
+        self.current_data["TotalTimeSec"] += time_sec
+        correct, wrong = self.getCorrectAndWrong(self.current_data)
+        self.current_data["Correct"] = correct
+        self.current_data["Wrong"] = wrong
         accuracy = self.getAccuracy(correct, wrong)
-        self.results[self.trial_id]["Accuracy"] = accuracy
-        target_count = self.results[self.trial_id]["Targets"]
+        self.current_data["Accuracy"] = accuracy
+        target_count = self.current_data["Targets"]
         itr = self.getItr(accuracy, target_count)
         time_per_target = self.getTimePerTarget(correct+wrong, time_sec)
-        self.results[self.trial_id]["TimePerTarget"] = time_per_target
-        self.results[self.trial_id]["ITR"] = itr
-        self.results[self.trial_id]["ITRt"] = self.getItrT(itr, time_per_target)
+        self.current_data["TimePerTarget"] = time_per_target
+        self.current_data["ITR"] = itr
+        self.current_data["ITRt"] = self.getItrT(itr, time_per_target)
+        ListByTrials.ListByTrials.trialEnded(self)
 
     def getTimePerTarget(self, total_results, total_time):
         if total_results == 0:
@@ -71,15 +68,15 @@ class Results(object):
         else:
             return np.log10(x)/np.log10(2)
 
-    def getCorrectAndWrong(self):
+    def getCorrectAndWrong(self, trial):
         correct_results = 0
         wrong_results = 0
-        for detected in self.results[self.trial_id]["Results"]:
-            for correct in self.results[self.trial_id]["Results"][detected]:
+        for detected in trial["Results"]:
+            for correct in trial["Results"][detected]:
                 if detected == correct:
-                    correct_results += self.results[self.trial_id]["Results"][detected][correct]
+                    correct_results += trial["Results"][detected][correct]
                 else:
-                    wrong_results += self.results[self.trial_id]["Results"][detected][correct]
+                    wrong_results += trial["Results"][detected][correct]
         return correct_results, wrong_results
 
     def getAccuracy(self, correct, wrong):
@@ -101,8 +98,8 @@ class Results(object):
 
     def __repr__(self):
         result = ""
-        for trial in self.results:
-            result += str(trial) + "\n" + self.trialtoString(trial)
+        for i in range(len(self.list)):
+            result += str(i) + "\n" + self.trialtoString(self.list[i])
         return result
 
     def isPrevResult(self, result):
