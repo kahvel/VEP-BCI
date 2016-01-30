@@ -19,7 +19,7 @@ class Training(BCI.BCI):
         # self.weight_finder = TargetIdentification.WeightFinder()
         self.result_finder = ResultAdder()
         self.result = 0
-        self.results_file = None
+        self.difference_finder = DifferenceFinder()
 
     def setupPackets(self):  # Currently uses always first data entry in the lists
         self.packets = self.recording.normal_eeg.list[0][c.EEG_RECORDING_PACKETS]
@@ -31,6 +31,7 @@ class Training(BCI.BCI):
         # self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
         # self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
         self.result_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
+        self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
 
     def setup(self, options):
         self.setupPackets()
@@ -49,18 +50,19 @@ class Training(BCI.BCI):
             return self.differentialEvolutionIdentification(self.changeOptions(options))
 
     def differentialEvolutionIdentification(self, options):
-        self.options_handler = ParameterHandler.DifferentialEvolutionIdentification()
+        options_handler = ParameterHandler.DifferentialEvolutionIdentification()
         self.counter = 1
-        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_de_i\\dummy\\"
+        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_new\\"
         f = open(self.directory + "options.txt", "w")
         f.write(str(options))
         f.close()
         # For timing cost function evaluation
-        # self.differentialEvolutionIdentificationCostFunction((1,1,1,1,1,0.1,0.1,0.1,0.1,0.1,1,3), self.options_handler, options)
+        # self.differentialEvolutionIdentificationCostFunction((1,1,1,1,1,0.1,0.1,0.1,0.1,0.1,1,3), options_handler, options)
         scipy.optimize.differential_evolution(
             self.differentialEvolutionIdentificationCostFunction,
-            self.options_handler.getBounds(),
-            args=(self.options_handler, options),
+            options_handler.getBounds(),
+            args=(options_handler, options),
+            popsize=5,
         )
 
     def differentialEvolutionIdentificationCostFunction(self, numbers, options_handler, all_options):
@@ -78,7 +80,7 @@ class Training(BCI.BCI):
         correct_result_count = self.target_identification.results.list[-1]["Correct"]
         result = self.target_identification.results.list[-1]["Wrong"] - self.target_identification.results.list[-1]["Correct"]
         result = len(self.packets) if wrong_result_count == 0 and correct_result_count == 0 else result
-        f = open(self.directory + "__" + str(self.counter) + ".txt", "w")
+        f = open(self.directory + str(self.counter) + ".txt", "w")
         f.write(str(new_options) + "\n")
         f.write(str(wrong_result_count) + " " + str(correct_result_count) + "\n")
         f.write(str(result))
@@ -87,19 +89,12 @@ class Training(BCI.BCI):
         return result
 
     def differentialEvolution(self, options):
-        self.options_handler = ParameterHandler.DifferentialEvolution()
-        self.all_results = {}
+        options_handler = ParameterHandler.DifferentialEvolution()
         scipy.optimize.differential_evolution(
             self.differentialEvolutionCostFunction,
-            self.options_handler.getBounds(),
-            args=(self.options_handler, options),
-            popsize=3,
-            callback=self.differentialEvolutionCallback,
+            options_handler.getBounds(),
+            args=(options_handler, options),
         )
-
-    def differentialEvolutionCallback(self, x, convergence=None):
-        signal_processing_options = self.options_handler.numbersToOptions(x)
-        print "callback", signal_processing_options, self.all_results[str(" ".join(str(signal_processing_options[key]) for key in sorted(signal_processing_options)))]
 
     def differentialEvolutionCostFunction(self, numbers, options_handler, all_options):
         signal_processing_options = options_handler.numbersToOptions(numbers)
@@ -113,21 +108,21 @@ class Training(BCI.BCI):
         options[c.DATA_EXTRACTION][2][c.DATA_EXTRACTION_OPTIONS][c.OPTIONS_WINDOW] = c.WINDOW_NONE
         BCI.BCI.setup(self, options)
         BCI.BCI.start(self, options)
-        self.result *= signal_processing_options[c.OPTIONS_STEP]
-        self.all_results[str(" ".join(str(signal_processing_options[key]) for key in sorted(signal_processing_options)))] = self.result
-        print signal_processing_options, self.result
+        # self.result *= signal_processing_options[c.OPTIONS_STEP]
+        # print signal_processing_options, self.result
         return self.result
 
     def bruteForce(self, options):
         options_generator = ParameterHandler.BruteForce().optionsGenerator()
-        counter = 0
+        counter = 1
+        self.handleExtractionMessages = self.handleExtractionMessages3
         for signal_processing_options in options_generator:
-            file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results1\\_" + str(counter) + ".txt"
-            self.results_file = open(file_name, "w")
-            self.results_file.write(str(signal_processing_options) + "\n")
+            file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_brute\\" + str(counter) + ".txt"
+            results_file = open(file_name, "w")
+            results_file.write(str(signal_processing_options) + "\n")
             result = self.costFunction(options, signal_processing_options)
-            self.results_file.write(str(result))
-            self.results_file.close()
+            results_file.write(str(result))
+            results_file.close()
             counter += 1
 
     def changeOptions(self, options):
@@ -178,7 +173,7 @@ class Training(BCI.BCI):
             current_target = self.getTarget(None, None, current_target)  # Override for this line
             self.handleEmotivMessages(target_freqs, current_target)
 
-    # def handleExtractionMessages(self, target_freqs, current_target):  # for brute force and DE
+    # def handleExtractionMessages2(self, target_freqs, current_target):  # for brute force and DE
     #     results = self.connections.receiveExtractionMessage()
     #     if results is not None:
     #         # self.results_file.write(str(results) + "\n")
@@ -190,6 +185,15 @@ class Training(BCI.BCI):
     #             else:
     #                 self.result += added[freq]
 
+    def handleExtractionMessages3(self, target_freqs, current_target):  # for brute force and DE
+        results = self.connections.receiveExtractionMessage()
+        if results is not None:
+            current = target_freqs[current_target]
+            self.difference_finder.setCurrentTarget(current)
+            self.difference_finder.reset()
+            self.difference_finder.parseResults(results)
+            self.result += self.difference_finder.result
+
 
 class ResultAdder(TargetIdentification.WeightFinder):
     def parseFrequencyResults(self, parse_result, result, data):
@@ -198,3 +202,25 @@ class ResultAdder(TargetIdentification.WeightFinder):
                 parse_result[result[0][0]] += result[0][1] * data
             else:
                 parse_result[result[0][0]] = result[0][1] * data
+
+
+class DifferenceFinder(TargetIdentification.DifferenceFinder):
+    def __init__(self):
+        TargetIdentification.DifferenceFinder.__init__(self)
+        self.result = None
+        self.current_target = None
+
+    def setCurrentTarget(self, current_target):
+        self.current_target = current_target
+
+    def reset(self):
+        self.result = 0
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        if len(result) > 1:  # If we have at least 2 targets in the result dict
+            difference = result[0][1]-result[1][1]
+            parse_result[result[0][0], result[1][0]] = difference
+            if result[0][0] == self.current_target:
+                self.result -= difference * data
+            else:
+                self.result += difference * data

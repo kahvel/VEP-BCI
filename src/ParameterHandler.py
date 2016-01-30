@@ -3,17 +3,16 @@ import constants as c
 
 class BruteForce(object):
     def __init__(self):
+        self.break_range = tuple(i for i in range(0, 9, 2))
         self.windows = [c.WINDOW_NONE, c.WINDOW_HANNING, c.WINDOW_HAMMING, c.WINDOW_BLACKMAN, c.WINDOW_BARTLETT]
-        self.interpolation = [c.INTERPOLATE_LINEAR, c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC, c.INTERPOLATE_BARYCENTRIC]
-        self.detrend = [c.LINEAR_DETREND, c.CONSTANT_DETREND, c.NONE_DETREND]
-        self.length_range = tuple(32*2**i for i in range(5))
-        self.step_range = tuple(16*2**i for i in range(6))
-        self.break_range = tuple(i for i in range(0, 33, 4))
+        self.interpolation = [c.INTERPOLATE_LINEAR, c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC]
+        self.length_range = tuple(128*2**i for i in range(2))
+        self.step_range = tuple(32*2**i for i in range(3))
 
     def optionsGenerator(self):
         for window in self.windows:
             for interpolation in self.interpolation:
-                for detrend in self.detrend:
+                # for detrend in self.detrend:
                     for length in self.length_range:
                         for step in self.step_range:
                             if step <= length:
@@ -22,7 +21,7 @@ class BruteForce(object):
                                         yield {
                                             c.OPTIONS_WINDOW: window,
                                             c.OPTIONS_INTERPOLATE: interpolation,
-                                            c.OPTIONS_DETREND: detrend,
+                                            c.OPTIONS_DETREND: c.LINEAR_DETREND,
                                             c.OPTIONS_LENGTH: length,
                                             c.OPTIONS_STEP: step,
                                             c.OPTIONS_BREAK: b,
