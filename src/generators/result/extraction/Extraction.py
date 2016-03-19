@@ -29,6 +29,8 @@ class Extraction(Generator.AbstractMyGenerator):
             message = self.connection.receiveMessageInstant()
             if message == c.CLEAR_BUFFER_MESSAGE:
                 self.setupCoordinatesGenerator()
+                self.generator = self.getGenerator(self.options) # this and next line needed for processing short signals
+                self.generator.setup(self.options)
             elif isinstance(message, basestring):
                 return message
             elif message is not None:
@@ -108,6 +110,8 @@ class Cca(Extraction):
             message = self.connection.receiveMessageInstant()
             if message == c.CLEAR_BUFFER_MESSAGE:
                 self.setupCoordinatesGenerator()
+                self.generator = self.getGenerator(self.options) # this and next line needed for processing short signals
+                self.generator.setup(self.options)
             elif isinstance(message, basestring):
                 return message
             elif message is not None:

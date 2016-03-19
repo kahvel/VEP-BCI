@@ -19,10 +19,12 @@ class CcaExtraction(Generator.AbstractExtracionGenerator):
     def getReferenceSignals(self, length, target_freqs):
         reference_signals = []
         t = np.arange(0, length, step=1.0)/c.HEADSET_FREQ
-        for freq, harmonic in zip(target_freqs, self.harmonics):
+        self.harmonics = [self.harmonics]*len(target_freqs)
+        for freq, harmonics in zip(target_freqs, self.harmonics):
             reference_signals.append([])
-            reference_signals[-1].append(np.sin(np.pi*2*harmonic*freq*t))
-            reference_signals[-1].append(np.cos(np.pi*2*harmonic*freq*t))
+            for harmonic in harmonics:
+                reference_signals[-1].append(np.sin(np.pi*2*harmonic*freq*t))
+                reference_signals[-1].append(np.cos(np.pi*2*harmonic*freq*t))
         return reference_signals
 
     def getCorr(self, signal, reference):
