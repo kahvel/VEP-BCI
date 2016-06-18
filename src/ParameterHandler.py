@@ -165,3 +165,63 @@ class DifferentialEvolution4Params(object):
     def getBounds(self):
         return self.bounds
 
+
+class NewTrainingParameterHandler(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 4),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 5),
+            (0, 5),
+            (0, 20),
+            (0, 5),
+        )
+        self.steps = (0.25, 0.25, 0.25, 0.25, 0.25, 0.025, 0.025, 0.025, 0.025, 0.025, 1, 0.25, 1, 0.25)
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_WEIGHTS: {
+                1: {
+                    1: numbers[0],
+                    2: numbers[1],
+                    3: numbers[2],
+                    c.RESULT_SUM: numbers[3],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[4],
+                }
+            },
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[5],
+                    2: numbers[6],
+                    3: numbers[7],
+                    c.RESULT_SUM: numbers[8],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[9],
+                }
+            },
+            c.DATA_ACTUAL_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: numbers[10],
+                c.DATA_WEIGHT_THRESHOLD: numbers[11],
+                c.DATA_ALWAYS_DELETE: False,
+            },
+            c.DATA_PREV_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: numbers[10],
+                c.DATA_WEIGHT_THRESHOLD: numbers[11],
+                c.DATA_ALWAYS_DELETE: False,
+            },
+            c.DATA_CLEAR_BUFFERS: False,
+        }
+
+    def getBounds(self):
+        return self.bounds
