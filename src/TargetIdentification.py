@@ -110,10 +110,11 @@ class WeightFinder(ResultsParser):
 
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
+            total = result[0][1]/sum(map(lambda x: x[1], result))*data
             if result[0][0] in parse_result:
-                parse_result[result[0][0]] += data
+                parse_result[result[0][0]] += total
             else:
-                parse_result[result[0][0]] = data
+                parse_result[result[0][0]] = total
 
     def parseResultValue(self, parse_result, key):
         return parse_result
@@ -203,7 +204,7 @@ class TargetIdentification(object):
     def addResultAndSendCommand(self, result_frequency, current, target_freqs_dict):
         self.results.add(current, result_frequency)
         self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
-        self.printResult(result_frequency, current)
+        # self.printResult(result_frequency, current)
         self.holdResultTarget(result_frequency, current)
 
     def printResult(self, result_frequency, current):
