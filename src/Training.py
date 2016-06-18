@@ -22,9 +22,9 @@ class Training(BCI.BCI):
         self.difference_finder = DifferenceFinder()
 
     def setupPackets(self):  # Currently uses always first data entry in the lists
-        self.packets = self.recording.normal_eeg.list[0][c.EEG_RECORDING_PACKETS]
-        self.target_freqs = self.recording.normal_eeg.list[0][c.EEG_RECORDING_FREQS]
-        self.expected_targets = self.recording.expected_targets.list[0]
+        self.packets = self.recording.normal_eeg.list[1][c.EEG_RECORDING_PACKETS]
+        self.target_freqs = self.recording.normal_eeg.list[1][c.EEG_RECORDING_FREQS]
+        self.expected_targets = self.recording.expected_targets.list[1]
         self.expected_target_index = 0
 
     def setupResultsParsers(self, options):
@@ -48,27 +48,42 @@ class Training(BCI.BCI):
             return self.bruteForce(self.changeOptions(options))
         elif method == c.TRAINING_METHOD_DE_IDENTIFICATION:
             return self.differentialEvolutionIdentification(self.changeOptions(options))
+        elif method == c.TRAINING_METHOD_SAVE:
+            return self.saveDataMethod(self.changeOptions(options))
+
+    def saveDataMethod(self, options):
+        self.file_content = ""
+        self.handleExtractionMessages = self.saveDataHandleExtraction
+        BCI.BCI.start(self, options)
+        open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\test5_results_2_psda.txt", "w").write(self.file_content)
+
+    def saveDataHandleExtraction(self, target_freqs, current_target):
+        results = self.connections.receiveExtractionMessage()
+        if results is not None:
+            self.file_content += str(results) + "\n"
 
     def differentialEvolutionIdentification(self, options):
-        options_handler = ParameterHandler.DifferentialEvolutionIdentification()
+        options_handler = ParameterHandler.DifferentialEvolution4Params()
         self.counter = 1
-        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_new\\"
+        self.directory = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\results_4params\\"
+        self.data = ""
         f = open(self.directory + "options.txt", "w")
         f.write(str(options))
         f.close()
         # For timing cost function evaluation
-        # self.differentialEvolutionIdentificationCostFunction((1,1,1,1,1,0.1,0.1,0.1,0.1,0.1,1,3), options_handler, options)
+        # for i in range(10):
+        #     self.differentialEvolutionIdentificationCostFunction((1,1,1,1,1,0.1,0.1,0.1,0.1,0.1,1,3), options_handler, options)
         scipy.optimize.differential_evolution(
             self.differentialEvolutionIdentificationCostFunction,
             options_handler.getBounds(),
             args=(options_handler, options),
-            popsize=5,
+            popsize=20,
         )
 
     def differentialEvolutionIdentificationCostFunction(self, numbers, options_handler, all_options):
         self.expected_target_index = 0
         new_options = options_handler.numbersToOptions(numbers)
-        all_options[c.DATA_EXTRACTION_WEIGHTS] = new_options[c.DATA_EXTRACTION_WEIGHTS]
+        #all_options[c.DATA_EXTRACTION_WEIGHTS] = new_options[c.DATA_EXTRACTION_WEIGHTS]
         all_options[c.DATA_EXTRACTION_DIFFERENCES] = new_options[c.DATA_EXTRACTION_DIFFERENCES]
         # new_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE]
         new_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE]
@@ -80,12 +95,14 @@ class Training(BCI.BCI):
         correct_result_count = self.target_identification.results.list[-1]["Correct"]
         result = self.target_identification.results.list[-1]["Wrong"] - self.target_identification.results.list[-1]["Correct"]
         result = len(self.packets) if wrong_result_count == 0 and correct_result_count == 0 else result
-        f = open(self.directory + str(self.counter) + ".txt", "w")
-        f.write(str(new_options) + "\n")
-        f.write(str(wrong_result_count) + " " + str(correct_result_count) + "\n")
-        f.write(str(result))
-        f.close()
+        self.data += str(new_options) + "\n" + str(wrong_result_count) + " " + str(correct_result_count) + "\n" + str(result) + "\nMARKER\n"
+        if self.counter % 100 == 0:
+            f = open(self.directory + str(self.counter) + ".txt", "w")
+            f.write(self.data)
+            f.close()
+            self.data = ""
         self.counter += 1
+        print(self.counter, result, new_options)
         return result
 
     def differentialEvolution(self, options):

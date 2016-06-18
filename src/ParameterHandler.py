@@ -121,3 +121,47 @@ class DifferentialEvolutionIdentification(object):
 
     def getBounds(self):
         return self.bounds
+
+
+class DifferentialEvolution4Params(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 2),
+        )
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[0],
+                    2: 0,
+                    3: 0,
+                    c.RESULT_SUM: numbers[1],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[2],
+                }
+            },
+            c.DATA_PREV_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: 1,
+                c.DATA_WEIGHT_THRESHOLD: numbers[3],
+            },
+            # c.DATA_EXTRACTION_WEIGHTS: {
+            #     1: {
+            #         1: numbers[5],
+            #         2: 0,
+            #         3: 0,
+            #         c.RESULT_SUM: numbers[6],
+            #     },
+            #     2: {
+            #         c.RESULT_SUM: numbers[7],
+            #     }
+            # },
+        }
+
+    def getBounds(self):
+        return self.bounds
+
