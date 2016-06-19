@@ -22,9 +22,9 @@ class Training(BCI.BCI):
         self.difference_finder = DifferenceFinder()
 
     def setupPackets(self):  # Currently uses always first data entry in the lists
-        self.packets = self.recording.normal_eeg.list[1][c.EEG_RECORDING_PACKETS]
-        self.target_freqs = self.recording.normal_eeg.list[1][c.EEG_RECORDING_FREQS]
-        self.expected_targets = self.recording.expected_targets.list[1]
+        self.packets = self.recording.normal_eeg.list[0][c.EEG_RECORDING_PACKETS]
+        self.target_freqs = self.recording.normal_eeg.list[0][c.EEG_RECORDING_FREQS]
+        self.expected_targets = self.recording.expected_targets.list[0]
         self.expected_target_index = 0
 
     def setupResultsParsers(self, options):
@@ -55,7 +55,7 @@ class Training(BCI.BCI):
         self.file_content = ""
         self.handleExtractionMessages = self.saveDataHandleExtraction
         BCI.BCI.start(self, options)
-        open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\test5_results_2_psda.txt", "w").write(self.file_content)
+        open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\no_overwrite.txt", "w").write(self.file_content)
 
     def saveDataHandleExtraction(self, target_freqs, current_target):
         results = self.connections.receiveExtractionMessage()

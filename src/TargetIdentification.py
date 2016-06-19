@@ -110,11 +110,11 @@ class WeightFinder(ResultsParser):
 
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
-            total = result[0][1]/sum(map(lambda x: x[1], result))*data
+            # total = result[0][1]/sum(map(lambda x: x[1], result))*data
             if result[0][0] in parse_result:
-                parse_result[result[0][0]] += total
+                parse_result[result[0][0]] += data
             else:
-                parse_result[result[0][0]] = total
+                parse_result[result[0][0]] = data
 
     def parseResultValue(self, parse_result, key):
         return parse_result
