@@ -5,6 +5,8 @@ import constants as c
 
 from ParameterHandler import NewTrainingParameterHandler
 
+import matplotlib.pyplot as plt
+
 import scipy.optimize
 import numpy as np
 
@@ -107,20 +109,45 @@ def costFunction(numbers, options_handler, frequencies):
     #     return 999
 
 
-# parameter_generator = parameter_handler.optionsGenerator()
-# for parameters in parameter_generator:
-#     costFunction(parameters, parameter_handler, frequencies)
+def plotData(y):
+    x = np.arange(1, len(features_list)+1, 1)
+    y = np.transpose(y)
+    plt.plot(x, y[0])
+    plt.plot(x, y[1])
+    plt.plot(x, y[2])
 
+if __name__ == '__main__':
+    # parameter_generator = parameter_handler.optionsGenerator()
+    # for parameters in parameter_generator:
+    #     costFunction(parameters, parameter_handler, frequencies)
+    #
+    # print target_identification.weight_finder.saved_results[c.CCA][:10]
 
-result = scipy.optimize.differential_evolution(
-    costFunction,
-    parameter_handler.getBounds(),
-    args=(parameter_handler, frequencies),
-    popsize=20,
-    seed=99,
-    disp=True
-)
-print counter
-print result
+    # result = scipy.optimize.differential_evolution(
+    #     costFunction,
+    #     parameter_handler.getBounds(),
+    #     args=(parameter_handler, frequencies),
+    #     popsize=20,
+    #     seed=99,
+    #     disp=True
+    # )
+    # print counter
+    # print result
+
+    costFunction(
+        (1,1,1,1,0.5,0.5,1,0.05,6*0.375),
+        parameter_handler,
+        frequencies
+    )
+
+    plt.subplot(2,2,1)
+    plotData(target_identification.weight_finder.saved_results[c.CCA])
+    plt.subplot(2,2,2)
+    plotData(target_identification.weight_finder.saved_results[c.SUM_PSDA+str(1)])
+    plt.subplot(2,2,3)
+    plotData(target_identification.weight_finder.saved_results[c.SUM_PSDA+str(2)])
+    plt.subplot(2,2,4)
+    plotData(target_identification.weight_finder.saved_results[c.SUM_PSDA+c.RESULT_SUM])
+    plt.show()
 
 

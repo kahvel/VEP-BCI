@@ -185,7 +185,7 @@ class NewTrainingParameterHandler(object):
             # (0, 20),
             (0, 4),
         )
-        self.steps = (0.25, 0.25, 0.25, 2.5, 0.125, 0.125, 0.125, 0.025)
+        self.steps = (0.25, 0.25, 0.25, 2.5, 0.125, 0.125, 0.125, 0.025, 0.5)
 
     def optionsGenerator(self):
         for n1 in np.arange(self.bounds[0][0]+self.steps[0], self.bounds[0][1]+self.steps[0], self.steps[0]):
@@ -196,7 +196,8 @@ class NewTrainingParameterHandler(object):
                             for n6 in np.arange(self.bounds[5][0]+self.steps[5], self.bounds[5][1]+self.steps[5], self.steps[5]):
                                 for n7 in np.arange(self.bounds[6][0]+self.steps[6], self.bounds[6][1]+self.steps[6], self.steps[6]):
                                     for n8 in np.arange(self.bounds[7][0]+self.steps[7], self.bounds[7][1]+self.steps[7], self.steps[7]):
-                                        yield (n1,n2,n3,n4,n5,n6,n7,n8)
+                                        for n9 in np.arange(self.bounds[8][0]+self.steps[8], self.bounds[8][1]+self.steps[8], self.steps[8]):
+                                            yield (n1,n2,n3,n4,n5,n6,n7,n8,n9)
 
     def numbersToOptions(self, numbers):
         return {

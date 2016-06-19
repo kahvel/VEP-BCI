@@ -67,6 +67,7 @@ class ResultsParser(object):
         self.data = None
         self.parse_result = None
         self.differences = None
+        self.saved_results = {c.CCA: [], c.SUM_PSDA+str(1): [], c.SUM_PSDA+str(2): [], c.SUM_PSDA+c.RESULT_SUM: []}
 
     def setup(self, weights, differences):
         self.data = weights
@@ -80,13 +81,15 @@ class ResultsParser(object):
     def parseHarmonicResults(self, parse_result, results, data, differences):
         for harmonic in results:
             # if harmonic in self.data:
-                self.parseFrequencyResults(parse_result, results[harmonic], data[harmonic], differences[harmonic])
+                self.parseFrequencyResults(parse_result, results[harmonic], data[harmonic], differences[harmonic], c.SUM_PSDA+str(harmonic))
 
-    def parseFrequencyResults(self, parse_result, result, data, threshold):
+    def parseFrequencyResults(self, parse_result, result, data, threshold, method):
         if len(result) > 1:  # If we have at least 2 targets in the result dict
             difference = result[0][1]-result[1][1]
         else:
             difference = float("inf")
+        s = sum(map(lambda x: x[1], result))
+        self.saved_results[method].append(map(lambda x: x[1]/s, sorted(result)))
         if len(result) != 0 and difference > threshold:
             total = result[0][1]/sum(map(lambda x: x[1], result))*data
             if result[0][0] in parse_result:
@@ -100,7 +103,7 @@ class ResultsParser(object):
             for method in results[tab]:
                 # if tab in self.data:
                     if method[0] == c.CCA:
-                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM], self.differences[tab][c.RESULT_SUM])
+                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM], self.differences[tab][c.RESULT_SUM], c.CCA)
                     elif method[0] == c.SUM_PSDA:
                         self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab], self.differences[tab])
                     elif method[0] == c.PSDA:
@@ -192,7 +195,7 @@ class TargetIdentification(object):
         results = message
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
-            # print freq_weights
+            print results
             frequency = self.prev_results.getFrequency(freq_weights)
             # print self.prev_results.summed_weights
             # print frequency
