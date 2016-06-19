@@ -1,4 +1,5 @@
 import constants as c
+import numpy as np
 
 
 class BruteForce(object):
@@ -172,19 +173,30 @@ class NewTrainingParameterHandler(object):
             (0, 1),
             (0, 1),
             (0, 1),
-            (0, 1),
+            # (0, 1),
+            (0, 10),
+            (0, 0.5),
+            (0, 0.5),
+            (0, 0.5),
+            # (0, 0.2),
+            (0, 0.2),
+            # (0, 5),
+            # (0, 5),
+            # (0, 20),
             (0, 4),
-            (0, 0.2),
-            (0, 0.2),
-            (0, 0.2),
-            (0, 0.2),
-            (0, 0.2),
-            (0, 5),
-            (0, 5),
-            (0, 20),
-            (0, 5),
         )
-        self.steps = (0.25, 0.25, 0.25, 0.25, 0.25, 0.025, 0.025, 0.025, 0.025, 0.025, 1, 0.25, 1, 0.25)
+        self.steps = (0.25, 0.25, 0.25, 2.5, 0.125, 0.125, 0.125, 0.025)
+
+    def optionsGenerator(self):
+        for n1 in np.arange(self.bounds[0][0]+self.steps[0], self.bounds[0][1]+self.steps[0], self.steps[0]):
+            for n2 in np.arange(self.bounds[1][0]+self.steps[1], self.bounds[1][1]+self.steps[1], self.steps[1]):
+                for n3 in np.arange(self.bounds[2][0]+self.steps[2], self.bounds[2][1]+self.steps[2], self.steps[2]):
+                    for n4 in np.arange(self.bounds[3][0]+self.steps[3], self.bounds[3][1]+self.steps[3], self.steps[3]):
+                        for n5 in np.arange(self.bounds[4][0]+self.steps[4], self.bounds[4][1]+self.steps[4], self.steps[4]):
+                            for n6 in np.arange(self.bounds[5][0]+self.steps[5], self.bounds[5][1]+self.steps[5], self.steps[5]):
+                                for n7 in np.arange(self.bounds[6][0]+self.steps[6], self.bounds[6][1]+self.steps[6], self.steps[6]):
+                                    for n8 in np.arange(self.bounds[7][0]+self.steps[7], self.bounds[7][1]+self.steps[7], self.steps[7]):
+                                        yield (n1,n2,n3,n4,n5,n6,n7,n8)
 
     def numbersToOptions(self, numbers):
         return {
@@ -192,32 +204,32 @@ class NewTrainingParameterHandler(object):
                 1: {
                     1: numbers[0],
                     2: numbers[1],
-                    3: numbers[2],
-                    c.RESULT_SUM: numbers[3],
+                    # 3: numbers[x],
+                    c.RESULT_SUM: numbers[2],
                 },
                 2: {
-                    c.RESULT_SUM: numbers[4],
+                    c.RESULT_SUM: numbers[3],
                 }
             },
             c.DATA_EXTRACTION_DIFFERENCES: {
                 1: {
-                    1: numbers[5],
-                    2: numbers[6],
-                    3: numbers[7],
-                    c.RESULT_SUM: numbers[8],
+                    1: numbers[4],
+                    2: numbers[5],
+                    # 3: numbers[x],
+                    c.RESULT_SUM: numbers[6],
                 },
                 2: {
-                    c.RESULT_SUM: numbers[9],
+                    c.RESULT_SUM: numbers[7],
                 }
             },
-            c.DATA_ACTUAL_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: numbers[10],
-                c.DATA_WEIGHT_THRESHOLD: numbers[11],
+            c.DATA_PREV_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: 8,  #numbers[x],
+                c.DATA_WEIGHT_THRESHOLD: numbers[8],  #numbers[x],
                 c.DATA_ALWAYS_DELETE: False,
             },
-            c.DATA_PREV_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: numbers[10],
-                c.DATA_WEIGHT_THRESHOLD: numbers[11],
+            c.DATA_ACTUAL_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: 1,  #numbers[x],
+                c.DATA_WEIGHT_THRESHOLD: 0,  #numbers[x],
                 c.DATA_ALWAYS_DELETE: False,
             },
             c.DATA_CLEAR_BUFFERS: False,

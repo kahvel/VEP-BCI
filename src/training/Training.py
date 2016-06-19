@@ -30,7 +30,8 @@ standby.disable()
 master_connection = DummyMasterConnection()
 target_identification = TargetIdentification.TargetIdentification(master_connection, results, standby)
 
-file_content = open("../save/test5_results_3.txt").readlines()
+trial_number = 3
+file_content = open("../save/test5_results_" + str(trial_number) + ".txt").readlines()
 # frequencies = dict(enumerate(sorted(map(lambda x: x[0], eval(file_content[0])[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][1]))))
 features_list = []
 for result in file_content:
@@ -38,7 +39,7 @@ for result in file_content:
 
 file_content = open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt").read().split(";")
 frequencies = eval(file_content[0])[0][c.EEG_RECORDING_FREQS]
-expected = eval(file_content[2])[0]
+expected = eval(file_content[2])[trial_number-1]
 
 parameter_handler = NewTrainingParameterHandler()
 
@@ -63,7 +64,7 @@ def costFunction(numbers, options_handler, frequencies):
     # new_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE]
     # all_options[c.DATA_ACTUAL_RESULTS] = new_options[c.DATA_ACTUAL_RESULTS]
     # all_options[c.DATA_PREV_RESULTS] = new_options[c.DATA_PREV_RESULTS]
-    print new_options
+    # print new_options
     target_identification.results.start(frequencies.values())
     target_identification.resetTargetVariables()
     target_identification.setup(new_options)
@@ -86,14 +87,29 @@ def costFunction(numbers, options_handler, frequencies):
     correct_result_count = target_identification.results.list[-1]["Correct"]
     result = target_identification.results.list[-1]["Wrong"] - target_identification.results.list[-1]["Correct"]
     result = len(features_list) if wrong_result_count == 0 and correct_result_count == 0 else result
-    # if counter % 100 == 0 or True:
+    # if counter % 100 == 0:
     #     print "Result", correct_result_count, wrong_result_count
     counter += 1
-    print "Result", correct_result_count, wrong_result_count
+    res = target_identification.results.list[-1]["Wrong"]**2-target_identification.results.list[-1]["Correct"]**2
+    print "Result", correct_result_count, wrong_result_count, res
+    return res
+    # return -target_identification.results.list[-1]["Correct"]
     # return result
     # total = target_identification.results.list[-1]["Wrong"] + target_identification.results.list[-1]["Correct"]
     # return -total+result
-    return -correct_result_count
+    # return -correct_result_count
+    # total = target_identification.results.list[-1]["Wrong"] + target_identification.results.list[-1]["Correct"]
+    # if total != 0:
+    #     ratio = target_identification.results.list[-1]["Correct"]/float(total)
+    #     return -total*ratio
+    #     return -target_identification.results.list[-1]["Correct"]/total
+    # else:
+    #     return 999
+
+
+# parameter_generator = parameter_handler.optionsGenerator()
+# for parameters in parameter_generator:
+#     costFunction(parameters, parameter_handler, frequencies)
 
 
 result = scipy.optimize.differential_evolution(

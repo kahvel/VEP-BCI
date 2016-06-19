@@ -66,90 +66,53 @@ class ResultsParser(object):
     def __init__(self):
         self.data = None
         self.parse_result = None
+        self.differences = None
 
-    def setup(self, *args):
-        raise NotImplementedError("setup not implemented!")
+    def setup(self, weights, differences):
+        self.data = weights
+        self.differences = differences
 
-    def parseSensorResults(self, parse_result, results, data):
+    def parseSensorResults(self, parse_result, results, data, differences):
         for sensor in results:
             # if sensor in data:  # Currently data does not contain sensors
-                self.parseHarmonicResults(self.parseResultValue(parse_result, sensor), results[sensor], data)
+                self.parseHarmonicResults(parse_result, results[sensor], data, differences)
 
-    def parseHarmonicResults(self, parse_result, results, data):
+    def parseHarmonicResults(self, parse_result, results, data, differences):
         for harmonic in results:
             # if harmonic in self.data:
-                self.parseFrequencyResults(self.parseResultValue(parse_result, harmonic), results[harmonic], data[harmonic])
+                self.parseFrequencyResults(parse_result, results[harmonic], data[harmonic], differences[harmonic])
 
-    def parseFrequencyResults(self, parse_result, result, data):
-        raise NotImplementedError("parseFrequencyResult not implemented!")
-
-    def parseResultValue(self, parse_result, key):
-        raise NotImplementedError("parseResultValue not implemented!")
-
-    def parseResults(self, results):
-        self.parse_result = {}
-        for tab in results:
-            for method in results[tab]:
-                # if tab in self.data:
-                    parse_result = self.parseResultValue(self.parse_result, tab)
-                    if method[0] == c.CCA:
-                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
-                    elif method[0] == c.SUM_PSDA:
-                        self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
-                    elif method[0] == c.PSDA:
-                        self.parseSensorResults(parse_result, results[tab][method], self.data[tab])
-        return self.parse_result
-
-
-class WeightFinder(ResultsParser):
-    def __init__(self):
-        ResultsParser.__init__(self)
-
-    def setup(self, data):
-        self.data = data
-
-    def parseFrequencyResults(self, parse_result, result, data):
-        if len(result) != 0:
+    def parseFrequencyResults(self, parse_result, result, data, threshold):
+        if len(result) > 1:  # If we have at least 2 targets in the result dict
+            difference = result[0][1]-result[1][1]
+        else:
+            difference = float("inf")
+        if len(result) != 0 and difference > threshold:
             total = result[0][1]/sum(map(lambda x: x[1], result))*data
             if result[0][0] in parse_result:
                 parse_result[result[0][0]] += total
             else:
                 parse_result[result[0][0]] = total
 
-    def parseResultValue(self, parse_result, key):
-        return parse_result
-
-
-class DifferenceFinder(ResultsParser):
-    def __init__(self):
-        ResultsParser.__init__(self)
-        self.comparison = []
-
-    def setup(self, data):
-        self.data = data
-
     def parseResults(self, results):
-        self.comparison = []
-        return ResultsParser.parseResults(self, results)
-
-    def parseResultValue(self, parse_result, key):
-        if key not in parse_result:
-            parse_result[key] = {}
-        return parse_result[key]
-
-    def parseFrequencyResults(self, parse_result, result, data):
-        if len(result) > 1:  # If we have at least 2 targets in the result dict
-            difference = result[0][1]-result[1][1]
-            parse_result[result[0][0], result[1][0]] = difference
-            self.comparison.append(difference >= data)
+        parse_result = {}
+        for tab in results:
+            for method in results[tab]:
+                # if tab in self.data:
+                    if method[0] == c.CCA:
+                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM], self.differences[tab][c.RESULT_SUM])
+                    elif method[0] == c.SUM_PSDA:
+                        self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab], self.differences[tab])
+                    elif method[0] == c.PSDA:
+                        self.parseSensorResults(parse_result, results[tab][method], self.data[tab], self.differences[tab])
+        return parse_result
 
 
 class TargetIdentification(object):
     def __init__(self, master_connection, results, standby):
         self.prev_results = ResultCounter()
         self.actual_results = ResultCounter()
-        self.difference_finder = DifferenceFinder()
-        self.weight_finder = WeightFinder()
+        self.weight_finder = ResultsParser()
         self.need_new_target = None
         self.new_target_counter = None
         self.master_connection = master_connection
@@ -158,8 +121,7 @@ class TargetIdentification(object):
         self.clear_buffers = None
 
     def setup(self, options):
-        self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
-        self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
+        self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS], options[c.DATA_EXTRACTION_DIFFERENCES])
         self.prev_results.setup(options[c.DATA_PREV_RESULTS])
         self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
@@ -230,16 +192,14 @@ class TargetIdentification(object):
         results = message
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
-            differences = self.difference_finder.parseResults(results)
-            if all(self.difference_finder.comparison):
-                frequency = self.prev_results.getFrequency(freq_weights)
-                if frequency is not None:
-                    result_frequency = self.actual_results.getFrequency({frequency: 1})
-                    if result_frequency is not None:
-                        self.handleStandby(result_frequency, target_freqs.values())
-                        self.handleFinalResult(result_frequency, target_freqs, current_target)
-                elif self.actual_results.always_remove_results:
-                    self.actual_results.removeWeight()
-            elif self.prev_results.always_remove_results:
-                self.prev_results.removeWeight()
+            # print freq_weights
+            frequency = self.prev_results.getFrequency(freq_weights)
+            # print self.prev_results.summed_weights
+            # print frequency
+            if frequency is not None:
+                result_frequency = self.actual_results.getFrequency({frequency: 1})
+                if result_frequency is not None:
+                    self.handleStandby(result_frequency, target_freqs.values())
+                    self.handleFinalResult(result_frequency, target_freqs, current_target)
+            elif self.actual_results.always_remove_results:
                 self.actual_results.removeWeight()
