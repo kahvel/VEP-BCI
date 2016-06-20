@@ -40,7 +40,7 @@ for result in file_content:
 
 # file_content = open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt").read().split(";")
 file_content = open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\eeg_new.txt").read().split(";")
-frequencies = eval(file_content[0])[0][c.EEG_RECORDING_FREQS]
+frequencies = eval(file_content[0])[trial_number-1][c.EEG_RECORDING_FREQS]
 expected = eval(file_content[2])[trial_number-1]
 
 parameter_handler = NewTrainingParameterHandler()
