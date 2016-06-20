@@ -6,7 +6,7 @@ import constants as c
 from ParameterHandler import NewTrainingParameterHandler
 
 import matplotlib.pyplot as plt
-
+from sklearn.decomposition import FastICA
 import scipy.optimize
 import numpy as np
 
@@ -40,7 +40,7 @@ for result in file_content:
     features_list.append(eval(result))
 
 file_content = open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt").read().split(";")
-frequencies = eval(file_content[0])[0][c.EEG_RECORDING_FREQS]
+frequencies = eval(file_content[0])[trial_number-1][c.EEG_RECORDING_FREQS]
 expected = eval(file_content[2])[trial_number-1]
 
 parameter_handler = NewTrainingParameterHandler()
@@ -116,6 +116,11 @@ def plotData(y):
     plt.plot(x, y[1])
     plt.plot(x, y[2])
 
+
+def plotICA(y):
+    x = np.arange(1, len(features_list)+1, 1)
+    plt.plot(x, y)
+
 if __name__ == '__main__':
     # parameter_generator = parameter_handler.optionsGenerator()
     # for parameters in parameter_generator:
@@ -140,6 +145,7 @@ if __name__ == '__main__':
         frequencies
     )
 
+    plt.figure()
     plt.subplot(2,2,1)
     plotData(target_identification.weight_finder.saved_results[c.CCA])
     plt.subplot(2,2,2)
@@ -148,6 +154,26 @@ if __name__ == '__main__':
     plotData(target_identification.weight_finder.saved_results[c.SUM_PSDA+str(2)])
     plt.subplot(2,2,4)
     plotData(target_identification.weight_finder.saved_results[c.SUM_PSDA+c.RESULT_SUM])
+
+    # ICA
+    # features = np.column_stack((
+    #     target_identification.weight_finder.saved_results[c.CCA],
+    #     # target_identification.weight_finder.saved_results[c.SUM_PSDA+str(1)],
+    #     # target_identification.weight_finder.saved_results[c.SUM_PSDA+str(2)],
+    #     # target_identification.weight_finder.saved_results[c.SUM_PSDA+c.RESULT_SUM]
+    # ))
+    # print features
+    # print features.shape
+    #
+    # n_components = 3
+    # ica = FastICA(n_components=n_components)
+    # decomposition = ica.fit_transform(features)
+    # # print decomposition
+    # # print decomposition.shape
+    #
+    # decomposition = np.transpose(decomposition)
+    # plt.figure()
+    # for i in range(n_components):
+    #     # plt.subplot(2,2,i+1)
+    #     plotICA(decomposition[i])
     plt.show()
-
-
