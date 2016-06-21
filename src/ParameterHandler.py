@@ -179,8 +179,8 @@ class NewTrainingParameterHandler(object):
             (0, 0.5),
             (0, 1),
             (0, 0.2),
-            # (0, 5),
-            # (0, 5),
+            (0, 1),
+            (0, 0.01),
             # (0, 20),
             # (0, 5),
         )
@@ -197,7 +197,10 @@ class NewTrainingParameterHandler(object):
                 },
                 2: {
                     c.RESULT_SUM: numbers[4],
-                }
+                },
+                3: {
+                    c.RESULT_SUM: numbers[10],
+                },
             },
             c.DATA_EXTRACTION_DIFFERENCES: {
                 1: {
@@ -208,7 +211,10 @@ class NewTrainingParameterHandler(object):
                 },
                 2: {
                     c.RESULT_SUM: numbers[9],
-                }
+                },
+                3: {
+                    c.RESULT_SUM: numbers[11],
+                },
             },
             c.DATA_ACTUAL_RESULTS: {
                 c.DATA_TARGET_THRESHOLD: 1,#numbers[10],

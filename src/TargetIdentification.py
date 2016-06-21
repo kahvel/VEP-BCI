@@ -94,6 +94,8 @@ class ResultsParser(object):
                     parse_result = self.parseResultValue(self.parse_result, tab)
                     if method[0] == c.CCA:
                         self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
+                    elif method[0] == c.LRT:
+                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
                     elif method[0] == c.SUM_PSDA:
                         self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
                     elif method[0] == c.PSDA:
