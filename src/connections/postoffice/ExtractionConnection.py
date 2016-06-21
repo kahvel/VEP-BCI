@@ -67,6 +67,8 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
             return self.getSumPsda()
         elif method == c.CCA:
             return self.getCca()
+        elif method == c.LRT:
+            return self.getLrt()
         elif method in (c.PSDA,):
             return ExtractionSensorConnection()
         else:
@@ -76,7 +78,10 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
         return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsda)
 
     def getCca(self):
-        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Cca)
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.CCA)
+
+    def getLrt(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.LRT)
 
     def setup(self, all_options):
         self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed
@@ -103,7 +108,10 @@ class TrainingExtractionMethodConnection(ExtractionMethodConnection):
         return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)
 
     def getCca(self):
-        return MyQueue.PostOfficeQueueConnection(Extraction.Cca)
+        return MyQueue.PostOfficeQueueConnection(Extraction.CCA)
+
+    def getLrt(self):
+        return MyQueue.PostOfficeQueueConnection(Extraction.LRT)
 
 
 class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConnections):

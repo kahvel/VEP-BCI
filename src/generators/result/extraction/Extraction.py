@@ -1,11 +1,18 @@
 import constants as c
 from generators import Generator
-from generators.result.extraction import CcaExtraction, PsdaExtraction
+from generators.result.extraction import ExtractionWithReferenceSignals, PsdaExtraction
 from generators.coordinates import Signal, PSD
 
 
 class Extraction(Generator.AbstractMyGenerator):
     def __init__(self, connection, name):
+        """
+        Class that handles messages. First messages are received, then sent to coordinates generators, then the
+        result from coordinates generator is sent to extraction generators.
+        :param connection:
+        :param name:
+        :return:
+        """
         Generator.AbstractMyGenerator.__init__(self)
         self.connection = connection
         """ @type : ConnectionProcessEnd.ExtractionConnection """
@@ -20,8 +27,29 @@ class Extraction(Generator.AbstractMyGenerator):
     def exit(self):
         self.connection.close()
 
+    def start(self):
+        raise NotImplementedError("start not implemented!")
+
+    def setup(self, options=None):
+        """
+        This override is required because otherwise it is not possible to call setup without arguments in
+        ConnectionProcessEnd waitMessages method. On the other hand it is subclass of AbstractMyGenerator whose setup
+        does take argument.
+        :param options: None
+        :return:
+        """
+        raise NotImplementedError("setup not implemented!")
+
     # def update(self):
     #     pg.QtGui.QApplication.processEvents()
+
+    def getCoordinatesGenerator(self):
+        raise NotImplementedError("getCoordinatesGenerator not implemented!")
+
+
+class PsdaMethod(Extraction):
+    def __init__(self, connection, name):
+        Extraction.__init__(self, connection, name)
 
     def start(self):
         while True:
@@ -29,7 +57,7 @@ class Extraction(Generator.AbstractMyGenerator):
             message = self.connection.receiveMessageInstant()
             if message == c.CLEAR_BUFFER_MESSAGE:
                 self.setupCoordinatesGenerator()
-                self.generator = self.getGenerator(self.options) # this and next line needed for processing short signals
+                self.generator = self.getGenerator(self.options)  # this and next line needed for processing short signals
                 self.generator.setup(self.options)
             elif isinstance(message, basestring):
                 return message
@@ -55,13 +83,10 @@ class Extraction(Generator.AbstractMyGenerator):
         Generator.AbstractMyGenerator.setup(self, self.options)
         return c.SUCCESS_MESSAGE
 
-    def getCoordinatesGenerator(self):
-        raise NotImplementedError("getCoordinatesGenerator not implemented!")
 
-
-class SumPsda(Extraction):
+class SumPsda(PsdaMethod):
     def __init__(self, connection):
-        Extraction.__init__(self, connection, c.SUM_PSDA)
+        PsdaMethod.__init__(self, connection, c.SUM_PSDA)
 
     def getCoordinatesGenerator(self):
         return PSD.SumPsd()
@@ -70,9 +95,9 @@ class SumPsda(Extraction):
         return PsdaExtraction.PsdaExtraction()
 
 
-class Psda(Extraction):
+class Psda(PsdaMethod):
     def __init__(self, connection):
-        Extraction.__init__(self, connection, c.PSDA)
+        PsdaMethod.__init__(self, connection, c.PSDA)
 
     def getCoordinatesGenerator(self):
         return PSD.PSD()
@@ -81,16 +106,13 @@ class Psda(Extraction):
         return PsdaExtraction.PsdaExtraction()
 
 
-class Cca(Extraction):
-    def __init__(self, connection):
-        Extraction.__init__(self, connection, c.CCA)
+class MethodWithReferenceSignals(Extraction):
+    def __init__(self, connection, name):
+        Extraction.__init__(self, connection, name)
         self.coordinates_generators = None
 
     def getCoordinatesGenerator(self):
         return [Signal.Signal() for _ in range(len(self.sensors))]
-
-    def getGenerator(self, options):
-        return CcaExtraction.CcaExtraction()
 
     def setup(self, options=None):
         self.options = self.connection.receiveOptions()
@@ -110,7 +132,7 @@ class Cca(Extraction):
             message = self.connection.receiveMessageInstant()
             if message == c.CLEAR_BUFFER_MESSAGE:
                 self.setupCoordinatesGenerator()
-                self.generator = self.getGenerator(self.options) # this and next line needed for processing short signals
+                self.generator = self.getGenerator(self.options)  # this and next line needed for processing short signals
                 self.generator.setup(self.options)
             elif isinstance(message, basestring):
                 return message
@@ -126,3 +148,19 @@ class Cca(Extraction):
                     self.generator.next()
                 else:
                     self.connection.sendMessage(None)
+
+
+class CCA(MethodWithReferenceSignals):
+    def __init__(self, connection):
+        MethodWithReferenceSignals.__init__(self, connection, c.CCA)
+
+    def getGenerator(self, options):
+        return ExtractionWithReferenceSignals.CcaExtraction()
+
+
+class LRT(MethodWithReferenceSignals):
+    def __init__(self, connection):
+        MethodWithReferenceSignals.__init__(self, connection, c.LRT)
+
+    def getGenerator(self, options):
+        return ExtractionWithReferenceSignals.LrtExtraction()

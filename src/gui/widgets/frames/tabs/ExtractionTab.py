@@ -156,5 +156,6 @@ class ExtractionTabButtonFrame(OptionsFrame.OptionsFrameFrame):
         self.addChildWidgets((
             Buttons.SunkenButton(self.widget, c.PSDA,     0, 0),
             Buttons.SunkenButton(self.widget, c.SUM_PSDA, 0, 1),
-            Buttons.SunkenButton(self.widget, c.CCA,      0, 2)
+            Buttons.SunkenButton(self.widget, c.CCA,      0, 2),
+            Buttons.SunkenButton(self.widget, c.LRT,      0, 3),
         ))
