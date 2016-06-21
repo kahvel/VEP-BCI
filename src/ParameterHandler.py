@@ -226,6 +226,8 @@ class NewTrainingParameterHandler(object):
                 c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
                 c.DATA_ALWAYS_DELETE: False,
             },
+            # If using training/Training.py, this only resets prev_result and actual_result.
+            # It cannot clear the 256 remembered packets, because the features are pre-calculated.
             c.DATA_CLEAR_BUFFERS: False,
         }
 

@@ -25,6 +25,7 @@ class DummyMasterConnection(object):
 
 
 results = Results.Results()
+results.isPrevResult = lambda x: False
 standby = Standby.Standby()
 standby.disable()
 master_connection = DummyMasterConnection()
@@ -32,7 +33,7 @@ target_identification = TargetIdentification.TargetIdentification(master_connect
 
 trial_number = 1
 # file_content = open("../save/test5_results_" + str(trial_number) + ".txt").readlines()
-file_content = open("../save/eeg_new_lrt.txt").readlines()
+file_content = open("../save/eeg_new_detrend2.txt").readlines()
 # frequencies = dict(enumerate(sorted(map(lambda x: x[0], eval(file_content[0])[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][1]))))
 features_list = []
 for result in file_content:
@@ -85,7 +86,7 @@ def costFunction(numbers, options_handler, frequencies):
         target_identification.handleFreqMessages(result, frequencies, target)
         # print i, packet_nr, target
     target_identification.results.trialEnded(packet_nr)
-
+    print target_identification.results
     wrong_result_count = target_identification.results.list[-1]["Wrong"]
     correct_result_count = target_identification.results.list[-1]["Correct"]
     result = target_identification.results.list[-1]["Wrong"] - target_identification.results.list[-1]["Correct"]
@@ -111,7 +112,7 @@ def costFunction(numbers, options_handler, frequencies):
 # print counter
 # print result
 costFunction(
-    (0.5, 0, None, 0.5, 1, 0.1, 0, None, 0.2, 0.06, 1, 0),
+    (1, 1, None, 1, 1, 0.01, 0.01, None, 0.02, 0.005, 1, 0.005),
     parameter_handler,
     frequencies
 )

@@ -107,11 +107,10 @@ class LrtExtraction(ExtractionWithReferenceSignals):
         """
         preprocessing.scale(signal, axis=1, with_std=False)  # centralise samples
         X = np.column_stack((signal, reference))
-        N = signal.shape[0]
-        sigma_hat = sum(np.dot(X[i], X[i]) for i in range(N))/N
-        sigma_11 = sum(np.dot(signal[i], signal[i]) for i in range(N))/N
-        sigma_22 = sum(np.dot(reference[i], reference[i]) for i in range(N))/N
-        V = sigma_hat/(sigma_11*sigma_22)
+        sigma_hat = np.cov(X, rowvar=False)
+        sigma_11 = np.cov(signal, rowvar=False)
+        sigma_22 = np.cov(reference, rowvar=False)
+        V = np.linalg.det(sigma_hat)/(np.linalg.det(sigma_11)*np.linalg.det(sigma_22))
         p2 = reference.shape[1]
         C = 1-V**(1.0/p2)
         return C
