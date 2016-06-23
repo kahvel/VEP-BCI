@@ -30,6 +30,57 @@ class ResultCollector(ResultsParser):
                     parse_result[frequency] = {self.expected_frequency: [value]}
 
 
+class Normaliser(ResultsParser):
+    def __init__(self, frequencies_list):
+        ResultsParser.__init__(self, add_sum=False)
+        self.frequencies_list = frequencies_list
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        for frequency in self.frequencies_list:
+            parse_result[frequency] = {}
+            mins = []
+            maxs = []
+            for expected_frequency in self.frequencies_list:
+                current_result = result[frequency][expected_frequency]
+                mins.append(min(current_result))
+                maxs.append(max(current_result))
+            minimum = min(mins)
+            maximum = max(maxs)
+            self.addResult(parse_result, result, frequency, maximum, minimum)
+
+    def addResult(self, parse_result, result, frequency, maximum, minimum):
+        raise NotImplementedError("addResult not implemented!")
+
+    def parseResults(self, results):
+        self.parse_result = {}
+        return ResultsParser.parseResults(self, results)
+
+
+class NormaliserCreator(Normaliser):
+    def addResult(self, parse_result, result, frequency, maximum, minimum):
+        parse_result[frequency] = lambda x: (x-minimum)/(maximum-minimum)+1
+
+
+class GroupNormaliser(Normaliser):
+    def addResult(self, parse_result, result, frequency, maximum, minimum):
+        for expected_frequency in self.frequencies_list:
+            current_result = result[frequency][expected_frequency]
+            parse_result[frequency][expected_frequency] = map(lambda x: (x-minimum)/(maximum-minimum)+1, current_result)
+
+
+class FeatureNormaliser(ResultsParser):
+    def __init__(self, frequencies_list):
+        ResultsParser.__init__(self, add_sum=True, data_has_method=True)
+        self.frequencies_list = frequencies_list
+        self.parse_result = {}
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        result_dict = dict(result)
+        for frequency in self.frequencies_list:
+            current_result = result_dict[frequency]
+            parse_result[frequency] = data[frequency](current_result)
+
+
 class DensityEstimator(ResultsParser):
     def __init__(self, frequencies_list, plot_kde=False, plot_histogram=False):
         ResultsParser.__init__(self, add_sum=False)
@@ -81,7 +132,7 @@ class DensityEstimator(ResultsParser):
 
 class NaiveBayes(ResultsParser):
     def __init__(self, frequencies_list):
-        ResultsParser.__init__(self)
+        ResultsParser.__init__(self, add_sum=False, data_has_method=True)
         self.frequencies_list = frequencies_list
 
     def parseFrequencyResults(self, parse_result, result, data):
@@ -103,28 +154,8 @@ class NaiveBayes(ResultsParser):
         return parse_result
 
     def parseResults(self, results):
-        """
-        Override to set self.parse_result = {} and to use self.data[tab][method] instead of self.data[tab].
-        Should add method to options coming from main window, then overriding is not necessary.
-        :param results:
-        :return:
-        """
         self.parse_result = {}
-        for tab in results:
-            for method in results[tab]:
-                # if tab in self.data:
-                    parse_result = self.parseResultValue(self.parse_result, tab)
-                    parse_result = self.parseResultValue(parse_result, method)
-                    if method[0] == c.CCA or method[0] == c.LRT:
-                        if self.add_sum:
-                            self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, self.data[tab][method])
-                        else:
-                            self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab][method])
-                    elif method[0] == c.SUM_PSDA:
-                        self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab][method])
-                    elif method[0] == c.PSDA:
-                        self.parseSensorResults(parse_result, results[tab][method], self.data[tab][method])
-        return self.parse_result
+        return ResultsParser.parseResults(self, results)
 
 
 features_list, expected, frequencies = readFeatures(
@@ -138,28 +169,40 @@ length = 256
 step = 32
 
 frequencies_list = sorted(frequencies.values())
-
-result_parser = ResultCollector()
 dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))["Weights"]
-result_parser.setup(dummy_parameters)
 
+feature_grouper = ResultCollector()
+feature_grouper.setup(dummy_parameters)
 for extracted_features, expected_target in featuresIterator(features_list, expected, length, step):
     expected_frequency = frequencies[expected_target]
-    result_parser.setExpectedTarget(expected_frequency)
-    result_parser.parseResults(extracted_features)
+    feature_grouper.setExpectedTarget(expected_frequency)
+    feature_grouper.parseResults(extracted_features)
+grouped_features = feature_grouper.parse_result
+print grouped_features
 
-collected_results = result_parser.parse_result
-print "density"
-print collected_results
+group_normaliser = GroupNormaliser(frequencies_list)
+group_normaliser.setup(dummy_parameters)
+normalised_features = group_normaliser.parseResults(grouped_features)
+print normalised_features
+
 density_estimator = DensityEstimator(frequencies_list, plot_kde=True)
 density_estimator.setup(dummy_parameters)
-densities = density_estimator.parseResults(collected_results)
-print densities
+density_functions = density_estimator.parseResults(normalised_features)
+print density_functions
+
+normaliser_creator = NormaliserCreator(frequencies_list)
+normaliser_creator.setup(dummy_parameters)
+normaliser_functions = normaliser_creator.parseResults(grouped_features)
+print normaliser_functions
+
+feature_normaliser = FeatureNormaliser(frequencies_list)
+feature_normaliser.setup(normaliser_functions)
 
 naive_bayes = NaiveBayes(frequencies_list)
-naive_bayes.setup(densities)
+naive_bayes.setup(density_functions)
 for extracted_features, expected_target in featuresIterator(features_list, expected, length, step):
-    print naive_bayes.parseResults(extracted_features)
+    normalised_features = feature_normaliser.parseResults(extracted_features)
+    print naive_bayes.parseResults(normalised_features)
 
 
 plt.show()

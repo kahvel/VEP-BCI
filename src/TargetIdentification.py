@@ -63,10 +63,11 @@ class ResultCounter(object):
 
 
 class ResultsParser(object):
-    def __init__(self, add_sum=True):
+    def __init__(self, add_sum=True, data_has_method=False):
         self.data = None
         self.parse_result = None
         self.add_sum = add_sum
+        self.data_has_method = data_has_method
 
     def setup(self, data):
         self.data = data
@@ -95,15 +96,19 @@ class ResultsParser(object):
                 # if tab in self.data:
                     parse_result = self.parseResultValue(self.parse_result, tab)
                     parse_result = self.parseResultValue(parse_result, method)
+                    if self.data_has_method:
+                        data = self.data[tab][method]
+                    else:
+                        data = self.data[tab]
                     if method[0] == c.CCA or method[0] == c.LRT:
                         if self.add_sum:
-                            self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, self.data[tab])
+                            self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, data)
                         else:
-                            self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
+                            self.parseHarmonicResults(parse_result, results[tab][method], data)
                     elif method[0] == c.SUM_PSDA:
-                        self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
+                        self.parseHarmonicResults(parse_result, results[tab][method], data)
                     elif method[0] == c.PSDA:
-                        self.parseSensorResults(parse_result, results[tab][method], self.data[tab])
+                        self.parseSensorResults(parse_result, results[tab][method], data)
         return self.parse_result
 
 
