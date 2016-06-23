@@ -67,8 +67,8 @@ class ResultsParser(object):
         self.data = None
         self.parse_result = None
 
-    def setup(self, *args):
-        raise NotImplementedError("setup not implemented!")
+    def setup(self, data):
+        self.data = data
 
     def parseSensorResults(self, parse_result, results, data):
         for sensor in results:
@@ -107,9 +107,6 @@ class WeightFinder(ResultsParser):
     def __init__(self):
         ResultsParser.__init__(self)
 
-    def setup(self, data):
-        self.data = data
-
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
             # total = result[0][1]/sum(map(lambda x: x[1], result))*data
@@ -126,9 +123,6 @@ class DifferenceFinder(ResultsParser):
     def __init__(self):
         ResultsParser.__init__(self)
         self.comparison = []
-
-    def setup(self, data):
-        self.data = data
 
     def parseResults(self, results):
         self.comparison = []
