@@ -21,6 +21,9 @@ class ResultCollector(ResultsParser):
         """
         Remove the first line "self.parse_result = {}", so the results remain in parse_result.
         Put it in constructor instead.
+        Also add method as a key to parse_result[tab] (this should be probably also done in DifferenceFinder),
+        ResultFinder does not need it, because its result is {frequency: sum of features}?
+        Add harmonic key also to CCA and LRT so it is easier to handle the parsing result.
         :param results:
         :return:
         """
@@ -28,10 +31,11 @@ class ResultCollector(ResultsParser):
             for method in results[tab]:
                 # if tab in self.data:
                     parse_result = self.parseResultValue(self.parse_result, tab)
+                    parse_result = self.parseResultValue(parse_result, method)
                     if method[0] == c.CCA:
-                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
+                        self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, self.data[tab])
                     elif method[0] == c.LRT:
-                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
+                        self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, self.data[tab])
                     elif method[0] == c.SUM_PSDA:
                         self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
                     elif method[0] == c.PSDA:
@@ -64,14 +68,8 @@ features_list, expected, frequencies = readFeatures(
 
 length = 256
 step = 32
-packet_nr = 0
-target = expected[0][0]
-expected_index = 1
 
 frequencies_list = sorted(frequencies.values())
-
-first_sample = features_list[0]
-density = {tab: {method: {harmonic: {frequency: {expected_frequency: [] for expected_frequency in frequencies_list} for frequency in frequencies_list} for harmonic in first_sample[tab][method]} for method in first_sample[tab]} for tab in first_sample}
 
 result_parser = ResultCollector()
 result_parser.setup(NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))["Weights"])
@@ -79,26 +77,20 @@ result_parser.setup(NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 
 for extracted_features, expected_target in featuresIterator(features_list, expected, length, step):
     expected_frequency = frequencies[expected_target]
     result_parser.setExpectedTarget(expected_frequency)
+    result_parser.parseResults(extracted_features)
 
-# for extracted_features, expected_target in featuresIterator(features_list, expected, length, step):
-#     for tab in extracted_features:
-#         for method in extracted_features[tab]:
-#             if c.SUM_PSDA in method:
-#                 for harmonic in extracted_features[tab][method]:
-#                     result_per_frequency = dict(extracted_features[tab][method][harmonic])
-#                     for frequency in frequencies_list:
-#                         expected_frequency = frequencies[expected_target]
-#                         density[tab][method][harmonic][frequency][expected_frequency].append(result_per_frequency[frequency])
-#
-# counter = 1
-# for tab in density:
-#     for method in density[tab]:
-#         for harmonic in density[tab][method]:
-#             for frequency in frequencies_list:
-#                 for expected_frequency in frequencies_list:
-#                     bins = np.linspace(min(density[tab][method][harmonic][expected_frequency]), max(density[tab][method][harmonic][expected_frequency]), 10)
-#                     plt.subplot(5, 3, counter)
-#                     plt.hist(density[tab][method][harmonic][frequency][expected_frequency], bins=bins)
-#                     counter += 1
-#
-# plt.show()
+density = result_parser.parse_result
+print density
+counter = 1
+for tab in density:
+    for method in density[tab]:
+        for harmonic in density[tab][method]:
+            for frequency in frequencies_list:
+                plt.subplot(5, 3, counter)
+                for expected_frequency in frequencies_list:
+                    bins = np.linspace(min(density[tab][method][harmonic][frequency][expected_frequency]), max(density[tab][method][harmonic][frequency][expected_frequency]), 10)
+                    plt.hist(np.array(density[tab][method][harmonic][frequency][expected_frequency]), bins=bins, normed=True)
+                counter += 1
+                plt.title(str(tab) + str(method[0]) + str(harmonic) + str(frequency))
+
+plt.show()
