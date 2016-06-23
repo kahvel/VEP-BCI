@@ -63,9 +63,10 @@ class ResultCounter(object):
 
 
 class ResultsParser(object):
-    def __init__(self):
+    def __init__(self, add_sum=True):
         self.data = None
         self.parse_result = None
+        self.add_sum = add_sum
 
     def setup(self, data):
         self.data = data
@@ -84,18 +85,21 @@ class ResultsParser(object):
         raise NotImplementedError("parseFrequencyResult not implemented!")
 
     def parseResultValue(self, parse_result, key):
-        raise NotImplementedError("parseResultValue not implemented!")
+        if key not in parse_result:
+            parse_result[key] = {}
+        return parse_result[key]
 
     def parseResults(self, results):
-        self.parse_result = {}
         for tab in results:
             for method in results[tab]:
                 # if tab in self.data:
                     parse_result = self.parseResultValue(self.parse_result, tab)
-                    if method[0] == c.CCA:
-                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
-                    elif method[0] == c.LRT:
-                        self.parseFrequencyResults(parse_result, results[tab][method], self.data[tab][c.RESULT_SUM])
+                    parse_result = self.parseResultValue(parse_result, method)
+                    if method[0] == c.CCA or method[0] == c.LRT:
+                        if self.add_sum:
+                            self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, self.data[tab])
+                        else:
+                            self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
                     elif method[0] == c.SUM_PSDA:
                         self.parseHarmonicResults(parse_result, results[tab][method], self.data[tab])
                     elif method[0] == c.PSDA:
@@ -118,6 +122,10 @@ class WeightFinder(ResultsParser):
     def parseResultValue(self, parse_result, key):
         return parse_result
 
+    def parseResults(self, results):
+        self.parse_result = {}
+        return ResultsParser.parseResults(self, results)
+
 
 class DifferenceFinder(ResultsParser):
     def __init__(self):
@@ -126,12 +134,8 @@ class DifferenceFinder(ResultsParser):
 
     def parseResults(self, results):
         self.comparison = []
+        self.parse_result = {}
         return ResultsParser.parseResults(self, results)
-
-    def parseResultValue(self, parse_result, key):
-        if key not in parse_result:
-            parse_result[key] = {}
-        return parse_result[key]
 
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) > 1:  # If we have at least 2 targets in the result dict
