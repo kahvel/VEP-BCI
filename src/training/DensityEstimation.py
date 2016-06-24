@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
 
-import constants as c
-
 
 class ResultCollector(ResultsParser):
     def __init__(self):
@@ -143,6 +141,26 @@ class NaiveBayes(ResultsParser):
                     log_value = data[frequency][expected_frequency].score_samples([[result_dict[frequency]]])[0]
                     value = np.exp(log_value)
                     if frequency in parse_result:
+                        parse_result[frequency][expected_frequency] = value
+                    else:
+                        parse_result[frequency] = {expected_frequency: value}
+
+    def parseResults(self, results):
+        self.parse_result = {}
+        return ResultsParser.parseResults(self, results)
+
+
+class DensityGrouper(ResultsParser):
+    def __init__(self, frequencies_list):
+        ResultsParser.__init__(self, add_sum=False, data_has_method=False)
+        self.frequencies_list = frequencies_list
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        if len(result) != 0:
+            for frequency in self.frequencies_list:
+                for expected_frequency in self.frequencies_list:
+                    value = result[frequency][expected_frequency]
+                    if frequency in parse_result:
                         if expected_frequency in parse_result[frequency]:
                             parse_result[frequency][expected_frequency].append(value)
                         else:
@@ -158,51 +176,104 @@ class NaiveBayes(ResultsParser):
         return ResultsParser.parseResults(self, results)
 
 
-features_list, expected, frequencies = readFeatures(
-    "../save/eeg_new_detrend2.txt",
-    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\eeg_new.txt",
+def multiplyDensities(frequencies_list, densities):
+    result = {}
+    for frequency in frequencies_list:
+        result[frequency] = {}
+        for expected_frequency in frequencies_list:
+            value = np.prod(densities[frequency][expected_frequency])
+            result[frequency][expected_frequency] = value
+    return result
+
+
+def multiplyDensitiesDifferentFrequencies(frequencies_list, densities):
+    result = {}
+    for expected_frequency in frequencies_list:
+        value = 1
+        for frequency in frequencies_list:
+            value *= densities[frequency][expected_frequency]
+            # print frequency, expected_frequency, multiplied_results[frequency][expected_frequency]
+        result[expected_frequency] = value
+    return result
+
+
+training_x, training_y, training_frequencies = readFeatures(
+    "../save/test5_results_1_all.txt",
+    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
     1
 )
 
+testing_x, testing_y, testing_frequencies = readFeatures(
+    "../save/test5_results_2.txt",
+    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
+    2
+)
 
-length = 256
-step = 32
 
-frequencies_list = sorted(frequencies.values())
+train_length = 256
+train_step = 1
+
+test_length = 256
+test_step = 32
+
+frequencies_list = sorted(training_frequencies.values())
 dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))["Weights"]
 
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
-for extracted_features, expected_target in featuresIterator(features_list, expected, length, step):
-    expected_frequency = frequencies[expected_target]
+for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step):
+    expected_frequency = training_frequencies[expected_target]
     feature_grouper.setExpectedTarget(expected_frequency)
     feature_grouper.parseResults(extracted_features)
 grouped_features = feature_grouper.parse_result
-print grouped_features
+# print grouped_features
 
 group_normaliser = GroupNormaliser(frequencies_list)
 group_normaliser.setup(dummy_parameters)
 normalised_features = group_normaliser.parseResults(grouped_features)
-print normalised_features
+# print normalised_features
 
 density_estimator = DensityEstimator(frequencies_list, plot_kde=True)
 density_estimator.setup(dummy_parameters)
 density_functions = density_estimator.parseResults(normalised_features)
-print density_functions
+# print density_functions
 
 normaliser_creator = NormaliserCreator(frequencies_list)
 normaliser_creator.setup(dummy_parameters)
 normaliser_functions = normaliser_creator.parseResults(grouped_features)
-print normaliser_functions
+# print normaliser_functions
 
 feature_normaliser = FeatureNormaliser(frequencies_list)
 feature_normaliser.setup(normaliser_functions)
 
+density_grouper = DensityGrouper(frequencies_list)
+density_grouper.setup(dummy_parameters)
+
 naive_bayes = NaiveBayes(frequencies_list)
 naive_bayes.setup(density_functions)
-for extracted_features, expected_target in featuresIterator(features_list, expected, length, step):
+
+correct = 0
+
+for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step):
     normalised_features = feature_normaliser.parseResults(extracted_features)
-    print naive_bayes.parseResults(normalised_features)
+    densities = naive_bayes.parseResults(normalised_features)
+    # print densities
+    grouped_densities = density_grouper.parseResults(densities)
+    # print grouped_densities
+    multiplied_densities = multiplyDensities(frequencies_list, grouped_densities)
+    # print multiplied_densities
+    multiplied_densities_final = multiplyDensitiesDifferentFrequencies(frequencies_list, multiplied_densities)
+    print multiplied_densities_final
+    expected_frequency = testing_frequencies[expected_target]
+    predicted_frequency = sorted(map(lambda x: (x[1], x[0]), multiplied_densities_final.items()), reverse=True)[0][1]
+    correct += expected_frequency == predicted_frequency
+    if expected_frequency == predicted_frequency:
+        print "Correct",
+    else:
+        print "Wrong  ",
+    print round(expected_frequency, 2), round(predicted_frequency, 2), correct
+
+print correct
 
 
 plt.show()
