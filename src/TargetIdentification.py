@@ -79,7 +79,7 @@ class ResultsParser(object):
 
     def parseHarmonicResults(self, parse_result, results, data):
         for harmonic in results:
-            # if harmonic in self.data:
+            if harmonic in data:
                 self.parseFrequencyResults(self.parseResultValue(parse_result, harmonic), results[harmonic], data[harmonic])
 
     def parseFrequencyResults(self, parse_result, result, data):
@@ -93,7 +93,7 @@ class ResultsParser(object):
     def parseResults(self, results):
         for tab in results:
             for method in results[tab]:
-                # if tab in self.data:
+                if tab in self.data:
                     parse_result = self.parseResultValue(self.parse_result, tab)
                     parse_result = self.parseResultValue(parse_result, method)
                     if self.data_has_method:

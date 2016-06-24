@@ -203,15 +203,24 @@ training_x, training_y, training_frequencies = readFeatures(
     1
 )
 
-testing_x, testing_y, testing_frequencies = readFeatures(
+training_x2, training_y2, training_frequencies2 = readFeatures(
     "../save/test5_results_2.txt",
     "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
     2
 )
 
+testing_x, testing_y, testing_frequencies = readFeatures(
+    "../save/test5_results_3.txt",
+    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
+    3
+)
+
 
 train_length = 256
 train_step = 32
+
+train_length2 = 256
+train_step2 = 32
 
 test_length = 256
 test_step = 32
@@ -222,6 +231,10 @@ dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
 for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
+    expected_frequency = training_frequencies[expected_target]
+    feature_grouper.setExpectedTarget(expected_frequency)
+    feature_grouper.parseResults(extracted_features)
+for extracted_features, expected_target in featuresIterator(training_x2, training_y2, train_length2, train_step2, skip_after_change=True):
     expected_frequency = training_frequencies[expected_target]
     feature_grouper.setExpectedTarget(expected_frequency)
     feature_grouper.parseResults(extracted_features)
