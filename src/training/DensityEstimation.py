@@ -198,7 +198,7 @@ def multiplyDensitiesDifferentFrequencies(frequencies_list, densities):
 
 
 training_x, training_y, training_frequencies = readFeatures(
-    "../save/test5_results_1_all.txt",
+    "../save/test5_results_1.txt",
     "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
     1
 )
@@ -211,7 +211,7 @@ testing_x, testing_y, testing_frequencies = readFeatures(
 
 
 train_length = 256
-train_step = 1
+train_step = 32
 
 test_length = 256
 test_step = 32
@@ -221,7 +221,7 @@ dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0
 
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
-for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step):
+for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
     expected_frequency = training_frequencies[expected_target]
     feature_grouper.setExpectedTarget(expected_frequency)
     feature_grouper.parseResults(extracted_features)
@@ -253,8 +253,9 @@ naive_bayes = NaiveBayes(frequencies_list)
 naive_bayes.setup(density_functions)
 
 correct = 0
+wrong = 0
 
-for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step):
+for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step, skip_after_change=True):
     normalised_features = feature_normaliser.parseResults(extracted_features)
     densities = naive_bayes.parseResults(normalised_features)
     # print densities
@@ -267,13 +268,14 @@ for extracted_features, expected_target in featuresIterator(testing_x, testing_y
     expected_frequency = testing_frequencies[expected_target]
     predicted_frequency = sorted(map(lambda x: (x[1], x[0]), multiplied_densities_final.items()), reverse=True)[0][1]
     correct += expected_frequency == predicted_frequency
+    wrong += expected_frequency != predicted_frequency
     if expected_frequency == predicted_frequency:
         print "Correct",
     else:
         print "Wrong  ",
-    print round(expected_frequency, 2), round(predicted_frequency, 2), correct
+    print round(expected_frequency, 2), round(predicted_frequency, 2), correct, wrong
 
-print correct
+print correct, wrong
 
 
 plt.show()

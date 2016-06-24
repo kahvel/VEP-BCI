@@ -21,9 +21,10 @@ def readFeatures(features_file_name, eeg_file_name, trial_number):
     return features_list, expected, frequencies
 
 
-def featuresIterator(features_list, expected_targets, length, step):
+def featuresIterator(features_list, expected_targets, length, step, skip_after_change=False):
     expected_index = 1
     expected_target = expected_targets[0][0]
+    packet_at_change = 0
     for i, result in enumerate(features_list):
         if i == 0:
             packet_nr = length
@@ -33,5 +34,11 @@ def featuresIterator(features_list, expected_targets, length, step):
         if expected_index < len(expected_targets) and packet_nr >= expected_targets[expected_index][1]:
             expected_target = expected_targets[expected_index][0]
             expected_index += 1
-        # print i, packet_nr, expected_target
-        yield result, expected_target
+            packet_at_change = packet_nr
+        if not skip_after_change:
+            # print i, packet_nr, expected_target
+            yield result, expected_target
+        else:
+            if packet_nr - packet_at_change >= length:
+                # print i, packet_nr, expected_target
+                yield result, expected_target
