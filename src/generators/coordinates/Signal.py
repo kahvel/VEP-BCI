@@ -1,33 +1,35 @@
-from generators.coordinates import SignalProcessing
+from generators.coordinates import SignalProcessing, Generator
 
 
-class AbstractSignal(object):
-    def signalPipeline(self, signal, window):
-        detrended_signal = self.detrendSignal(signal)
-        filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
-        windowed_signal = self.windowSignal(filtered_signal, window)
-        return windowed_signal
-
-
-class AverageSignal(AbstractSignal, SignalProcessing.AverageSignal):
+class AverageSignal(SignalProcessing.SignalPipeline):
     def __init__(self):
-        AbstractSignal.__init__(self)
-        SignalProcessing.AverageSignal.__init__(self, self.signalPipeline)
+        SignalProcessing.SignalPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.AverageSignalGenerator(self.signalPipeline)
 
 
-class Signal(AbstractSignal, SignalProcessing.Signal):
+class Signal(SignalProcessing.SignalPipeline):
     def __init__(self):
-        AbstractSignal.__init__(self)
-        SignalProcessing.Signal.__init__(self, self.signalPipeline)
+        SignalProcessing.SignalPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.SignalGenerator(self.signalPipeline)
 
 
-class SumSignal(AbstractSignal, SignalProcessing.SumSignal):
+class SumSignal(SignalProcessing.SignalPipeline):
     def __init__(self):
-        AbstractSignal.__init__(self)
-        SignalProcessing.SumSignal.__init__(self, self.signalPipeline)
+        SignalProcessing.SignalPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.SumSignalGenerator(self.signalPipeline)
 
 
-class SumAverageSignal(AbstractSignal, SignalProcessing.SumAverageSignal):
+class SumAverageSignal(SignalProcessing.SignalPipeline):
     def __init__(self):
-        AbstractSignal.__init__(self)
-        SignalProcessing.SumAverageSignal.__init__(self, self.signalPipeline)
+        SignalProcessing.SignalPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.SumAverageSignalGenerator(self.signalPipeline)
+
+

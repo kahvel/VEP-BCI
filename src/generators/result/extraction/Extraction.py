@@ -1,10 +1,10 @@
 import constants as c
-from generators import Generator
+from generators import AbstractGenerator
 from generators.result.extraction import ExtractionWithReferenceSignals, PsdaExtraction
 from generators.coordinates import Signal, PSD
 
 
-class Extraction(Generator.AbstractMyGenerator):
+class Extraction(AbstractGenerator.AbstractMyGenerator):
     def __init__(self, connection, name):
         """
         Class that handles messages. First messages are received, then sent to coordinates generators, then the
@@ -13,7 +13,7 @@ class Extraction(Generator.AbstractMyGenerator):
         :param name:
         :return:
         """
-        Generator.AbstractMyGenerator.__init__(self)
+        AbstractGenerator.AbstractMyGenerator.__init__(self)
         self.connection = connection
         """ @type : ConnectionProcessEnd.ExtractionConnection """
         self.name = name
@@ -80,7 +80,7 @@ class PsdaMethod(Extraction):
         self.options = self.connection.receiveOptions()
         self.sensors = tuple(self.options[c.DATA_SENSORS])
         self.setupCoordinatesGenerator()
-        Generator.AbstractMyGenerator.setup(self, self.options)
+        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
         return c.SUCCESS_MESSAGE
 
 
@@ -118,7 +118,7 @@ class MethodWithReferenceSignals(Extraction):
         self.options = self.connection.receiveOptions()
         self.sensors = tuple(self.options[c.DATA_SENSORS])
         self.setupCoordinatesGenerator()
-        Generator.AbstractMyGenerator.setup(self, self.options)
+        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
         return c.SUCCESS_MESSAGE
 
     def setupCoordinatesGenerator(self):

@@ -2,12 +2,12 @@ import numpy as np
 import scipy.interpolate
 
 import constants as c
-from generators import Generator
+from generators import AbstractGenerator
 
 
-class PsdaExtraction(Generator.AbstractExtracionGenerator):
+class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
     def __init__(self):
-        Generator.AbstractExtracionGenerator.__init__(self)
+        AbstractGenerator.AbstractExtracionGenerator.__init__(self)
         self.interpolation = None
         self.fft_bins = None
         self.menu_key_to_scipy_key = {
@@ -20,7 +20,7 @@ class PsdaExtraction(Generator.AbstractExtracionGenerator):
         }
 
     def setup(self, options):
-        Generator.AbstractExtracionGenerator.setup(self, options)
+        AbstractGenerator.AbstractExtracionGenerator.setup(self, options)
         self.interpolation = self.getInterpolation(options[c.DATA_OPTIONS])
         self.fft_bins = np.fft.rfftfreq(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])[1:]*c.HEADSET_FREQ
 

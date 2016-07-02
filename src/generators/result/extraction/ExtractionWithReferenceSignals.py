@@ -3,17 +3,17 @@ import sklearn.cross_decomposition
 from sklearn import preprocessing
 
 import constants as c
-from generators import Generator
+from generators import AbstractGenerator
 
 
-class ExtractionWithReferenceSignals(Generator.AbstractExtracionGenerator):
+class ExtractionWithReferenceSignals(AbstractGenerator.AbstractExtracionGenerator):
     def __init__(self):
         """
         The class which Extraction uses to extract features. Extraction receives messages and sends it here.
         This class does all the processing and sends back the extracted feature (correlation with reference signals).
         :return:
         """
-        Generator.AbstractExtracionGenerator.__init__(self)
+        AbstractGenerator.AbstractExtracionGenerator.__init__(self)
         self.reference_signals = None
 
     def getReferenceSignals(self, length, target_freqs):
@@ -69,7 +69,7 @@ class CcaExtraction(ExtractionWithReferenceSignals):
         self.model = None
 
     def setup(self, options):
-        Generator.AbstractExtracionGenerator.setup(self, options)
+        AbstractGenerator.AbstractExtracionGenerator.setup(self, options)
         self.model = sklearn.cross_decomposition.CCA(n_components=1)
         self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS].values())
 
@@ -92,7 +92,7 @@ class LrtExtraction(ExtractionWithReferenceSignals):
         :param options: Dictionary of options
         :return:
         """
-        Generator.AbstractExtracionGenerator.setup(self, options)
+        AbstractGenerator.AbstractExtracionGenerator.setup(self, options)
         self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS].values())
         for i in range(len(self.reference_signals)):
             preprocessing.scale(self.reference_signals[i], axis=1, with_std=False)

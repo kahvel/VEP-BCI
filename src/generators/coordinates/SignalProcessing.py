@@ -2,47 +2,25 @@ import scipy.signal
 import numpy as np
 
 import constants as c
-from generators import Generator
+from generators import AbstractGenerator
 
 
-class SignalProcessing(Generator.AbstractMyGenerator):
+class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
     def __init__(self):
-        Generator.AbstractMyGenerator.__init__(self)
+        AbstractGenerator.AbstractMyGenerator.__init__(self)
         self.options = None
         self.channels = None
         self.window_function = None
         self.filter_coefficients = None
         self.breakpoints = None
         self.filter_prev_state = None
-        self.menu_key_to_scipy_key = {
-            c.WINDOW_HANNING:  c.SCIPY_WINDOW_HANNING,
-            c.WINDOW_HAMMING:  c.SCIPY_WINDOW_HAMMING,
-            c.WINDOW_BLACKMAN: c.SCIPY_WINDOW_BLACKMAN,
-            c.WINDOW_KAISER:   c.SCIPY_WINDOW_KAISER,
-            c.WINDOW_BARTLETT: c.SCIPY_WINDOW_BARTLETT
-        }
 
     def setup(self, options):
-        Generator.AbstractMyGenerator.setup(self, options)
+        AbstractGenerator.AbstractMyGenerator.setup(self, options)
         self.options = options[c.DATA_OPTIONS]
-        self.window_function = self.getWindowFunction(self.options, self.options[c.OPTIONS_LENGTH])
         self.filter_coefficients = self.getFilter(self.options)
         self.breakpoints = self.getBreakpoints(self.options)
         self.filter_prev_state = self.getFilterPrevState([0])
-
-    def getWindowWithArgs(self, options):
-        if options[c.OPTIONS_WINDOW] == c.WINDOW_KAISER:
-            return c.SCIPY_WINDOW_KAISER, options[c.OPTIONS_ARG]
-        else:
-            return self.menu_key_to_scipy_key[options[c.OPTIONS_WINDOW]]
-
-    def getWindowFunction(self, options, length):
-        if options[c.OPTIONS_WINDOW] == c.WINDOW_NONE:
-            return None
-        elif options[c.OPTIONS_WINDOW] in c.WINDOW_FUNCTION_NAMES:
-            return scipy.signal.get_window(self.getWindowWithArgs(options), length)
-        else:
-            raise ValueError("Illegal window value in getWindowFunction: " + options[c.OPTIONS_WINDOW])
 
     def getFilter(self, options):
         if options[c.OPTIONS_FILTER] == c.NONE_FILTER:
@@ -109,19 +87,19 @@ class SignalProcessing(Generator.AbstractMyGenerator):
         else:
             raise ValueError("Illegal filter value in filterPrevState: " + self.options[c.OPTIONS_FILTER])
 
+    def signalPipeline(self, signal, window):
+        raise NotImplementedError("signalPipeline not implemented!")
+
 
 class SignalPipeline(SignalProcessing):
-    def __init__(self, signalPipeline):
-        SignalProcessing.__init__(self)
-        self.signalPipeline = signalPipeline
+    def signalPipeline(self, signal, window):
+        detrended_signal = self.detrendSignal(signal)
+        filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
+        windowed_signal = self.windowSignal(filtered_signal, window)
+        return windowed_signal
 
-    def getSegment(self, array, i):
-        if array is not None:
-            step = self.options[c.OPTIONS_STEP]
-            return array[i*step:i*step+step]
-        else:
-            return None
 
+class PsdPipeline(SignalProcessing):
     def normaliseSpectrum(self, fft):
         if self.options[c.OPTIONS_NORMALISE]:
             result = (fft/sum(fft))[1:]
@@ -130,95 +108,10 @@ class SignalPipeline(SignalProcessing):
             result = np.log10(fft)[1:]
             return result
 
-    def innerPipeline(self, signal, window):
-        raise NotImplementedError("innerPipeline not implemented!")
-
-    def processSumSignals(self, signal, pipelineFunction):
-        raise NotImplementedError("processSumSignals not implemented!")
-
-    def processSignal(self, signal, segment, i, k, pipelineFunction):
-        raise NotImplementedError("processSignal not implemented!")
-
-    def processShortSignal(self, signal, i, pipelineFunction):
-        raise NotImplementedError("processShortSignal not implemented!")
-
-
-class AverageSignal(SignalPipeline):
-    def __init__(self, signalPipeline):
-        SignalPipeline.__init__(self, signalPipeline)
-
-    def getGenerator(self, options):
-        return Generator.Generator(
-            self.processSignal,
-            self.processShortSignal,
-            self.signalPipeline
-        )
-
-    def processSignal(self, signal, segment, i, k, pipelineFunction):
-        step = len(segment)
-        for j in range(step):
-            signal[i*step+j] = (signal[i*step+j] * (k - 1) + segment[j]) / k
-        return pipelineFunction(signal, self.window_function)
-
-    def processShortSignal(self, signal, i, pipelineFunction):
-        return pipelineFunction(signal, self.getSegment(self.window_function, i))
-
-
-class Signal(SignalPipeline):
-    def __init__(self, signalPipeline):
-        SignalPipeline.__init__(self, signalPipeline)
-
-    def getGenerator(self, options):
-        return Generator.Generator(
-            self.processSignal,
-            self.processShortSignal,
-            self.signalPipeline
-        )
-
-    def processSignal(self, signal, segment, i, k, pipelineFunction):
-        signal.extend(segment)
-        del signal[:len(segment)]
-        return pipelineFunction(signal, self.window_function)
-
-    def processShortSignal(self, signal, i, pipelineFunction):
-        return pipelineFunction(signal, self.getWindowFunction(self.options, len(signal)))
-
-
-class SumSignal(Signal):
-    def __init__(self, signalPipeline):
-        Signal.__init__(self, signalPipeline)
-
-    def getGenerator(self, options):
-        return Generator.SumGenerator(
-            self.processSignal,
-            self.processShortSignal,
-            self.innerPipeline,
-            self.signalPipeline,
-            self.processSumSignals
-        )
-
-    def innerPipeline(self, signal, window):
-        return signal
-
-    def processSumSignals(self, signal, pipelineFunction):
-        return pipelineFunction(signal, self.getWindowFunction(self.options, len(signal)))
-
-
-class SumAverageSignal(AverageSignal):
-    def __init__(self, signalPipeline):
-        AverageSignal.__init__(self, signalPipeline)
-
-    def getGenerator(self, options):
-        return Generator.SumGenerator(
-            self.processSignal,
-            self.processShortSignal,
-            self.innerPipeline,
-            self.signalPipeline,
-            self.processSumSignals
-        )
-
-    def innerPipeline(self, signal, window):
-        return signal
-
-    def processSumSignals(self, signal, pipelineFunction):
-        return pipelineFunction(signal, self.window_function)
+    def signalPipeline(self, signal, window):
+        detrended_signal = self.detrendSignal(signal)
+        filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
+        windowed_signal = self.windowSignal(filtered_signal, window)
+        amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
+        normalised_spectrum = self.normaliseSpectrum(amplitude_spectrum)
+        return normalised_spectrum

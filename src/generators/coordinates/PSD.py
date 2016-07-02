@@ -1,37 +1,33 @@
-import numpy as np
-
-from generators.coordinates import SignalProcessing
+from generators.coordinates import SignalProcessing, Generator
 
 
-class AbstractPSD(object):
-    def signalPipeline(self, signal, window):
-        detrended_signal = self.detrendSignal(signal)
-        filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
-        windowed_signal = self.windowSignal(filtered_signal, window)
-        amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
-        normalised_spectrum = self.normaliseSpectrum(amplitude_spectrum)
-        return normalised_spectrum
-
-
-class PSD(AbstractPSD, SignalProcessing.Signal):
+class PSD(SignalProcessing.PsdPipeline):
     def __init__(self):
-        AbstractPSD.__init__(self)
-        SignalProcessing.Signal.__init__(self, self.signalPipeline)
+        SignalProcessing.PsdPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.SignalGenerator(self.signalPipeline)
 
 
-class AveragePSD(AbstractPSD, SignalProcessing.AverageSignal):
+class AveragePSD(SignalProcessing.PsdPipeline):
     def __init__(self):
-        AbstractPSD.__init__(self)
-        SignalProcessing.AverageSignal.__init__(self, self.signalPipeline)
+        SignalProcessing.PsdPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.AverageSignalGenerator(self.signalPipeline)
 
 
-class SumAveragePSD(AbstractPSD, SignalProcessing.SumAverageSignal):
+class SumAveragePSD(SignalProcessing.PsdPipeline):
     def __init__(self):
-        AbstractPSD.__init__(self)
-        SignalProcessing.SumAverageSignal.__init__(self, self.signalPipeline)
+        SignalProcessing.PsdPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.SumAverageSignalGenerator(self.signalPipeline)
 
 
-class SumPsd(AbstractPSD, SignalProcessing.SumSignal):
+class SumPsd(SignalProcessing.PsdPipeline):
     def __init__(self):
-        AbstractPSD.__init__(self)
-        SignalProcessing.SumSignal.__init__(self, self.signalPipeline)
+        SignalProcessing.PsdPipeline.__init__(self)
+
+    def getGenerator(self, options):
+        return Generator.SumSignalGenerator(self.signalPipeline)

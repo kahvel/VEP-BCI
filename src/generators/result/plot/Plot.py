@@ -1,13 +1,13 @@
 import pyqtgraph as pg
 
 import constants as c
-from generators import Generator
+from generators import AbstractGenerator
 from generators.coordinates import Signal, PSD
 
 
-class Plot(Generator.AbstractMyGenerator):
+class Plot(AbstractGenerator.AbstractMyGenerator):
     def __init__(self, connection):
-        Generator.AbstractMyGenerator.__init__(self)
+        AbstractGenerator.AbstractMyGenerator.__init__(self)
         self.connection = connection
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
@@ -31,7 +31,7 @@ class Plot(Generator.AbstractMyGenerator):
     def setup(self, options=None):
         options = self.connection.receiveOptions()
         self.sensors = options[c.DATA_SENSORS]
-        Generator.AbstractMyGenerator.setup(self, options)
+        AbstractGenerator.AbstractMyGenerator.setup(self, options)
         self.closeWindow()
         self.newWindow(self.getTitle(options))
         return c.SUCCESS_MESSAGE
