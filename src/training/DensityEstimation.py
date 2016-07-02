@@ -94,7 +94,7 @@ class DensityEstimator(ResultsParser):
 
     def setSubplot(self):
         if self.plot_histogram or self.plot_kde:
-            plt.subplot(5, 3, self.counter)
+            plt.subplot(6, 3, self.counter)
         self.counter += 1
 
     def plotHistogram(self, data):
@@ -118,7 +118,7 @@ class DensityEstimator(ResultsParser):
                     max(result[frequency][expected_frequency]),
                     len(result[frequency][expected_frequency])
                 )])
-                bandwidth = (x[1][0] - x[0][0])*3
+                bandwidth = (x[1][0] - x[0][0])*30
                 kde = KernelDensity(bandwidth=bandwidth)
                 observations = np.transpose([result[frequency][expected_frequency]])
                 kde.fit(observations)
@@ -196,50 +196,38 @@ def multiplyDensitiesDifferentFrequencies(frequencies_list, densities):
         result[expected_frequency] = value
     return result
 
-
-training_x, training_y, training_frequencies = readFeatures(
-    "../save/test5_results_1.txt",
-    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
-    1
-)
-
-training_x2, training_y2, training_frequencies2 = readFeatures(
-    "../save/test5_results_2.txt",
-    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
-    2
-)
-
-testing_x, testing_y, testing_frequencies = readFeatures(
-    "../save/test5_results_3.txt",
-    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
-    3
-)
-
-
 train_length = 256
 train_step = 32
-
-train_length2 = 256
-train_step2 = 32
 
 test_length = 256
 test_step = 32
 
-frequencies_list = sorted(training_frequencies.values())
 dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))["Weights"]
 
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
-for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
-    expected_frequency = training_frequencies[expected_target]
-    feature_grouper.setExpectedTarget(expected_frequency)
-    feature_grouper.parseResults(extracted_features)
-for extracted_features, expected_target in featuresIterator(training_x2, training_y2, train_length2, train_step2, skip_after_change=True):
-    expected_frequency = training_frequencies[expected_target]
-    feature_grouper.setExpectedTarget(expected_frequency)
-    feature_grouper.parseResults(extracted_features)
+for i in [1,2,3,5,6]:
+    eeg_file_name = "C:\\Users\\Anti\\Desktop\\eeg\\" + str(i) + ".txt"
+    result_file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\" + str(i) + "_result.txt"
+    training_x, training_y, training_frequencies = readFeatures(
+        result_file_name,
+        eeg_file_name,
+        1
+    )
+    for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
+        expected_frequency = training_frequencies[expected_target]
+        feature_grouper.setExpectedTarget(expected_frequency)
+        feature_grouper.parseResults(extracted_features)
 grouped_features = feature_grouper.parse_result
 # print grouped_features
+
+testing_x, testing_y, testing_frequencies = readFeatures(
+    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\7_result.txt",
+    "C:\\Users\\Anti\\Desktop\\eeg\\7.txt",
+    1
+)
+
+frequencies_list = sorted(training_frequencies.values())
 
 group_normaliser = GroupNormaliser(frequencies_list)
 group_normaliser.setup(dummy_parameters)
@@ -277,7 +265,7 @@ for extracted_features, expected_target in featuresIterator(testing_x, testing_y
     multiplied_densities = multiplyDensities(frequencies_list, grouped_densities)
     # print multiplied_densities
     multiplied_densities_final = multiplyDensitiesDifferentFrequencies(frequencies_list, multiplied_densities)
-    print multiplied_densities_final
+    # print multiplied_densities_final
     expected_frequency = testing_frequencies[expected_target]
     predicted_frequency = sorted(map(lambda x: (x[1], x[0]), multiplied_densities_final.items()), reverse=True)[0][1]
     correct += expected_frequency == predicted_frequency

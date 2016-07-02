@@ -236,7 +236,7 @@ class TargetIdentification(object):
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
             differences = self.difference_finder.parseResults(results)
-            if all(self.difference_finder.comparison):
+            if sum(self.difference_finder.comparison) >= len(self.difference_finder.comparison):
                 frequency = self.prev_results.getFrequency(freq_weights)
                 if frequency is not None:
                     result_frequency = self.actual_results.getFrequency({frequency: 1})

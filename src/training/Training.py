@@ -40,10 +40,15 @@ target_identification = TargetIdentification.TargetIdentification(master_connect
 # )
 
 features_list, expected, frequencies = readFeatures(
-    "../save/eeg_new_detrend2.txt",
-    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\eeg_new.txt",
+    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\3_result_5.txt",
+    "C:\\Users\\Anti\\Desktop\\eeg\\3.txt",
     1
 )
+
+# frequencies[4] = (frequencies.values()[0] + frequencies.values()[1])/2
+# frequencies[5] = (frequencies.values()[2] + frequencies.values()[1])/2
+
+print frequencies
 
 parameter_handler = NewTrainingParameterHandler()
 
@@ -96,7 +101,7 @@ def costFunction(numbers, options_handler, frequencies):
 # print counter
 # print result
 costFunction(
-    (1, 1, None, 1, 1, 0.01, 0.01, None, 0.02, 0.005, 1, 0.005),
+    (0.5, 0.5, 0.5, 0.5, 1, 0.05, 0.05, 0.05, 0.1, 0.05, 1, 0.005),
     parameter_handler,
     frequencies
 )
