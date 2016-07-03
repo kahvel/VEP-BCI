@@ -38,6 +38,8 @@ class AbstractExtracionGenerator(AbstractPythonGenerator):
         self.short_signal = None
         self.reference_signals = None
         self.target_freqs = None
+        self.projection_matrix = None
+        self.flat_reference_signals = None
 
     def getReferenceSignals(self, length, target_freqs, all_harmonics):
         """
@@ -66,6 +68,13 @@ class AbstractExtracionGenerator(AbstractPythonGenerator):
             self.getHarmonicsForReferenceSignals(options)
         )
         self.short_signal = True
+        self.flat_reference_signals = [signal for sublist in self.reference_signals for signal in sublist]
+        self.projection_matrix = self.calculateProjectionMatrix(self.flat_reference_signals)
+
+    def calculateProjectionMatrix(self, At):
+        A = np.transpose(At)
+        AtA_inverse = np.linalg.inv(np.dot(At, A))
+        return np.dot(np.dot(A, AtA_inverse), At)
 
     def getHarmonicsForReferenceSignals(self, options):
         return [options[c.DATA_HARMONICS]]*len(options[c.DATA_FREQS])
