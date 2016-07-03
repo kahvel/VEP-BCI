@@ -32,13 +32,19 @@ class Extraction(AbstractGenerator.AbstractMyGenerator):
 
     def setup(self, options=None):
         """
-        This override is required because otherwise it is not possible to call setup without arguments in
+        :param options: Always none because otherwise it is not possible to call setup without arguments in
         ConnectionProcessEnd waitMessages method. On the other hand it is subclass of AbstractMyGenerator whose setup
         does take argument.
-        :param options: None
         :return:
         """
-        raise NotImplementedError("setup not implemented!")
+        self.options = self.connection.receiveOptions()
+        self.sensors = tuple(self.options[c.DATA_SENSORS])
+        self.setupCoordinatesGenerator()
+        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
+        return c.SUCCESS_MESSAGE
+
+    def setupCoordinatesGenerator(self):
+        raise NotImplementedError("setupCoordinatesGenerator not implemented!")
 
     # def update(self):
     #     pg.QtGui.QApplication.processEvents()
@@ -76,13 +82,6 @@ class PsdaMethod(Extraction):
         self.coordinates_generator = self.getCoordinatesGenerator()
         self.coordinates_generator.setup(self.options)
 
-    def setup(self, options=None):
-        self.options = self.connection.receiveOptions()
-        self.sensors = tuple(self.options[c.DATA_SENSORS])
-        self.setupCoordinatesGenerator()
-        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
-        return c.SUCCESS_MESSAGE
-
 
 class SumPsda(PsdaMethod):
     def __init__(self, connection):
@@ -113,13 +112,6 @@ class MethodWithReferenceSignals(Extraction):
 
     def getCoordinatesGenerator(self):
         return [Signal.Signal() for _ in range(len(self.sensors))]
-
-    def setup(self, options=None):
-        self.options = self.connection.receiveOptions()
-        self.sensors = tuple(self.options[c.DATA_SENSORS])
-        self.setupCoordinatesGenerator()
-        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
-        return c.SUCCESS_MESSAGE
 
     def setupCoordinatesGenerator(self):
         self.coordinates_generators = self.getCoordinatesGenerator()
