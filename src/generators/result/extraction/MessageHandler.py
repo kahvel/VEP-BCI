@@ -1,10 +1,10 @@
 import constants as c
 from generators import AbstractGenerator
-from generators.result.extraction import ExtractionWithReferenceSignals, PsdaExtraction
+from generators.result.extraction import SignalExtraction, PsdaExtraction
 from generators.coordinates import Signal, PSD
 
 
-class Extraction(AbstractGenerator.AbstractMyGenerator):
+class MessageHandler(AbstractGenerator.AbstractMyGenerator):
     def __init__(self, connection, name):
         """
         Class that handles messages. First messages are received, then sent to coordinates generators, then the
@@ -32,13 +32,19 @@ class Extraction(AbstractGenerator.AbstractMyGenerator):
 
     def setup(self, options=None):
         """
-        This override is required because otherwise it is not possible to call setup without arguments in
+        :param options: Always none because otherwise it is not possible to call setup without arguments in
         ConnectionProcessEnd waitMessages method. On the other hand it is subclass of AbstractMyGenerator whose setup
-        does take argument.
-        :param options: None
+        does take an argument. Options are received via connection.
         :return:
         """
-        raise NotImplementedError("setup not implemented!")
+        self.options = self.connection.receiveOptions()
+        self.sensors = tuple(self.options[c.DATA_SENSORS])
+        self.setupCoordinatesGenerator()
+        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
+        return c.SUCCESS_MESSAGE
+
+    def setupCoordinatesGenerator(self):
+        raise NotImplementedError("setupCoordinatesGenerator not implemented!")
 
     # def update(self):
     #     pg.QtGui.QApplication.processEvents()
@@ -47,9 +53,9 @@ class Extraction(AbstractGenerator.AbstractMyGenerator):
         raise NotImplementedError("getCoordinatesGenerator not implemented!")
 
 
-class PsdaMethod(Extraction):
+class PsdaMethod(MessageHandler):
     def __init__(self, connection, name):
-        Extraction.__init__(self, connection, name)
+        MessageHandler.__init__(self, connection, name)
 
     def start(self):
         while True:
@@ -76,13 +82,6 @@ class PsdaMethod(Extraction):
         self.coordinates_generator = self.getCoordinatesGenerator()
         self.coordinates_generator.setup(self.options)
 
-    def setup(self, options=None):
-        self.options = self.connection.receiveOptions()
-        self.sensors = tuple(self.options[c.DATA_SENSORS])
-        self.setupCoordinatesGenerator()
-        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
-        return c.SUCCESS_MESSAGE
-
 
 class SumPsda(PsdaMethod):
     def __init__(self, connection):
@@ -106,20 +105,13 @@ class Psda(PsdaMethod):
         return PsdaExtraction.PsdaExtraction()
 
 
-class MethodWithReferenceSignals(Extraction):
+class SignalMethod(MessageHandler):
     def __init__(self, connection, name):
-        Extraction.__init__(self, connection, name)
+        MessageHandler.__init__(self, connection, name)
         self.coordinates_generators = None
 
     def getCoordinatesGenerator(self):
         return [Signal.Signal() for _ in range(len(self.sensors))]
-
-    def setup(self, options=None):
-        self.options = self.connection.receiveOptions()
-        self.sensors = tuple(self.options[c.DATA_SENSORS])
-        self.setupCoordinatesGenerator()
-        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
-        return c.SUCCESS_MESSAGE
 
     def setupCoordinatesGenerator(self):
         self.coordinates_generators = self.getCoordinatesGenerator()
@@ -150,17 +142,25 @@ class MethodWithReferenceSignals(Extraction):
                     self.connection.sendMessage(None)
 
 
-class CCA(MethodWithReferenceSignals):
+class CCA(SignalMethod):
     def __init__(self, connection):
-        MethodWithReferenceSignals.__init__(self, connection, c.CCA)
+        SignalMethod.__init__(self, connection, c.CCA)
 
     def getGenerator(self, options):
-        return ExtractionWithReferenceSignals.CcaExtraction()
+        return SignalExtraction.CcaExtraction()
 
 
-class LRT(MethodWithReferenceSignals):
+class LRT(SignalMethod):
     def __init__(self, connection):
-        MethodWithReferenceSignals.__init__(self, connection, c.LRT)
+        SignalMethod.__init__(self, connection, c.LRT)
 
     def getGenerator(self, options):
-        return ExtractionWithReferenceSignals.LrtExtraction()
+        return SignalExtraction.LrtExtraction()
+
+
+class PsdaSnrMethod(SignalMethod):
+    def __init__(self, connection):
+        SignalMethod.__init__(self, connection, c.SNR_PSDA)
+
+    def getGenerator(self, options):
+        return SignalExtraction.PsdaSnrExtraction()

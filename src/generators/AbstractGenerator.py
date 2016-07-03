@@ -1,4 +1,3 @@
-import numpy as np
 import constants as c
 
 
@@ -36,48 +35,11 @@ class AbstractExtracionGenerator(AbstractPythonGenerator):
         AbstractPythonGenerator.__init__(self)
         self.harmonics = None
         self.short_signal = None
-        self.reference_signals = None
-        self.target_freqs = None
-        self.projection_matrix = None
-        self.flat_reference_signals = None
-
-    def getReferenceSignals(self, length, target_freqs, all_harmonics):
-        """
-        Returns reference signals grouped per target. Each target has number of harmonics times two reference signals,
-        that is sine and cosine for each harmonic.
-        :param length:
-        :param target_freqs:
-        :return:
-        """
-        reference_signals = []
-        t = np.arange(0, length, step=1.0)/c.HEADSET_FREQ
-        for freq, harmonics in zip(target_freqs, all_harmonics):
-            reference_signals.append([])
-            for harmonic in harmonics:
-                reference_signals[-1].append(np.sin(np.pi*2*harmonic*freq*t))
-                reference_signals[-1].append(np.cos(np.pi*2*harmonic*freq*t))
-        return reference_signals
 
     def setup(self, options):
         AbstractPythonGenerator.setup(self, options)
-        self.target_freqs = options[c.DATA_FREQS]
         self.harmonics = self.getHarmonics(options)
-        self.reference_signals = self.getReferenceSignals(
-            options[c.DATA_OPTIONS][c.OPTIONS_LENGTH],
-            self.target_freqs.values(),
-            self.getHarmonicsForReferenceSignals(options)
-        )
         self.short_signal = True
-        self.flat_reference_signals = [signal for sublist in self.reference_signals for signal in sublist]
-        self.projection_matrix = self.calculateProjectionMatrix(self.flat_reference_signals)
-
-    def calculateProjectionMatrix(self, At):
-        A = np.transpose(At)
-        AtA_inverse = np.linalg.inv(np.dot(At, A))
-        return np.dot(np.dot(A, AtA_inverse), At)
-
-    def getHarmonicsForReferenceSignals(self, options):
-        return [options[c.DATA_HARMONICS]]*len(options[c.DATA_FREQS])
 
     def getHarmonics(self, options):
         return options[c.DATA_HARMONICS]

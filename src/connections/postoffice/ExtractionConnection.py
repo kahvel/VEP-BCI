@@ -1,12 +1,12 @@
 import copy
 
 from connections import Connections
-from connections.postoffice import ConnectionPostOfficeEnd, MyQueue
-from generators.result.extraction import Extraction
+from connections.postoffice import ConnectionPostOfficeEnd
+from generators.result.extraction import MessageHandler
 import constants as c
 
 
-class ExtractionConnection(object):
+class ExtractionConnection(Connections.MultipleConnections):
     def receiveExtractionMessages(self):
         result = {}
         for connection in self.connections:
@@ -20,10 +20,9 @@ class ExtractionConnection(object):
         connection.setId(id)
 
 
-class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnections):
+class ExtractionTabConnection(ExtractionConnection):
     def __init__(self):
         ExtractionConnection.__init__(self)
-        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self):
         return ExtractionMethodConnection()
@@ -49,18 +48,9 @@ class ExtractionTabConnection(ExtractionConnection, Connections.MultipleConnecti
         return dict_copy
 
 
-class TrainingExtractionTabConnection(ExtractionTabConnection):
-    def __init__(self):
-        ExtractionTabConnection.__init__(self)
-
-    def getConnection(self):
-        return TrainingExtractionMethodConnection()
-
-
-class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConnections):
+class ExtractionMethodConnection(ExtractionConnection):
     def __init__(self):
         ExtractionConnection.__init__(self)
-        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self, method):
         if method == c.SUM_PSDA:
@@ -75,13 +65,13 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
     def getSumPsda(self):
-        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.SumPsda)
+        return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.SumPsda)
 
     def getCca(self):
-        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.CCA)
+        return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.CCA)
 
     def getLrt(self):
-        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.LRT)
+        return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.LRT)
 
     def setup(self, all_options):
         self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed
@@ -100,24 +90,9 @@ class ExtractionMethodConnection(ExtractionConnection, Connections.MultipleConne
         return dict_copy
 
 
-class TrainingExtractionMethodConnection(ExtractionMethodConnection):
-    def __init__(self):
-        ExtractionMethodConnection.__init__(self)
-
-    def getSumPsda(self):
-        return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)
-
-    def getCca(self):
-        return MyQueue.PostOfficeQueueConnection(Extraction.CCA)
-
-    def getLrt(self):
-        return MyQueue.PostOfficeQueueConnection(Extraction.LRT)
-
-
-class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConnections):
+class ExtractionSensorConnection(ExtractionConnection):
     def __init__(self):
         ExtractionConnection.__init__(self)
-        Connections.MultipleConnections.__init__(self)
 
     def getConnection(self, method):
         if method == c.PSDA:
@@ -126,7 +101,7 @@ class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConne
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
     def getPsda(self):
-        return ConnectionPostOfficeEnd.ExtractionConnection(Extraction.Psda)
+        return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.Psda)
 
     def setup(self, all_options):
         self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed
@@ -140,11 +115,3 @@ class ExtractionSensorConnection(ExtractionConnection, Connections.MultipleConne
         dict_copy = copy.deepcopy(all_options)
         dict_copy[c.DATA_SENSORS] = [sensor]
         return dict_copy
-
-
-class TrainingExtractionSensorConnection(ExtractionSensorConnection):
-    def __init__(self):
-        ExtractionSensorConnection.__init__(self)
-
-    def getPsda(self):
-        return MyQueue.PostOfficeQueueConnection(Extraction.SumPsda)

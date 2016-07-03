@@ -212,12 +212,11 @@ SETUP_BUTTON = "Setup"
 # Extraction method buttons
 PSDA = "PSDA"
 SUM_PSDA = "Sum PSDA"
+SNR_PSDA = "SNR PSDA"
 CCA = "CCA"
 BOTH = "Both"
 SUM_BOTH = "Sum Both"
 LRT = "LRT"
-
-EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, CCA, BOTH, SUM_BOTH, "shortCCAPSDA")
 
 # Plot type buttons
 SIGNAL = "Signal"
