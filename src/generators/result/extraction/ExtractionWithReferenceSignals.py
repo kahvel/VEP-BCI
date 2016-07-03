@@ -14,25 +14,9 @@ class ExtractionWithReferenceSignals(AbstractGenerator.AbstractExtracionGenerato
         :return:
         """
         AbstractGenerator.AbstractExtracionGenerator.__init__(self)
-        self.reference_signals = None
 
-    def getReferenceSignals(self, length, target_freqs):
-        """
-        Returns reference signals grouped per target. Each target has number of harmonics times two reference signals,
-        that is sine and cosine for each harmonic.
-        :param length:
-        :param target_freqs:
-        :return:
-        """
-        reference_signals = []
-        t = np.arange(0, length, step=1.0)/c.HEADSET_FREQ
-        self.harmonics = [self.harmonics]*len(target_freqs)
-        for freq, harmonics in zip(target_freqs, self.harmonics):
-            reference_signals.append([])
-            for harmonic in harmonics:
-                reference_signals[-1].append(np.sin(np.pi*2*harmonic*freq*t))
-                reference_signals[-1].append(np.cos(np.pi*2*harmonic*freq*t))
-        return reference_signals
+    def getHarmonics(self, options):
+        return self.getHarmonicsForReferenceSignals(options)
 
     def getReferenceSignal(self, target_reference, length):
         if self.short_signal:
@@ -71,7 +55,6 @@ class CcaExtraction(ExtractionWithReferenceSignals):
     def setup(self, options):
         AbstractGenerator.AbstractExtracionGenerator.setup(self, options)
         self.model = sklearn.cross_decomposition.CCA(n_components=1)
-        self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS].values())
 
     def getCorr(self, signal, reference):
         self.model.fit(signal, reference)
@@ -86,14 +69,14 @@ class LrtExtraction(ExtractionWithReferenceSignals):
 
     def setup(self, options):
         """
-        Create reference signals and centralise them (along samples).
-        AbstractExtractionGenerator sets self.harmonics value from options and self.short_signal to True.
-        In addition calls AbstractPythonGenerator setup which sets self.generator value using self.getGenerator and sends None to it.
+        Centralise reference signals (along samples).
+        AbstractExtractionGenerator sets self.harmonics, self.target_freqs and self.reference_signals value from options
+        and self.short_signal to True. In addition calls AbstractPythonGenerator setup which sets self.generator value
+        using self.getGenerator and sends None to it.
         :param options: Dictionary of options
         :return:
         """
         AbstractGenerator.AbstractExtracionGenerator.setup(self, options)
-        self.reference_signals = self.getReferenceSignals(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH], options[c.DATA_FREQS].values())
         for i in range(len(self.reference_signals)):
             preprocessing.scale(self.reference_signals[i], axis=1, with_std=False)
 
@@ -114,4 +97,3 @@ class LrtExtraction(ExtractionWithReferenceSignals):
         p2 = reference.shape[1]
         C = 1-V**(1.0/p2)
         return C
-
