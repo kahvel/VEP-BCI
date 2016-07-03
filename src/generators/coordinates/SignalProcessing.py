@@ -5,9 +5,9 @@ import constants as c
 from generators import AbstractGenerator
 
 
-class SignalProcessing(AbstractGenerator.SignalProcessingGenerator):
+class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
     def __init__(self):
-        AbstractGenerator.SignalProcessingGenerator.__init__(self)
+        AbstractGenerator.AbstractMyGenerator.__init__(self)
         self.options = None
         self.channels = None
         self.window_function = None
@@ -16,7 +16,7 @@ class SignalProcessing(AbstractGenerator.SignalProcessingGenerator):
         self.filter_prev_state = None
 
     def setup(self, options):
-        AbstractGenerator.SignalProcessingGenerator.setup(self, options)
+        AbstractGenerator.AbstractMyGenerator.setup(self, options)
         self.options = options[c.DATA_OPTIONS]
         self.filter_coefficients = self.getFilter(self.options)
         self.breakpoints = self.getBreakpoints(self.options)
