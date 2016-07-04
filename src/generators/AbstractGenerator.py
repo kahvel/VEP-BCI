@@ -1,4 +1,3 @@
-import constants as c
 
 
 class AbstractGenerator(object):
@@ -12,38 +11,44 @@ class AbstractGenerator(object):
         raise NotImplementedError("getGenerator not implemented!")
 
     def send(self, message):
+        raise NotImplementedError("getGenerator not implemented!")
+
+    def next(self):
+        raise NotImplementedError("next not implemented!")
+
+
+class SingleGenerator(AbstractGenerator):
+    def send(self, message):
         return self.generator.send(message)
 
     def next(self):
         self.generator.next()
 
 
-class AbstractPythonGenerator(AbstractGenerator):
+class AbstractPythonGenerator(SingleGenerator):
     def setup(self, options):
-        AbstractGenerator.setup(self, options)
+        SingleGenerator.setup(self, options)
         self.generator.send(None)
 
 
-class AbstractMyGenerator(AbstractGenerator):
+class AbstractMyGenerator(SingleGenerator):
     def setup(self, options):
-        AbstractGenerator.setup(self, options)
+        SingleGenerator.setup(self, options)
         self.generator.setup(options)
 
 
 class AbstractExtracionGenerator(AbstractPythonGenerator):
     def __init__(self):
         AbstractPythonGenerator.__init__(self)
-        self.harmonics = None
         self.short_signal = None
+        self.ranker = None
 
     def setup(self, options):
         AbstractPythonGenerator.setup(self, options)
-        self.harmonics = self.getHarmonics(options)
         self.short_signal = True
+        self.ranker.setup(options)
 
-    def getHarmonics(self, options):
-        return options[c.DATA_HARMONICS]
-
-    def checkLength(self, signal_length, options_length):
-        if self.short_signal and signal_length == options_length:
+    def checkLength(self, actual_length, max_length):
+        if self.short_signal and actual_length == max_length:
             self.short_signal = False
+        return self.short_signal

@@ -1,15 +1,16 @@
-import numpy as np
+import Ranker
+import constants as c
 import scipy.interpolate
 
-import constants as c
-from generators import AbstractGenerator
+import numpy as np
 
 
-class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
+class PsdRanker(Ranker.Ranker):
     def __init__(self):
-        AbstractGenerator.AbstractExtracionGenerator.__init__(self)
+        Ranker.Ranker.__init__(self)
         self.interpolation = None
         self.fft_bins = None
+        self.harmonics = None
         self.menu_key_to_scipy_key = {
             c.INTERPOLATE_LINEAR: c.SCIPY_INTERPOLATE_LINEAR,
             c.INTERPOLATE_NEAREST: c.SCIPY_INTERPOLATE_NEAREST,
@@ -20,9 +21,12 @@ class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
         }
 
     def setup(self, options):
-        AbstractGenerator.AbstractExtracionGenerator.setup(self, options)
+        self.harmonics = self.getHarmonics(options)
         self.interpolation = self.getInterpolation(options[c.DATA_OPTIONS])
         self.fft_bins = np.fft.rfftfreq(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])[1:]*c.HEADSET_FREQ
+
+    def getHarmonics(self, options):
+        return options[c.DATA_HARMONICS]
 
     def getInterpolation(self, options):
         if options[c.OPTIONS_INTERPOLATE] in self.menu_key_to_scipy_key:
@@ -43,13 +47,10 @@ class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
     #     return result
 
     def getSignalLength(self, fft_length):
-        return (fft_length)*2
+        return fft_length*2
 
-    def getFftLength(self, signal_length):
-        return signal_length//2
-
-    def getFreqs(self, fft_length):
-        if self.short_signal:
+    def getFreqs(self, fft_length, is_short):
+        if is_short:
             return np.fft.rfftfreq(self.getSignalLength(fft_length))[1:]*c.HEADSET_FREQ
         else:
             return self.fft_bins
@@ -57,20 +58,8 @@ class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
     def getListOfMagnitudes(self, target_freqs, harmonic, interpolation_func):
         return {freq: self.getMagnitude(freq, harmonic, interpolation_func) for freq in target_freqs}
 
-    def getResults(self, target_freqs, coordinates):
-        interpolation_func = self.interpolation(self.getFreqs(len(coordinates)), coordinates)
+    def getResults(self, fft, length, target_freqs, is_short):
+        interpolation_func = self.interpolation(self.getFreqs(length, is_short), fft)
         result = {harmonic: self.getListOfMagnitudes(target_freqs, harmonic, interpolation_func) for harmonic in self.harmonics}
         result[c.RESULT_SUM] = {freq: sum(result[harmonic][freq] for harmonic in self.harmonics) for freq in target_freqs}
         return {harmonic: self.getRanking(result[harmonic].items()) for harmonic in self.harmonics+[c.RESULT_SUM]}
-
-    def getRanking(self, results):
-        return sorted(results, key=lambda x: x[1], reverse=True)
-
-    def getGenerator(self, options):
-        max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
-        target_freqs = options[c.DATA_FREQS].values()
-        while True:
-            coordinates = yield
-            actual_length = len(coordinates)
-            self.checkLength(actual_length, self.getFftLength(max_length))
-            yield self.getResults(target_freqs, coordinates)
