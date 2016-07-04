@@ -17,6 +17,9 @@ class TrainingExtractionMethodConnection(ExtractionConnection.ExtractionMethodCo
     def getSumPsda(self):
         return MyQueue.PostOfficeQueueConnection(MessageHandler.SumPsda)
 
+    def getSnrPsda(self):
+        return MyQueue.PostOfficeQueueConnection(MessageHandler.SnrPsda)
+
     def getCca(self):
         return MyQueue.PostOfficeQueueConnection(MessageHandler.CCA)
 

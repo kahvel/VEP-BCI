@@ -59,6 +59,8 @@ class ExtractionMethodConnection(ExtractionConnection):
             return self.getCca()
         elif method == c.LRT:
             return self.getLrt()
+        elif method == c.SNR_PSDA:
+            return self.getSnrPsda()
         elif method in (c.PSDA,):
             return ExtractionSensorConnection()
         else:
@@ -66,6 +68,9 @@ class ExtractionMethodConnection(ExtractionConnection):
 
     def getSumPsda(self):
         return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.SumPsda)
+
+    def getSnrPsda(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.SnrPsda)
 
     def getCca(self):
         return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.CCA)

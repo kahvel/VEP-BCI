@@ -44,28 +44,28 @@ class MultiplePsdGenerators(MultipleGenerators):
         return [PSD.PSD() for _ in self.getSensors(options)]
 
 
-class MultipleSignalPsdGenerators(AbstractMultipleGenerators):
-    def __init__(self):
-        AbstractMultipleGenerators.__init__(self)
-        self.generator_keys = ("Signal", "PSDA")
-
-    def setupGenerators(self, options):
-        for key in self.generator_keys:
-            for generator in self.generator[key]:
-                generator.setup(options)
-
-    def send(self, message):
-        for key in self.generator_keys:
-            for generator, sensor in zip(self.generator[key], self.sensors):
-                yield generator, generator.send(message[sensor])
-
-    def next(self):
-        for key in self.generator_keys:
-            for generator in self.generator[key]:
-                generator.next()
-
-    def getGenerator(self, options):
-        return {
-            "Signal": [Signal.Signal() for _ in self.getSensors(options)],
-            "PSDA": [PSD.PSD() for _ in self.getSensors(options)]
-        }
+# class MultipleSignalPsdGenerators(AbstractMultipleGenerators): # Removed after realising PSDA SNR does not need PSDA coordinates.
+#     def __init__(self):
+#         AbstractMultipleGenerators.__init__(self)
+#         self.generator_keys = ("Signal", "PSDA")
+#
+#     def setupGenerators(self, options):
+#         for key in self.generator_keys:
+#             for generator in self.generator[key]:
+#                 generator.setup(options)
+#
+#     def send(self, message):
+#         for key in self.generator_keys:
+#             for generator, sensor in zip(self.generator[key], self.sensors):
+#                 yield generator, generator.send(message[sensor])
+#
+#     def next(self):
+#         for key in self.generator_keys:
+#             for generator in self.generator[key]:
+#                 generator.next()
+#
+#     def getGenerator(self, options):
+#         return {
+#             "Signal": [Signal.Signal() for _ in self.getSensors(options)],
+#             "PSDA": [PSD.PSD() for _ in self.getSensors(options)]
+#         }

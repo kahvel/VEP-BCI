@@ -158,4 +158,5 @@ class ExtractionTabButtonFrame(OptionsFrame.OptionsFrameFrame):
             Buttons.SunkenButton(self.widget, c.SUM_PSDA, 0, 1),
             Buttons.SunkenButton(self.widget, c.CCA,      0, 2),
             Buttons.SunkenButton(self.widget, c.LRT,      0, 3),
+            Buttons.SunkenButton(self.widget, c.SNR_PSDA, 0, 4)
         ))

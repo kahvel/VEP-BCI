@@ -15,8 +15,6 @@ class MultipleCoordinatesGeneratorHandler(AbstractGenerator.AbstractExtracionGen
         """
         AbstractGenerator.AbstractExtracionGenerator.__init__(self)
 
-
-class CcaLrtExtraction(MultipleCoordinatesGeneratorHandler):
     def getGenerator(self, options):
         max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         generator_count = len(options[c.DATA_SENSORS])
@@ -31,16 +29,16 @@ class CcaLrtExtraction(MultipleCoordinatesGeneratorHandler):
             yield self.ranker.getResults(transposed_coordinates, actual_length, target_freqs, is_short)
 
 
-class CcaExtraction(CcaLrtExtraction):
+class CcaExtraction(MultipleCoordinatesGeneratorHandler):
     def __init__(self):
-        CcaLrtExtraction.__init__(self)
+        MultipleCoordinatesGeneratorHandler.__init__(self)
         self.model = None
         self.ranker = CorrelationRanker.CcaRanker()
 
 
-class LrtExtraction(CcaLrtExtraction):
+class LrtExtraction(MultipleCoordinatesGeneratorHandler):
     def __init__(self):
-        CcaLrtExtraction.__init__(self)
+        MultipleCoordinatesGeneratorHandler.__init__(self)
         self.ranker = CorrelationRanker.LrtRanker()
 
 
@@ -49,22 +47,22 @@ class PsdaSnrExtraction(MultipleCoordinatesGeneratorHandler):
         MultipleCoordinatesGeneratorHandler.__init__(self)
         self.ranker = PsdaSnrRanker.PsdaSnrRanker()
 
-    def getGenerator(self, options):
-        max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
-        generator_count = len(options[c.DATA_SENSORS])
-        target_freqs = options[c.DATA_FREQS].values()
-        coordinates = {
-            "Signal": [[] for _ in range(generator_count)],
-            "PSDA": [[] for _ in range(generator_count)]
-        }
-        while True:
-            for i in range(generator_count):
-                coordinates["Signal"][i] = yield
-            for i in range(generator_count):
-                coordinates["PSDA"][i] = yield
-            actual_length = len(coordinates["Signal"][0])
-            is_short = self.checkLength(actual_length, max_length)
-            yield self.ranker.getResults(coordinates, actual_length, target_freqs, is_short)
+    # def getGenerator(self, options):  # Removed after realising PSDA SNR does not need PSDA coordinates.
+    #     max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
+    #     generator_count = len(options[c.DATA_SENSORS])
+    #     target_freqs = options[c.DATA_FREQS].values()
+    #     coordinates = {
+    #         "Signal": [[] for _ in range(generator_count)],
+    #         "PSDA": [[] for _ in range(generator_count)]
+    #     }
+    #     while True:
+    #         for i in range(generator_count):
+    #             coordinates["Signal"][i] = yield
+    #         for i in range(generator_count):
+    #             coordinates["PSDA"][i] = yield
+    #         actual_length = len(coordinates["Signal"][0])
+    #         is_short = self.checkLength(actual_length, max_length)
+    #         yield self.ranker.getResults(coordinates, actual_length, target_freqs, is_short)
 
 
 class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):

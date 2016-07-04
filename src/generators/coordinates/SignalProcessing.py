@@ -102,16 +102,15 @@ class SignalPipeline(SignalProcessing):
 class PsdPipeline(SignalProcessing):
     def normaliseSpectrum(self, fft):
         if self.options[c.OPTIONS_NORMALISE]:
-            result = (fft/sum(fft))[1:]
-            return result
+            return fft/sum(fft)
         else:
-            result = np.log10(fft)[1:]
-            return result
+            return fft
 
     def signalPipeline(self, signal, window):
         detrended_signal = self.detrendSignal(signal)
         filtered_signal, self.filter_prev_state = self.filterSignal(detrended_signal, self.filter_prev_state)
         windowed_signal = self.windowSignal(filtered_signal, window)
-        amplitude_spectrum = np.abs(np.fft.rfft(windowed_signal))
+        amplitude_spectrum = (np.abs(np.fft.rfft(windowed_signal))**2)[1:]
+        # same as scipy.signal.periodogram(windowed_signal, c.HEADSET_FREQ)*length*64?
         normalised_spectrum = self.normaliseSpectrum(amplitude_spectrum)
         return normalised_spectrum

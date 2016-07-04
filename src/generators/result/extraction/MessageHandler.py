@@ -158,7 +158,7 @@ class LRT(MultipleCoordinatesGeneratorHandler):
         return MultipleGenerators.MultipleSignalGenerators()
 
 
-class PsdaSnrMethod(MultipleCoordinatesGeneratorHandler):
+class SnrPsda(MultipleCoordinatesGeneratorHandler):
     def __init__(self, connection):
         MultipleCoordinatesGeneratorHandler.__init__(self, connection, c.SNR_PSDA)
 
@@ -166,4 +166,4 @@ class PsdaSnrMethod(MultipleCoordinatesGeneratorHandler):
         return CoordinatesHandler.PsdaSnrExtraction()
 
     def getCoordinatesGenerator(self):
-        return MultipleGenerators.MultipleSignalPsdGenerators()
+        return MultipleGenerators.MultipleSignalGenerators()
