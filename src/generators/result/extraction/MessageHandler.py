@@ -20,6 +20,8 @@ class MessageHandler(AbstractGenerator.AbstractMyGenerator):
         self.target_freqs = None
         self.options = None
         self.coordinates_generator = None
+        self.debug = False
+        self.counter = None
         # self.pw = pg.plot()
         self.connection.waitMessages(self.start, self.exit, lambda: None, self.setup)
 
@@ -36,6 +38,7 @@ class MessageHandler(AbstractGenerator.AbstractMyGenerator):
             elif isinstance(message, basestring):
                 return message
             elif message is not None:
+                self.printMessage(message, 0)
                 self.handleEegMessage(message)
 
     def handleEegMessage(self, message):
@@ -48,6 +51,7 @@ class MessageHandler(AbstractGenerator.AbstractMyGenerator):
         does take an argument. Options are received via connection.
         :return:
         """
+        self.counter = {key: 0 for key in range(5)}
         self.options = self.connection.receiveOptions()
         self.sensors = tuple(self.options[c.DATA_SENSORS])
         self.setupCoordinatesGenerator()
@@ -60,6 +64,12 @@ class MessageHandler(AbstractGenerator.AbstractMyGenerator):
 
     def getCoordinatesGenerator(self):
         raise NotImplementedError("getCoordinatesGenerator not implemented!")
+
+    def printMessage(self, message, key):
+        if self.debug:
+            self.counter[key] += 1
+            if message is not None:
+                print self.counter[key], message
 
     # def update(self):
     #     pg.QtGui.QApplication.processEvents()
@@ -75,8 +85,10 @@ class SingleCoordinatesGeneratorHandler(MessageHandler):
         for sensor in self.sensors:
             coordinates = self.coordinates_generator.send(message[sensor])
         if coordinates is not None:
+            self.printMessage(coordinates, 1)
             self.coordinates_generator.next()
             result = self.generator.send(coordinates)
+            self.printMessage(result, 2)
             self.connection.sendMessage(result)
             self.generator.next()
         else:
@@ -113,9 +125,11 @@ class MultipleCoordinatesGeneratorHandler(MessageHandler):
         results = None
         for generator, response in self.coordinates_generator.send(message):
             if response is not None:
+                self.printMessage(response, 1)
                 generator.next()
                 results = self.generator.send(response)
         if results is not None:
+            self.printMessage(results, 2)
             self.connection.sendMessage(results)
             self.generator.next()
         else:
