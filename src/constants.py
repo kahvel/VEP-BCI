@@ -133,6 +133,7 @@ SCIPY_INTERPOLATE_CUBIC = "cubic"
 
 # Plot and Extraction tab options frame buttons
 OPTIONS_NORMALISE = "Normalise"
+OPTIONS_LOG10 = "Log10"
 OPTIONS_DETREND = "Detrend"
 OPTIONS_FILTER = "Filter"
 OPTIONS_STEP = "Step"
