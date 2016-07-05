@@ -3,6 +3,7 @@ import pyqtgraph as pg
 import constants as c
 from generators import AbstractGenerator
 from generators.coordinates import Signal, PSD
+from generators.result import Logic
 
 
 class Plot(AbstractGenerator.AbstractMyGenerator):
@@ -12,6 +13,7 @@ class Plot(AbstractGenerator.AbstractMyGenerator):
         """ @type : ConnectionProcessEnd.PlotConnection """
         self.pw = None
         self.sensors = None
+        self.options = None
         pg.QtGui.QMainWindow.closeEvent = self.exit
         self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
 
@@ -25,15 +27,18 @@ class Plot(AbstractGenerator.AbstractMyGenerator):
                 for sensor in self.sensors:
                     coordinates = self.generator.send(message[sensor])
                 if coordinates is not None:
-                    self.pw.plot(coordinates, clear=True)
+                    self.updatePlot(coordinates)
                     self.generator.next()
 
+    def updatePlot(self, coordinates):
+        raise NotImplementedError("updatePlot not implemented!")
+
     def setup(self, options=None):
-        options = self.connection.receiveOptions()
-        self.sensors = options[c.DATA_SENSORS]
-        AbstractGenerator.AbstractMyGenerator.setup(self, options)
+        self.options = self.connection.receiveOptions()
+        self.sensors = self.options[c.DATA_SENSORS]
+        AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
         self.closeWindow()
-        self.newWindow(self.getTitle(options))
+        self.newWindow(self.getTitle(self.options))
         return c.SUCCESS_MESSAGE
 
     def getTitle(self, options):
@@ -56,75 +61,97 @@ class Plot(AbstractGenerator.AbstractMyGenerator):
             event.ignore()
 
 
-class NotSum(Plot):
+class SignalPlot(Plot):
     def __init__(self, connection):
         Plot.__init__(self, connection)
 
+    def updatePlot(self, coordinates):
+        self.pw.plot(coordinates, clear=True)
 
-class Sum(Plot):
+
+class PsdaPlot(Plot):
     def __init__(self, connection):
+        """
+        Superclass constructor call has to be last line, because it goes into waitMessages loop and never comes back.
+        :param connection:
+        :return:
+        """
+        self.target_freqs = None
+        self.frequency_handler = Logic.InterpolationAndFftBins()
         Plot.__init__(self, connection)
 
+    def setup(self, options=None):
+        Plot.setup(self)
+        self.frequency_handler.setup(self.options)
+        self.target_freqs = sorted(self.options[c.DATA_FREQS].values())
+        return c.SUCCESS_MESSAGE
 
-class SumSignal(Sum):
+    def updatePlot(self, coordinates):
+        length = len(coordinates)
+        is_short = length < self.options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]//2
+        frequency_bins = self.frequency_handler.getBins(length, is_short)
+        self.pw.plot(frequency_bins, coordinates, clear=True)
+
+
+class SumSignal(SignalPlot):
     def __init__(self, connection):
-        Sum.__init__(self, connection)
+        SignalPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return Signal.SumSignal()
 
 
-class NotSumSignal(NotSum):
+class NotSumSignal(SignalPlot):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        SignalPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return Signal.Signal()
 
 
-class SumPower(Sum):
+class SumPower(PsdaPlot):
     def __init__(self, connection):
-        Sum.__init__(self, connection)
+        PsdaPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return PSD.SumPsd()
 
 
-class NotSumPower(NotSum):
+class NotSumPower(PsdaPlot):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        PsdaPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return PSD.PSD()
 
 
-class SumAvgSignal(Sum):
+class SumAvgSignal(SignalPlot):
     def __init__(self, connection):
-        Sum.__init__(self, connection)
+        SignalPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return Signal.SumAverageSignal()
 
 
-class NotSumAvgSignal(NotSum):
+class NotSumAvgSignal(SignalPlot):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        SignalPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return Signal.AverageSignal()
 
 
-class SumAvgPower(Sum):
+class SumAvgPower(PsdaPlot):
     def __init__(self, connection):
-        Sum.__init__(self, connection)
+        PsdaPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return PSD.SumAveragePSD()
 
 
-class NotSumAvgPower(NotSum):
+class NotSumAvgPower(PsdaPlot):
     def __init__(self, connection):
-        NotSum.__init__(self, connection)
+        PsdaPlot.__init__(self, connection)
 
     def getGenerator(self, options):
         return PSD.AveragePSD()
