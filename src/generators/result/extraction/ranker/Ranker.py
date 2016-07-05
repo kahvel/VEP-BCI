@@ -17,13 +17,30 @@ class Ranker(object):
         raise NotImplementedError("setup not implemented!")
 
 
-class RankerWithReferenceSignals(Ranker):
+class RankerWithHarmonics(Ranker):
     def __init__(self):
+        Ranker.__init__(self)
+        self.harmonics = None
+
+    def setup(self, options):
+        self.harmonics = self.getHarmonics(options)
+
+    def getHarmonics(self, options):
+        return options[c.DATA_HARMONICS]
+
+
+class RankerWithReferenceSignals(RankerWithHarmonics):
+    def __init__(self):
+        """
+        All rankers with reference signals are not rankers with harmonics, did not know how to fix hierarchy.
+        :return:
+        """
         Ranker.__init__(self)
         self.reference_signals = None
         self.target_freqs = None
 
     def setup(self, options):
+        RankerWithHarmonics.setup(self, options)
         self.target_freqs = options[c.DATA_FREQS]
         self.reference_signals = self.getReferenceSignals(
             options[c.DATA_OPTIONS][c.OPTIONS_LENGTH],

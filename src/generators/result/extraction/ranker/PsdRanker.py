@@ -5,9 +5,9 @@ import scipy.interpolate
 import numpy as np
 
 
-class PsdRanker(Ranker.Ranker):
+class PsdRanker(Ranker.RankerWithHarmonics):
     def __init__(self):
-        Ranker.Ranker.__init__(self)
+        Ranker.RankerWithHarmonics.__init__(self)
         self.interpolation = None
         self.fft_bins = None
         self.harmonics = None
@@ -21,12 +21,9 @@ class PsdRanker(Ranker.Ranker):
         }
 
     def setup(self, options):
-        self.harmonics = self.getHarmonics(options)
+        Ranker.RankerWithHarmonics.setup(self, options)
         self.interpolation = self.getInterpolation(options[c.DATA_OPTIONS])
         self.fft_bins = np.fft.rfftfreq(options[c.DATA_OPTIONS][c.OPTIONS_LENGTH])[1:]*c.HEADSET_FREQ
-
-    def getHarmonics(self, options):
-        return options[c.DATA_HARMONICS]
 
     def getInterpolation(self, options):
         if options[c.OPTIONS_INTERPOLATE] in self.menu_key_to_scipy_key:

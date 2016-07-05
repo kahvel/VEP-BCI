@@ -55,8 +55,9 @@ class PsdaSnrRanker(Ranker.RankerWithReferenceSignals):
         noise_components = signal_coordinates - np.dot(self.projection_matrix, signal_coordinates)
         new_axis = self.getLastPrincipalComponents(noise_components)
         projected_signal = np.dot(new_axis, np.transpose(signal_coordinates))
-        projected_noise = np.dot(new_axis, np.transpose(noise_components))
         print projected_signal.shape
+        projected_noise = np.dot(new_axis, np.transpose(noise_components))
+        result = {harmonic: {freq: 0 for freq in target_freqs} for harmonic in self.harmonics+[c.RESULT_SUM]}
         for signal, noise in zip(projected_signal, projected_noise):
             amplitude_spectrum = (np.abs(np.fft.rfft(signal))**2)[1:]
             signal_results = self.signal_psda_ranker.getResults(amplitude_spectrum, length, target_freqs, is_short)
@@ -66,3 +67,14 @@ class PsdaSnrRanker(Ranker.RankerWithReferenceSignals):
             noise_results = self.coefficient_psda_ranker.getResults(coefficients_psd[1:], length, target_freqs, is_short)
             print signal_results
             print noise_results
+            for harmonic in signal_results:
+                if harmonic != c.RESULT_SUM:
+                    signal_freq_results = dict(signal_results[harmonic])
+                    noise_freq_results = dict(noise_results[harmonic])
+                    for freq in target_freqs:
+                        result[harmonic][freq] += signal_freq_results[freq]/noise_freq_results[freq]
+        result[c.RESULT_SUM] = {freq: sum(result[harmonic][freq] for harmonic in self.harmonics) for freq in target_freqs}
+        final = {harmonic: self.getRanking(result[harmonic].items()) for harmonic in self.harmonics+[c.RESULT_SUM]}
+        print final
+        print
+        return final
