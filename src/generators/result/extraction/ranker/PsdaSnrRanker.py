@@ -4,7 +4,7 @@ from nitime import algorithms
 
 import constants as c
 import Ranker
-import PsdRanker
+import PsdaRanker
 
 
 class PsdaSnrRanker(Ranker.RankerWithReferenceSignals):
@@ -12,8 +12,8 @@ class PsdaSnrRanker(Ranker.RankerWithReferenceSignals):
         Ranker.RankerWithReferenceSignals.__init__(self)
         self.projection_matrix = None
         self.flat_reference_signals = None
-        self.signal_psda_ranker = PsdRanker.PsdRanker()
-        self.coefficient_psda_ranker = PsdRanker.PsdRanker()
+        self.signal_psda_ranker = PsdaRanker.PsdaRanker()
+        self.coefficient_psda_ranker = PsdaRanker.PsdaRanker()
 
     def setup(self, options):
         Ranker.RankerWithReferenceSignals.setup(self, options)

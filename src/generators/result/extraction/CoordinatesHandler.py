@@ -1,6 +1,6 @@
 import constants as c
 from generators import AbstractGenerator
-from generators.result.extraction.ranker import CorrelationRanker, PsdRanker, PsdaSnrRanker
+from generators.result.extraction.ranker import CorrelationRanker, PsdaRanker, PsdaSnrRanker
 
 import numpy as np
 
@@ -64,10 +64,9 @@ class PsdaSnrExtraction(MultipleCoordinatesGeneratorHandler):
 class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
     def __init__(self):
         AbstractGenerator.AbstractExtracionGenerator.__init__(self)
-        self.ranker = PsdRanker.PsdRanker()
+        self.ranker = PsdaRanker.PsdaRanker()
 
     def getGenerator(self, options):
-        target_freqs = options[c.DATA_FREQS].values()
         while True:
             coordinates = yield
-            yield self.ranker.getResults(coordinates, target_freqs)
+            yield self.ranker.getResults(coordinates)

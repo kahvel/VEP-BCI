@@ -5,6 +5,11 @@ import constants as c
 
 
 class Logic(object):
+    def setup(self, options):
+        raise NotImplementedError("setup not implemented!")
+
+
+class SignalLength(Logic):
     def __init__(self):
         self.max_signal_length = None
 
@@ -15,14 +20,14 @@ class Logic(object):
         self.max_signal_length = self.getMaxSignalLength(options)
 
 
-class FftBins(Logic):
+class FftBins(SignalLength):
     def __init__(self):
-        Logic.__init__(self)
+        SignalLength.__init__(self)
         self.max_length_fft_bins = None
         self.max_fft_length = None
 
     def setup(self, options):
-        Logic.setup(self, options)
+        SignalLength.setup(self, options)
         self.max_length_fft_bins = self.calculateBins(self.max_signal_length)
         self.max_fft_length = self.getFftLength(self.max_signal_length)
 
@@ -54,9 +59,9 @@ class FftBins(Logic):
         return np.fft.rfftfreq(signal_length)[1:]*c.HEADSET_FREQ
 
 
-class InterpolationAndFftBins(FftBins):
+class Interpolation(Logic):
     def __init__(self):
-        FftBins.__init__(self)
+        Logic.__init__(self)
         self.interpolationFunc = None
         self.menu_key_to_scipy_key = {
             c.INTERPOLATE_LINEAR: c.SCIPY_INTERPOLATE_LINEAR,
@@ -68,7 +73,6 @@ class InterpolationAndFftBins(FftBins):
         }
 
     def setup(self, options):
-        FftBins.setup(self, options)
         self.interpolationFunc = self.getInterpolation(options[c.DATA_OPTIONS])
 
     def getInterpolation(self, options):
@@ -88,31 +92,33 @@ class TargetFrequencies(Logic):
         self.frequencies = None
 
     def setup(self, options):
-        Logic.setup(self, options)
         self.frequencies_dict = options[c.DATA_FREQS]
         self.frequency_count = len(self.frequencies_dict)
-        self.frequencies = self.frequencies_dict.values()
+        self.frequencies = sorted(self.frequencies_dict.values())
 
 
-class Harmonics(TargetFrequencies):
+class Harmonics(Logic):
     def __init__(self):
-        TargetFrequencies.__init__(self)
+        Logic.__init__(self)
         self.harmonics = None
 
     def setup(self, options):
-        TargetFrequencies.setup(self, options)
         self.harmonics = options[c.DATA_HARMONICS]
 
 
-class ReferenceSignals(Harmonics):
+class ReferenceSignals(Harmonics, TargetFrequencies, SignalLength):
     def __init__(self):
         Harmonics.__init__(self)
+        TargetFrequencies.__init__(self)
+        SignalLength.__init__(self)
         self.reference_signals = None
 
     def setup(self, options):
         Harmonics.setup(self, options)
+        TargetFrequencies.setup(self, options)
+        SignalLength.setup(self, options)
         self.reference_signals = self.getReferenceSignals(
-            self.getMaxSignalLength(options),
+            self.max_signal_length,
             self.frequencies,
             self.getHarmonicsForReferenceSignals()
         )
@@ -146,3 +152,57 @@ class ReferenceSignals(Harmonics):
             return np.array([target_reference[j][:length] for j in range(len(target_reference))])
         else:
             return np.array(target_reference)
+
+
+class TargetMagnitude(Harmonics, TargetFrequencies, Interpolation, FftBins):
+    def __init__(self):
+        Harmonics.__init__(self)
+        TargetFrequencies.__init__(self)
+        Interpolation.__init__(self)
+        FftBins.__init__(self)
+
+    def setup(self, options):
+        Harmonics.setup(self, options)
+        TargetFrequencies.setup(self, options)
+        Interpolation.setup(self, options)
+        FftBins.setup(self, options)
+
+    def getMagnitude(self, freq, harmonic, interpolation):
+        return float(interpolation(freq*harmonic))
+
+    def getMagnitudesPerFrequency(self, harmonic, fft):
+        frequency_bins = self.getBins(len(fft))
+        interpolationFunc = self.interpolationFunc(frequency_bins, fft)
+        return {freq: self.getMagnitude(freq, harmonic, interpolationFunc) for freq in self.frequencies}
+
+    def getMagnitudesPerHarmonic(self, fft):
+        return {harmonic: self.getMagnitudesPerFrequency(harmonic, fft) for harmonic in self.harmonics}
+
+
+class Ranker(Logic):
+    def getRanking(self, results):
+        return sorted(results, key=lambda x: x[1], reverse=True)
+
+    def getResults(self, coordinates):
+        raise NotImplementedError("getResults not implemented!")
+
+    def setup(self, options):
+        pass
+
+
+class SumResultAdder(Ranker, Harmonics, TargetFrequencies):
+    def __init__(self):
+        Ranker.__init__(self)
+        Harmonics.__init__(self)
+        TargetFrequencies.__init__(self)
+
+    def setup(self, options):
+        Ranker.setup(self, options)
+        Harmonics.setup(self, options)
+        TargetFrequencies.setup(self, options)
+
+    def getSumResults(self, result):
+        return {freq: sum(result[harmonic][freq] for harmonic in self.harmonics) for freq in self.frequencies}
+
+    def orderByResult(self, result):
+        return {harmonic: self.getRanking(result[harmonic].items()) for harmonic in self.harmonics+[c.RESULT_SUM]}
