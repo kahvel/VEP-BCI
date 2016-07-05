@@ -25,8 +25,8 @@ class PsdRanker(Ranker.RankerWithHarmonics):
     def getListOfMagnitudes(self, target_freqs, harmonic, interpolation_func):
         return {freq: self.getMagnitude(freq, harmonic, interpolation_func) for freq in target_freqs}
 
-    def getResults(self, fft, length, target_freqs, is_short):
-        frequency_bins = self.frequency_handler.getBins(length, is_short)
+    def getResults(self, fft, target_freqs):
+        frequency_bins = self.frequency_handler.getBins(len(fft))
         interpolation_func = self.frequency_handler.interpolationFunc(frequency_bins, fft)
         result = {harmonic: self.getListOfMagnitudes(target_freqs, harmonic, interpolation_func) for harmonic in self.harmonics}
         result[c.RESULT_SUM] = {freq: sum(result[harmonic][freq] for harmonic in self.harmonics) for freq in target_freqs}

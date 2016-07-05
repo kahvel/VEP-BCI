@@ -16,17 +16,13 @@ class MultipleCoordinatesGeneratorHandler(AbstractGenerator.AbstractExtracionGen
         AbstractGenerator.AbstractExtracionGenerator.__init__(self)
 
     def getGenerator(self, options):
-        max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         generator_count = len(options[c.DATA_SENSORS])
         target_freqs = options[c.DATA_FREQS].values()
         coordinates = [[] for _ in range(generator_count)]
         while True:
             for i in range(generator_count):
                 coordinates[i] = yield
-            actual_length = len(coordinates[0])
-            is_short = self.checkLength(actual_length, max_length)
-            transposed_coordinates = np.array(coordinates).T
-            yield self.ranker.getResults(transposed_coordinates, actual_length, target_freqs, is_short)
+            yield self.ranker.getResults(coordinates, target_freqs)
 
 
 class CcaExtraction(MultipleCoordinatesGeneratorHandler):
@@ -70,14 +66,8 @@ class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
         AbstractGenerator.AbstractExtracionGenerator.__init__(self)
         self.ranker = PsdRanker.PsdRanker()
 
-    def getMaxFftLength(self, signal_length):
-        return signal_length//2
-
     def getGenerator(self, options):
-        max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]
         target_freqs = options[c.DATA_FREQS].values()
         while True:
             coordinates = yield
-            actual_length = len(coordinates)
-            is_short = self.checkLength(actual_length, self.getMaxFftLength(max_length))
-            yield self.ranker.getResults(coordinates, actual_length, target_freqs, is_short)
+            yield self.ranker.getResults(coordinates, target_freqs)

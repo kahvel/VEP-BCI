@@ -12,16 +12,10 @@ class CorrelationRanker(Ranker.RankerWithReferenceSignals):
     def getCorr(self, signal, reference):
         raise NotImplementedError("getCorr not implemented!")
 
-    def changeReferenceSignalLength(self, target_reference, length, is_short):
-        if is_short:
-            return np.array([target_reference[j][:length] for j in range(len(target_reference))])
-        else:
-            return np.array(target_reference)
-
-    def getResults(self, coordinates, length, target_freqs, is_short):
+    def getResults(self, coordinates, target_freqs):
         return self.getRanking(
-            (freq, self.getCorr(coordinates, self.changeReferenceSignalLength(reference, length, is_short).T))
-            for freq, reference in zip(target_freqs, self.reference_signals)
+            (freq, self.getCorr(np.transpose(coordinates), np.transpose(reference)))
+            for freq, reference in self.reference_handler.iteraterateSignals(len(coordinates[0]))
         )
 
 

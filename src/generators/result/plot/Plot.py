@@ -88,8 +88,7 @@ class PsdaPlot(Plot):
 
     def updatePlot(self, coordinates):
         length = len(coordinates)
-        is_short = length < self.options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]//2
-        frequency_bins = self.frequency_handler.getBins(length, is_short)
+        frequency_bins = self.frequency_handler.getBins(length)
         self.pw.plot(frequency_bins, coordinates, clear=True)
 
 
