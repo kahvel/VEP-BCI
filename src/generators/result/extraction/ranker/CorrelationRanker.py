@@ -2,20 +2,25 @@ import sklearn.cross_decomposition
 import sklearn.preprocessing
 import numpy as np
 
-import Ranker
+from generators.result import Logic
 
 
-class CorrelationRanker(Ranker.RankerWithReferenceSignals):
+class CorrelationRanker(Logic.Ranker):
     def __init__(self):
-        Ranker.RankerWithReferenceSignals.__init__(self)
+        Logic.Ranker.__init__(self)
+        self.reference_signal_handler = Logic.ReferenceSignals()
+
+    def setup(self, options):
+        Logic.Ranker.setup(self, options)
+        self.reference_signal_handler.setup(options)
 
     def getCorr(self, signal, reference):
         raise NotImplementedError("getCorr not implemented!")
 
-    def getResults(self, coordinates, target_freqs):
+    def getResults(self, coordinates):
         return self.getRanking(
             (freq, self.getCorr(np.transpose(coordinates), np.transpose(reference)))
-            for freq, reference in self.reference_handler.iteraterateSignals(len(coordinates[0]))
+            for freq, reference in self.reference_signal_handler.iteraterateSignals(len(coordinates[0]))
         )
 
 
@@ -30,8 +35,8 @@ class LrtRanker(CorrelationRanker):
         :return:
         """
         CorrelationRanker.setup(self, options)
-        for i in range(len(self.reference_signals)):
-            sklearn.preprocessing.scale(self.reference_signals[i], axis=1, with_std=False)
+        # for i in range(len(self.reference_signals)):
+        #     sklearn.preprocessing.scale(self.reference_signals[i], axis=1, with_std=False)
 
     def getCorr(self, signal, reference):
         """
@@ -43,7 +48,7 @@ class LrtRanker(CorrelationRanker):
         :return: LRT result
         """
         sklearn.preprocessing.scale(signal, axis=1, with_std=False)  # centralise samples
-        X = np.column_stack((signal, reference))
+        X = np.column_stack((signal, reference))  # TODO does it make sense?
         sigma_hat = np.cov(X, rowvar=False)
         sigma_11 = np.cov(signal, rowvar=False)
         sigma_22 = np.cov(reference, rowvar=False)

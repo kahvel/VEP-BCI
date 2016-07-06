@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.interpolate
+from sklearn.decomposition import PCA
 
 import constants as c
 
@@ -154,6 +155,65 @@ class ReferenceSignals(Harmonics, TargetFrequencies, SignalLength):
             return np.array(target_reference)
 
 
+class Projection(Logic):
+    def __init__(self):
+        Logic.__init__(self)
+        self.projection_matrix = None
+
+    def setup(self, options):
+        pass
+
+    def calculateProjectionMatrix(self, matrix):
+        raise NotImplementedError("calculateProjectionMatrix not implemented!")
+
+    def initialiseProjectionMatrix(self, matrix):
+        self.projection_matrix = self.calculateProjectionMatrix(matrix)
+
+    def project(self, coordinates):
+        return np.dot(self.projection_matrix, coordinates)
+
+
+class ProjectionOntoReferenceSignals(ReferenceSignals, Projection):
+    def __init__(self):
+        ReferenceSignals.__init__(self)
+        Projection.__init__(self)
+
+    def setup(self, options):
+        ReferenceSignals.setup(self, options)
+        Projection.setup(self, options)
+        flat_reference_signals = [signal for sublist in self.reference_signals for signal in sublist]
+        self.initialiseProjectionMatrix(flat_reference_signals)
+
+    def calculateProjectionMatrix(self, At):
+        A = np.transpose(At)
+        AtA_inverse = np.linalg.inv(np.dot(At, A))
+        return np.dot(np.dot(A, AtA_inverse), At)
+
+
+class ProjectionOntoLastPrincipalComponents(Projection):
+    def __init__(self):
+        Projection.__init__(self)
+
+    def setup(self, options):
+        Projection.setup(self, options)
+
+    def calculateProjectionMatrix(self, data):
+        model = PCA()
+        model.fit(data)
+        new_axis = []
+        variance_explained = 0
+        for i, variance_ratio in enumerate(reversed(model.explained_variance_ratio_)):
+            variance_explained += variance_ratio
+            if variance_explained < 0.1:
+                new_axis.append(model.components_[-(i+1)])
+            else:
+                break
+        if len(new_axis) == 0:
+            return [model.components_[-1]]
+        else:
+            return new_axis
+
+
 class TargetMagnitude(Harmonics, TargetFrequencies, Interpolation, FftBins):
     def __init__(self):
         Harmonics.__init__(self)
@@ -206,3 +266,18 @@ class SumResultAdder(Ranker, Harmonics, TargetFrequencies):
 
     def orderByResult(self, result):
         return {harmonic: self.getRanking(result[harmonic].items()) for harmonic in self.harmonics+[c.RESULT_SUM]}
+
+    def addSumAndOrderResult(self, result):
+        result[c.RESULT_SUM] = self.getSumResults(result)
+        return self.orderByResult(result)
+
+
+class PSDA(Logic):
+    def __init__(self):
+        Logic.__init__(self)
+
+    def setup(self, options):
+        pass
+
+    def calculatePSD(self, signal):
+        return (np.abs(np.fft.rfft(signal))**2)[1:]

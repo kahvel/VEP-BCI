@@ -1,4 +1,3 @@
-import constants as c
 from generators.result import Logic
 
 
@@ -15,8 +14,7 @@ class PsdaRanker(Logic.Ranker):
 
     def getResults(self, fft):
         result = self.target_magnitude_handler.getMagnitudesPerHarmonic(fft)
-        result[c.RESULT_SUM] = self.sum_result_adder.getSumResults(result)
-        return self.sum_result_adder.orderByResult(result)
+        return self.sum_result_adder.addSumAndOrderResult(result)
 
     # def getSNR(self, freq, harmonic_count, interpolation):
     #     result = 0

@@ -17,12 +17,11 @@ class MultipleCoordinatesGeneratorHandler(AbstractGenerator.AbstractExtracionGen
 
     def getGenerator(self, options):
         generator_count = len(options[c.DATA_SENSORS])
-        target_freqs = options[c.DATA_FREQS].values()
         coordinates = [[] for _ in range(generator_count)]
         while True:
             for i in range(generator_count):
                 coordinates[i] = yield
-            yield self.ranker.getResults(coordinates, target_freqs)
+            yield self.ranker.getResults(coordinates)
 
 
 class CcaExtraction(MultipleCoordinatesGeneratorHandler):
