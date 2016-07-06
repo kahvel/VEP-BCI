@@ -197,21 +197,28 @@ class ProjectionOntoLastPrincipalComponents(Projection):
     def setup(self, options):
         Projection.setup(self, options)
 
-    def calculateProjectionMatrix(self, data):
-        model = PCA()
-        model.fit(data)
+    def getLastPrincipalComponents(self, model, threshold):
         new_axis = []
         variance_explained = 0
         for i, variance_ratio in enumerate(reversed(model.explained_variance_ratio_)):
             variance_explained += variance_ratio
-            if variance_explained < 0.1:
+            if variance_explained < threshold:
                 new_axis.append(model.components_[-(i+1)])
             else:
                 break
+        return new_axis
+
+    def addComponentIfEmpty(self, new_axis, model):
         if len(new_axis) == 0:
             return [model.components_[-1]]
         else:
             return new_axis
+
+    def calculateProjectionMatrix(self, data):
+        model = PCA()
+        model.fit(data)
+        new_axis = self.getLastPrincipalComponents(model, 0.1)
+        return self.addComponentIfEmpty(new_axis, model)
 
 
 class TargetMagnitude(Harmonics, TargetFrequencies, Interpolation, FftBins):
