@@ -61,8 +61,8 @@ class SNR(Logic.TargetFrequencies, Logic.Harmonics):
         for signal, noise in zip(projected_signal, projected_noise):
             signal_results = self.signal_psda_ranker.getResults(signal)
             noise_results = self.autoregressive_psd_handler.getResults(noise)
-            print signal_results
-            print noise_results
+            # print signal_results
+            # print noise_results
             self.updateSNRs(self.result, signal_results, noise_results)
         return self.result
 
@@ -85,7 +85,7 @@ class PsdaSnrRanker(Logic.Ranker):
     def projectOntoPrincipalComponents(self, signal_coordinates, noise_components):
         self.projection_onto_principal_components.initialiseProjectionMatrix(noise_components)
         projected_signal = self.projection_onto_principal_components.project(np.transpose(signal_coordinates))
-        print projected_signal.shape
+        # print projected_signal.shape
         projected_noise = self.projection_onto_principal_components.project(np.transpose(noise_components))
         return projected_signal, projected_noise
 
@@ -103,6 +103,6 @@ class PsdaSnrRanker(Logic.Ranker):
         projected_signal, projected_noise = self.projectOntoPrincipalComponents(signal_coordinates, noise_components)
         snr = self.snr_handler.calculateSNR(projected_signal, projected_noise)
         final = self.sum_result_adder.addSumAndOrderResult(snr)
-        print final
-        print
-        return final
+        # print final
+        # print
+        return final[c.RESULT_SUM]

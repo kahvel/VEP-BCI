@@ -100,7 +100,7 @@ class ResultsParser(object):
                         data = self.data[tab][method]
                     else:
                         data = self.data[tab]
-                    if method[0] == c.CCA or method[0] == c.LRT:
+                    if method[0] == c.CCA or method[0] == c.LRT or method[0] == c.SNR_PSDA:
                         if self.add_sum:
                             self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, data)
                         else:
