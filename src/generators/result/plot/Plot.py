@@ -69,27 +69,43 @@ class SignalPlot(Plot):
         self.pw.plot(coordinates, clear=True)
 
 
-class PsdaPlot(Plot):
+class PsdaPlot(Plot, Logic.TargetFrequencies):
     def __init__(self, connection):
         """
         Superclass constructor call has to be last line, because it goes into waitMessages loop and never comes back.
         :param connection:
         :return:
         """
-        self.target_freqs = None
-        self.frequency_handler = Logic.InterpolationAndFftBins()
+        Logic.TargetFrequencies.__init__(self)
+        self.fft_bin_handler = Logic.FftBins()
+        self.target_magnitude_handler = Logic.TargetMagnitude()
+        self.harmonics = None
         Plot.__init__(self, connection)
 
     def setup(self, options=None):
-        Plot.setup(self)
-        self.frequency_handler.setup(self.options)
-        self.target_freqs = sorted(self.options[c.DATA_FREQS].values())
-        return c.SUCCESS_MESSAGE
+        message = Plot.setup(self)
+        Logic.TargetFrequencies.setup(self, self.options)
+        self.fft_bin_handler.setup(self.options)
+        self.harmonics = [1, 2, 3]
+        self.options[c.DATA_HARMONICS] = self.harmonics
+        self.target_magnitude_handler.setup(self.options)
+        return message
 
-    def updatePlot(self, coordinates):
-        length = len(coordinates)
-        frequency_bins = self.frequency_handler.getBins(length)
-        self.pw.plot(frequency_bins, coordinates, clear=True)
+    def updateTargetMagnitudes(self, fft):
+        target_magnitudes = self.target_magnitude_handler.getMagnitudesPerHarmonic(fft)
+        for i, frequency in enumerate(self.frequencies):
+            x = [frequency*harmonic for harmonic in self.harmonics]
+            y = [target_magnitudes[harmonic][frequency] for harmonic in self.harmonics]
+            self.pw.plot(x, y, pen=None, symbolBrush=(i, len(self.harmonics)), symbol='o')
+
+    def updateLine(self, fft):
+        length = len(fft)
+        frequency_bins = self.fft_bin_handler.getBins(length)
+        self.pw.plot(frequency_bins, fft, clear=True)
+
+    def updatePlot(self, fft):
+        self.updateLine(fft)
+        self.updateTargetMagnitudes(fft)
 
 
 class SumSignal(SignalPlot):
