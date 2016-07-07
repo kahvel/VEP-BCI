@@ -10,34 +10,30 @@ import constants as c
 # To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
 
 
-class Target(object):
+class TargetHandler(object):
     def __init__(self, id, options, test_color, window):
         self.standby_target = False
-        self.color1 = options[c.TARGET_COLOR1]
-        self.color0 = options[c.TARGET_COLOR0]
-        self.test_color = test_color
         self.current_target = False
         self.detected_target = False
         self.detected_counter = 0
         self.detected_length = 3
-        self.rect = self.getRect(window, options, self.color1)
+        self.target = self.getTargetWrapper(window, options)
         self.fixation = visual.GratingStim(window, size=1, pos=[options[c.TARGET_X], options[c.TARGET_Y]], sf=0, rgb=1)
         self.fixation.setAutoDraw(True)
-        self.current_target_signs = self.getSigns(window, options, self.test_color)
+        self.current_target_signs = self.getSigns(window, options, test_color)
         self.detected_target_signs = self.getSigns(window, options, "#00ff00", 40)
         self.freq = options[c.DATA_FREQ]
         self.sequence = options[c.TARGET_SEQUENCE]
         self.id = id
 
-    def getRect(self, window, options, color):
-        return visual.Rect(
-            window,
-            width=options[c.TARGET_WIDTH],
-            height=options[c.TARGET_HEIGHT],
-            pos=(options[c.TARGET_X], options[c.TARGET_Y]),
-            autoLog=False,
-            fillColor=color
-        )
+    def getTargetWrapper(self, window, options):
+        size = (options[c.TARGET_WIDTH], options[c.TARGET_HEIGHT])
+        position = (options[c.TARGET_X], options[c.TARGET_Y])
+        colors = (options[c.TARGET_COLOR0], options[c.TARGET_COLOR1])
+        return self.getTarget(window, size, position, colors)
+
+    def getTarget(self, window, size, position, colors):
+        raise NotImplementedError("getTarget not implemented!")
 
     def getTriangle(self, window, options, color, x, y, ori=0, offset=20):
         return visual.Polygon(
@@ -69,11 +65,11 @@ class Target(object):
     def setStandbyTarget(self, value):
         self.standby_target = value
 
-    def drawRect(self, color, standby):
-        self.rect.setFillColor(color, colorSpace="rgb")
-        self.rect.setLineColor(color, colorSpace="rgb")
+    def drawTarget(self, color_index, standby):
+        self.target.setFillColor(color_index)
+        self.target.setLineColor(color_index)
         if not standby or self.standby_target:
-            self.rect.draw()
+            self.target.draw()
 
     def drawTriangles(self, standby, triangles):
         if not standby:
@@ -92,10 +88,121 @@ class Target(object):
                     self.drawTriangles(standby, self.detected_target_signs)
                 if self.current_target:
                     self.drawTriangles(standby, self.current_target_signs)
-                if state == "1":
-                    self.drawRect(self.color1, standby)
-                elif state == "0":
-                    self.drawRect(self.color0, standby)
+                self.drawTarget(int(state), standby)
+
+
+# class ColorHandler(object):
+#     def __init__(self, colors, current_color_index):
+#         self.colors = colors
+#         self.current_color_index = current_color_index
+#         self.color_count = len(colors)
+#
+#     def nextColorIndex(self):
+#         if self.current_color_index == self.color_count - 1:
+#             return 0
+#         else:
+#             return self.current_color_index + 1
+#
+#     def nextColor(self):
+#         self.current_color_index = self.nextColorIndex()
+#         return self.colors[self.current_color_index]
+
+
+class Rectangle(object):
+    def __init__(self, window, size, position, colors, current_color_index):
+        self.color_space = "rgb"
+        self.colors = colors
+        self.rectangle = visual.Rect(
+            window,
+            width=size[0],
+            height=size[1],
+            pos=position,
+            autoLog=False,
+            fillColor=colors[current_color_index]
+        )
+
+    def setFillColor(self, color_index):
+        self.rectangle.setFillColor(self.colors[color_index], colorSpace=self.color_space)
+
+    def setLineColor(self, color_index):
+        self.rectangle.setLineColor(self.colors[color_index], colorSpace=self.color_space)
+
+    def draw(self):
+        self.rectangle.draw()
+
+
+class Target(object):
+    def __init__(self):
+        self.objects = []
+
+    def setFillColor(self, color_index):
+        for object in self.objects:
+            object.setFillColor(color_index)
+
+    def setLineColor(self, color_index):
+        for object in self.objects:
+            object.setLineColor(color_index)
+
+    def draw(self):
+        for object in self.objects:
+            object.draw()
+
+
+class RectangleTarget(Target):
+    def __init__(self, window, size, position, colors):
+        Target.__init__(self)
+        self.objects = [Rectangle(window, size, position, colors, 1)]
+
+
+class CheckerboardTarget(Target):
+    def __init__(self, window, size, position, colors, rectangles_in_row):
+        Target.__init__(self)
+        self.objects = self.getRectangles(window, size, position, colors, rectangles_in_row)
+
+    def getRectangles(self, window, size, position, colors, rectangles_in_row):
+        rectangle_size = self.getRectangleSize(size, rectangles_in_row)
+        up_left_rectangle_position = self.getUpLeftRectanglePosition(rectangle_size, position, rectangles_in_row)
+        return self.makeRectangles(window, colors, rectangle_size, rectangles_in_row, up_left_rectangle_position)
+
+    def makeRectangles(self, window, colors, rectangle_size, rectangles_in_row, up_left_rectangle_position):
+        return [self.makeRectangle(row, column, window, colors, rectangle_size, up_left_rectangle_position)
+                for row in range(rectangles_in_row) for column in range(rectangles_in_row)]
+
+    def makeRectangle(self, row, column, window, colors, rectangle_size, up_left_rectangle_position):
+        current_rectangle_position = self.getCurrentRectanglePosition(up_left_rectangle_position, row, column, rectangle_size)
+        return Rectangle(
+            window, rectangle_size, current_rectangle_position,
+            self.shiftColors(colors, row, column), 0
+        )
+
+    def shiftColors(self, colors, row, column):
+        return colors if row % 2 == column % 2 else (colors[1:] + (colors[0],))
+
+    def getUpLeftRectanglePosition(self, rectangle_size, position, rectangles_in_row):
+        rectangles_to_up_left = (rectangles_in_row - 1) / 2.0
+        up_left_rectangle_x = position[0] - rectangles_to_up_left * rectangle_size[0]
+        up_left_rectangle_y = position[1] - rectangles_to_up_left * rectangle_size[1]
+        return up_left_rectangle_x, up_left_rectangle_y
+
+    def getRectangleSize(self, size, rectangles_in_row):
+        rectangle_width = float(size[0])/rectangles_in_row
+        rectangle_height = float(size[1])/rectangles_in_row
+        return rectangle_width, rectangle_height
+
+    def getCurrentRectanglePosition(self, up_left_rectangle_position, row, column, rectangle_size):
+        current_rectangle_x = up_left_rectangle_position[0] + row * rectangle_size[0]
+        current_rectangle_y = up_left_rectangle_position[1] + column * rectangle_size[1]
+        return current_rectangle_x, current_rectangle_y
+
+
+class RectangleTargetHandler(TargetHandler):
+    def getTarget(self, window, size, position, colors):
+        return RectangleTarget(window, size, position, colors)
+
+
+class CheckerboardTargetHandler(TargetHandler):
+    def getTarget(self, window, size, position, colors):
+        return CheckerboardTarget(window, size, position, colors, 4)
 
 
 class TargetsWindow(object):
@@ -156,7 +263,7 @@ class TargetsWindow(object):
         )
 
     def getTargets(self, targets_data, test_color, window):
-        return [Target(key, data, test_color, window) for key, data in targets_data.items()]
+        return [CheckerboardTargetHandler(key, data, test_color, window) for key, data in targets_data.items()]
 
     def setupGenerator(self, generator):
         generator.send(None)

@@ -207,8 +207,8 @@ dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
 for i in [1,2,3,5,6]:
-    eeg_file_name = "C:\\Users\\Anti\\Desktop\\eeg\\" + str(i) + ".txt"
     result_file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\" + str(i) + "_result.txt"
+    eeg_file_name = "C:\\Users\\Anti\\Desktop\\eeg\\" + str(i) + ".txt"
     training_x, training_y, training_frequencies = readFeatures(
         result_file_name,
         eeg_file_name,
@@ -221,7 +221,10 @@ for i in [1,2,3,5,6]:
 grouped_features = feature_grouper.parse_result
 # print grouped_features
 
-testing_x, testing_y, testing_frequencies = readFeatures(
+# "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\test5_results_" + str(i) + ".txt",
+# "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
+
+testing_x, testing_y, testing_frequencies = readFeatures(  # Check file names!
     "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\7_result.txt",
     "C:\\Users\\Anti\\Desktop\\eeg\\7.txt",
     1
