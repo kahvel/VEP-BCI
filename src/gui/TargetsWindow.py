@@ -262,8 +262,16 @@ class TargetsWindow(object):
             color=background_data[c.WINDOW_COLOR]
         )
 
-    def getTargets(self, targets_data, test_color, window):
-        return [CheckerboardTargetHandler(key, data, test_color, window) for key, data in targets_data.items()]
+    def getTargets(self, targets_options, test_color, window):
+        return [self.chooseTarget(key, options, test_color, window) for key, options in targets_options.items()]
+
+    def chooseTarget(self, key, options, test_color, window):
+        if options[c.TARGET_TYPE] == c.CHECKERBOARD_TARGET:
+            return CheckerboardTargetHandler(key, options, test_color, window)
+        elif options[c.TARGET_TYPE] == c.RECTANGLE_TARGET:
+            return RectangleTargetHandler(key, options, test_color, window)
+        else:
+            raise ValueError("Invalid target type value!")
 
     def setupGenerator(self, generator):
         generator.send(None)

@@ -178,6 +178,13 @@ TARGET_X = "x"
 TARGET_Y = "y"
 TARGET_COLOR0 = "Color0"
 TARGET_SEQUENCE = "Sequence"
+TARGET_TYPE = "Type"
+
+# Target types optionmenu
+RECTANGLE_TARGET = "Rectangle"
+CHECKERBOARD_TARGET = "Checkerboard"
+
+TARGET_TYPE_NAMES = (CHECKERBOARD_TARGET, RECTANGLE_TARGET)
 
 # Detrend optionmenu
 CONSTANT_DETREND = "Constant"

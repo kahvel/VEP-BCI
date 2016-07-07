@@ -1,6 +1,6 @@
 from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 from gui.widgets.frames import Frame
-from gui.widgets import Textboxes
+from gui.widgets import Textboxes, OptionMenu
 import constants as c
 import math
 
@@ -38,6 +38,7 @@ class TargetFrame(Frame.Frame):
         decrease = lambda: self.changeFreq(decrease=True)
         self.addChildWidgets((
             Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
+            OptionMenu.OptionMenu          (self.widget, c.TARGET_TYPE,   0, 4, c.TARGET_TYPE_NAMES),
             Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4, label_columnspan=2),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
             Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
