@@ -105,4 +105,4 @@ class PsdaSnrRanker(Logic.Ranker):
         final = self.sum_result_adder.addSumAndOrderResult(snr)
         # print final
         # print
-        return final[c.RESULT_SUM]
+        return final

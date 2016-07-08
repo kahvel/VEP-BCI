@@ -40,15 +40,8 @@ class AbstractMyGenerator(SingleGenerator):
 class AbstractExtracionGenerator(AbstractPythonGenerator):
     def __init__(self):
         AbstractPythonGenerator.__init__(self)
-        self.short_signal = None
         self.ranker = None
 
     def setup(self, options):
         AbstractPythonGenerator.setup(self, options)
-        self.short_signal = True
         self.ranker.setup(options)
-
-    def checkLength(self, actual_length, max_length):
-        if self.short_signal and actual_length == max_length:
-            self.short_signal = False
-        return self.short_signal
