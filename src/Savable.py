@@ -1,4 +1,10 @@
 import tkFileDialog
+import os
+
+
+def getLocation():
+    import __main__
+    return os.path.dirname(os.path.abspath(__main__.__file__))
 
 
 class Savable(object):
@@ -6,7 +12,7 @@ class Savable(object):
         raise NotImplementedError("save not implemented!")
 
     def askSaveFile(self):
-        self.saveFile(tkFileDialog.asksaveasfile())
+        self.saveFile(tkFileDialog.asksaveasfile(defaultextension=".txt", initialdir=getLocation()))
 
     def saveFile(self, file):
         if file is not None:
@@ -19,7 +25,7 @@ class Loadable(object):
         raise NotImplementedError("load not implemented!")
 
     def askLoadFile(self):
-        self.loadFile(tkFileDialog.askopenfile())
+        self.loadFile(tkFileDialog.askopenfile(defaultextension=".txt", initialdir=getLocation()))
 
     def loadFile(self, file):
         if file is not None:
