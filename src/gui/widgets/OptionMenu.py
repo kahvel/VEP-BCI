@@ -92,7 +92,7 @@ class TargetChoosingMenu(OptionMenu):
         file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(list(int(value) for value in self.disabled_tabs)).strip("[]")+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
     def load(self, file):
-        name, value, disabled, disabled_tabs, disablers = file.readline().strip().split(";")
+        name, value, disabled, disabled_tabs, disablers = file.readline().strip("\n").split(";")
         self.setValue(value)
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []

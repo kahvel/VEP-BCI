@@ -49,7 +49,7 @@ class Widget(object):
         file.write(self.name+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
     def load(self, file):
-        name, disabled, disablers = file.readline().strip().split(";")
+        name, disabled, disablers = file.readline().strip("\n").split(";")
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []
 
@@ -92,7 +92,7 @@ class WidgetWithCommand(Widget):
         self.updateState()
 
     def load(self, file):
-        name, value, disabled, disablers = file.readline().strip().split(";")
+        name, value, disabled, disablers = file.readline().strip("\n").split(";")
         self.setValue(value)
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []

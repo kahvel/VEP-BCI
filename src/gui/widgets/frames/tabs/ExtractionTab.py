@@ -131,7 +131,7 @@ class TargetsFrame(Frame.Frame):
         Frame.Frame.save(self, file)
 
     def load(self, file):
-        disabled_tabs = file.readline().strip()
+        disabled_tabs = file.readline().strip("\n")
         disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
         self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
         self.deleteOptions()
