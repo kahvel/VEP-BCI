@@ -35,16 +35,18 @@ class Normaliser(ResultsParser):
 
     def parseFrequencyResults(self, parse_result, result, data):
         for frequency in self.frequencies_list:
-            parse_result[frequency] = {}
-            mins = []
-            maxs = []
-            for expected_frequency in self.frequencies_list:
-                current_result = result[frequency][expected_frequency]
-                mins.append(min(current_result))
-                maxs.append(max(current_result))
-            minimum = min(mins)
-            maximum = max(maxs)
-            self.addResult(parse_result, result, frequency, maximum, minimum)
+            if frequency in result:
+                parse_result[frequency] = {}
+                mins = []
+                maxs = []
+                for expected_frequency in self.frequencies_list:
+                    if expected_frequency in result[frequency]:
+                        current_result = result[frequency][expected_frequency]
+                        mins.append(min(current_result))
+                        maxs.append(max(current_result))
+                minimum = min(mins)
+                maximum = max(maxs)
+                self.addResult(parse_result, result, frequency, maximum, minimum)
 
     def addResult(self, parse_result, result, frequency, maximum, minimum):
         raise NotImplementedError("addResult not implemented!")
@@ -62,8 +64,9 @@ class NormaliserCreator(Normaliser):
 class GroupNormaliser(Normaliser):
     def addResult(self, parse_result, result, frequency, maximum, minimum):
         for expected_frequency in self.frequencies_list:
-            current_result = result[frequency][expected_frequency]
-            parse_result[frequency][expected_frequency] = map(lambda x: (x-minimum)/(maximum-minimum)+1, current_result)
+            if expected_frequency in result[frequency]:
+                current_result = result[frequency][expected_frequency]
+                parse_result[frequency][expected_frequency] = map(lambda x: (x-minimum)/(maximum-minimum)+1, current_result)
 
 
 class FeatureNormaliser(ResultsParser):
@@ -75,8 +78,9 @@ class FeatureNormaliser(ResultsParser):
     def parseFrequencyResults(self, parse_result, result, data):
         result_dict = dict(result)
         for frequency in self.frequencies_list:
-            current_result = result_dict[frequency]
-            parse_result[frequency] = data[frequency](current_result)
+            if frequency in result_dict:
+                current_result = result_dict[frequency]
+                parse_result[frequency] = data[frequency](current_result)
 
 
 class DensityEstimator(ResultsParser):
@@ -94,7 +98,7 @@ class DensityEstimator(ResultsParser):
 
     def setSubplot(self):
         if self.plot_histogram or self.plot_kde:
-            plt.subplot(6, 3, self.counter)
+            plt.subplot(10, 5, self.counter)
         self.counter += 1
 
     def plotHistogram(self, data):
@@ -109,23 +113,25 @@ class DensityEstimator(ResultsParser):
 
     def parseFrequencyResults(self, parse_result, result, data):
         for frequency in self.frequencies_list:
-            self.setSubplot()
-            parse_result[frequency] = {}
-            for expected_frequency in self.frequencies_list:
-                self.plotHistogram(result[frequency][expected_frequency])
-                x = np.transpose([np.linspace(
-                    min(result[frequency][expected_frequency]),
-                    max(result[frequency][expected_frequency]),
-                    len(result[frequency][expected_frequency])
-                )])
-                bandwidth = (x[1][0] - x[0][0])*30
-                kde = KernelDensity(bandwidth=bandwidth)
-                observations = np.transpose([result[frequency][expected_frequency]])
-                kde.fit(observations)
-                parse_result[frequency][expected_frequency] = kde
-                self.plotKde(kde, x)
-            # if self.plot_histogram or self.plot_kde:
-            #     plt.title(str(tab) + str(method[0]) + str(harmonic) + str(frequency))
+            if frequency in result:
+                self.setSubplot()
+                parse_result[frequency] = {}
+                for expected_frequency in self.frequencies_list:
+                    if expected_frequency in result[frequency]:
+                        self.plotHistogram(result[frequency][expected_frequency])
+                        x = np.transpose([np.linspace(
+                            min(result[frequency][expected_frequency]),
+                            max(result[frequency][expected_frequency]),
+                            len(result[frequency][expected_frequency])
+                        )])
+                        bandwidth = (x[1][0] - x[0][0])*30
+                        kde = KernelDensity(bandwidth=bandwidth)
+                        observations = np.transpose([result[frequency][expected_frequency]])
+                        kde.fit(observations)
+                        parse_result[frequency][expected_frequency] = kde
+                        self.plotKde(kde, x)
+                # if self.plot_histogram or self.plot_kde:
+                #     plt.title(str(tab) + str(method[0]) + str(harmonic) + str(frequency))
 
 
 class NaiveBayes(ResultsParser):
@@ -138,12 +144,13 @@ class NaiveBayes(ResultsParser):
             result_dict = dict(result)
             for frequency in self.frequencies_list:
                 for expected_frequency in self.frequencies_list:
-                    log_value = data[frequency][expected_frequency].score_samples([[result_dict[frequency]]])[0]
-                    value = np.exp(log_value)
-                    if frequency in parse_result:
-                        parse_result[frequency][expected_frequency] = value
-                    else:
-                        parse_result[frequency] = {expected_frequency: value}
+                    if frequency in result_dict and expected_frequency in data[frequency]:
+                        log_value = data[frequency][expected_frequency].score_samples([[result_dict[frequency]]])[0]
+                        value = np.exp(log_value)
+                        if frequency in parse_result:
+                            parse_result[frequency][expected_frequency] = value
+                        else:
+                            parse_result[frequency] = {expected_frequency: value}
 
     def parseResults(self, results):
         self.parse_result = {}
@@ -158,15 +165,17 @@ class DensityGrouper(ResultsParser):
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
             for frequency in self.frequencies_list:
-                for expected_frequency in self.frequencies_list:
-                    value = result[frequency][expected_frequency]
-                    if frequency in parse_result:
-                        if expected_frequency in parse_result[frequency]:
-                            parse_result[frequency][expected_frequency].append(value)
-                        else:
-                            parse_result[frequency][expected_frequency] = [value]
-                    else:
-                        parse_result[frequency] = {expected_frequency: [value]}
+                if frequency in result:
+                    for expected_frequency in self.frequencies_list:
+                        if expected_frequency in result[frequency]:
+                            value = result[frequency][expected_frequency]
+                            if frequency in parse_result:
+                                if expected_frequency in parse_result[frequency]:
+                                    parse_result[frequency][expected_frequency].append(value)
+                                else:
+                                    parse_result[frequency][expected_frequency] = [value]
+                            else:
+                                parse_result[frequency] = {expected_frequency: [value]}
 
     def parseResultValue(self, parse_result, key):
         return parse_result
@@ -179,10 +188,12 @@ class DensityGrouper(ResultsParser):
 def multiplyDensities(frequencies_list, densities):
     result = {}
     for frequency in frequencies_list:
-        result[frequency] = {}
-        for expected_frequency in frequencies_list:
-            value = np.prod(densities[frequency][expected_frequency])
-            result[frequency][expected_frequency] = value
+        if frequency in densities:
+            result[frequency] = {}
+            for expected_frequency in frequencies_list:
+                if expected_frequency in densities[frequency]:
+                    value = np.prod(densities[frequency][expected_frequency])
+                    result[frequency][expected_frequency] = value
     return result
 
 
@@ -191,8 +202,9 @@ def multiplyDensitiesDifferentFrequencies(frequencies_list, densities):
     for expected_frequency in frequencies_list:
         value = 1
         for frequency in frequencies_list:
-            value *= densities[frequency][expected_frequency]
-            # print frequency, expected_frequency, multiplied_results[frequency][expected_frequency]
+            if frequency in densities and expected_frequency in densities[frequency]:
+                value *= densities[frequency][expected_frequency]
+                # print frequency, expected_frequency, multiplied_results[frequency][expected_frequency]
         result[expected_frequency] = value
     return result
 
@@ -206,15 +218,15 @@ dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0
 
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
-for i in [1,2,3,5,6]:
-    result_file_name = "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\" + str(i) + "_result.txt"
-    eeg_file_name = "C:\\Users\\Anti\\Desktop\\eeg\\" + str(i) + ".txt"
+for i in [1,2,3,5,6,7,8,9,10,11,12,13,14,15]:
+    result_file_name = "U:\\data\\my\\results1_2\\results" + str(i) + ".txt"
+    eeg_file_name = "U:\\data\\my\\eeg1\\" + str(i) + ".txt"
     training_x, training_y, training_frequencies = readFeatures(
         result_file_name,
         eeg_file_name,
         1
     )
-    for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
+    for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=False):
         expected_frequency = training_frequencies[expected_target]
         feature_grouper.setExpectedTarget(expected_frequency)
         feature_grouper.parseResults(extracted_features)
@@ -225,12 +237,13 @@ grouped_features = feature_grouper.parse_result
 # "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
 
 testing_x, testing_y, testing_frequencies = readFeatures(  # Check file names!
-    "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\7_result.txt",
-    "C:\\Users\\Anti\\Desktop\\eeg\\7.txt",
+    "U:\\data\\my\\results1_2\\results15.txt",
+    "U:\\data\\my\\eeg1\\15.txt",
     1
 )
 
 frequencies_list = sorted(training_frequencies.values())
+print frequencies_list
 
 group_normaliser = GroupNormaliser(frequencies_list)
 group_normaliser.setup(dummy_parameters)
@@ -259,7 +272,7 @@ naive_bayes.setup(density_functions)
 correct = 0
 wrong = 0
 
-for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step, skip_after_change=True):
+for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step, skip_after_change=False):
     normalised_features = feature_normaliser.parseResults(extracted_features)
     densities = naive_bayes.parseResults(normalised_features)
     # print densities
@@ -273,11 +286,11 @@ for extracted_features, expected_target in featuresIterator(testing_x, testing_y
     predicted_frequency = sorted(map(lambda x: (x[1], x[0]), multiplied_densities_final.items()), reverse=True)[0][1]
     correct += expected_frequency == predicted_frequency
     wrong += expected_frequency != predicted_frequency
-    if expected_frequency == predicted_frequency:
-        print "Correct",
-    else:
-        print "Wrong  ",
-    print round(expected_frequency, 2), round(predicted_frequency, 2), correct, wrong
+    # if expected_frequency == predicted_frequency:
+    #     print "Correct",
+    # else:
+    #     print "Wrong  ",
+    # print round(expected_frequency, 2), round(predicted_frequency, 2), correct, wrong
 
 print correct, wrong
 

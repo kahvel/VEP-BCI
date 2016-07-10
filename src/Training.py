@@ -4,7 +4,6 @@ import ParameterHandler
 import TargetIdentification
 
 import copy
-import os
 import scipy.optimize
 
 
@@ -55,7 +54,7 @@ class Training(BCI.BCI):
         self.file_content = ""
         self.handleExtractionMessages = self.saveDataHandleExtraction
         BCI.BCI.start(self, options)
-        open("C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\no_overwrite.txt", "w").write(self.file_content)
+        open("U:\\data\\my\\no_overwrite.txt", "w").write(self.file_content)
 
     def saveDataHandleExtraction(self, target_freqs, current_target):
         results = self.connections.receiveExtractionMessage()

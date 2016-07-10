@@ -201,6 +201,12 @@ class NewTrainingParameterHandler(object):
                 3: {
                     c.RESULT_SUM: numbers[10],
                 },
+                4: {
+                    1: 0,
+                    2: 0,
+                    3: 0,
+                    c.RESULT_SUM: 0,
+                },
             },
             c.DATA_EXTRACTION_DIFFERENCES: {
                 1: {
@@ -214,6 +220,12 @@ class NewTrainingParameterHandler(object):
                 },
                 3: {
                     c.RESULT_SUM: numbers[11],
+                },
+                4: {
+                    1: 0,
+                    2: 0,
+                    3: 0,
+                    c.RESULT_SUM: 0,
                 },
             },
             c.DATA_ACTUAL_RESULTS: {

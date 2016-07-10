@@ -1,7 +1,7 @@
 from connections import Connections
 from connections.postoffice import ConnectionPostOfficeEnd
 from connections.postoffice import PlotConnection
-from connections.postoffice import ExtractionConnection
+from connections.postoffice import TrainingExtractionConnection, ExtractionConnection
 
 import constants as c
 
@@ -107,7 +107,7 @@ class TrainingMasterConnection(AbstractMasterConnection):
         AbstractMasterConnection.__init__(
             self,
             {
-                c.CONNECTION_EXTRACTION: ExtractionConnection.TrainingExtractionTabConnection(),
+                c.CONNECTION_EXTRACTION: TrainingExtractionConnection.TrainingExtractionTabConnection(),
             },
             {
                 c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,
