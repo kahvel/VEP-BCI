@@ -7,11 +7,10 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 
 
-class ResultCollector(ResultsParser):
-    def __init__(self):
-        ResultsParser.__init__(self)
+class Collector(ResultsParser):
+    def __init__(self, add_sum, data_has_method):
+        ResultsParser.__init__(self, add_sum=add_sum, data_has_method=data_has_method)
         self.expected_frequency = None
-        self.parse_result = {}
 
     def setExpectedTarget(self, expected_frequency):
         self.expected_frequency = expected_frequency
@@ -19,13 +18,36 @@ class ResultCollector(ResultsParser):
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
             for frequency, value in result:
+                processed_value = self.getValue(value, result, data, frequency)
                 if frequency in parse_result:
                     if self.expected_frequency in parse_result[frequency]:
-                        parse_result[frequency][self.expected_frequency].append(value)
+                        parse_result[frequency][self.expected_frequency].append(processed_value)
                     else:
-                        parse_result[frequency][self.expected_frequency] = [value]
+                        parse_result[frequency][self.expected_frequency] = [processed_value]
                 else:
-                    parse_result[frequency] = {self.expected_frequency: [value]}
+                    parse_result[frequency] = {self.expected_frequency: [processed_value]}
+
+    def getValue(self, value, result, data, frequency):
+        raise NotImplementedError("getValue not implemented!")
+
+
+class ResultCollector(Collector):
+    def __init__(self):
+        Collector.__init__(self, True, False)
+        self.parse_result = {}
+
+    def getValue(self, value, result, data, frequency):
+        return value
+
+
+class RatioCollector(Collector):
+    def __init__(self):
+        Collector.__init__(self, True, True)
+        self.parse_result = {}
+
+    def getValue(self, value, result, data, frequency):
+        results_sum = sum(map(data[frequency], dict(result).values()))
+        return data[frequency](value)/results_sum
 
 
 class Normaliser(ResultsParser):
@@ -84,12 +106,13 @@ class FeatureNormaliser(ResultsParser):
 
 
 class DensityEstimator(ResultsParser):
-    def __init__(self, frequencies_list, plot_kde=False, plot_histogram=False):
+    def __init__(self, frequencies_list, figure, plot_kde=False, plot_histogram=False):
         ResultsParser.__init__(self, add_sum=False)
         self.counter = None
         self.plot_histogram = plot_histogram
         self.plot_kde = plot_kde
         self.frequencies_list = frequencies_list
+        plt.figure(figure)
 
     def parseResults(self, results):
         self.counter = 1
@@ -208,6 +231,21 @@ def multiplyDensitiesDifferentFrequencies(frequencies_list, densities):
         result[expected_frequency] = value
     return result
 
+
+def collectData(collector):
+    for i in [1,2,3,5,6,7,8,9,10,11,12,13,14,15]:
+        training_x, training_y, training_frequencies = readFeatures(
+            "U:\\data\\my\\results1_1\\" + str(i) + "_result.txt",
+            "U:\\data\\my\\eeg1\\" + str(i) + ".txt",
+            1
+        )
+        for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
+            expected_frequency = training_frequencies[expected_target]
+            collector.setExpectedTarget(expected_frequency)
+            collector.parseResults(extracted_features)
+    return collector, training_frequencies
+
+
 train_length = 256
 train_step = 32
 
@@ -218,18 +256,7 @@ dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0
 
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
-for i in [1,2,3,5,6,7,8,9,10,11,12,13,14,15]:
-    result_file_name = "U:\\data\\my\\results1_2\\results" + str(i) + ".txt"
-    eeg_file_name = "U:\\data\\my\\eeg1\\" + str(i) + ".txt"
-    training_x, training_y, training_frequencies = readFeatures(
-        result_file_name,
-        eeg_file_name,
-        1
-    )
-    for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=False):
-        expected_frequency = training_frequencies[expected_target]
-        feature_grouper.setExpectedTarget(expected_frequency)
-        feature_grouper.parseResults(extracted_features)
+feature_grouper, training_frequencies = collectData(feature_grouper)
 grouped_features = feature_grouper.parse_result
 # print grouped_features
 
@@ -250,7 +277,7 @@ group_normaliser.setup(dummy_parameters)
 normalised_features = group_normaliser.parseResults(grouped_features)
 # print normalised_features
 
-density_estimator = DensityEstimator(frequencies_list, plot_kde=True)
+density_estimator = DensityEstimator(frequencies_list, 1, plot_kde=True)
 density_estimator.setup(dummy_parameters)
 density_functions = density_estimator.parseResults(normalised_features)
 # print density_functions
@@ -259,6 +286,18 @@ normaliser_creator = NormaliserCreator(frequencies_list)
 normaliser_creator.setup(dummy_parameters)
 normaliser_functions = normaliser_creator.parseResults(grouped_features)
 # print normaliser_functions
+
+ratio_collector = RatioCollector()
+ratio_collector.setup(normaliser_functions)
+ratio_collector, _ = collectData(ratio_collector)
+ratios = ratio_collector.parse_result
+# print ratios
+
+ratio_density_estimator = DensityEstimator(frequencies_list, 2, plot_kde=True)
+ratio_density_estimator.setup(dummy_parameters)
+ratio_density_functions = ratio_density_estimator.parseResults(ratios)
+
+plt.show()
 
 feature_normaliser = FeatureNormaliser(frequencies_list)
 feature_normaliser.setup(normaliser_functions)
