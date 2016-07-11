@@ -202,7 +202,7 @@ class RectangleTargetHandler(TargetHandler):
 
 class CheckerboardTargetHandler(TargetHandler):
     def getTarget(self, window, size, position, colors):
-        return CheckerboardTarget(window, size, position, colors, 4)
+        return CheckerboardTarget(window, size, position, colors, 3)
 
 
 class TargetsWindow(object):

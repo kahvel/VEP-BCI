@@ -14,7 +14,7 @@ class AutoregressivePSD(PsdaRanker.PsdaRanker):
         PsdaRanker.PsdaRanker.setup(self, options)
 
     def getResults(self, data):
-        coefficients, sigma_squared = algorithms.AR_est_YW(data, 10)
+        coefficients, sigma_squared = algorithms.AR_est_YW(data, 100)
         length = self.target_magnitude_handler.max_signal_length
         normalised_frequencies, coefficients_psd = algorithms.AR_psd(coefficients, sigma_squared, length-1)
         self.target_magnitude_handler.max_length_fft_bins = (normalised_frequencies*c.HEADSET_FREQ/(2*np.pi))[1:]

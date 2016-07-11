@@ -211,7 +211,7 @@ class TargetIdentification(object):
     def addResultAndSendCommand(self, result_frequency, current, target_freqs_dict):
         self.results.add(current, result_frequency)
         self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
-        # self.printResult(result_frequency, current)
+        self.printResult(result_frequency, current)
         self.holdResultTarget(result_frequency, current)
 
     def printResult(self, result_frequency, current):
@@ -237,6 +237,7 @@ class TargetIdentification(object):
         results = message
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
+            print results
             differences = self.difference_finder.parseResults(results)
             if sum(self.difference_finder.comparison) >= len(self.difference_finder.comparison):
                 frequency = self.prev_results.getFrequency(freq_weights)
