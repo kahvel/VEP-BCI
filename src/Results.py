@@ -13,6 +13,7 @@ class Trial(object):
         self.target_count = len(target_freqs)
         self.total_packets = None
         self.frequency_to_label = {frequency: label for label, frequency in enumerate(target_freqs)}
+        self.frequency_to_label[None] = None
         self.target_frequencies = target_freqs
 
     def add(self, current, detected):
@@ -140,8 +141,8 @@ class Trial(object):
         result = "\n".join(str(key) + ": " + str(value) for key, value in self.getData().items()) + "\n"
         for freq in self.results:
             result += str(freq) + " " + str(self.results[freq]) + "\n"
-        result += str(self.true_labels) + "\n"
-        result += str(self.predicted_labels) + "\n"
+        # result += str(self.true_labels) + "\n"
+        # result += str(self.predicted_labels) + "\n"
         return result
 
 

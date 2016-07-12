@@ -195,12 +195,12 @@ class TargetIdentification(object):
             # winsound.Beep(2500, 100)
             self.prev_results.reset(target_freqs)
 
-    def filterRepeatingResults(self, result_frequency, current, target_freqs_dict):
+    def filterRepeatingResults(self, predicted_frequency, current_frequency, target_freqs_dict):
         if not self.clear_buffers:
-            if not self.results.isPrevResult(result_frequency):
-                self.addResultAndSendCommand(result_frequency, current, target_freqs_dict)
+            if not self.results.isPrevResult(predicted_frequency):
+                self.addResultAndSendCommand(predicted_frequency, current_frequency, target_freqs_dict)
         else:
-            self.addResultAndSendCommand(result_frequency, current, target_freqs_dict)
+            self.addResultAndSendCommand(predicted_frequency, current_frequency, target_freqs_dict)
             self.clearBuffers(target_freqs_dict.values())
 
     def clearBuffers(self, target_freq):
@@ -208,11 +208,10 @@ class TargetIdentification(object):
         self.actual_results.reset(target_freq)
         self.prev_results.reset(target_freq)
 
-    def addResultAndSendCommand(self, result_frequency, current, target_freqs_dict):
-        self.results.add(current, result_frequency)
-        self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, result_frequency))
-        self.printResult(result_frequency, current)
-        self.holdResultTarget(result_frequency, current)
+    def addResultAndSendCommand(self, predicted_frequency, current_frequency, target_freqs_dict):
+        self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, predicted_frequency))
+        self.printResult(predicted_frequency, current_frequency)
+        self.holdResultTarget(predicted_frequency, current_frequency)
 
     def printResult(self, result_frequency, current):
         if result_frequency != current:
@@ -227,11 +226,25 @@ class TargetIdentification(object):
                 self.need_new_target = True
                 self.new_target_counter = 0
 
-    def handleFinalResult(self, result_frequency, target_freqs_dict, current_target):
+    def handleStandbyResult(self, result_frequency, target_freqs_dict, current_frequency):
         if self.standby.notInStandby():
             self.master_connection.sendTargetMessage(result_frequency)
-            current = target_freqs_dict[current_target] if current_target in target_freqs_dict else None
-            self.filterRepeatingResults(result_frequency, current, target_freqs_dict)
+            self.filterRepeatingResults(result_frequency, current_frequency, target_freqs_dict)
+
+    def filterResults(self, freq_weights, target_freqs, current_frequency, difference_comparisons):
+        if sum(difference_comparisons) >= len(difference_comparisons):
+            frequency = self.prev_results.getFrequency(freq_weights)
+            if frequency is not None:
+                result_frequency = self.actual_results.getFrequency({frequency: 1})
+                if result_frequency is not None:
+                    self.handleStandby(result_frequency, target_freqs.values())
+                    self.handleStandbyResult(result_frequency, target_freqs, current_frequency)
+                return result_frequency
+            elif self.actual_results.always_remove_results:
+                self.actual_results.removeWeight()
+        elif self.prev_results.always_remove_results:
+            self.prev_results.removeWeight()
+            self.actual_results.removeWeight()
 
     def handleFreqMessages(self, message, target_freqs, current_target):
         results = message
@@ -239,15 +252,7 @@ class TargetIdentification(object):
             freq_weights = self.weight_finder.parseResults(results)
             print results
             differences = self.difference_finder.parseResults(results)
-            if sum(self.difference_finder.comparison) >= len(self.difference_finder.comparison):
-                frequency = self.prev_results.getFrequency(freq_weights)
-                if frequency is not None:
-                    result_frequency = self.actual_results.getFrequency({frequency: 1})
-                    if result_frequency is not None:
-                        self.handleStandby(result_frequency, target_freqs.values())
-                        self.handleFinalResult(result_frequency, target_freqs, current_target)
-                elif self.actual_results.always_remove_results:
-                    self.actual_results.removeWeight()
-            elif self.prev_results.always_remove_results:
-                self.prev_results.removeWeight()
-                self.actual_results.removeWeight()
+            difference_comparisons = self.difference_finder.comparison
+            current_frequency = target_freqs[current_target] if current_target in target_freqs else None
+            predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, difference_comparisons)
+            self.results.add(current_frequency, predicted_frequency)
