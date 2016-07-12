@@ -5,6 +5,7 @@ from ParameterHandler import NewTrainingParameterHandler
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
+import pandas as pd
 
 
 class Collector(ResultsParser):
@@ -42,12 +43,12 @@ class ResultCollector(Collector):
 
 class RatioCollector(Collector):
     def __init__(self):
-        Collector.__init__(self, True, True)
+        Collector.__init__(self, True, False)
         self.parse_result = {}
 
     def getValue(self, value, result, data, frequency):
-        results_sum = sum(map(data[frequency], dict(result).values()))
-        return data[frequency](value)/results_sum
+        results_sum = sum(dict(result).values())
+        return value/results_sum
 
 
 class Normaliser(ResultsParser):
@@ -100,7 +101,7 @@ class FeatureNormaliser(ResultsParser):
     def parseFrequencyResults(self, parse_result, result, data):
         result_dict = dict(result)
         for frequency in self.frequencies_list:
-            if frequency in result_dict:
+            if frequency in result_dict and frequency in data:
                 current_result = result_dict[frequency]
                 parse_result[frequency] = data[frequency](current_result)
 
@@ -208,6 +209,32 @@ class DensityGrouper(ResultsParser):
         return ResultsParser.parseResults(self, results)
 
 
+class MovingAverage(ResultsParser):
+    def __init__(self, frequencies_list, window_length):
+        ResultsParser.__init__(self, add_sum=False)
+        self.frequencies_list = frequencies_list
+        self.window_length = window_length
+
+    def parseResults(self, results):
+        self.parse_result = {}
+        return ResultsParser.parseResults(self, results)
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        for frequency in self.frequencies_list:
+            if frequency in result:
+                parse_result[frequency] = {}
+                for expected_frequency in self.frequencies_list:
+                    if expected_frequency in result[frequency]:
+                        parse_result[frequency][expected_frequency] = movingAverage(result[frequency][expected_frequency], self.window_length)
+
+
+def movingAverage(data, window_length):
+    assert len(data) >= window_length
+    ret = np.cumsum(data, dtype=float)
+    ret[window_length:] = ret[window_length:] - ret[:-window_length]
+    return list(ret[window_length - 1:] / window_length)
+
+
 def multiplyDensities(frequencies_list, densities):
     result = {}
     for frequency in frequencies_list:
@@ -260,11 +287,32 @@ feature_grouper, training_frequencies = collectData(feature_grouper)
 grouped_features = feature_grouper.parse_result
 # print grouped_features
 
+# matrix = {}
+# for tab, tab_results in grouped_features.items():
+#     for method, method_results in tab_results.items():
+#         for harmonic, harmonic_results in method_results.items():
+#             for frequency, frequency_results in harmonic_results.items():
+#                 for expected_frequency, expected_frequency_results in frequency_results.items():
+#                     if expected_frequency in matrix:
+#                         matrix[expected_frequency].append(expected_frequency_results)
+#                     else:
+#                         matrix[expected_frequency] = [expected_frequency_results]
+# for i, expected_frequency in enumerate(matrix):
+#     matrix[expected_frequency] = np.transpose(matrix[expected_frequency])
+#     print matrix[expected_frequency].shape
+#     # print matrix[expected_frequency]
+#     plt.figure(i+1)
+#     df = pd.DataFrame(matrix[expected_frequency])
+#     axes = pd.tools.plotting.scatter_matrix(df, alpha=0.2)
+#     # plt.tight_layout()
+#
+# plt.show()
+
 # "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\test5_results_" + str(i) + ".txt",
 # "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
 
 testing_x, testing_y, testing_frequencies = readFeatures(  # Check file names!
-    "U:\\data\\my\\results1_2\\results15.txt",
+    "U:\\data\\my\\results1_1\\15_result.txt",
     "U:\\data\\my\\eeg1\\15.txt",
     1
 )
@@ -272,9 +320,14 @@ testing_x, testing_y, testing_frequencies = readFeatures(  # Check file names!
 frequencies_list = sorted(training_frequencies.values())
 print frequencies_list
 
+moving_average = MovingAverage(frequencies_list, 1)
+moving_average.setup(dummy_parameters)
+averaged_features = moving_average.parseResults(grouped_features)
+# print averaged_features
+
 group_normaliser = GroupNormaliser(frequencies_list)
 group_normaliser.setup(dummy_parameters)
-normalised_features = group_normaliser.parseResults(grouped_features)
+normalised_features = group_normaliser.parseResults(averaged_features)
 # print normalised_features
 
 density_estimator = DensityEstimator(frequencies_list, 1, plot_kde=True)
@@ -284,20 +337,25 @@ density_functions = density_estimator.parseResults(normalised_features)
 
 normaliser_creator = NormaliserCreator(frequencies_list)
 normaliser_creator.setup(dummy_parameters)
-normaliser_functions = normaliser_creator.parseResults(grouped_features)
+normaliser_functions = normaliser_creator.parseResults(averaged_features)
 # print normaliser_functions
 
-ratio_collector = RatioCollector()
-ratio_collector.setup(normaliser_functions)
-ratio_collector, _ = collectData(ratio_collector)
-ratios = ratio_collector.parse_result
-# print ratios
+# ratio_collector = RatioCollector()
+# ratio_collector.setup(dummy_parameters)
+# ratio_collector, _ = collectData(ratio_collector)
+# ratios = ratio_collector.parse_result
+# # print ratios
+#
+# ratio_group_normaliser = GroupNormaliser(frequencies_list)
+# ratio_group_normaliser.setup(dummy_parameters)
+# normalised_ratios = ratio_group_normaliser.parseResults(ratios)
+# # print normalised_ratios
+#
+# ratio_density_estimator = DensityEstimator(frequencies_list, 2, plot_kde=True)
+# ratio_density_estimator.setup(dummy_parameters)
+# ratio_density_functions = ratio_density_estimator.parseResults(normalised_ratios)
 
-ratio_density_estimator = DensityEstimator(frequencies_list, 2, plot_kde=True)
-ratio_density_estimator.setup(dummy_parameters)
-ratio_density_functions = ratio_density_estimator.parseResults(ratios)
-
-plt.show()
+# plt.show()
 
 feature_normaliser = FeatureNormaliser(frequencies_list)
 feature_normaliser.setup(normaliser_functions)
@@ -311,25 +369,88 @@ naive_bayes.setup(density_functions)
 correct = 0
 wrong = 0
 
-for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step, skip_after_change=False):
-    normalised_features = feature_normaliser.parseResults(extracted_features)
-    densities = naive_bayes.parseResults(normalised_features)
-    # print densities
-    grouped_densities = density_grouper.parseResults(densities)
-    # print grouped_densities
-    multiplied_densities = multiplyDensities(frequencies_list, grouped_densities)
-    # print multiplied_densities
-    multiplied_densities_final = multiplyDensitiesDifferentFrequencies(frequencies_list, multiplied_densities)
-    # print multiplied_densities_final
-    expected_frequency = testing_frequencies[expected_target]
-    predicted_frequency = sorted(map(lambda x: (x[1], x[0]), multiplied_densities_final.items()), reverse=True)[0][1]
-    correct += expected_frequency == predicted_frequency
-    wrong += expected_frequency != predicted_frequency
-    # if expected_frequency == predicted_frequency:
-    #     print "Correct",
-    # else:
-    #     print "Wrong  ",
-    # print round(expected_frequency, 2), round(predicted_frequency, 2), correct, wrong
+
+class MovingAverageCollector(ResultsParser):
+    def __init__(self, window_length):
+        ResultsParser.__init__(self)
+        self.window_length = window_length
+        self.is_short = True
+        self.expected_frequency = None
+        self.parse_result = {}
+
+    def newExpectedTarget(self, expected_frequency):
+        if expected_frequency != self.expected_frequency:
+            self.is_short = True
+            self.parse_result = {}
+            self.expected_frequency = expected_frequency
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        for frequency, value in result:
+            result_dict = dict(result)
+            if frequency in parse_result:
+                parse_result[frequency] = self.addValue(parse_result[frequency], result_dict[frequency])
+            else:
+                parse_result[frequency] = [result_dict[frequency]]
+
+    def addValue(self, parse_result, value):
+        if len(parse_result) >= self.window_length:
+            self.is_short = False
+            return parse_result[1:] + [value]
+        else:
+            return parse_result + [value]
+
+    def parseResults(self, results):
+        res = ResultsParser.parseResults(self, results)
+        if not self.is_short:
+            return res
+        else:
+            return None
+
+
+class TestMovingAverage(ResultsParser):
+    def __init__(self, window_length):
+        ResultsParser.__init__(self, add_sum=False)
+        self.window_length = window_length
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        for frequency, value in result.items():
+            parse_result[frequency] = movingAverage(result[frequency], self.window_length)[0]
+
+    def parseResults(self, results):
+        self.parse_result = {}
+        return ResultsParser.parseResults(self, results)
+
+
+window_length = 1
+prev_results = MovingAverageCollector(window_length)
+prev_results.setup(dummy_parameters)
+
+test_moving_average = TestMovingAverage(window_length)
+test_moving_average.setup(dummy_parameters)
+
+for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step, skip_after_change=True):
+    prev_results.newExpectedTarget(expected_target)
+    collected = prev_results.parseResults(extracted_features)
+    if collected is not None:  # None if length < window_length
+        averaged = test_moving_average.parseResults(collected)
+        normalised_features = feature_normaliser.parseResults(averaged)
+        densities = naive_bayes.parseResults(normalised_features)  # TODO density is sometimes 0
+        # print densities
+        grouped_densities = density_grouper.parseResults(densities)
+        # print grouped_densities
+        multiplied_densities = multiplyDensities(frequencies_list, grouped_densities)
+        # print multiplied_densities
+        multiplied_densities_final = multiplyDensitiesDifferentFrequencies(frequencies_list, multiplied_densities)
+        # print multiplied_densities_final
+        expected_frequency = testing_frequencies[expected_target]
+        predicted_frequency = sorted(map(lambda x: (x[1], x[0]), multiplied_densities_final.items()), reverse=True)[0][1]
+        correct += expected_frequency == predicted_frequency
+        wrong += expected_frequency != predicted_frequency
+        if expected_frequency == predicted_frequency:
+            print "Correct",
+        else:
+            print "Wrong  ",
+        print round(expected_frequency, 2), round(predicted_frequency, 2), correct, wrong
 
 print correct, wrong
 
