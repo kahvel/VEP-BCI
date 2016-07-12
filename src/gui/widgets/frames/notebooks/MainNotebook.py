@@ -1,4 +1,4 @@
-from gui.widgets.frames.notebooks import SameTabsNotebook, Notebook
+from gui.widgets.frames.notebooks import PlusNotebook, Notebook
 from gui.widgets.frames.tabs import TestTab, WindowTab, RobotTab, EmotivTab, RecordTab
 import constants as c
 
@@ -6,12 +6,12 @@ import constants as c
 class MainNotebook(Notebook.Notebook):
     def __init__(self, parent, button_commands, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
-        target_notebook = SameTabsNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq)
+        target_notebook = PlusNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq)
         self.addChildWidgets((
             WindowTab.WindowTab(self.widget, 0, 0, self.monitorFreqChanged),
             target_notebook,
-            SameTabsNotebook.ExtractionNotebook(self.widget, 0, 0, target_notebook.widgets_list),
-            SameTabsNotebook.PlotNotebook(self.widget, 0, 0),
+            PlusNotebook.ExtractionNotebook(self.widget, 0, 0, target_notebook.widgets_list),
+            PlusNotebook.PlotNotebook(self.widget, 0, 0),
             TestTab.TestTab(self.widget, button_commands[c.TEST_TAB], 0, 0),
             RobotTab.RobotTab(self.widget, button_commands[c.ROBOT_TAB]),
             EmotivTab.EmotivTab(self.widget),
