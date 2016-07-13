@@ -51,15 +51,18 @@ class Training(BCI.BCI):
             return self.saveDataMethod(self.changeOptions(options))
 
     def saveDataMethod(self, options):
+        self.expected_target_index = 0
         self.file_content = ""
         self.handleExtractionMessages = self.saveDataHandleExtraction
         BCI.BCI.start(self, options)
-        open("U:\\data\\my\\no_overwrite.txt", "w").write(self.file_content)
+        trial_number = 0
+        open("U:\\data\\my\\results1_2_target\\results" + str(trial_number) + ".txt", "w").write(self.file_content)
+        open("U:\\data\\my\\results1_2_target\\frequencies" + str(trial_number) + ".txt", "w").write(str(self.target_freqs))
 
     def saveDataHandleExtraction(self, target_freqs, current_target):
         results = self.connections.receiveExtractionMessage()
         if results is not None:
-            self.file_content += str(results) + "\n"
+            self.file_content += str((results, current_target)) + "\n"
 
     def differentialEvolutionIdentification(self, options):
         options_handler = ParameterHandler.DifferentialEvolution4Params()

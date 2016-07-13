@@ -4,7 +4,7 @@ import Standby
 import constants as c
 
 from ParameterHandler import NewTrainingParameterHandler, BruteForceHandler
-from utils import readFeatures, featuresIterator
+from utils import readFeaturesWithTargets, removeResultsAfterChange
 
 import scipy.optimize
 import numpy as np
@@ -31,35 +31,26 @@ standby.disable()
 master_connection = DummyMasterConnection()
 target_identification = TargetIdentification.TargetIdentification(master_connection, results, standby)
 
-# trial_number = 1
-# features_list, expected, frequencies = readFeatures(
-#     "../save/test5_results_" + str(trial_number) + ".txt",
-#     "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
-#     trial_number
-# )
-
-features_list, expected, frequencies = readFeatures(
-    "U:\\data\\my\\results1_1\\15_result.txt",
-    "U:\\data\\my\\eeg1\\15.txt",
-    1
+features_list, expected, frequencies = readFeaturesWithTargets(
+    "U:\\data\\my\\results1_2_target\\results5.txt",
+    "U:\\data\\my\\results1_2_target\\frequencies5.txt"
 )
 
 # frequencies[4] = (frequencies.values()[0] + frequencies.values()[1])/2
 # frequencies[5] = (frequencies.values()[2] + frequencies.values()[1])/2
-
 print frequencies
-
-parameter_handler = NewTrainingParameterHandler()
 
 length = 256
 step = 32
+number_of_steps_to_skip = length/step-1
+
+features_list, expected = removeResultsAfterChange(features_list, expected, 0)
 packet_count = len(features_list)*step+length
+
 enable_buffer_clearing = False
-counter = 0
 
 
 def costFunction(numbers, options_handler, frequencies):
-    global counter
     new_options = options_handler.numbersToOptions(numbers)
     target_identification.results.start(frequencies.values())
     target_identification.resetTargetVariables()
@@ -67,7 +58,7 @@ def costFunction(numbers, options_handler, frequencies):
     target_identification.resetResults(frequencies.values())
     clear_buffers = False
     packet_counter = 0
-    for result, expected_target in featuresIterator(features_list, expected, length, step, skip_after_change=True):
+    for result, expected_target in zip(features_list, expected):
         if clear_buffers and enable_buffer_clearing:
             packet_counter += step
             if packet_counter >= length:
@@ -75,7 +66,6 @@ def costFunction(numbers, options_handler, frequencies):
                 clear_buffers = False
         else:
             predicted_frequency = target_identification.handleFreqMessages(result, frequencies, expected_target, filter_by_comparison=True)
-            counter += 1
             if predicted_frequency is not None:
                 clear_buffers = True
     target_identification.results.trialEnded(packet_count)
@@ -84,6 +74,8 @@ def costFunction(numbers, options_handler, frequencies):
     # print result[c.RESULTS_DATA_TRUE_POSITIVES], result[c.RESULTS_DATA_FALSE_POSITIVES], result[c.RESULTS_DATA_MEAN_F1]
     return 1-result[c.RESULTS_DATA_MEAN_F1]
 
+
+parameter_handler = NewTrainingParameterHandler()
 
 # result = scipy.optimize.differential_evolution(
 #     costFunction,
