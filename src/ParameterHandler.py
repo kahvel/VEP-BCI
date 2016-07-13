@@ -174,15 +174,21 @@ class NewTrainingParameterHandler(object):
             (0, 1),
             (0, 1),
             (0, 3),
-            (0, 0.5),
-            (0, 0.5),
-            (0, 0.5),
+            (0, 3),
             (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
             (0, 0.2),
-            (0, 1),
-            (0, 0.01),
-            # (0, 20),
-            # (0, 5),
+            (0, 0.02),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
         )
         self.steps = (0.25, 0.25, 0.25, 0.25, 0.25, 0.025, 0.025, 0.025, 0.025, 0.025, 1, 0.25, 1, 0.25)
 
@@ -199,33 +205,33 @@ class NewTrainingParameterHandler(object):
                     c.RESULT_SUM: numbers[4],
                 },
                 3: {
-                    c.RESULT_SUM: numbers[10],
+                    c.RESULT_SUM: numbers[5],
                 },
                 4: {
-                    1: 0,
-                    2: 0,
-                    3: 0,
-                    c.RESULT_SUM: 0,
+                    1: numbers[6],
+                    2: numbers[7],
+                    3: numbers[8],
+                    c.RESULT_SUM: numbers[9],
                 },
             },
             c.DATA_EXTRACTION_DIFFERENCES: {
                 1: {
-                    1: numbers[5],
-                    2: numbers[6],
-                    3: numbers[7],
-                    c.RESULT_SUM: numbers[8],
+                    1: numbers[10],
+                    2: numbers[11],
+                    3: numbers[12],
+                    c.RESULT_SUM: numbers[13],
                 },
                 2: {
-                    c.RESULT_SUM: numbers[9],
+                    c.RESULT_SUM: numbers[14],
                 },
                 3: {
-                    c.RESULT_SUM: numbers[11],
+                    c.RESULT_SUM: numbers[15],
                 },
                 4: {
-                    1: 0,
-                    2: 0,
-                    3: 0,
-                    c.RESULT_SUM: 0,
+                    1: numbers[16],
+                    2: numbers[17],
+                    3: numbers[18],
+                    c.RESULT_SUM: numbers[19],
                 },
             },
             c.DATA_ACTUAL_RESULTS: {
@@ -238,10 +244,47 @@ class NewTrainingParameterHandler(object):
                 c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
                 c.DATA_ALWAYS_DELETE: False,
             },
-            # If using training/Training.py, this only resets prev_result and actual_result.
-            # It cannot clear the 256 remembered packets, because the features are pre-calculated.
-            c.DATA_CLEAR_BUFFERS: False,
+            c.DATA_CLEAR_BUFFERS: True,
         }
 
     def getBounds(self):
         return self.bounds
+
+
+class BruteForceHandler(object):
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_WEIGHTS: {
+                1: {
+                    1: 1,
+                    2: 1,
+                    3: 1,
+                    c.RESULT_SUM: 1,
+                },
+                2: {
+                    c.RESULT_SUM: 3,
+                },
+            },
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[0],
+                    2: numbers[1],
+                    3: numbers[2],
+                    c.RESULT_SUM: numbers[3],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[4],
+                },
+            },
+            c.DATA_ACTUAL_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
+                c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
+                c.DATA_ALWAYS_DELETE: False,
+            },
+            c.DATA_PREV_RESULTS: {
+                c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
+                c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
+                c.DATA_ALWAYS_DELETE: False,
+            },
+            c.DATA_CLEAR_BUFFERS: True,
+        }
