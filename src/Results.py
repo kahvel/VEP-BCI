@@ -33,22 +33,28 @@ class Trial(object):
         else:
             return float(total_time)/total_results
 
-    def getCorrectAndWrong(self):
-        correct_results = 0
-        wrong_results = 0
-        for detected in self.results:
-            for correct in self.results[detected]:
-                if detected == correct:
-                    correct_results += self.results[detected][correct]
-                else:
-                    wrong_results += self.results[detected][correct]
-        return correct_results, wrong_results
+    def getTrueFalsePositives(self):
+        """
+        Returns the number of true positives and false positives.
+        If detected is None, then negative class was predicted.
+        :return:
+        """
+        true_positives = 0
+        false_positives = 0
+        for correct in self.results:
+            for detected in self.results[correct]:
+                if detected is not None:
+                    if correct == detected:
+                        true_positives += self.results[correct][detected]
+                    else:
+                        false_positives += self.results[correct][detected]
+        return true_positives, false_positives
 
-    def getAccuracy(self, correct, wrong):
-        if correct+wrong == 0:
+    def getPrecision(self, true_positives, false_positives):
+        if true_positives+false_positives == 0:
             return np.nan
         else:
-            return float(correct)/(correct+wrong)
+            return float(true_positives)/(true_positives+false_positives)
 
     def getItrBitPerMin(self, itr, time):
         return itr*60.0/time
@@ -118,19 +124,19 @@ class Trial(object):
         ) for frequency in self.target_frequencies}
 
     def getData(self, beta=1, weighted=True):
-        correct_results, wrong_results = self.getCorrectAndWrong()
-        accuracy = self.getAccuracy(correct_results, wrong_results)
+        true_positives, false_positives = self.getTrueFalsePositives()
+        precision = self.getPrecision(true_positives, false_positives)
         time_in_sec = self.getTimeInSec(self.total_packets)
-        time_per_target = self.getTimePerTarget(correct_results+wrong_results, time_in_sec)
-        itr = self.getItrBitPerTrial(accuracy, self.target_count)
+        time_per_target = self.getTimePerTarget(true_positives+false_positives, time_in_sec)
+        itr = self.getItrBitPerTrial(precision, self.target_count)
         f1_scores = self.calculateF1ScoreDict(beta)
         return {
             c.RESULTS_DATA_TOTAL_TIME_PACKETS: self.total_packets,
             c.RESULTS_DATA_TOTAL_TIME_SECONDS: time_in_sec,
             c.RESULTS_DATA_TIME_PER_TARGET: time_per_target,
-            c.RESULTS_DATA_PRECISION: accuracy,
-            c.RESULTS_DATA_CORRECT: correct_results,
-            c.RESULTS_DATA_WRONG: wrong_results,
+            c.RESULTS_DATA_PRECISION: precision,
+            c.RESULTS_DATA_TRUE_POSITIVES: true_positives,
+            c.RESULTS_DATA_FALSE_POSITIVES: false_positives,
             c.RESULTS_DATA_ITR_BIT_PER_TRIAL: itr,
             c.RESULTS_DATA_ITR_BIT_PER_MIN: self.getItrBitPerMin(itr, self.target_count),
             c.RESULTS_DATA_F1: f1_scores,

@@ -81,7 +81,7 @@ def costFunction(numbers, options_handler, frequencies):
     target_identification.results.trialEnded(packet_count)
     result = target_identification.results.list[-1].getData(beta=0.2)
     print result
-    # print result[c.RESULTS_DATA_CORRECT], result[c.RESULTS_DATA_WRONG], result[c.RESULTS_DATA_MEAN_F1]
+    # print result[c.RESULTS_DATA_TRUE_POSITIVES], result[c.RESULTS_DATA_FALSE_POSITIVES], result[c.RESULTS_DATA_MEAN_F1]
     return 1-result[c.RESULTS_DATA_MEAN_F1]
 
 
