@@ -44,7 +44,6 @@ def readFeaturesWithTargets(features_file_name, frequencies_file_name):
         expected_targets.append(expected_target)
     frequencies = eval(open(frequencies_file_name).read())
     print frequencies
-    print expected_targets
     print len(features_list)
     print
     return features_list, expected_targets, frequencies
@@ -78,6 +77,15 @@ def removeResultsAfterChange(features_list, expected_targets, number_of_steps_to
 
 
 def featuresIterator(features_list, expected_targets, length, step, skip_after_change=False):
+    """
+    Old features iterator. Probably not working correctly. Use newFeaturesIterator instead.
+    :param features_list:
+    :param expected_targets:
+    :param length:
+    :param step:
+    :param skip_after_change:
+    :return:
+    """
     expected_index = 1
     expected_target = expected_targets[0][0]
     packet_at_change = 0

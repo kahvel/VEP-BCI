@@ -1,4 +1,4 @@
-from utils import readFeatures, featuresIterator
+from utils import readFeaturesWithTargets, removeResultsAfterChange
 from TargetIdentification import ResultsParser
 from ParameterHandler import NewTrainingParameterHandler
 
@@ -261,25 +261,24 @@ def multiplyDensitiesDifferentFrequencies(frequencies_list, densities):
 
 def collectData(collector):
     for i in [1,2,3,5,6,7,8,9,10,11,12,13,14,15]:
-        training_x, training_y, training_frequencies = readFeatures(
-            "U:\\data\\my\\results1_1\\" + str(i) + "_result.txt",
-            "U:\\data\\my\\eeg1\\" + str(i) + ".txt",
-            1
+        training_x, training_y, training_frequencies = readFeaturesWithTargets(
+            "U:\\data\\my\\results1_2_target\\results" + str(i) + ".txt",
+            "U:\\data\\my\\results1_2_target\\frequencies" + str(i) + ".txt"
         )
-        for extracted_features, expected_target in featuresIterator(training_x, training_y, train_length, train_step, skip_after_change=True):
+        training_x, training_y = removeResultsAfterChange(training_x, training_y, number_of_steps_to_skip)
+        for extracted_features, expected_target in zip(training_x, training_y):
             expected_frequency = training_frequencies[expected_target]
             collector.setExpectedTarget(expected_frequency)
             collector.parseResults(extracted_features)
     return collector, training_frequencies
 
 
-train_length = 256
-train_step = 32
+length = 256
+step = 32
+number_of_steps_to_skip = 0
+# number_of_steps_to_skip = length/step-1
 
-test_length = 256
-test_step = 32
-
-dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))["Weights"]
+dummy_parameters = NewTrainingParameterHandler().numbersToOptions((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))["Weights"]
 
 feature_grouper = ResultCollector()
 feature_grouper.setup(dummy_parameters)
@@ -311,11 +310,11 @@ grouped_features = feature_grouper.parse_result
 # "C:\\Users\\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\src\\save\\test5_results_" + str(i) + ".txt",
 # "C:\\Users\\Anti\\Desktop\\PycharmProjects\\MAProject\\src\\eeg\\test5.txt",
 
-testing_x, testing_y, testing_frequencies = readFeatures(  # Check file names!
-    "U:\\data\\my\\results1_1\\15_result.txt",
-    "U:\\data\\my\\eeg1\\15.txt",
-    1
+testing_x, testing_y, testing_frequencies = readFeaturesWithTargets(  # Check file names!
+    "U:\\data\\my\\results1_2_target\\results15.txt",
+    "U:\\data\\my\\results1_2_target\\frequencies15.txt"
 )
+testing_x, testing_y = removeResultsAfterChange(testing_x, testing_y, number_of_steps_to_skip)
 
 frequencies_list = sorted(training_frequencies.values())
 print frequencies_list
@@ -407,7 +406,7 @@ class MovingAverageCollector(ResultsParser):
             return None
 
 
-class TestMovingAverage(ResultsParser):
+class MovingAverageOnTestSet(ResultsParser):
     def __init__(self, window_length):
         ResultsParser.__init__(self, add_sum=False)
         self.window_length = window_length
@@ -425,10 +424,10 @@ window_length = 1
 prev_results = MovingAverageCollector(window_length)
 prev_results.setup(dummy_parameters)
 
-test_moving_average = TestMovingAverage(window_length)
+test_moving_average = MovingAverageOnTestSet(window_length)
 test_moving_average.setup(dummy_parameters)
 
-for extracted_features, expected_target in featuresIterator(testing_x, testing_y, test_length, test_step, skip_after_change=True):
+for extracted_features, expected_target in zip(testing_x, testing_y):
     prev_results.newExpectedTarget(expected_target)
     collected = prev_results.parseResults(extracted_features)
     if collected is not None:  # None if length < window_length
