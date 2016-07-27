@@ -12,9 +12,10 @@ class BCI(object):
         self.connections = connections
         self.main_connection = main_connection
         self.results = Results.Results()
+        self.new_results = Results.Results()
         self.recording = recording
         self.standby = Standby.Standby()
-        self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.standby)
+        self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.new_results, self.standby)
         self.message_counter = 0
 
     def setup(self, options):
@@ -33,6 +34,7 @@ class BCI(object):
         self.target_identification.resetResults(options[c.DATA_FREQS].values())
         target_freqs = options[c.DATA_FREQS]
         self.results.start(target_freqs.values())
+        self.new_results.start(target_freqs.values())
         self.recording.start(target_freqs)
         self.connections.sendMessage(c.START_MESSAGE)
         message = self.targetChangingLoop(
@@ -41,6 +43,7 @@ class BCI(object):
         )
         self.connections.sendMessage(c.STOP_MESSAGE)
         self.results.trialEnded(self.message_counter)
+        self.new_results.trialEnded(self.message_counter)
         self.recording.trialEnded()
         return message
 
@@ -132,9 +135,10 @@ class BCI(object):
 
     def resetResults(self):
         self.results.reset()
+        self.new_results.reset()
 
     def getResults(self):
-        return self.results.__repr__()
+        return "\nNew:\n" + self.new_results.__repr__() + "Old:\n" + self.results.__repr__()
 
     def loadEeg(self, file_content):
         self.recording.loadEeg(file_content)

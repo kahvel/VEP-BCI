@@ -252,28 +252,36 @@ class NewTrainingParameterHandler(object):
 
 
 class BruteForceHandler(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 0.18),
+            (0, 0.18),
+            (0, 0.18),
+            (0, 0.18),
+        )
+
     def numbersToOptions(self, numbers):
         return {
             c.DATA_EXTRACTION_WEIGHTS: {
                 1: {
-                    1: 1,
-                    2: 1,
-                    3: 1,
-                    c.RESULT_SUM: 1,
+                    1: 0.5,
+                    2: 0.5,
+                    # 3: 1,
+                    c.RESULT_SUM: 0.5,
                 },
                 2: {
-                    c.RESULT_SUM: 3,
+                    c.RESULT_SUM: 1,
                 },
             },
             c.DATA_EXTRACTION_DIFFERENCES: {
                 1: {
                     1: numbers[0],
                     2: numbers[1],
-                    3: numbers[2],
-                    c.RESULT_SUM: numbers[3],
+                    # 3: numbers[2],
+                    c.RESULT_SUM: numbers[2],
                 },
                 2: {
-                    c.RESULT_SUM: numbers[4],
+                    c.RESULT_SUM: numbers[3],
                 },
             },
             c.DATA_ACTUAL_RESULTS: {
@@ -283,8 +291,11 @@ class BruteForceHandler(object):
             },
             c.DATA_PREV_RESULTS: {
                 c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
-                c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
+                c.DATA_WEIGHT_THRESHOLD: 1.5,#numbers[13],
                 c.DATA_ALWAYS_DELETE: False,
             },
-            c.DATA_CLEAR_BUFFERS: True,
+            c.DATA_CLEAR_BUFFERS: False,
         }
+
+    def getBounds(self):
+        return self.bounds

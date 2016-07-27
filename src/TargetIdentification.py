@@ -152,7 +152,7 @@ class DifferenceFinder(ResultsParser):
 
 
 class TargetIdentification(object):
-    def __init__(self, master_connection, results, standby):
+    def __init__(self, master_connection, results, new_results, standby):
         self.prev_results = ResultCounter()
         self.actual_results = ResultCounter()
         self.difference_finder = DifferenceFinder()
@@ -161,6 +161,7 @@ class TargetIdentification(object):
         self.new_target_counter = None
         self.master_connection = master_connection
         self.results = results
+        self.new_results = new_results
         self.standby = standby
         self.clear_buffers = None
 
@@ -211,6 +212,7 @@ class TargetIdentification(object):
     def sendCommand(self, predicted_frequency, current_frequency, target_freqs_dict):
         self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, predicted_frequency))
         # self.printResult(predicted_frequency, current_frequency)
+        self.results.add(current_frequency, predicted_frequency)
         self.holdResultTarget(predicted_frequency, current_frequency)
 
     def printResult(self, result_frequency, current):
@@ -255,5 +257,5 @@ class TargetIdentification(object):
             difference_comparisons = self.difference_finder.comparison
             current_frequency = target_freqs[current_target] if current_target in target_freqs else None
             predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, difference_comparisons, filter_by_comparison)
-            self.results.add(current_frequency, predicted_frequency)
+            self.new_results.add(current_frequency, predicted_frequency)
             return predicted_frequency
