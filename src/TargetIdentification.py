@@ -1,4 +1,6 @@
 import constants as c
+import pickle
+import numpy as np
 
 
 class ResultCounter(object):
@@ -151,12 +153,32 @@ class DifferenceFinder(ResultsParser):
             self.comparison.append(difference >= data)
 
 
+class RatioFinder(ResultsParser):
+    def __init__(self):
+        ResultsParser.__init__(self)
+
+    def parseFrequencyResults(self, parse_result, result, data):
+        if len(result) != 0:
+            for frequency, value in result:
+                processed_value = self.getValue(value, result, data, frequency)
+                parse_result[frequency] = processed_value
+
+    def getValue(self, value, result, data, frequency):
+        results_sum = sum(map(lambda x: data(x), dict(result).values()))
+        return data(value)/results_sum
+
+    def parseResults(self, results):
+        self.parse_result = {}
+        return ResultsParser.parseResults(self, results)
+
+
 class TargetIdentification(object):
     def __init__(self, master_connection, results, new_results, standby):
         self.prev_results = ResultCounter()
         self.actual_results = ResultCounter()
         self.difference_finder = DifferenceFinder()
         self.weight_finder = WeightFinder()
+        self.ratio_finder = RatioFinder()
         self.need_new_target = None
         self.new_target_counter = None
         self.master_connection = master_connection
@@ -164,6 +186,9 @@ class TargetIdentification(object):
         self.new_results = new_results
         self.standby = standby
         self.clear_buffers = None
+        self.saved_model = None
+        self.matrix_result = None
+        self.scaling_functions = None
 
     def setup(self, options):
         self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
@@ -171,6 +196,36 @@ class TargetIdentification(object):
         self.prev_results.setup(options[c.DATA_PREV_RESULTS])
         self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
+        scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model11_mm.pkl")))
+        self.scaling_functions = {
+            1: {
+                1: scaling_functions["PSDA_h1"],
+                2: scaling_functions["PSDA_h2"],
+            },
+            2: {
+                c.RESULT_SUM: scaling_functions["CCA"]
+            }
+        }
+        self.saved_model = pickle.load(file("U:\\data\\my\\pickle\\model11.pkl"))
+        self.ratio_finder.setup(self.scaling_functions)
+        self.matrix_result = []
+
+    def getScalingFunction(self, min_max):
+        group_names = ["CCA", "PSDA_h1", "PSDA_h2"]#, "PSDA_sum"]
+        col_names = {
+            "CCA": ["CCA_f1", "CCA_f3", "CCA_f5"],
+            "PSDA_h1": ["PSDA_h1_f1", "PSDA_h1_f3", "PSDA_h1_f5"],
+            "PSDA_h2": ["PSDA_h2_f1", "PSDA_h2_f3", "PSDA_h2_f5"],
+            # "PSDA_sum": ["PSDA_sum_f1", "PSDA_sum_f2", "PSDA_sum_f3"],
+            "SNR_h1": ["SNR_h1_f1", "SNR_h1_f3", "SNR_h1_f5"],
+            "SNR_h2": ["SNR_h2_f1", "SNR_h2_f3", "SNR_h2_f5"],
+            "LRT": ["LRT_f1", "LRT_f3", "LRT_f5"],
+        }
+        functions = {}
+        for group in group_names:
+            minimum, maximum = min_max[group]
+            functions[group] = lambda x: (x-minimum)/(maximum-minimum)
+        return functions
 
     def resetTargetVariables(self):
         self.need_new_target = False
@@ -252,10 +307,53 @@ class TargetIdentification(object):
         results = message
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
-            # print results
             differences = self.difference_finder.parseResults(results)
             difference_comparisons = self.difference_finder.comparison
             current_frequency = target_freqs[current_target] if current_target in target_freqs else None
             predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, difference_comparisons, filter_by_comparison)
             self.new_results.add(current_frequency, predicted_frequency)
             return predicted_frequency
+
+    def handleFreqMessagesNew(self, message, target_freqs, current_target, filter_by_comparison=True):
+        results = message
+        if results is not None:
+            results = self.ratio_finder.parseResults(results)
+            frequencies = sorted(target_freqs.values())
+            psda_keys = [1, 2]
+            cca_results_dict = dict(results[2][('CCA', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
+            for frequency in frequencies:
+                self.matrix_result.append(cca_results_dict[frequency])
+            for i, key in enumerate(psda_keys):
+                psda_results = results[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][key]
+                psda_results_dict = dict(psda_results)
+                for frequency in frequencies:
+                    self.matrix_result.append(psda_results_dict[frequency])
+            # cca_results_dict = dict(results[3][('LRT', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
+            # for frequency in frequencies:
+            #     self.matrix_result.append(cca_results_dict[frequency])
+            # for key in psda_keys:
+            #     psda_results = results[4][('SNR PSDA', ('P7', 'O1', 'O2', 'P8'))][key]
+            #     psda_results_dict = dict(psda_results)
+            #     for frequency in frequencies:
+            #         self.matrix_result.append(psda_results_dict[frequency])
+            if len(self.matrix_result) == 90:
+                predicted = self.saved_model.predict([self.matrix_result])[0]
+                # scores = list(self.saved_model.decision_function([self.matrix_result])[0])
+                # print scores
+                # if scores[0] > -0.214198895282:
+                #     predicted = 0
+                # elif scores[2] > -0.309460750891:
+                #     predicted = 2
+                # elif scores[1] > -0.368188700899:
+                #     predicted = 1
+                # else:
+                #     predicted = None
+                if predicted is not None:
+                    predicted_frequency = frequencies[predicted-1]
+                    current_frequency = target_freqs[current_target] if current_target in target_freqs else None
+                    self.new_results.add(current_frequency, predicted_frequency)
+                    freq_weights = {predicted_frequency: 1.5}
+                    predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, [True], False)
+                    print predicted_frequency, self.saved_model.predict_proba([self.matrix_result]), self.saved_model.decision_function([self.matrix_result])
+                    self.matrix_result = self.matrix_result[9:]
+                    return predicted_frequency
