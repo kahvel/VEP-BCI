@@ -196,7 +196,7 @@ class TargetIdentification(object):
         self.prev_results.setup(options[c.DATA_PREV_RESULTS])
         self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
-        scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model11_mm.pkl")))
+        scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model22_mm.pkl")))
         self.scaling_functions = {
             1: {
                 1: scaling_functions["PSDA_h1"],
@@ -206,21 +206,12 @@ class TargetIdentification(object):
                 c.RESULT_SUM: scaling_functions["CCA"]
             }
         }
-        self.saved_model = pickle.load(file("U:\\data\\my\\pickle\\model11.pkl"))
+        self.saved_model = pickle.load(file("U:\\data\\my\\pickle\\model22.pkl"))
         self.ratio_finder.setup(self.scaling_functions)
         self.matrix_result = []
 
     def getScalingFunction(self, min_max):
         group_names = ["CCA", "PSDA_h1", "PSDA_h2"]#, "PSDA_sum"]
-        col_names = {
-            "CCA": ["CCA_f1", "CCA_f3", "CCA_f5"],
-            "PSDA_h1": ["PSDA_h1_f1", "PSDA_h1_f3", "PSDA_h1_f5"],
-            "PSDA_h2": ["PSDA_h2_f1", "PSDA_h2_f3", "PSDA_h2_f5"],
-            # "PSDA_sum": ["PSDA_sum_f1", "PSDA_sum_f2", "PSDA_sum_f3"],
-            "SNR_h1": ["SNR_h1_f1", "SNR_h1_f3", "SNR_h1_f5"],
-            "SNR_h2": ["SNR_h2_f1", "SNR_h2_f3", "SNR_h2_f5"],
-            "LRT": ["LRT_f1", "LRT_f3", "LRT_f5"],
-        }
         functions = {}
         for group in group_names:
             minimum, maximum = min_max[group]
@@ -303,7 +294,7 @@ class TargetIdentification(object):
             self.prev_results.removeWeight()
             self.actual_results.removeWeight()
 
-    def handleFreqMessages(self, message, target_freqs, current_target, filter_by_comparison=True):
+    def handleFreqMessages1(self, message, target_freqs, current_target, filter_by_comparison=True):
         results = message
         if results is not None:
             freq_weights = self.weight_finder.parseResults(results)
@@ -314,7 +305,7 @@ class TargetIdentification(object):
             self.new_results.add(current_frequency, predicted_frequency)
             return predicted_frequency
 
-    def handleFreqMessagesNew(self, message, target_freqs, current_target, filter_by_comparison=True):
+    def handleFreqMessages(self, message, target_freqs, current_target, filter_by_comparison=True):
         results = message
         if results is not None:
             results = self.ratio_finder.parseResults(results)
@@ -338,22 +329,25 @@ class TargetIdentification(object):
             #         self.matrix_result.append(psda_results_dict[frequency])
             if len(self.matrix_result) == 90:
                 predicted = self.saved_model.predict([self.matrix_result])[0]
-                # scores = list(self.saved_model.decision_function([self.matrix_result])[0])
-                # print scores
-                # if scores[0] > -0.214198895282:
-                #     predicted = 0
-                # elif scores[2] > -0.309460750891:
-                #     predicted = 2
-                # elif scores[1] > -0.368188700899:
-                #     predicted = 1
-                # else:
-                #     predicted = None
+                scores = list(self.saved_model.decision_function([self.matrix_result])[0])
+                print scores
+                if scores[0] > -0.690910465686 and scores[2] < -0.298335471114 and scores[1] < -0.155039992655:#-0.214198895282:
+                    predicted = 0
+                elif scores[2] > -0.298335471114 and scores[0] < -0.690910465686 and scores[1] < -0.155039992655:#-0.309460750891:
+                    predicted = 2
+                elif scores[1] > -0.155039992655 and scores[0] < -0.690910465686 and scores[2] < -0.298335471114:#-0.368188700899:
+                    predicted = 1
+                else:
+                    predicted = None
                 if predicted is not None:
                     predicted_frequency = frequencies[predicted-1]
                     current_frequency = target_freqs[current_target] if current_target in target_freqs else None
                     self.new_results.add(current_frequency, predicted_frequency)
                     freq_weights = {predicted_frequency: 1.5}
                     predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, [True], False)
-                    print predicted_frequency, self.saved_model.predict_proba([self.matrix_result]), self.saved_model.decision_function([self.matrix_result])
-                    self.matrix_result = self.matrix_result[9:]
+                    print predicted_frequency, current_frequency, self.saved_model.predict_proba([self.matrix_result]), self.saved_model.decision_function([self.matrix_result])
+                    # self.matrix_result = self.matrix_result[9:]
+                    self.matrix_result = []  # TODO to clear the array or not to clear?
                     return predicted_frequency
+                else:
+                    self.matrix_result = self.matrix_result[9:]

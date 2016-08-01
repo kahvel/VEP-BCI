@@ -47,6 +47,7 @@ TEST_TARGET = "Test target"
 TEST_UNLIMITED = "Unlimited"
 TEST_NONE = "None"
 TEST_RANDOM = "Random"
+TEST_TIMED = "Timed"
 TEST_COLOR = "Color"
 
 TEST_RESULT_COUNTER = "No of results"

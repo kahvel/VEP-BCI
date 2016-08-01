@@ -17,6 +17,8 @@ class BCI(object):
         self.standby = Standby.Standby()
         self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.new_results, self.standby)
         self.message_counter = 0
+        self.previous_target_change = 0
+        self.target_duration_seconds = 9
 
     def setup(self, options):
         self.connections.setup(options)
@@ -31,6 +33,7 @@ class BCI(object):
 
     def start(self, options):
         self.message_counter = 0
+        self.previous_target_change = 0
         self.target_identification.resetResults(options[c.DATA_FREQS].values())
         target_freqs = options[c.DATA_FREQS]
         self.results.start(target_freqs.values())
@@ -50,19 +53,22 @@ class BCI(object):
     def getTotalTime(self, unlimited, test_time):
         return float("inf") if unlimited else test_time
 
-    def getTarget(self, test_target, target_freqs, previous_target):
-        if self.isRandom(test_target):
+    def getTarget(self, test_target_option, target_freqs, previous_target):
+        if self.isRandom(test_target_option) or self.isTimed(test_target_option):
             targets = target_freqs.keys()
             if previous_target is not None and len(targets) > 1:
                 targets.remove(previous_target)
             return random.choice(targets)
-        elif test_target != c.TEST_NONE:
-            return test_target
+        elif test_target_option != c.TEST_NONE:
+            return test_target_option
         else:
             return None
 
-    def isRandom(self, test_target):
-        return test_target == c.TEST_RANDOM
+    def isRandom(self, test_target_option):
+        return test_target_option == c.TEST_RANDOM
+
+    def isTimed(self, test_target_option):
+        return test_target_option == c.TEST_TIMED
 
     def targetChangingLoop(self, options, target_freqs):
         total_time = self.getTotalTime(options[c.TEST_UNLIMITED], options[c.TEST_TIME])
@@ -73,7 +79,7 @@ class BCI(object):
                 self.recording.collectExpectedTarget(target, self.message_counter)
                 self.connections.sendTargetMessage(target)
             self.target_identification.resetTargetVariables()
-            message = self.startPacketSending(target_freqs, target, total_time)
+            message = self.startPacketSending(target_freqs, target, total_time, options[c.TEST_TARGET])
             if message is not None:
                 return message
         self.main_connection.sendMessage(c.STOP_MESSAGE)
@@ -103,8 +109,24 @@ class BCI(object):
         if message is not None:
             self.connections.sendTargetMessage(message)
 
-    def startPacketSending(self, target_freqs, current_target, total_time):
-        while not self.target_identification.need_new_target and self.message_counter < total_time:
+    def checkTimeExceeded(self):
+        if (self.message_counter - self.previous_target_change) / c.HEADSET_FREQ > self.target_duration_seconds + random.randint(-2, 2):
+            self.previous_target_change = self.message_counter
+            return True
+        else:
+            return False
+
+    def needNewTarget(self, test_target_option):
+        if self.isRandom(test_target_option):
+            return self.target_identification.need_new_target
+        elif self.isTimed(test_target_option):
+            return self.checkTimeExceeded()
+        else:
+            return False
+
+    def startPacketSending(self, target_freqs, current_target, total_time, test_target_option):
+        print self.message_counter - self.previous_target_change, current_target
+        while not self.needNewTarget(test_target_option) and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
             if main_message in c.ROBOT_COMMANDS:
                 self.connections.sendRobotMessage(main_message)

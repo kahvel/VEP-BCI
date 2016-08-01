@@ -26,7 +26,7 @@ class TestTab(Frame.Frame):
     def __init__(self, parent, buttons, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.addChildWidgets((
-            OptionMenu.TargetChoosingMenu(self.widget, c.TEST_TARGET,    0, 1, (c.TEST_NONE, c.TEST_RANDOM), columnspan=2),
+            OptionMenu.TargetChoosingMenu(self.widget, c.TEST_TARGET,    0, 1, (c.TEST_NONE, c.TEST_RANDOM, c.TEST_TIMED), columnspan=2),
             Textboxes.ColorTextboxFrame(self.widget, c.TEST_COLOR, 0, 3, default_value="#ffffb3"),
             OptionMenu.TargetChoosingMenu(self.widget, c.TEST_STANDBY,   1, 1, (c.TEST_NONE,), columnspan=2),
             Textboxes.LabelTextbox(self.widget, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
