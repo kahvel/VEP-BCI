@@ -50,31 +50,56 @@ class Robot(object):
     def robotStopEvent(self): pass
 
 
-class MessagingInterface(Bci, Recording, Results, Robot):
+class Targets(object):
+    def __init__(self): pass
+
+    def targetAddedEvent(self): pass
+
+    def targetRemovedEvent(self, deleted_tab): pass
+
+    def targetDisabledEvent(self, tabs, current_tab): pass
+
+    def targetEnabledEvent(self, tabs, current_tab): pass
+
+
+class MessagingInterface(Bci, Recording, Results, Robot, Targets):
     def __init__(self):
         Bci.__init__(self)
         Recording.__init__(self)
         Results.__init__(self)
         Robot.__init__(self)
-
-    def targetAdded(self): pass
-
-    def targetRemoved(self, deleted_tab): pass
-
-    def targetDisabled(self, tabs, current_tab): pass
-
-    def targetEnabled(self, tabs, current_tab): pass
-
-    def trialEnded(self): pass
+        Targets.__init__(self)
 
     def sendEventToRoot(self, function, needs_stopped_state=False):
         raise NotImplementedError("sendEventToRoot not implemented!")
 
+    def sendEventToChildren(self, function):
+        raise NotImplementedError("sendEventToChildren not implemented!")
 
-class MessagingInterfaceChild(MessagingInterface):
+
+class MessagingInterfaceWithParent(MessagingInterface):
     def __init__(self, parent):
         MessagingInterface.__init__(self)
         self.parent = parent
 
     def sendEventToRoot(self, function, needs_stopped_state=False):
-        self.parent.sendEventToRoot(function)
+        self.parent.sendEventToRoot(function, needs_stopped_state)
+
+
+class WidgetMessagingInterface(MessagingInterfaceWithParent):
+    def __init__(self, parent):
+        MessagingInterfaceWithParent.__init__(self, parent)
+
+    def sendEventToChildren(self, function):
+        function(self)
+
+
+class FrameMessagingInterface(MessagingInterfaceWithParent):
+    def __init__(self, parent, widgets_list):
+        MessagingInterfaceWithParent.__init__(self, parent)
+        self.widgets_list = widgets_list
+
+    def sendEventToChildren(self, function):
+        function(self)
+        for widget in self.widgets_list:
+            widget.sendEventToChildren(function)

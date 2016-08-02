@@ -47,7 +47,7 @@ class TargetChoosingMenu(OptionMenu):
             if not disabled:
                 self.addOption(i+1)
 
-    def targetAdded(self):
+    def targetAddedEvent(self):
         self.disabled_tabs.append(False)
         self.addOption(len(self.disabled_tabs))
 
@@ -74,17 +74,17 @@ class TargetChoosingMenu(OptionMenu):
         self.addDefaultOptions()
         self.addTargetOptions()
 
-    def targetRemoved(self, deleted_tab):
+    def targetRemovedEvent(self, deleted_tab):
         del self.disabled_tabs[deleted_tab]
         self.deleteAndAddAll()
         self.updateAfterDeleteOrDisable(deleted_tab, self.decreaseLargerTabs)
 
-    def targetDisabled(self, tabs, current_tab):
+    def targetDisabledEvent(self, tabs, current_tab):
         self.disabled_tabs = copy.deepcopy(tabs)
         self.deleteAndAddAll()
         self.updateAfterDeleteOrDisable(current_tab)
 
-    def targetEnabled(self, tabs, current_tab):
+    def targetEnabledEvent(self, tabs, current_tab):
         self.disabled_tabs = copy.deepcopy(tabs)
         self.deleteAndAddAll()
 

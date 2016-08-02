@@ -1,12 +1,13 @@
 from gui.widgets import AbstractWidget
+from gui import MessagingInterface
 
 import Tkinter
 
 
-class AbstractFrame(AbstractWidget.Widget):
+class AbstractFrame(AbstractWidget.Widget, MessagingInterface.FrameMessagingInterface):
     def __init__(self, parent, name, row, column, **kwargs):
         AbstractWidget.Widget.__init__(self, parent, name, row, column, **kwargs)
-        self.widgets_list = []
+        MessagingInterface.FrameMessagingInterface.__init__(self, parent, [])
         self.widgets_dict = {}
 
     def addChildWidgets(self, child_widgets):
@@ -66,26 +67,6 @@ class AbstractFrame(AbstractWidget.Widget):
     def getValue(self):
         if len(self.widgets_dict) != 0:
             return {key: widget.getValue() for key, widget in self.widgets_dict.items() if not widget.no_value}
-
-    def targetAdded(self):
-        for widget in self.widgets_list:
-            widget.targetAdded()
-
-    def targetRemoved(self, deleted_tab):
-        for widget in self.widgets_list:
-            widget.targetRemoved(deleted_tab)
-
-    def targetDisabled(self, tabs, current_tab):
-        for widget in self.widgets_list:
-            widget.targetDisabled(tabs, current_tab)
-
-    def targetEnabled(self, tabs, current_tab):
-        for widget in self.widgets_list:
-            widget.targetEnabled(tabs, current_tab)
-
-    def trialEnded(self):
-        for widget in self.widgets_list:
-            widget.trialEnded()
 
     def disableWidget(self, path_to_widget, disabler="PostOffice"):
         if len(path_to_widget) > 1:

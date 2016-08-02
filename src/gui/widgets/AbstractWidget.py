@@ -3,9 +3,9 @@ from gui import MessagingInterface
 import Tkinter
 
 
-class Widget(MessagingInterface.MessagingInterfaceChild):
+class Widget(object):
     def __init__(self, parent, name, row, column, **kwargs):
-        MessagingInterface.MessagingInterfaceChild.__init__(self, parent)
+        self.parent = parent
         self.row = row
         self.column = column
         self.columnspan = kwargs.get("columnspan", 1)
@@ -70,9 +70,10 @@ class Widget(MessagingInterface.MessagingInterfaceChild):
         return True
 
 
-class WidgetWithCommand(Widget):
+class WidgetWithCommand(Widget, MessagingInterface.WidgetMessagingInterface):
     def __init__(self, parent, name, row, column, **kwargs):
         Widget.__init__(self, parent, name, row, column, **kwargs)
+        MessagingInterface.WidgetMessagingInterface.__init__(self, parent)
         self.default_value = kwargs.get("default_value", 0)
         self.disabled_state = kwargs.get("disabled_state", "disabled")
         self.enabled_state = Tkinter.NORMAL

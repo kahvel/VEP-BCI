@@ -1,7 +1,7 @@
 import constants as c
 import os
 
-from gui import ButtonsStateController, MessageHandler
+from gui import ButtonsStateController, RootMessageHandler
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
 import Savable
@@ -17,7 +17,7 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         self.connection = connection
         self.main_frame = self.getMainFrame()
         button_state_controller = ButtonsStateController.ButtonsStateController(self.main_frame, (c.BOTTOM_FRAME,))
-        self.message_handler = MessageHandler.MainWindowMessageHandler(
+        self.message_handler = RootMessageHandler.MainWindowMessageHandler(
             connection,
             self.getMessageHandler(self.main_frame, button_state_controller, connection),
             self.main_frame,
@@ -90,7 +90,7 @@ class TrainingWindow(AbstractMainWindow):
         input_parser = InputParser.TrainingInputParser()
         return PostOfficeMessageHandler.PostOfficeMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)
 
-    def loadEeg(self, file):
+    def loadEeg(self, file):  # TODO this is broken due to new recording system
         AbstractMainWindow.loadEeg(self, file)
         self.removeAllTargets()
         file.seek(0)

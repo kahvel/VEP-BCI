@@ -70,28 +70,24 @@ class PlotNotebook(PlusNotebook):
 
 
 class TargetNotebook(PlusNotebook):
-    def __init__(self, parent, row, column, addTarget, removeTarget, disableTarget, enableTarget, getMonitorFreq, **kwargs):
+    def __init__(self, parent, row, column, getMonitorFreq, **kwargs):
         PlusNotebook.__init__(self, parent, c.TARGETS_NOTEBOOK, row, column, **kwargs)
         self.getMonitorFreq = getMonitorFreq
-        self.addTarget = addTarget
-        self.removeTarget = removeTarget
-        self.disableTarget = disableTarget
-        self.enableTarget = enableTarget
 
     def changeFreq(self):
         for widget in self.widgets_list:
             widget.changeFreq()
 
     def plusTabClicked(self):  # Updates TargetChoosingMenus
-        self.addTarget()   # MainNotebook's targetAdded method which calls TargetChoosingMenu's targetAdded
+        self.sendEventToRoot(lambda x: x.targetAddedEvent)
         PlusNotebook.plusTabClicked(self)
 
     def getEnabledTabs(self):
         return list(tab.disabled for tab in self.widgets_list)
 
     def newTab(self, deleteTab):
-        return TargetsTab.TargetsTab(self, self.disableTarget, self.enableTarget, self.getMonitorFreq, deleteTab, self.getEnabledTabs, self.getCurrentTab)
+        return TargetsTab.TargetsTab(self, self.getMonitorFreq, deleteTab, self.getEnabledTabs, self.getCurrentTab)
 
     def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = PlusNotebook.deleteTab(self)
-        self.removeTarget(deleted_tab)  # MainNotebook's targetRemoved method which calls TargetChoosingMenu's targetAdded
+        self.sendEventToRoot(lambda x: x.targetRemovedEvent(deleted_tab))

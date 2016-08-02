@@ -93,7 +93,7 @@ class TargetsFrame(Frame.Frame):
         for i, disabled in enumerate(self.disabled_tabs):
             self.addOption(i+1, disabled, button_states[i])
 
-    def targetAdded(self, disabled=False):
+    def targetAddedEvent(self, disabled=False):
         self.disabled_tabs.append(disabled)
         self.addOption(len(self.disabled_tabs), disabled, 1)
 
@@ -114,15 +114,15 @@ class TargetsFrame(Frame.Frame):
         self.addDefaultOptions()
         self.addTargetOptions(button_states)
 
-    def targetRemoved(self, deleted_tab):
+    def targetRemovedEvent(self, deleted_tab):
         del self.disabled_tabs[deleted_tab]
         self.deleteAndAddAll(deleted_tab)
 
-    def targetDisabled(self, tabs, current_tab):
+    def targetDisabledEvent(self, tabs, current_tab):
         self.widgets_list[current_tab].disable("TargetTab")
         self.disabled_tabs[current_tab] = True
 
-    def targetEnabled(self, tabs, current_tab):
+    def targetEnabledEvent(self, tabs, current_tab):
         self.widgets_list[current_tab].enable("TargetTab")
         self.disabled_tabs[current_tab] = False
 

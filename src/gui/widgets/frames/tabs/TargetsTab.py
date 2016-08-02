@@ -6,10 +6,8 @@ import math
 
 
 class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
-    def __init__(self, parent, disableTarget, enableTarget, getMonitorFreq, deleteTab, getEnabledTabs, getCurrentTab, **kwargs):
+    def __init__(self, parent, getMonitorFreq, deleteTab, getEnabledTabs, getCurrentTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.TARGETS_TAB_TAB, **kwargs)
-        self.disableTarget = disableTarget
-        self.enableTarget = enableTarget
         self.getEnabledTabs = getEnabledTabs
         self.getCurrentTab = getCurrentTab
         self.addChildWidgets((
@@ -22,11 +20,11 @@ class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
 
     def disable(self, disabler):  # Updates TargetChoosingMenus
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.disable(self, disabler)
-        self.disableTarget(self.getEnabledTabs(), self.getCurrentTab())  # MainNotebook's targetDisabled method
+        self.sendEventToRoot(lambda x: x.targetDisabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
 
     def enable(self, enabler):  # Updates TargetChoosingMenus
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.enable(self, enabler)
-        self.enableTarget(self.getEnabledTabs(), self.getCurrentTab())  # MainNotebook's targetEnabled method
+        self.sendEventToRoot(lambda x: x.targetEnabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
 
 
 class TargetFrame(Frame.Frame):

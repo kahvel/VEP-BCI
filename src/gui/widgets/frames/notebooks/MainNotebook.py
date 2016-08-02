@@ -6,7 +6,7 @@ import constants as c
 class MainNotebook(Notebook.Notebook):
     def __init__(self, parent, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
-        target_notebook = PlusNotebook.TargetNotebook(self, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq)
+        target_notebook = PlusNotebook.TargetNotebook(self, 0, 0, self.getMonitorFreq)
         self.addChildWidgets((
             WindowTab.WindowTab(self, 0, 0, self.monitorFreqChanged),
             target_notebook,

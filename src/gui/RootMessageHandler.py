@@ -83,13 +83,26 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
+class Targets(MessagingInterface.Targets):
+    def __init__(self):
+        MessagingInterface.Targets.__init__(self)
 
-class MainWindowMessageHandler(Bci, Recording, Results, Robot):
+    def targetAddedEvent(self): pass
+
+    def targetRemovedEvent(self, deleted_tab): pass
+
+    def targetDisabledEvent(self, tabs, current_tab): pass
+
+    def targetEnabledEvent(self, tabs, current_tab): pass
+
+
+class MainWindowMessageHandler(Bci, Recording, Results, Robot, MessagingInterface.FrameMessagingInterface):
     def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
         Recording.__init__(self, connection)
         Results.__init__(self, connection)
         Robot.__init__(self, connection)
+        MessagingInterface.FrameMessagingInterface.__init__(self, None, [main_frame])
         self.main_frame = main_frame
 
     def bciIsStopped(self):
@@ -103,14 +116,8 @@ class MainWindowMessageHandler(Bci, Recording, Results, Robot):
     def sendEventToRoot(self, function, needs_stopped_state=False):
         if needs_stopped_state and self.bciIsStopped() or not needs_stopped_state:
             function(self)
-            function(self.main_frame)
-
-    def targetAdded(self): pass
-
-    def targetRemoved(self, deleted_tab): pass
-
-    def targetDisabled(self, tabs, current_tab): pass
-
-    def targetEnabled(self, tabs, current_tab): pass
+            self.sendEventToChildren(function)
+        else:
+            print "BCI has to be stopped to use this functionality!"
 
     def trialEnded(self): pass
