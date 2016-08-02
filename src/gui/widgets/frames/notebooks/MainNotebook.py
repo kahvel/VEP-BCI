@@ -4,7 +4,7 @@ import constants as c
 
 
 class MainNotebook(Notebook.Notebook):
-    def __init__(self, parent, button_commands, row, column, **kwargs):
+    def __init__(self, parent, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
         target_notebook = PlusNotebook.TargetNotebook(self, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq)
         self.addChildWidgets((
@@ -12,8 +12,8 @@ class MainNotebook(Notebook.Notebook):
             target_notebook,
             PlusNotebook.ExtractionNotebook(self, 0, 0, target_notebook.widgets_list),
             PlusNotebook.PlotNotebook(self, 0, 0),
-            TestTab.TestTab(self, button_commands[c.TEST_TAB], 0, 0),
-            RobotTab.RobotTab(self, button_commands[c.ROBOT_TAB]),
+            TestTab.TestTab(self, 0, 0),
+            RobotTab.RobotTab(self),
             EmotivTab.EmotivTab(self),
             RecordTab.RecordTab(self),
         ))

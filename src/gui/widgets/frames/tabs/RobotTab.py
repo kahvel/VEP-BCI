@@ -5,8 +5,7 @@ import constants as c
 
 
 class RobotTab(DisableDeleteNotebookTab.Disable):
-    def __init__(self, parent, button_commands, **kwargs):
-        forward, backward, right, left, stop = button_commands
+    def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.ROBOT_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
             OptionMenu.TargetChoosingMenu(self, c.ROBOT_OPTION_FORWARD, 0, 1, (c.ROBOT_NONE,)),
@@ -14,11 +13,11 @@ class RobotTab(DisableDeleteNotebookTab.Disable):
             OptionMenu.TargetChoosingMenu(self, c.ROBOT_OPTION_RIGHT, 2, 1, (c.ROBOT_NONE,)),
             OptionMenu.TargetChoosingMenu(self, c.ROBOT_OPTION_LEFT, 3, 1, (c.ROBOT_NONE,)),
             OptionMenu.TargetChoosingMenu(self, c.ROBOT_OPTION_STOP, 4, 1, (c.ROBOT_NONE,)),
-            Buttons.Button(self, c.ROBOT_TEST, 0, 3, command=forward),
-            Buttons.Button(self, c.ROBOT_TEST, 1, 3, command=backward),
-            Buttons.Button(self, c.ROBOT_TEST, 2, 3, command=right),
-            Buttons.Button(self, c.ROBOT_TEST, 3, 3, command=left),
-            Buttons.Button(self, c.ROBOT_TEST, 4, 3, command=stop),
+            Buttons.Button(self, c.ROBOT_TEST, 0, 3, command=self.forwardClicked),
+            Buttons.Button(self, c.ROBOT_TEST, 1, 3, command=self.backwardClicked),
+            Buttons.Button(self, c.ROBOT_TEST, 2, 3, command=self.rightClicked),
+            Buttons.Button(self, c.ROBOT_TEST, 3, 3, command=self.leftClicked),
+            Buttons.Button(self, c.ROBOT_TEST, 4, 3, command=self.stopClicked),
             Textboxes.LabelTextbox(self, c.STREAM_X, 5, 0, command=int, allow_negative=True, allow_zero=True),
             Textboxes.LabelTextbox(self, c.STREAM_Y, 5, 2, command=int, allow_negative=True, allow_zero=True),
             Checkbutton.Checkbutton(self, c.ROBOT_STREAM, 5, 4, command=self.enableCoordinates, default_value=1),
@@ -26,6 +25,21 @@ class RobotTab(DisableDeleteNotebookTab.Disable):
             Textboxes.LabelTextbox(self, c.STREAM_HEIGHT, 6, 2, command=int, allow_negative=True, allow_zero=True, default_value=240),
             self.getDisableButton(7, 0)
         ))
+
+    def forwardClicked(self):
+        self.sendEventToRoot(lambda x: x.robotForwardEvent())
+
+    def backwardClicked(self):
+        self.sendEventToRoot(lambda x: x.robotBackwardEvent())
+
+    def leftClicked(self):
+        self.sendEventToRoot(lambda x: x.robotLeftEvent())
+
+    def rightClicked(self):
+        self.sendEventToRoot(lambda x: x.robotRightEvent())
+
+    def stopClicked(self):
+        self.sendEventToRoot(lambda x: x.robotStopEvent())
 
     def enableCoordinates(self):
         self.conditionalDisabling(

@@ -7,23 +7,30 @@ import Savable
 
 
 class ResultsFrame(Frame.Frame, Savable.Savable):
-    def __init__(self, parent, buttons, row, column, **kwargs):
-        show, reset, save = buttons
-        self.main_window_save_results_function = save
+    def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.RESULT_FRAME, row, column, no_value=True, **kwargs)
         Tkinter.Label(self.widget, text="Results").grid(row=0, column=0, padx=5, pady=5)
         self.addChildWidgets((
-            Buttons.Button(self, c.RESULT_SHOW_BUTTON,  0, 1, command=show),
-            Buttons.Button(self, c.RESULT_RESET_BUTTON, 0, 2, command=reset),
-            Buttons.Button(self, c.RESULT_SAVE_BUTTON, 0, 3, command=self.askSaveFile)
+            Buttons.Button(self, c.RESULT_SHOW_BUTTON,  0, 1, command=self.showClicked),
+            Buttons.Button(self, c.RESULT_RESET_BUTTON, 0, 2, command=self.resetClicked),
+            Buttons.Button(self, c.RESULT_SAVE_BUTTON, 0, 3, command=self.saveClicked)
         ))
 
+    def showClicked(self):
+        self.sendEventToRoot(lambda x: x.showResultsEvent, True)
+
+    def resetClicked(self):
+        self.sendEventToRoot(lambda x: x.resetResultsEvent, True)
+
+    def saveClicked(self):
+        self.askSaveFile()
+
     def saveToFile(self, file):
-        self.main_window_save_results_function(file)
+        self.sendEventToRoot(lambda x: x.saveResultsEvent, True)
 
 
 class TestTab(Frame.Frame):
-    def __init__(self, parent, buttons, row, column, **kwargs):
+    def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.TEST_TAB, row, column, **kwargs)
         self.addChildWidgets((
             OptionMenu.TargetChoosingMenu(self, c.TEST_TARGET,    0, 1, (c.TEST_NONE, c.TEST_RANDOM, c.TEST_TIMED), columnspan=2),
@@ -31,7 +38,7 @@ class TestTab(Frame.Frame):
             OptionMenu.TargetChoosingMenu(self, c.TEST_STANDBY,   1, 1, (c.TEST_NONE,), columnspan=2),
             Textboxes.LabelTextbox(self, c.TEST_TIME,      2, 0, command=int, default_value=1, default_disability=True, default_disablers=[c.TEST_UNLIMITED]),
             Checkbutton.Checkbutton(self, c.TEST_UNLIMITED, 2, 2, columnspan=2, command=self.enableTime, default_value=1),
-            ResultsFrame(self, buttons, 4, 0, columnspan=4),
+            ResultsFrame(self, 4, 0, columnspan=4),
             IdentificationOptionsFrame(self, 5, 0, columnspan=4)
         ))
 

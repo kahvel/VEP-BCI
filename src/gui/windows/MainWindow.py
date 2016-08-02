@@ -1,71 +1,54 @@
 import constants as c
 import os
 
-from gui import ButtonsStateController, MessagingInterface
+from gui import ButtonsStateController, MessageHandler
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
-import MainFrameButtonCommands
 import Savable
 import PostOfficeMessageHandler
 import InputParser
 
 
-class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable, MessagingInterface.MessagingInterfaceRoot):
+class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def __init__(self, connection, default_settings_file_name):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
         Savable.Savable.__init__(self)
         Savable.Loadable.__init__(self)
-        MessagingInterface.MessagingInterfaceRoot.__init__(self)
         self.connection = connection
-        """ @type : connections.ConnectionProcessEnd.MainConnection """
+        self.main_frame = self.getMainFrame()
+        button_state_controller = ButtonsStateController.ButtonsStateController(self.main_frame, (c.BOTTOM_FRAME,))
+        self.message_handler = MessageHandler.MainWindowMessageHandler(
+            connection,
+            self.getMessageHandler(self.main_frame, button_state_controller, connection),
+            self.main_frame,
+            self,
+            button_state_controller
+        )
         self.default_settings_file_name = default_settings_file_name
-        self.bottom_frame_buttons_states = ButtonsStateController.ButtonsStateController(self, (c.BOTTOM_FRAME,))
-        self.message_handler = self.getMessageHandler(self.bottom_frame_buttons_states)
-        self.main_frame = self.getMainFrame(self.message_handler)
         self.loadValuesAtStartup()
-        self.bottom_frame_buttons_states.setInitialStates()
+        button_state_controller.setInitialStates()
         self.checkMessages()
         self.mainloop()
 
-    def getMainFrame(self, message_handler):
+    def getMainFrame(self):
         raise NotImplementedError("getMainFrame not implemented!")
 
-    def getMessageHandler(self, bottom_frame_buttons_states):
+    def getMessageHandler(self, main_frame, bottom_frame_buttons_states, connection):
         raise NotImplementedError("getMessageHandler not implemented!")
 
     def checkMessages(self):
-        message = self.connection.receiveMessageInstant()
-        if self.message_handler.canHandle(message):
-            self.message_handler.handle(message)
+        self.message_handler.checkPostOfficeMessages()
         self.after(100, self.checkMessages)
 
-    def loadValuesAtStartup(self):
+    def getDefaultSettingsFile(self):
         import __main__
+        return open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), self.default_settings_file_name))
+
+    def loadValuesAtStartup(self):
         try:
-            self.main_frame.load(open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), self.default_settings_file_name)))
+            self.main_frame.load(self.getDefaultSettingsFile())
         except IOError:
             self.main_frame.loadDefaultValue()
-
-    def resetResults(self):
-        self.connection.sendMessage(c.RESET_RESULTS_MESSAGE)
-
-    def showResults(self):
-        self.connection.sendMessage(c.SHOW_RESULTS_MESSAGE)
-
-    def saveResults(self, file):
-        self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
-        self.connection.sendMessage(file)
-
-    def saveEegEvent(self, file):
-        self.connection.sendMessage(c.SAVE_EEG_MESSAGE)
-        self.connection.sendMessage(file)
-
-    def loadEegEvent(self, file):
-        self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
-        self.connection.sendMessage(file)
-
-    def resetEegEvent(self):
-        self.connection.sendMessage(c.RESET_EEG_MESSAGE)
 
     def exit(self):
         self.exitFlag = True
@@ -79,37 +62,33 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable, 
 
     def loadFromFile(self, file):
         self.main_frame.load(file)
-        self.bottom_frame_buttons_states.setInitialStates()
 
-    def sendEventToRoot(self, function):
-        function(self)
-        function(self.main_frame)
+    def sendEventToRoot(self, function, needs_stopped_state=False):
+        self.message_handler.sendEventToRoot(function, needs_stopped_state)
 
 
 class MainWindow(AbstractMainWindow):
     def __init__(self, connection):
         AbstractMainWindow.__init__(self, connection, c.DEFAULT_SETTINGS_FILE_NAME)
 
-    def getMainFrame(self, message_handler):
-        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands
-        return MainFrame.MainFrame(self, button_commands)
+    def getMainFrame(self):
+        return MainFrame.MainFrame(self)
 
-    def getMessageHandler(self, bottom_frame_buttons_states):
+    def getMessageHandler(self, main_frame, bottom_frame_buttons_states, connection):
         input_parser = InputParser.MainInputParser()
-        return PostOfficeMessageHandler.PostOfficeMessageHandler(self, bottom_frame_buttons_states, input_parser)
+        return PostOfficeMessageHandler.PostOfficeMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)
 
 
 class TrainingWindow(AbstractMainWindow):
     def __init__(self, connection):
         AbstractMainWindow.__init__(self, connection, c.DEFAULT_TRAINING_SETTINGS_FILE_NAME)
 
-    def getMainFrame(self, message_handler):
-        button_commands = MainFrameButtonCommands.MainFrameButtonCommands(self, message_handler).commands
-        return MainFrame.TrainingMainFrame(self, button_commands)
+    def getMainFrame(self):
+        return MainFrame.TrainingMainFrame(self)
 
-    def getMessageHandler(self, bottom_frame_buttons_states):
+    def getMessageHandler(self, main_frame, bottom_frame_buttons_states, connection):
         input_parser = InputParser.TrainingInputParser()
-        return PostOfficeMessageHandler.PostOfficeMessageHandler(self, bottom_frame_buttons_states, input_parser)
+        return PostOfficeMessageHandler.PostOfficeMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)
 
     def loadEeg(self, file):
         AbstractMainWindow.loadEeg(self, file)

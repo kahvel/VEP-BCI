@@ -1,3 +1,4 @@
+from gui import MessagingInterface
 from gui.widgets import Buttons, OptionMenu
 from gui.widgets.frames import Frame
 import constants as c
@@ -14,22 +15,6 @@ class RecordTab(Frame.Frame, Savable.Savable, Savable.Loadable):
             Buttons.Button       (self, c.TRAINING_RESET_EEG, 1, 2, command=self.resetEegClicked),
         ))
 
-    def saveToFile(self, file):
-        """
-        askSaveFile calls this function when corresponding button is pressed.
-        :param file:
-        :return:
-        """
-        self.sendEventToRoot(lambda x: x.saveEegEvent(file))
-
-    def loadFromFile(self, file):
-        """
-        askLoadFile calls this function when corresponding button is pressed.
-        :param file:
-        :return:
-        """
-        self.sendEventToRoot(lambda x: x.loadEegEvent(file))
-
     def saveEegClicked(self):
         self.askSaveFile()
 
@@ -37,4 +22,20 @@ class RecordTab(Frame.Frame, Savable.Savable, Savable.Loadable):
         self.askLoadFile()
 
     def resetEegClicked(self):
-        self.sendEventToRoot(lambda x: x.resetEegEvent)
+        self.sendEventToRoot(lambda x: x.resetEegEvent(), True)
+
+    def saveToFile(self, file):
+        """
+        askSaveFile calls this function when corresponding button is pressed.
+        :param file:
+        :return:
+        """
+        self.sendEventToRoot(lambda x: x.saveEegEvent(file), True)
+
+    def loadFromFile(self, file):
+        """
+        askLoadFile calls this function when corresponding button is pressed.
+        :param file:
+        :return:
+        """
+        self.sendEventToRoot(lambda x: x.loadEegEvent(file), True)

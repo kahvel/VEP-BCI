@@ -2,12 +2,12 @@ import constants as c
 
 
 class PostOfficeMessageHandler(object):
-    def __init__(self, main_window, buttons_state_controller, input_parser):
-        self.main_window = main_window
+    def __init__(self, main_frame, buttons_state_controller, input_parser, connection):
+        self.main_frame = main_frame
         self.buttons_state_controller = buttons_state_controller
         self.options = None
         self.input_parser = input_parser
-        self.connection = main_window.connection
+        self.connection = connection
         self.stopped = True
 
     def canHandle(self, message):
@@ -23,16 +23,16 @@ class PostOfficeMessageHandler(object):
             self.buttons_state_controller.disableStart()
 
     def setup(self):
-        not_validated = self.main_window.main_frame.getNotValidated()
+        not_validated = self.main_frame.getNotValidated()
         if len(not_validated) != 0:
             print(not_validated)
         else:
-            self.options = self.input_parser.parseData(self.main_window.main_frame.getValue()[c.MAIN_NOTEBOOK])
+            self.options = self.input_parser.parseData(self.main_frame.getValue()[c.MAIN_NOTEBOOK])
             self.connection.sendMessage(c.SETUP_MESSAGE)
             self.connection.sendMessage(self.options)
 
     def start(self):
-        if self.options != self.input_parser.parseData(self.main_window.main_frame.getValue()[c.MAIN_NOTEBOOK]):
+        if self.options != self.input_parser.parseData(self.main_frame.getValue()[c.MAIN_NOTEBOOK]):
             print("Warning: options were changed, but setup was not clicked")
         self.connection.sendMessage(c.START_MESSAGE)
         self.buttons_state_controller.startClicked()
