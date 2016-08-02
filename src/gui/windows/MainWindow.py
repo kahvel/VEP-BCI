@@ -51,17 +51,15 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
 
     def saveResults(self, file):
         self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
-        result_string = self.connection.receiveMessageBlock()
-        file.write(result_string)
+        self.connection.sendMessage(file)
 
     def saveEeg(self, file):
         self.connection.sendMessage(c.SAVE_EEG_MESSAGE)
-        result_string = self.connection.receiveMessageBlock()
-        file.write(result_string)
+        self.connection.sendMessage(file)
 
     def loadEeg(self, file):
         self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
-        self.connection.sendMessage(file.read())
+        self.connection.sendMessage(file)
 
     def resetEeg(self):
         self.connection.sendMessage(c.RESET_EEG_MESSAGE)

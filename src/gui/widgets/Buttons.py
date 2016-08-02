@@ -5,9 +5,9 @@ import Tkinter
 
 class Button(AbstractWidget.WidgetWithCommand):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
+        AbstractWidget.WidgetWithCommand.__init__(self, parent, name, row, column, **kwargs)
         self.command = kwargs.get("command", None)
-        self.create(Tkinter.Button(parent, text=self.name, command=self.command))
+        self.create(Tkinter.Button(parent.widget, text=self.name, command=self.command))
 
     def getValue(self):
         return
@@ -18,9 +18,9 @@ class Button(AbstractWidget.WidgetWithCommand):
 
 class SunkenButton(AbstractWidget.WidgetWithCommand):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **kwargs)
+        AbstractWidget.WidgetWithCommand.__init__(self, parent, name, row, column, **kwargs)
         self.variable = Tkinter.IntVar()
-        self.create(Tkinter.Button(parent, text=self.name, command=self.sunkenButtonCommand))
+        self.create(Tkinter.Button(parent.widget, text=self.name, command=self.sunkenButtonCommand))
 
     def getValue(self):
         return self.variable.get()

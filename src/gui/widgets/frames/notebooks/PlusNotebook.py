@@ -58,7 +58,7 @@ class ExtractionNotebook(PlusNotebook):
         self.target_notebook_widgets = target_notebook_widgets
 
     def newTab(self, deleteTab):
-        return ExtractionTab.ExtractionTab(self.widget, deleteTab, self.target_notebook_widgets)
+        return ExtractionTab.ExtractionTab(self, deleteTab, self.target_notebook_widgets)
 
 
 class PlotNotebook(PlusNotebook):
@@ -66,7 +66,7 @@ class PlotNotebook(PlusNotebook):
         PlusNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
 
     def newTab(self, deletaTab):
-        return PlotTab.PlotTab(self.widget, deletaTab)
+        return PlotTab.PlotTab(self, deletaTab)
 
 
 class TargetNotebook(PlusNotebook):
@@ -90,7 +90,7 @@ class TargetNotebook(PlusNotebook):
         return list(tab.disabled for tab in self.widgets_list)
 
     def newTab(self, deleteTab):
-        return TargetsTab.TargetsTab(self.widget, self.disableTarget, self.enableTarget, self.getMonitorFreq, deleteTab, self.getEnabledTabs, self.getCurrentTab)
+        return TargetsTab.TargetsTab(self, self.disableTarget, self.enableTarget, self.getMonitorFreq, deleteTab, self.getEnabledTabs, self.getCurrentTab)
 
     def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = PlusNotebook.deleteTab(self)

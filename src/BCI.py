@@ -76,7 +76,6 @@ class BCI(object):
         while self.message_counter < total_time:
             target = self.getTarget(options[c.TEST_TARGET], target_freqs, target)
             if target is not None:
-                self.recording.collectExpectedTarget(target, self.message_counter)
                 self.connections.sendTargetMessage(target)
             self.target_identification.resetTargetVariables()
             message = self.startPacketSending(target_freqs, target, total_time, options[c.TEST_TARGET])
@@ -89,7 +88,7 @@ class BCI(object):
         message = self.getNextPacket()
         if message is not None:
             self.message_counter += 1
-            self.recording.collectPacket(message)
+            self.recording.collectPacket(message, current_target)
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
             self.handleExtractionMessages(target_freqs, current_target)
@@ -161,11 +160,21 @@ class BCI(object):
     def getResults(self):
         return "\nNew:\n" + self.new_results.__repr__() + "Old:\n" + self.results.__repr__()
 
-    def loadEeg(self, file_content):
-        self.recording.loadEeg(file_content)
+    def showResults(self):
+        print(self.getResults())
 
-    def saveEeg(self):
-        return self.recording.saveEeg()
+    def saveResults(self, file):
+        file.write(self.getResults())
+        file.close()
+
+    def loadEeg(self, file):
+        self.recording.loadEeg(file.name)
+        file.close()
+
+    def saveEeg(self, file):
+        self.saveResults(file)
+        self.recording.saveEeg(file.name)
+        file.close()
 
     def resetRecording(self):
         self.recording.reset()

@@ -8,7 +8,7 @@ import constants as c
 
 class Textbox(AbstractWidget.WidgetWithCommand):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractWidget.WidgetWithCommand.__init__(self, name, row, column, **self.setDefaultKwargs(kwargs, {
+        AbstractWidget.WidgetWithCommand.__init__(self, parent, name, row, column, **self.setDefaultKwargs(kwargs, {
             "disabled_state": "readonly"
         }))
         self.allow_negative = kwargs.get("allow_negative", False)
@@ -17,7 +17,7 @@ class Textbox(AbstractWidget.WidgetWithCommand):
         self.arg_command = kwargs.get("command", lambda x: None)
         self.auto_update = kwargs.get("auto_update", lambda: True)
         self.validate_command = lambda: self.auto_update() if self.validate() else False
-        self.create(Tkinter.Entry(parent, validate="focusout", validatecommand=self.validate_command, width=self.width))
+        self.create(Tkinter.Entry(parent.widget, validate="focusout", validatecommand=self.validate_command, width=self.width))
 
     def setValue(self, value):
         previous_state = self.widget.config("state")[4]
@@ -73,7 +73,7 @@ class LabelTextbox(Textbox):
     def __init__(self, parent, name, row, column, **kwargs):
         label_columnspan = kwargs.get("label_columnspan", 1)
         Textbox.__init__(self, parent, name, row, column+label_columnspan, **kwargs)
-        label = Tkinter.Label(parent, text=kwargs.get("label", self.name))
+        label = Tkinter.Label(parent.widget, text=kwargs.get("label", self.name))
         label.grid(row=self.row, column=column, padx=self.padx, pady=self.pady, columnspan=label_columnspan)
 
 
@@ -98,8 +98,8 @@ class PlusMinusTextboxFrame(Frame.Frame):
         increase_command = lambda: increase() if self.widgets_dict[c.TEXTBOX].validate() else None
         decrease_command = lambda: decrease() if self.widgets_dict[c.TEXTBOX].validate() else None
         self.addChildWidgets((
-            LabelTextbox(self.widget, c.TEXTBOX, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0, label=name),
-            PlusMinusFrame.PlusMinusFrame(self.widget, 0, 2, increase_command, decrease_command)
+            LabelTextbox(self, c.TEXTBOX, 0, 0, command=float, auto_update=kwargs["command"], default_value=10.0, label=name),
+            PlusMinusFrame.PlusMinusFrame(self, 0, 2, increase_command, decrease_command)
         ))
 
     def getValue(self):
@@ -115,8 +115,8 @@ class ColorTextboxFrame(Frame.Frame):
         textbox_command = lambda color: self.widgets_dict[button_name].widget.configure(background=color)
         default_value = kwargs.get("default_value", "#eeeeee")
         self.addChildWidgets((
-            Buttons.Button(self.widget, button_name, 0, 0, command=button_command),
-            Textbox(self.widget, c.TEXTBOX, 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7, allow_negative=True, allow_zero=True)
+            Buttons.Button(self, button_name, 0, 0, command=button_command),
+            Textbox(self, c.TEXTBOX, 0, 1, disabled_state="readonly", command=textbox_command, default_value=default_value, width=7, allow_negative=True, allow_zero=True)
         ))
 
     def chooseColor(self, textbox):

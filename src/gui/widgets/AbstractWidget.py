@@ -2,7 +2,8 @@ import Tkinter
 
 
 class Widget(object):
-    def __init__(self, name, row, column, **kwargs):
+    def __init__(self, parent, name, row, column, **kwargs):
+        self.parent = parent
         self.row = row
         self.column = column
         self.columnspan = kwargs.get("columnspan", 1)
@@ -78,10 +79,13 @@ class Widget(object):
     def targetEnabled(self, tabs, current_tab):
         pass
 
+    def trialEnded(self):
+        pass
+
 
 class WidgetWithCommand(Widget):
-    def __init__(self, name, row, column, **kwargs):
-        Widget.__init__(self, name, row, column, **kwargs)
+    def __init__(self, parent, name, row, column, **kwargs):
+        Widget.__init__(self, parent, name, row, column, **kwargs)
         self.default_value = kwargs.get("default_value", 0)
         self.disabled_state = kwargs.get("disabled_state", "disabled")
         self.enabled_state = Tkinter.NORMAL

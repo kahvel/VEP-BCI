@@ -33,7 +33,7 @@ class NormalEegTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
     def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.NORMAL_EEG_TAB, **kwargs)
         self.addChildWidgets((
-            Textboxes.LabelTextbox(self.widget, c.RECORDING_LENGTH, 0, 0, default_disablers=c.NORMAL_EEG_TAB, default_disability=True),
+            Textboxes.LabelTextbox(self, c.RECORDING_LENGTH, 0, 0, default_disablers=c.NORMAL_EEG_TAB, default_disability=True),
             self.getDisableDeleteFrame(1, 0, deleteTab),
         ))
 
@@ -42,6 +42,6 @@ class NeutralEegTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
     def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.NORMAL_EEG_TAB, **kwargs)
         self.addChildWidgets((
-            Textboxes.LabelTextbox(self.widget, c.RECORDING_LENGTH, 0, 0, default_disablers=c.NORMAL_EEG_TAB, default_disability=True),
+            Textboxes.LabelTextbox(self, c.RECORDING_LENGTH, 0, 0, default_disablers=c.NORMAL_EEG_TAB, default_disability=True),
             self.getDisableDeleteFrame(1, 0, deleteTab),
         ))

@@ -88,7 +88,7 @@ def costFunction(numbers, options_handler, frequencies):
                 packet_counter = 0
                 clear_buffers = False
         else:
-            frequencies = {1: 8.571428571428571, 2: 6.666666666666667, 3: 7.5}
+            # frequencies = {1: 8.571428571428571, 2: 6.666666666666667, 3: 7.5}
             predicted_frequency = target_identification.handleFreqMessages(result, frequencies, expected_target, filter_by_comparison=True)
             if predicted_frequency is not None:
                 clear_buffers = True

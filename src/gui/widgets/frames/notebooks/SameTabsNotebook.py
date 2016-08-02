@@ -1,4 +1,5 @@
 from gui.widgets.frames.notebooks import Notebook
+from gui.widgets.frames.tabs import RecordNotebookTab
 import constants as c
 
 
@@ -43,4 +44,9 @@ class SameTabsNotebook(Notebook.Notebook):
 class ResultsNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.RESULTS_NOTEBOOK, row, column, **kwargs)
-    # TODO could improve usability with this
+
+    def trialEnded(self):
+        self.addTab(self.tab_count)
+
+    def newTab(self, deleteTab):
+        return RecordNotebookTab.RecordNotebookTab(self,)  # TODO

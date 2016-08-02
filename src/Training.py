@@ -179,7 +179,7 @@ class Training(BCI.BCI):
             if self.expected_targets[self.expected_target_index][1] == self.message_counter:
                 self.expected_target_index += 1
                 return self.expected_targets[self.expected_target_index-1][0]
-        return self.expected_targets[self.expected_target_index-1]
+        return self.expected_targets[self.expected_target_index-1][0]
 
     def getNextPacket(self):
         return self.packets[self.message_counter]

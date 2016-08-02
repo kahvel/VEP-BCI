@@ -11,8 +11,8 @@ class RadiobuttonFrame(Frame.Frame):
         self.variable = Tkinter.StringVar(value=c.LINEAR_DETREND)
         self.default_value = kwargs.get("default_value", c.LINEAR_DETREND)
         self.addChildWidgets((
-            Radiobutton.Radiobutton(self.widget, c.CONSTANT_DETREND, 0, 0, self.variable, padx=0, pady=0),
-            Radiobutton.Radiobutton(self.widget, c.LINEAR_DETREND,   1, 0, self.variable, padx=0, pady=0)
+            Radiobutton.Radiobutton(self, c.CONSTANT_DETREND, 0, 0, self.variable, padx=0, pady=0),
+            Radiobutton.Radiobutton(self, c.LINEAR_DETREND,   1, 0, self.variable, padx=0, pady=0)
         ))
 
     def getValue(self):

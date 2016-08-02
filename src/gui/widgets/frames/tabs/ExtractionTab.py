@@ -12,7 +12,7 @@ class ExtractionTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
     def __init__(self, parent, deleteTab, target_notebook_widgets, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.EXTRACTION_TAB_TAB, **kwargs)
         self.addChildWidgets((
-            ExtractionTabNotebook(self.widget, target_notebook_widgets),
+            ExtractionTabNotebook(self, target_notebook_widgets),
             self.getDisableDeleteFrame(3, 0, deleteTab)
         ))
 
@@ -21,7 +21,7 @@ class OptionsTab(Frame.Frame):
     def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_OPTIONS_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
-            OptionsFrame.OptionsFrame(self.widget, 2, 0),
+            OptionsFrame.OptionsFrame(self, 2, 0),
         ))
 
 
@@ -31,17 +31,17 @@ class HarmonicsTab(Frame.Frame):
         Tkinter.Label(self.widget, text="              Weight  Diff").grid(row=0, column=0)
         for i in range(1, 8):
             checkbutton_name = str(i)+"      "
-            self.addChildWidgets((HarmonicFrame(self.widget, checkbutton_name, i > 3, i),))
-        self.addChildWidgets((HarmonicFrame(self.widget, c.RESULT_SUM, False, 8),))
+            self.addChildWidgets((HarmonicFrame(self, checkbutton_name, i > 3, i),))
+        self.addChildWidgets((HarmonicFrame(self, c.RESULT_SUM, False, 8),))
 
 
 class HarmonicFrame(Frame.Frame):
     def __init__(self, parent, name, disabled, row, **kwargs):
         Frame.Frame.__init__(self, parent, name, row, 0, padx=0, pady=0, **kwargs)
         self.addChildWidgets((
-            Checkbutton.Checkbutton(self.widget, name,                  0, 0, command=self.enableTextboxes, default_value=not disabled),
-            Textboxes.Textbox      (self.widget, c.HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
-            Textboxes.Textbox      (self.widget, c.HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
+            Checkbutton.Checkbutton(self, name,                  0, 0, command=self.enableTextboxes, default_value=not disabled),
+            Textboxes.Textbox      (self, c.HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
+            Textboxes.Textbox      (self, c.HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
         ))
 
     def enableTextboxes(self):
@@ -62,9 +62,9 @@ class ActiveTab(Frame.Frame):
         Tkinter.Label(self.widget, text="Sensors").grid(row=2, column=0)
         Tkinter.Label(self.widget, text="Targets").grid(row=4, column=0)
         self.addChildWidgets((
-            ExtractionTabButtonFrame(self.widget, 1, 0),
-            OptionsFrame.SensorsFrame(self.widget, 3, 0),
-            TargetsFrame(self.widget, 5, 0, target_notebook_widgets),
+            ExtractionTabButtonFrame(self, 1, 0),
+            OptionsFrame.SensorsFrame(self, 3, 0),
+            TargetsFrame(self, 5, 0, target_notebook_widgets),
         ))
 
 
@@ -80,7 +80,7 @@ class TargetsFrame(Frame.Frame):
             self.targetAdded(widget.disabled)
 
     def addOption(self, option, disabled, state):
-        new_widget = Checkbutton.Checkbutton(self.widget, str(option), (option-1) // 7, (option-1) % 7, default_value=state, padx=0, pady=0)
+        new_widget = Checkbutton.Checkbutton(self, str(option), (option-1) // 7, (option-1) % 7, default_value=state, padx=0, pady=0)
         self.addChildWidgets((new_widget,))
         new_widget.loadDefaultValue()
         if disabled:
@@ -144,9 +144,9 @@ class ExtractionTabNotebook(Notebook.Notebook):
     def __init__(self, parent, target_notebook_widgets, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.EXTRACTION_TAB_NOTEBOOK, 0, 0, **kwargs)
         self.addChildWidgets((
-            ActiveTab(self.widget, target_notebook_widgets),
-            OptionsTab(self.widget),
-            HarmonicsTab(self.widget)
+            ActiveTab(self, target_notebook_widgets),
+            OptionsTab(self),
+            HarmonicsTab(self)
         ))
 
 
@@ -154,9 +154,9 @@ class ExtractionTabButtonFrame(OptionsFrame.OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):
         OptionsFrame.OptionsFrameFrame.__init__(self, parent, c.METHODS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            Buttons.SunkenButton(self.widget, c.PSDA,     0, 0),
-            Buttons.SunkenButton(self.widget, c.SUM_PSDA, 0, 1),
-            Buttons.SunkenButton(self.widget, c.CCA,      0, 2),
-            Buttons.SunkenButton(self.widget, c.LRT,      0, 3),
-            Buttons.SunkenButton(self.widget, c.SNR_PSDA, 0, 4)
+            Buttons.SunkenButton(self, c.PSDA,     0, 0),
+            Buttons.SunkenButton(self, c.SUM_PSDA, 0, 1),
+            Buttons.SunkenButton(self, c.CCA,      0, 2),
+            Buttons.SunkenButton(self, c.LRT,      0, 3),
+            Buttons.SunkenButton(self, c.SNR_PSDA, 0, 4)
         ))

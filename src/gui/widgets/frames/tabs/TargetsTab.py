@@ -13,7 +13,7 @@ class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
         self.getEnabledTabs = getEnabledTabs
         self.getCurrentTab = getCurrentTab
         self.addChildWidgets((
-            TargetFrame(self.widget, 0, 0, getMonitorFreq, **kwargs),
+            TargetFrame(self, 0, 0, getMonitorFreq, **kwargs),
             self.getDisableDeleteFrame(1, 0, deleteTab)
         ))
 
@@ -37,15 +37,15 @@ class TargetFrame(Frame.Frame):
         increase = lambda: self.changeFreq(increase=True)
         decrease = lambda: self.changeFreq(decrease=True)
         self.addChildWidgets((
-            Textboxes.PlusMinusTextboxFrame(self.widget, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
-            OptionMenu.OptionMenu          (self.widget, c.TARGET_TYPE,   0, 4, c.TARGET_TYPE_NAMES),
-            Textboxes.SequenceTextbox      (self.widget, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4, label_columnspan=2),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR1, 2, 4, default_value="#ffffff"),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_X,      3, 0, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.LabelTextbox         (self.widget, c.TARGET_Y,      3, 2, command=int, allow_negative=True, allow_zero=True),
-            Textboxes.ColorTextboxFrame    (self.widget, c.TARGET_COLOR0, 3, 4, default_value="#000000")
+            Textboxes.PlusMinusTextboxFrame(self, c.TARGET_FREQ,   0, 0, increase, decrease, command=validate),
+            OptionMenu.OptionMenu          (self, c.TARGET_TYPE,   0, 4, c.TARGET_TYPE_NAMES),
+            Textboxes.SequenceTextbox      (self, c.TARGET_SEQUENCE, 1, 0, allow_zero=True, command=self.sequenceChanged, width=35, columnspan=4, label_columnspan=2),
+            Textboxes.LabelTextbox         (self, c.TARGET_WIDTH,  2, 0, command=int, default_value=150),
+            Textboxes.LabelTextbox         (self, c.TARGET_HEIGHT, 2, 2, command=int, default_value=150),
+            Textboxes.ColorTextboxFrame    (self, c.TARGET_COLOR1, 2, 4, default_value="#ffffff"),
+            Textboxes.LabelTextbox         (self, c.TARGET_X,      3, 0, command=int, allow_negative=True, allow_zero=True),
+            Textboxes.LabelTextbox         (self, c.TARGET_Y,      3, 2, command=int, allow_negative=True, allow_zero=True),
+            Textboxes.ColorTextboxFrame    (self, c.TARGET_COLOR0, 3, 4, default_value="#000000")
         ))
 
     def getTargetFreq(self):

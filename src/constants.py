@@ -71,6 +71,7 @@ TRAINING_RECORD = "Record"
 TRAINING_SAVE_EEG = "Save EEG"
 TRAINING_LOAD_EEG = "Load EEG"
 TRAINING_RESET_EEG = "Reset EEG"
+TRAINING_TRIAL_NUMBER = "Trial"
 
 # Training tab options menu
 TRAINING_RECORD_NORMAL = "Normal"
@@ -252,6 +253,7 @@ SENSORS_FRAME = "Sensors"
 OPTIONS_FRAME = "Options"
 
 # Sensor names in Plot and Extraction tab
+# NB order is important, it is used in writing csv files
 SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
 
 HEADSET_FREQ = 128

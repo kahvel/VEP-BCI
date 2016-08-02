@@ -8,7 +8,7 @@ class DisableDeleteNotebookTab(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, 0, 0, **kwargs)
 
     def getDisableDeleteFrame(self, row, column, deleteTab, **kwargs):
-        return DisableDeleteFrame(self.widget, row, column, deleteTab, disable=self.disable, enable=self.enable, **kwargs)
+        return DisableDeleteFrame(self, row, column, deleteTab, disable=self.disable, enable=self.enable, **kwargs)
 
 
 class Disable(Frame.Frame):
@@ -16,13 +16,13 @@ class Disable(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, 0, 0, **kwargs)
 
     def getDisableButton(self, row, column, **kwargs):
-        return Buttons.DisableButton(self.widget, c.DISABLE, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
+        return Buttons.DisableButton(self, c.DISABLE, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
 
 
 class DisableDeleteFrame(Frame.Frame):
     def __init__(self, parent, row, column, deleteTab, **kwargs):
         Frame.Frame.__init__(self, parent, c.DISABLE_DELETE_FRAME, row, column, no_value=True, **kwargs)
         self.addChildWidgets((
-            Buttons.DisableButton(self.widget, c.DISABLE, 0, 0, enable=kwargs["enable"], disable=kwargs["disable"], always_enabled=True),
-            Buttons.Button       (self.widget, c.DELETE,  0, 1, command=deleteTab,  always_enabled=True)
+            Buttons.DisableButton(self, c.DISABLE, 0, 0, enable=kwargs["enable"], disable=kwargs["disable"], always_enabled=True),
+            Buttons.Button       (self, c.DELETE,  0, 1, command=deleteTab,  always_enabled=True)
         ))

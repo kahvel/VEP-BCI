@@ -1,7 +1,8 @@
 import Switchable
 import ListByTrials
-
 import constants as c
+
+import csv
 
 
 class RecordingListByTrials(Switchable.Switchable, ListByTrials.ListByTrials):
@@ -17,88 +18,99 @@ class RecordingListByTrials(Switchable.Switchable, ListByTrials.ListByTrials):
         if self.enabled:
             ListByTrials.ListByTrials.start(self, *args)
 
-    def save(self):
-        return str(self.list)
+    def save(self, file_name):
 
-    def load(self, file_content):
-        self.list = eval(file_content)
+        open(self.changeFileName(file_name), "w").write(str(self.list))
+
+    def load(self, file_name):
+        self.list = eval(open(self.changeFileName(file_name)))
+
+    def changeFileName(self, file_name):
+        raise NotImplementedError("changeFileName not implemented!")
+
+    def getTrialCollection(self, target_freqs):
+        return []
+
+    def add(self, data):
+        if self.enabled:
+            self.current_data.append(data)
 
 
 class EEG(RecordingListByTrials):
     def __init__(self):
         RecordingListByTrials.__init__(self)
 
-    def getTrialCollection(self, target_freqs):
-        return {
-            c.EEG_RECORDING_FREQS: target_freqs,
-            c.EEG_RECORDING_PACKETS: []
-        }
+    def save(self, file_name):
+        with open(self.changeFileName(file_name), "w") as csv_file:
+            writer = csv.DictWriter(csv_file, c.SENSORS)
+            writer.writeheader()
+            writer.writerows(self.list)
 
-    def add(self, packet):
-        if self.enabled:
-            self.current_data[c.EEG_RECORDING_PACKETS].append(packet)
+    def changeFileName(self, file_name):
+        return file_name[:-4] + "_eeg"
 
 
 class ExpectedTargets(RecordingListByTrials):
     def __init__(self):
         RecordingListByTrials.__init__(self)
 
-    def getTrialCollection(self, *args):
-        return []
+    def save(self, file_name):
+        with open(self.changeFileName(file_name), "w") as csv_file:
+            writer = csv.DictWriter(csv_file, c.SENSORS)
+            writer.writeheader()
+            writer.writerows(self.list)
 
-    def add(self, target, time):
-        if self.enabled:
-            self.current_data.append((target, time))
+    def changeFileName(self, file_name):
+        return file_name[:-4] + "_targets"
+
+
+class Frequencies(RecordingListByTrials):
+    def __init__(self):
+        RecordingListByTrials.__init__(self)
+
+    def changeFileName(self, file_name):
+        return file_name[:-4] + "_frequencies"
 
 
 class Recording(object):
     def __init__(self):
         self.normal_eeg = EEG()
-        self.neutral_eeg = EEG()
         self.expected_targets = ExpectedTargets()
+        self.target_frequencies = Frequencies()
 
     def start(self, target_freqs):
-        self.normal_eeg.start(target_freqs)
-        self.neutral_eeg.start(target_freqs)
+        self.normal_eeg.start()
         self.expected_targets.start()
+        self.target_frequencies.start(target_freqs)
 
     def reset(self):
         self.normal_eeg.reset()
-        self.neutral_eeg.reset()
         self.expected_targets.reset()
 
     def disableRecording(self):
         self.normal_eeg.disable()
         self.expected_targets.disable()
-        self.neutral_eeg.disable()
 
     def enableNormal(self):
         self.normal_eeg.enable()
         self.expected_targets.enable()
-        self.neutral_eeg.disable()
 
     def enableNeutral(self):
         self.normal_eeg.disable()
         self.expected_targets.disable()
-        self.neutral_eeg.enable()
 
     def trialEnded(self):
         self.normal_eeg.trialEnded()
         self.expected_targets.trialEnded()
-        self.neutral_eeg.trialEnded()
 
-    def collectPacket(self, packet):
+    def collectPacket(self, packet, expected_target):
         self.normal_eeg.add(packet)
-        self.neutral_eeg.add(packet)
+        self.expected_targets.add(expected_target)
 
-    def collectExpectedTarget(self, expected_target, message_counter):
-        self.expected_targets.add(expected_target, message_counter)
+    def saveEeg(self, file_name):
+        self.normal_eeg.save(file_name)
+        self.expected_targets.save(file_name)
 
-    def saveEeg(self):
-        return self.normal_eeg.save() + ";" + self.neutral_eeg.save() + ";" + self.expected_targets.save()
-
-    def loadEeg(self, file_content):
-        split_content = file_content.split(";")
-        self.normal_eeg.load(split_content[0])
-        self.neutral_eeg.load(split_content[1])
-        self.expected_targets.load(split_content[2])
+    def loadEeg(self, file_name):
+        self.normal_eeg.load(file_name)
+        self.expected_targets.load(file_name)

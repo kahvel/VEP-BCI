@@ -19,14 +19,13 @@ class PostOffice(object):
                 elif message == c.RESET_RESULTS_MESSAGE:
                     self.bci_controller.resetResults()
                 elif message == c.SHOW_RESULTS_MESSAGE:
-                    print(self.bci_controller.getResults())
+                    self.bci_controller.showResults()
                 elif message == c.SAVE_RESULTS_MESSAGE:
-                    self.main_connection.sendMessage(self.bci_controller.getResults())
+                    self.bci_controller.saveResults(self.main_connection.receiveMessageBlock())
                 elif message == c.LOAD_EEG_MESSAGE:
-                    file_content = self.main_connection.receiveMessageBlock()
-                    self.bci_controller.loadEeg(file_content)
+                    self.bci_controller.loadEeg(self.main_connection.receiveMessageBlock())
                 elif message == c.SAVE_EEG_MESSAGE:
-                    self.main_connection.sendMessage(self.bci_controller.saveEeg())
+                    self.bci_controller.saveEeg(self.main_connection.receiveMessageBlock())
                 elif message == c.RESET_EEG_MESSAGE:
                     self.bci_controller.resetRecording()
                 elif message in c.ROBOT_COMMANDS:

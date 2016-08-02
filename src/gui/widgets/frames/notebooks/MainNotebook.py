@@ -6,16 +6,16 @@ import constants as c
 class MainNotebook(Notebook.Notebook):
     def __init__(self, parent, button_commands, row, column, **kwargs):
         Notebook.Notebook.__init__(self, parent, c.MAIN_NOTEBOOK, row, column, **kwargs)
-        target_notebook = PlusNotebook.TargetNotebook(self.widget, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq)
+        target_notebook = PlusNotebook.TargetNotebook(self, 0, 0, self.targetAdded, self.targetRemoved, self.targetDisabled, self.targetEnabled, self.getMonitorFreq)
         self.addChildWidgets((
-            WindowTab.WindowTab(self.widget, 0, 0, self.monitorFreqChanged),
+            WindowTab.WindowTab(self, 0, 0, self.monitorFreqChanged),
             target_notebook,
-            PlusNotebook.ExtractionNotebook(self.widget, 0, 0, target_notebook.widgets_list),
-            PlusNotebook.PlotNotebook(self.widget, 0, 0),
-            TestTab.TestTab(self.widget, button_commands[c.TEST_TAB], 0, 0),
-            RobotTab.RobotTab(self.widget, button_commands[c.ROBOT_TAB]),
-            EmotivTab.EmotivTab(self.widget),
-            RecordTab.RecordTab(self.widget, button_commands[c.RECORD_TAB]),
+            PlusNotebook.ExtractionNotebook(self, 0, 0, target_notebook.widgets_list),
+            PlusNotebook.PlotNotebook(self, 0, 0),
+            TestTab.TestTab(self, button_commands[c.TEST_TAB], 0, 0),
+            RobotTab.RobotTab(self, button_commands[c.ROBOT_TAB]),
+            EmotivTab.EmotivTab(self),
+            RecordTab.RecordTab(self, button_commands[c.RECORD_TAB]),
         ))
 
     def getMonitorFreq(self):

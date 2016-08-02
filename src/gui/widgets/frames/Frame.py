@@ -4,8 +4,8 @@ import Tkinter
 
 
 class AbstractFrame(AbstractWidget.Widget):
-    def __init__(self, name, row, column, **kwargs):
-        AbstractWidget.Widget.__init__(self, name, row, column, **kwargs)
+    def __init__(self, parent, name, row, column, **kwargs):
+        AbstractWidget.Widget.__init__(self, parent, name, row, column, **kwargs)
         self.widgets_list = []
         self.widgets_dict = {}
 
@@ -83,6 +83,10 @@ class AbstractFrame(AbstractWidget.Widget):
         for widget in self.widgets_list:
             widget.targetEnabled(tabs, current_tab)
 
+    def trialEnded(self):
+        for widget in self.widgets_list:
+            widget.trialEnded()
+
     def disableWidget(self, path_to_widget, disabler="PostOffice"):
         if len(path_to_widget) > 1:
             self.widgets_dict[path_to_widget[0]].disableWidget(path_to_widget[1:], disabler)
@@ -98,5 +102,5 @@ class AbstractFrame(AbstractWidget.Widget):
 
 class Frame(AbstractFrame):
     def __init__(self, parent, name, row, column, **kwargs):
-        AbstractFrame.__init__(self, name, row, column, **kwargs)
-        self.create(Tkinter.Frame(parent))
+        AbstractFrame.__init__(self, parent, name, row, column, **kwargs)
+        self.create(Tkinter.Frame(parent.widget))
