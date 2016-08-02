@@ -1,9 +1,11 @@
+from gui import MessagingInterface
+
 import Tkinter
 
 
-class Widget(object):
+class Widget(MessagingInterface.MessagingInterfaceChild):
     def __init__(self, parent, name, row, column, **kwargs):
-        self.parent = parent
+        MessagingInterface.MessagingInterfaceChild.__init__(self, parent)
         self.row = row
         self.column = column
         self.columnspan = kwargs.get("columnspan", 1)
@@ -66,21 +68,6 @@ class Widget(object):
 
     def validate(self):
         return True
-
-    def targetAdded(self):
-        pass
-
-    def targetRemoved(self, deleted_tab):
-        pass
-
-    def targetDisabled(self, tabs, current_tab):
-        pass
-
-    def targetEnabled(self, tabs, current_tab):
-        pass
-
-    def trialEnded(self):
-        pass
 
 
 class WidgetWithCommand(Widget):

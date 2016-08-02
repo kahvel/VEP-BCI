@@ -50,3 +50,6 @@ class ResultsNotebook(SameTabsNotebook):
 
     def newTab(self, deleteTab):
         return RecordNotebookTab.RecordNotebookTab(self,)  # TODO
+
+    def fillTab(self):
+        pass

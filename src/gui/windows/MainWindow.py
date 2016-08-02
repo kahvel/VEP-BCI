@@ -1,7 +1,7 @@
 import constants as c
 import os
 
-from gui import ButtonsStateController
+from gui import ButtonsStateController, MessagingInterface
 from gui.windows import MyWindows
 from gui.widgets.frames import MainFrame
 import MainFrameButtonCommands
@@ -10,9 +10,12 @@ import PostOfficeMessageHandler
 import InputParser
 
 
-class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
+class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable, MessagingInterface.MessagingInterfaceRoot):
     def __init__(self, connection, default_settings_file_name):
         MyWindows.TkWindow.__init__(self, "VEP-BCI")
+        Savable.Savable.__init__(self)
+        Savable.Loadable.__init__(self)
+        MessagingInterface.MessagingInterfaceRoot.__init__(self)
         self.connection = connection
         """ @type : connections.ConnectionProcessEnd.MainConnection """
         self.default_settings_file_name = default_settings_file_name
@@ -53,15 +56,15 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
         self.connection.sendMessage(file)
 
-    def saveEeg(self, file):
+    def saveEegEvent(self, file):
         self.connection.sendMessage(c.SAVE_EEG_MESSAGE)
         self.connection.sendMessage(file)
 
-    def loadEeg(self, file):
+    def loadEegEvent(self, file):
         self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
         self.connection.sendMessage(file)
 
-    def resetEeg(self):
+    def resetEegEvent(self):
         self.connection.sendMessage(c.RESET_EEG_MESSAGE)
 
     def exit(self):
@@ -77,6 +80,10 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
     def loadFromFile(self, file):
         self.main_frame.load(file)
         self.bottom_frame_buttons_states.setInitialStates()
+
+    def sendEventToRoot(self, function):
+        function(self)
+        function(self.main_frame)
 
 
 class MainWindow(AbstractMainWindow):
