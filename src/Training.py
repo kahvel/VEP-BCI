@@ -56,8 +56,8 @@ class Training(BCI.BCI):
         self.handleExtractionMessages = self.saveDataHandleExtraction
         BCI.BCI.start(self, options)
         trial_number = 0
-        open("U:\\data\\my\\results1_2_target\\results" + str(trial_number) + ".txt", "w").write(self.file_content)
-        open("U:\\data\\my\\results1_2_target\\frequencies" + str(trial_number) + ".txt", "w").write(str(self.target_freqs))
+        open("U:\\data\\test\\5_targets\\result" + str(trial_number) + ".txt", "w").write(self.file_content)
+        open("U:\\data\\test\\5_targets\\frequencies" + str(trial_number) + ".txt", "w").write(str(self.target_freqs))
 
     def saveDataHandleExtraction(self, target_freqs, current_target):
         results = self.connections.receiveExtractionMessage()
@@ -172,24 +172,27 @@ class Training(BCI.BCI):
         return len(self.packets)
 
     def getTarget(self, test_target, target_freqs, previous_target):
+        return None
+
+    def getExpectedTarget(self):
         if self.expected_target_index < len(self.expected_targets):
             if self.expected_targets[self.expected_target_index][1] == self.message_counter:
                 self.expected_target_index += 1
                 return self.expected_targets[self.expected_target_index-1][0]
-        return previous_target
+        return self.expected_targets[self.expected_target_index-1]
 
     def getNextPacket(self):
         return self.packets[self.message_counter]
 
-    def startPacketSending(self, target_freqs, current_target, total_time):
-        while not self.target_identification.need_new_target and self.message_counter < total_time:
+    def startPacketSending(self, target_freqs, dummy_current_target, total_time, test_target_option):
+        while not self.needNewTarget(test_target_option) and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
             if main_message in c.ROBOT_COMMANDS:
                 self.connections.sendRobotMessage(main_message)
             elif main_message is not None:
                 print main_message + "!!!"
                 return main_message
-            current_target = self.getTarget(None, None, current_target)  # Override for this line
+            current_target = self.getExpectedTarget()  # Override for this line
             self.handleEmotivMessages(target_freqs, current_target)
 
     # def handleExtractionMessages2(self, target_freqs, current_target):  # for brute force and DE

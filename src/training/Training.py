@@ -76,20 +76,27 @@ def costFunction(numbers, options_handler, frequencies):
     clear_buffers = False
     packet_counter = 0
     for result, expected_target in zip(features_list, expected):
+        # result[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][1] = [(key, value) for key, value in result[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][1]
+        #                                                         if key in [8.571428571428571,6.666666666666667,7.5]]
+        # result[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][2] = [(key, value) for key, value in result[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][2]
+        #                                                         if key in [8.571428571428571,6.666666666666667,7.5]]
+        # result[2][('CCA', ('P7', 'O1', 'O2', 'P8'))] = [(key, value) for key, value in result[2][('CCA', ('P7', 'O1', 'O2', 'P8'))]
+        #                                                 if key in [8.571428571428571,6.666666666666667,7.5]]
         if clear_buffers and enable_buffer_clearing:
             packet_counter += step
             if packet_counter >= length:
                 packet_counter = 0
                 clear_buffers = False
         else:
+            frequencies = {1: 8.571428571428571, 2: 6.666666666666667, 3: 7.5}
             predicted_frequency = target_identification.handleFreqMessages(result, frequencies, expected_target, filter_by_comparison=True)
             if predicted_frequency is not None:
                 clear_buffers = True
     target_identification.results.trialEnded(packet_count)
     target_identification.new_results.trialEnded(packet_count)
     result = target_identification.new_results.list[-1]
-    # print str(result)
-    # print str(target_identification.results.list[-1])
+    print str(result)
+    print str(target_identification.results.list[-1])
     # print result[c.RESULTS_DATA_TRUE_POSITIVES], result[c.RESULTS_DATA_FALSE_POSITIVES], result[c.RESULTS_DATA_MEAN_F1]
     return 1-result.getData()[c.RESULTS_DATA_MEAN_F1]
 

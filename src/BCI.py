@@ -125,7 +125,6 @@ class BCI(object):
             return False
 
     def startPacketSending(self, target_freqs, current_target, total_time, test_target_option):
-        print self.message_counter - self.previous_target_change, current_target
         while not self.needNewTarget(test_target_option) and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
             if main_message in c.ROBOT_COMMANDS:

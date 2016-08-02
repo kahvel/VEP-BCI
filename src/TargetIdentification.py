@@ -1,6 +1,5 @@
 import constants as c
 import pickle
-import numpy as np
 
 
 class ResultCounter(object):
@@ -189,6 +188,7 @@ class TargetIdentification(object):
         self.saved_model = None
         self.matrix_result = None
         self.scaling_functions = None
+        self.thresholds = None
 
     def setup(self, options):
         self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
@@ -196,7 +196,7 @@ class TargetIdentification(object):
         self.prev_results.setup(options[c.DATA_PREV_RESULTS])
         self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
-        scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model22_mm.pkl")))
+        scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model11_mm.pkl")))
         self.scaling_functions = {
             1: {
                 1: scaling_functions["PSDA_h1"],
@@ -206,7 +206,8 @@ class TargetIdentification(object):
                 c.RESULT_SUM: scaling_functions["CCA"]
             }
         }
-        self.saved_model = pickle.load(file("U:\\data\\my\\pickle\\model22.pkl"))
+        self.saved_model = pickle.load(file("U:\\data\\my\\pickle\\model11.pkl"))
+        self.thresholds = pickle.load(file("U:\\data\\my\\pickle\\model11_thresh.pkl"))
         self.ratio_finder.setup(self.scaling_functions)
         self.matrix_result = []
 
@@ -328,17 +329,13 @@ class TargetIdentification(object):
             #     for frequency in frequencies:
             #         self.matrix_result.append(psda_results_dict[frequency])
             if len(self.matrix_result) == 90:
-                predicted = self.saved_model.predict([self.matrix_result])[0]
+                # predicted = self.saved_model.predict([self.matrix_result])[0]
                 scores = list(self.saved_model.decision_function([self.matrix_result])[0])
-                print scores
-                if scores[0] > -0.690910465686 and scores[2] < -0.298335471114 and scores[1] < -0.155039992655:#-0.214198895282:
-                    predicted = 0
-                elif scores[2] > -0.298335471114 and scores[0] < -0.690910465686 and scores[1] < -0.155039992655:#-0.309460750891:
-                    predicted = 2
-                elif scores[1] > -0.155039992655 and scores[0] < -0.690910465686 and scores[2] < -0.298335471114:#-0.368188700899:
-                    predicted = 1
-                else:
-                    predicted = None
+                predicted = None
+                for i in range(len(scores)):
+                    if scores[i] > self.thresholds[i] and all(map(lambda (j, (s, t)): s < t or j == i, enumerate(zip(scores, self.thresholds)))):
+                        predicted = i
+                        break
                 if predicted is not None:
                     predicted_frequency = frequencies[predicted-1]
                     current_frequency = target_freqs[current_target] if current_target in target_freqs else None
