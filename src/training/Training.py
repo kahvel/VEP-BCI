@@ -97,8 +97,8 @@ def costFunction(numbers, options_handler, frequencies):
     result = target_identification.new_results.list[-1]
     print str(result)
     print str(target_identification.results.list[-1])
-    # print result[c.RESULTS_DATA_TRUE_POSITIVES], result[c.RESULTS_DATA_FALSE_POSITIVES], result[c.RESULTS_DATA_MEAN_F1]
-    return 1-result.getData()[c.RESULTS_DATA_MEAN_F1]
+    # print result[c.RESULTS_DATA_TRUE_POSITIVES], result[c.RESULTS_DATA_FALSE_POSITIVES], result[c.RESULTS_DATA_MACRO_F1]
+    return 1-result.getData()[c.RESULTS_DATA_MACRO_F1]
 
 
 parameter_handler = NewTrainingParameterHandler()

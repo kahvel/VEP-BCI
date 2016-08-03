@@ -39,6 +39,8 @@ class Results(object):
 
     def newResultsReceivedEvent(self, new_results): pass
 
+    def fillResultsFrameEvent(self, results): pass
+
 
 class Robot(object):
     def __init__(self): pass

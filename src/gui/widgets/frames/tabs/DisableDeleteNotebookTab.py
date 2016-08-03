@@ -19,6 +19,14 @@ class Disable(Frame.Frame):
         return Buttons.DisableButton(self, c.DISABLE, row, column, enable=self.enable, disable=self.disable, always_enabled=True)
 
 
+class Delete(Frame.Frame):
+    def __init__(self, parent, name, **kwargs):
+        Frame.Frame.__init__(self, parent, name, 0, 0, **kwargs)
+
+    def getDeleteButton(self, row, column, deleteTab, **kwargs):
+        return Buttons.Button(self, c.DELETE, row, column, command=deleteTab, always_enabled=True)
+
+
 class DisableDeleteFrame(Frame.Frame):
     def __init__(self, parent, row, column, deleteTab, **kwargs):
         Frame.Frame.__init__(self, parent, c.DISABLE_DELETE_FRAME, row, column, no_value=True, **kwargs)

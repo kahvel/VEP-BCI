@@ -43,8 +43,8 @@ class SunkenButton(AbstractWidget.WidgetWithCommand):
 class DisableButton(SunkenButton):
     def __init__(self, parent, name, row, column, **kwargs):
         SunkenButton.__init__(self, parent, name, row, column, **kwargs)
-        self.enable_command = kwargs.get("enable", lambda: None)
-        self.disable_command = kwargs.get("disable", lambda: None)
+        self.enable_command = kwargs.get("enable", lambda x: None)
+        self.disable_command = kwargs.get("disable", lambda x: None)
 
     def sunkenButtonCommand(self):
         SunkenButton.sunkenButtonCommand(self)

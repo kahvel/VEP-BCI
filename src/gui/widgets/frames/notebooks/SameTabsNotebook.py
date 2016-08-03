@@ -51,18 +51,38 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
         Savable.Loadable.__init__(self)
         self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
         self.load_successful = False
+        self.tab_to_fill = None
 
     def loadDefaultValue(self):
         SameTabsNotebook.loadDefaultValue(self)
         self.addInitialTabs()
         for i in range(self.tab_count+1):
             self.tabDefaultValues(i)
+        self.tab_to_fill = 0
+
+    def getValue(self):
+        for i, widget in enumerate(self.widgets_list):
+            if not widget.disabled and i == self.tab_to_fill:
+                return widget.getValue()
 
     def addInitialTabs(self):
         self.last_tab = self.addTab("Load")
-        self.trialEndedEvent()
+        self.addNewTab()
 
     def trialEndedEvent(self):
+        self.addNewTab()
+        self.tabDefaultValues(-1)
+        self.tab_to_fill = self.tab_count
+
+    def resultsReceivedEvent(self, results):
+        """
+        Since currently tab frames do not know their number we have to send the event to only the correct tab.
+        :param results:
+        :return:
+        """
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.fillResultsFrameEvent(results))
+
+    def addNewTab(self):
         self.tab_count += 1
         self.widgets_list.append(self.last_tab)
         self.widget.tab(self.tab_count, text=self.tab_count+1)
@@ -71,14 +91,15 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
     def newTab(self, deleteTab):
         return RecordNotebookTab.RecordNotebookTab(self, deleteTab)
 
-    def fillTab(self):
-        pass
-
     def tabChangedEvent(self, event):
         if event.widget.index("current") == self.tab_count+1:
             self.askLoadFile()
             if not self.load_successful:
                 self.changeActiveTab(self.getCurrentTab())
+            else:
+                self.addNewTab()
+                self.tabDefaultValues(-1)
+            self.load_successful = False
 
     def loadFromFile(self, file):
         # to stuff
