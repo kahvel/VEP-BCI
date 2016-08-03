@@ -1,4 +1,4 @@
-from gui.widgets.frames.notebooks import PlusNotebook, Notebook
+from gui.widgets.frames.notebooks import PlusNotebook, SameTabsNotebook, Notebook
 from gui.widgets.frames.tabs import TestTab, WindowTab, RobotTab, EmotivTab, RecordTab
 import constants as c
 
@@ -15,7 +15,7 @@ class MainNotebook(Notebook.Notebook):
             TestTab.TestTab(self, 0, 0),
             RobotTab.RobotTab(self),
             EmotivTab.EmotivTab(self),
-            RecordTab.RecordTab(self),
+            SameTabsNotebook.ResultsNotebook(self, 0, 0),
         ))
 
     def getMonitorFreq(self):

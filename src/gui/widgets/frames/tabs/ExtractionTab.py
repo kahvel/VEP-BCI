@@ -77,7 +77,7 @@ class TargetsFrame(Frame.Frame):
     def loadDefaultValue(self):
         Frame.Frame.loadDefaultValue(self)
         for widget in self.target_notebook_widgets:
-            self.targetAdded(widget.disabled)
+            self.targetAddedEvent(widget.disabled)
 
     def addOption(self, option, disabled, state):
         new_widget = Checkbutton.Checkbutton(self, str(option), (option-1) // 7, (option-1) % 7, default_value=state, padx=0, pady=0)

@@ -42,9 +42,6 @@ class PlusNotebook(SameTabsNotebook.SameTabsNotebook):
         self.widget.tab(self.tab_count, text=self.tab_count+1)
         self.last_tab = self.addTab(c.PLUS_TAB)
 
-    def tabDefaultValues(self, tab_index):
-        self.widgets_list[tab_index].loadDefaultValue()
-
     def deleteAllTabs(self):
         if self.tab_count != -1:
             self.widget.select(0)
