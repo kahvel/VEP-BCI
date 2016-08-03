@@ -11,8 +11,8 @@ class BCI(object):
     def __init__(self, connections, main_connection, recording):
         self.connections = connections
         self.main_connection = main_connection
-        self.results = Results.Results()
-        self.new_results = Results.Results()
+        self.results = None
+        self.new_results = None
         self.recording = recording
         self.standby = Standby.Standby()
         self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.new_results, self.standby)
@@ -34,10 +34,10 @@ class BCI(object):
     def start(self, options):
         self.message_counter = 0
         self.previous_target_change = 0
-        self.target_identification.resetResults(options[c.DATA_FREQS].values())
         target_freqs = options[c.DATA_FREQS]
-        self.results.start(target_freqs.values())
-        self.new_results.start(target_freqs.values())
+        self.target_identification.resetResults(target_freqs.values())
+        self.results = Results.Result(target_freqs.values())
+        self.new_results = Results.Result(target_freqs.values())
         self.recording.start(target_freqs)
         self.connections.sendMessage(c.START_MESSAGE)
         message = self.targetChangingLoop(
@@ -45,8 +45,8 @@ class BCI(object):
             target_freqs,
         )
         self.connections.sendMessage(c.STOP_MESSAGE)
-        self.results.trialEnded(self.message_counter)
-        self.new_results.trialEnded(self.message_counter)
+        self.results.setTime(self.message_counter)
+        self.new_results.setTime(self.message_counter)
         self.recording.trialEnded()
         return message
 
@@ -153,19 +153,11 @@ class BCI(object):
         if self.standby.enabled:
             self.standby.setup(options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]])
 
-    def resetResults(self):
-        self.results.reset()
-        self.new_results.reset()
-
     def getResults(self):
-        return "\nNew:\n" + self.new_results.__repr__() + "Old:\n" + self.results.__repr__()
+        return self.results.getData()
 
-    def showResults(self):
-        print(self.getResults())
-
-    def saveResults(self, file):
-        file.write(self.getResults())
-        file.close()
+    def getNewResults(self):
+        return self.new_results.getData()
 
     def loadEeg(self, file):
         self.recording.loadEeg(file.name)

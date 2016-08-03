@@ -45,7 +45,7 @@ class ResultsNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.RESULTS_NOTEBOOK, row, column, **kwargs)
 
-    def trialEnded(self):
+    def trialEndedEvent(self):
         self.addTab(self.tab_count)
 
     def newTab(self, deleteTab):

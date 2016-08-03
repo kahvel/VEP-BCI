@@ -17,6 +17,7 @@ class PostOfficeMessageHandler(object):
         if message == c.STOP_MESSAGE:
             self.buttons_state_controller.stopClicked()
             self.stopped = True
+            self.evokeTrialEndedEvent()
         elif message == c.SUCCESS_MESSAGE:  # Setup was successful
             self.buttons_state_controller.enableStart()
         elif message == c.FAIL_MESSAGE:  # Setup failed
@@ -42,6 +43,10 @@ class PostOfficeMessageHandler(object):
         self.buttons_state_controller.stopClicked()
         self.connection.sendMessage(c.STOP_MESSAGE)
         self.stopped = True
+        self.evokeTrialEndedEvent()
 
     def isStopped(self):
         return self.stopped
+
+    def evokeTrialEndedEvent(self):
+        self.main_frame.sendEventToRoot(lambda x: x.trialEndedEvent())

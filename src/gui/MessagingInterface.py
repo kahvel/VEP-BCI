@@ -35,6 +35,10 @@ class Results(object):
 
     def resetResultsEvent(self): pass
 
+    def resultsReceivedEvent(self, results): pass
+
+    def newResultsReceivedEvent(self, new_results): pass
+
 
 class Robot(object):
     def __init__(self): pass
@@ -75,6 +79,8 @@ class MessagingInterface(Bci, Recording, Results, Robot, Targets):
 
     def sendEventToChildren(self, function):
         raise NotImplementedError("sendEventToChildren not implemented!")
+
+    def trialEndedEvent(self): pass
 
 
 class MessagingInterfaceWithParent(MessagingInterface):

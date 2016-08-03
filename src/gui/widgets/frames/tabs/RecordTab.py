@@ -15,6 +15,12 @@ class RecordTab(Frame.Frame, Savable.Savable, Savable.Loadable):
             Buttons.Button       (self, c.TRAINING_RESET_EEG, 1, 2, command=self.resetEegClicked),
         ))
 
+    def resultsReceivedEvent(self, results):
+        pass
+
+    def newResultsReceivedEvent(self, new_results):
+        pass
+
     def saveEegClicked(self):
         self.askSaveFile()
 

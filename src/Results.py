@@ -5,7 +5,7 @@ import constants as c
 import ListByTrials
 
 
-class Trial(object):
+class Result(object):
     def __init__(self, target_freqs):
         self.results = {current: {detected: 0 for detected in target_freqs+[None]} for current in target_freqs+[None]}
         self.true_labels = []
@@ -15,11 +15,23 @@ class Trial(object):
         self.frequency_to_label = {frequency: label for label, frequency in enumerate(target_freqs)}
         self.frequency_to_label[None] = None
         self.target_frequencies = target_freqs
+        self.prev_result = None
+
+    def isEqualToPreviousResult(self, result):
+        return self.prev_result == result
 
     def add(self, current, detected):
+        """
+        Current is None if there is no computer-chosen target presented to user.
+        Detected is None if no target was detected. Otherwise both are respective frequencies.
+        :param current: The frequency of the current expected target.
+        :param detected: The frequency of the detected target.
+        :return:
+        """
         self.results[current][detected] += 1
         self.true_labels.append(self.frequency_to_label[current])
         self.predicted_labels.append(self.frequency_to_label[detected])
+        self.prev_result = detected
 
     def setTime(self, total_time):
         self.total_packets = total_time
@@ -165,13 +177,6 @@ class Results(ListByTrials.ListByTrials):
         return Trial(target_freqs)
 
     def add(self, current, detected):
-        """
-        Current is None if there is no computer-chosen target presented to user.
-        Detected is None if no target was detected. Otherwise both are respective frequencies.
-        :param current: The frequency of the current expected target.
-        :param detected: The frequency of the detected target.
-        :return:
-        """
         self.current_data.add(current, detected)
         self.prev_result = detected
 

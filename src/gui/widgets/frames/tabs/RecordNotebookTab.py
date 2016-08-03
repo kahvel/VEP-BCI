@@ -5,10 +5,10 @@ import constants as c
 
 
 class RecordNotebookTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab, Savable.Savable):
-    def __init__(self, parent, buttons, deleteTab, **kwargs):
+    def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.RECORD_TAB, **kwargs)
         Savable.Savable.__init__(self)
         self.addChildWidgets((
-            RecordTab.RecordTab(self, buttons),
+            RecordTab.RecordTab(self),
             self.getDisableDeleteFrame(1, 0, deleteTab),
         ))

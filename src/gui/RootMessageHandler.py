@@ -83,19 +83,6 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
-class Targets(MessagingInterface.Targets):
-    def __init__(self):
-        MessagingInterface.Targets.__init__(self)
-
-    def targetAddedEvent(self): pass
-
-    def targetRemovedEvent(self, deleted_tab): pass
-
-    def targetDisabledEvent(self, tabs, current_tab): pass
-
-    def targetEnabledEvent(self, tabs, current_tab): pass
-
-
 class MainWindowMessageHandler(Bci, Recording, Results, Robot, MessagingInterface.FrameMessagingInterface):
     def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
@@ -115,9 +102,20 @@ class MainWindowMessageHandler(Bci, Recording, Results, Robot, MessagingInterfac
 
     def sendEventToRoot(self, function, needs_stopped_state=False):
         if needs_stopped_state and self.bciIsStopped() or not needs_stopped_state:
-            function(self)
             self.sendEventToChildren(function)
         else:
             print "BCI has to be stopped to use this functionality!"
 
-    def trialEnded(self): pass
+    def trialEndedEvent(self):
+        self.evokeResultsReceivedEvent()
+        self.evokeNewResultsReceivedEvent()
+
+    def evokeResultsReceivedEvent(self):
+        self.connection.sendMessage(c.GET_RESULTS_MESSAGE)
+        results = self.connection.receiveMessageBlock()
+        self.sendEventToChildren(lambda x: x.resultsReceivedEvent(results))
+
+    def evokeNewResultsReceivedEvent(self):
+        self.connection.sendMessage(c.GET_NEW_RESULTS_MESSAGE)
+        results = self.connection.receiveMessageBlock()
+        self.sendEventToChildren(lambda x: x.newResultsReceivedEvent(results))
