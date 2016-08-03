@@ -79,7 +79,7 @@ class LabelTextbox(Textbox):
 
 class DisabledTextLabelTextbox(LabelTextbox):
     def __init__(self, parent, name, row, column, **kwargs):
-        LabelTextbox.__init__(self, parent, name, row, column, default_disability=1, default_disablers=["Always Disabled"], **kwargs)
+        LabelTextbox.__init__(self, parent, name, row, column, default_disability=1, default_disablers=["Always Disabled"], default_value="", **kwargs)
 
     def validationFunction(self):
         pass

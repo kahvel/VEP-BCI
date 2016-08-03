@@ -82,7 +82,7 @@ class MainInputParser(AbstractInputParser):
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.ROBOT_TAB],
             c.DATA_EMOTIV: all_data[c.EMOTIV_TAB],
-            c.DATA_RECORD: all_data[c.RESULTS_NOTEBOOK][c.RECORD_TAB][c.RECORD_TAB][c.RECORD_FRAME],
+            c.DATA_RECORD: all_data[c.RECORD_TAB_FRAME][c.TRAINING_RECORD],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseDifferenceData),
             c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.TEST_RESULT_COUNTER_FRAME),

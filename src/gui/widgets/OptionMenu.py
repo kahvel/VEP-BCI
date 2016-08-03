@@ -1,9 +1,9 @@
-import Tkinter
-
-import copy
-
+from gui.widgets.frames import Frame
 from gui.widgets import AbstractWidget
+
 import constants as c
+import Tkinter
+import copy
 
 
 class OptionMenu(AbstractWidget.WidgetWithCommand):
@@ -27,6 +27,14 @@ class OptionMenu(AbstractWidget.WidgetWithCommand):
 
     def getDefaultValue(self, kwargs, values):
         return kwargs.get("default_value", values[0])
+
+
+class OptionMenuFrame(Frame.Frame):
+    def __init__(self, parent, name, row, column, values, **kwargs):
+        Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
+        self.addChildWidgets((
+            OptionMenu(self, name, 0, 1, values),
+        ))
 
 
 class TargetChoosingMenu(OptionMenu):

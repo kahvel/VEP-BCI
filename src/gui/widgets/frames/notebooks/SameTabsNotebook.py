@@ -1,5 +1,5 @@
 from gui.widgets.frames.notebooks import Notebook
-from gui.widgets.frames.tabs import RecordNotebookTab
+from gui.widgets.frames.tabs import RecordTab
 import constants as c
 import Savable
 
@@ -89,7 +89,7 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
         self.last_tab = self.addTab("Load")
 
     def newTab(self, deleteTab):
-        return RecordNotebookTab.RecordNotebookTab(self, deleteTab)
+        return RecordTab.RecordTab(self, deleteTab)
 
     def tabChangedEvent(self, event):
         if event.widget.index("current") == self.tab_count+1:
