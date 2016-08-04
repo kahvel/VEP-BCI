@@ -43,3 +43,15 @@ class SavableDirectory(object):
     def saveFile(self, directory):
         if directory is not None:
             self.saveToFile(directory)
+
+
+class LoadableDirectory(object):
+    def loadFromFile(self, file):
+        raise NotImplementedError("loadFromFile not implemented!")
+
+    def askLoadFile(self):
+        self.loadFile(os.path.join(getLocation(), tkFileDialog.askdirectory(initialdir=getLocation())))
+
+    def loadFile(self, directory):
+        if directory is not None:
+            self.loadFromFile(directory)

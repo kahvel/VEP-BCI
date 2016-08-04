@@ -26,6 +26,14 @@ class RecordTab(DisableDeleteNotebookTab.Delete):
     def saveMe(self):
         return self.widgets_dict[c.RECORD_FRAME].saveMe()
 
+    def loadEegEvent(self, directory):
+        file_name = os.path.join(directory, "file.txt")
+        if os.path.isfile(file_name):
+            file = open(file_name, "r")
+            self.sendEventToChildren(lambda x: x.loadBciSettingsEvent(file))
+        else:
+            print file_name, "does not exist!"
+
 
 class TimestampFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
@@ -41,12 +49,12 @@ class TimestampFrame(Frame.Frame):
         return datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S %d.%m.%Y')
 
 
-class RecordFrame(Frame.Frame, Savable.SavableDirectory, Savable.Loadable):
+class RecordFrame(Frame.Frame, Savable.SavableDirectory):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.RECORD_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.Button(self, c.TRAINING_SAVE_EEG,  1, 0, command=self.saveEegClicked),
-            Buttons.Button(self, c.TRAINING_LOAD_EEG,  1, 1, command=self.loadEegClicked),
+
         ))
         self.save_me = False
 
@@ -55,9 +63,6 @@ class RecordFrame(Frame.Frame, Savable.SavableDirectory, Savable.Loadable):
 
     def saveEegClicked(self):
         self.askSaveFile()
-
-    def loadEegClicked(self):
-        self.askLoadFile()
 
     def saveToFile(self, file):
         """
@@ -68,14 +73,6 @@ class RecordFrame(Frame.Frame, Savable.SavableDirectory, Savable.Loadable):
         self.save_me = True
         self.sendEventToRoot(lambda x: x.saveEegEvent(file), True)
         self.save_me = False
-
-    def loadFromFile(self, file):
-        """
-        askLoadFile calls this function when corresponding button is pressed.
-        :param file:
-        :return:
-        """
-        self.sendEventToRoot(lambda x: x.loadEegEvent(file), True)
 
 
 class ResultsFrame(Frame.Frame):
