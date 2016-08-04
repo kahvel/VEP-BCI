@@ -32,17 +32,17 @@ class Recording(object):
 class Results(object):
     def __init__(self): pass
 
-    def saveResultsEvent(self): pass
-
-    def showResultsEvent(self): pass
-
-    def resetResultsEvent(self): pass
-
     def resultsReceivedEvent(self, results): pass
 
     def newResultsReceivedEvent(self, new_results): pass
 
     def fillResultsFrameEvent(self, results): pass
+
+    def recordedEegReceivedEvent(self, eeg): pass
+
+    def recordedFeaturesReceivedEvent(self, features): pass
+
+    def recordedFrequenciesReceivedEvent(self, frequencies): pass
 
 
 class Robot(object):

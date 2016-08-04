@@ -3,26 +3,28 @@ import constants as c
 import Results
 import TargetIdentification
 import Standby
+import Recording
 
 import random
 
 
 class BCI(object):
-    def __init__(self, connections, main_connection, recording):
+    def __init__(self, connections, main_connection):
         self.connections = connections
         self.main_connection = main_connection
         self.results = None
         self.new_results = None
-        self.recording = recording
+        self.recording = None
         self.standby = Standby.Standby()
         self.target_identification = TargetIdentification.TargetIdentification(self.connections, self.results, self.new_results, self.standby)
         self.message_counter = 0
         self.previous_target_change = 0
         self.target_duration_seconds = 9
+        self.record_option = None
 
     def setup(self, options):
         self.connections.setup(options)
-        self.setRecording(options[c.DATA_RECORD][c.TRAINING_RECORD])
+        self.record_option = options[c.DATA_RECORD][c.TRAINING_RECORD]
         self.setStandby(options)
         self.setupStandby(options)
         if self.connections.setupSuccessful():
@@ -36,9 +38,9 @@ class BCI(object):
         self.previous_target_change = 0
         target_freqs = options[c.DATA_FREQS]
         self.target_identification.resetResults(target_freqs.values())
-        self.results = Results.Result(target_freqs.values())
-        self.new_results = Results.Result(target_freqs.values())
-        self.recording.start(target_freqs)
+        self.results = Results.Result(target_freqs)
+        self.new_results = Results.Result(target_freqs)
+        self.recording = Recording.Recording(target_freqs, self.record_option)
         self.connections.sendMessage(c.START_MESSAGE)
         message = self.targetChangingLoop(
             options[c.DATA_TEST],
@@ -47,7 +49,6 @@ class BCI(object):
         self.connections.sendMessage(c.STOP_MESSAGE)
         self.results.setTime(self.message_counter)
         self.new_results.setTime(self.message_counter)
-        self.recording.trialEnded()
         return message
 
     def getTotalTime(self, unlimited, test_time):
@@ -139,16 +140,6 @@ class BCI(object):
         else:
             self.standby.enable()
 
-    def setRecording(self, record_option):
-        if record_option == c.TRAINING_RECORD_NORMAL:
-            self.recording.enableNormal()
-        elif record_option == c.TRAINING_RECORD_NEUTRAL:
-            self.recording.enableNeutral()
-        elif record_option == c.TRAINING_RECORD_DISABLED:
-            self.recording.disableRecording()
-        else:
-            raise Exception("Recording option menu in invalid state!")
-
     def setupStandby(self, options):
         if self.standby.enabled:
             self.standby.setup(options[c.DATA_FREQS][options[c.DATA_TEST][c.TEST_STANDBY]])
@@ -159,11 +150,11 @@ class BCI(object):
     def getNewResults(self):
         return self.new_results.getData()
 
-    def loadEeg(self, file):
-        self.recording.loadEeg(file.name)
-        file.close()
+    def getRecordedEeg(self):
+        return self.recording.getEeg()
 
-    def saveEeg(self, file):
-        self.saveResults(file)
-        self.recording.saveEeg(file.name)
-        file.close()
+    def getRecordedFeatures(self):
+        return self.recording.getFeatures()
+
+    def getRecordedFrequencies(self):
+        return self.recording.getFrequencies()

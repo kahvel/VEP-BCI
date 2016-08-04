@@ -8,8 +8,8 @@ import scipy.optimize
 
 
 class Training(BCI.BCI):
-    def __init__(self, connections, main_connection, recording):
-        BCI.BCI.__init__(self, connections, main_connection, recording)
+    def __init__(self, connections, main_connection):
+        BCI.BCI.__init__(self, connections, main_connection)
         self.packets = []
         self.expected_targets = []
         self.expected_target_index = 0

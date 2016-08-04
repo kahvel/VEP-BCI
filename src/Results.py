@@ -2,19 +2,18 @@ import numpy as np
 import sklearn.metrics
 
 import constants as c
-import ListByTrials
 
 
 class Result(object):
     def __init__(self, target_freqs):
-        self.results = {current: {detected: 0 for detected in target_freqs+[None]} for current in target_freqs+[None]}
+        self.results = {current: {detected: 0 for detected in target_freqs.values()+[None]} for current in target_freqs.values()+[None]}
         self.true_labels = []
         self.predicted_labels = []
         self.target_count = len(target_freqs)
         self.total_packets = None
-        self.frequency_to_label = {frequency: label for label, frequency in enumerate(target_freqs)}
+        self.frequency_to_label = {frequency: label for label, frequency in target_freqs.items()}
         self.frequency_to_label[None] = None
-        self.target_frequencies = target_freqs
+        self.target_frequencies = target_freqs.values()
         self.prev_result = None
 
     def isEqualToPreviousResult(self, result):
@@ -162,33 +161,3 @@ class Result(object):
         # result += str(self.true_labels) + "\n"
         # result += str(self.predicted_labels) + "\n"
         return result
-
-
-class Results(ListByTrials.ListByTrials):
-    def __init__(self):
-        ListByTrials.ListByTrials.__init__(self)
-        self.prev_result = None
-
-    def start(self, target_freqs):
-        ListByTrials.ListByTrials.start(self, target_freqs)
-        self.prev_result = None
-
-    def getTrialCollection(self, target_freqs):
-        return Trial(target_freqs)
-
-    def add(self, current, detected):
-        self.current_data.add(current, detected)
-        self.prev_result = detected
-
-    def trialEnded(self, total_time):
-        self.current_data.setTime(total_time)
-        ListByTrials.ListByTrials.trialEnded(self)
-
-    def __repr__(self):
-        result = ""
-        for i in range(len(self.list)):
-            result += str(i) + "\n" + str(self.list[i])
-        return result
-
-    def isPrevResult(self, result):
-        return result == self.prev_result

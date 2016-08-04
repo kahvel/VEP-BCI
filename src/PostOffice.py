@@ -16,12 +16,12 @@ class PostOffice(object):
             if message is not None:
                 if self.bci_message_handler.canHandle(message):
                     self.bci_message_handler.handle(message)
-                elif message == c.RESET_RESULTS_MESSAGE:
-                    self.bci_controller.resetResults()
-                elif message == c.SHOW_RESULTS_MESSAGE:
-                    self.bci_controller.showResults()
-                elif message == c.SAVE_RESULTS_MESSAGE:
-                    self.bci_controller.saveResults(self.main_connection.receiveMessageBlock())
+                elif message == c.GET_RECORDED_EEG:
+                    self.main_connection.sendMessage(self.bci_controller.getRecordedEeg())
+                elif message == c.GET_RECORDED_FEATURES:
+                    self.main_connection.sendMessage(self.bci_controller.getRecordedFeatures())
+                elif message == c.GET_RECORDED_FREQUENCIES:
+                    self.main_connection.sendMessage(self.bci_controller.getRecordedFrequencies())
                 elif message == c.GET_RESULTS_MESSAGE:
                     self.main_connection.sendMessage(self.bci_controller.getResults())
                 elif message == c.GET_NEW_RESULTS_MESSAGE:

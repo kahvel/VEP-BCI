@@ -29,22 +29,6 @@ class Bci(MessagingInterface.Bci):
         self.main_window.exit()
 
 
-class Results(MessagingInterface.Results):
-    def __init__(self, connection):
-        MessagingInterface.Results.__init__(self)
-        self.connection = connection
-
-    def saveResultsEvent(self):
-        self.connection.sendMessage(c.SAVE_RESULTS_MESSAGE)
-        self.connection.sendMessage(file)
-
-    def showResultsEvent(self):
-        self.connection.sendMessage(c.SHOW_RESULTS_MESSAGE)
-
-    def resetResultsEvent(self):
-        self.connection.sendMessage(c.RESET_RESULTS_MESSAGE)
-
-
 class Robot(MessagingInterface.Robot):
     def __init__(self, connection):
         MessagingInterface.Robot.__init__(self)
@@ -66,11 +50,11 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
-class MainWindowMessageHandler(Bci, MessagingInterface.Recording, Results, Robot, MessagingInterface.Root, MessagingInterface.Targets):
+class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInterface.Results, Robot, MessagingInterface.Root, MessagingInterface.Targets):
     def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
         MessagingInterface.Recording.__init__(self)
-        Results.__init__(self, connection)
+        MessagingInterface.Results.__init__(self)
         Robot.__init__(self, connection)
         MessagingInterface.Root.__init__(self, [main_frame], post_office_message_handler)
         MessagingInterface.Targets.__init__(self)
@@ -84,13 +68,30 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, Results, Robot
     def trialEndedEvent(self):
         self.evokeResultsReceivedEvent()
         self.evokeNewResultsReceivedEvent()
+        self.evokeRecordedEegReceivedEvent()
+        self.evokeRecordedFeaturesReceivedEvent()
+        self.evokeRecordedFrequenciesReceivedEvent()
+
+    def getResults(self, message):
+        self.connection.sendMessage(message)
+        return self.connection.receiveMessageBlock()
 
     def evokeResultsReceivedEvent(self):
-        self.connection.sendMessage(c.GET_RESULTS_MESSAGE)
-        results = self.connection.receiveMessageBlock()
+        results = self.getResults(c.GET_RESULTS_MESSAGE)
         self.sendEventToChildren(lambda x: x.resultsReceivedEvent(results))
 
     def evokeNewResultsReceivedEvent(self):
-        self.connection.sendMessage(c.GET_NEW_RESULTS_MESSAGE)
-        results = self.connection.receiveMessageBlock()
+        results = self.getResults(c.GET_NEW_RESULTS_MESSAGE)
         self.sendEventToChildren(lambda x: x.newResultsReceivedEvent(results))
+
+    def evokeRecordedEegReceivedEvent(self):
+        results = self.getResults(c.GET_RECORDED_EEG)
+        self.sendEventToChildren(lambda x: x.recordedEegReceivedEvent(results))
+
+    def evokeRecordedFeaturesReceivedEvent(self):
+        results = self.getResults(c.GET_RECORDED_FEATURES)
+        self.sendEventToChildren(lambda x: x.recordedFeaturesReceivedEvent(results))
+
+    def evokeRecordedFrequenciesReceivedEvent(self):
+        results = self.getResults(c.GET_RECORDED_FREQUENCIES)
+        self.sendEventToChildren(lambda x: x.recordedFrequenciesReceivedEvent(results))
