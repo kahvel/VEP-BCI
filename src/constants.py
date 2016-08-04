@@ -274,9 +274,6 @@ SHOW_RESULTS_MESSAGE = "Show results"
 RESET_RESULTS_MESSAGE = "Reset results"
 SAVE_RESULTS_MESSAGE = "Save results"
 
-SAVE_EEG_MESSAGE = "Save EEG"
-LOAD_EEG_MESSAGE = "Load EEG"
-
 GET_RESULTS_MESSAGE = "Get results"
 GET_NEW_RESULTS_MESSAGE = "Get new results"
 

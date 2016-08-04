@@ -79,7 +79,9 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
     def trialEndedEvent(self):
         self.addNewTab()
         self.tabDefaultValues(-1)
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.trialEndedEvent())
         self.tab_to_fill = self.tab_count
+        return c.STOP_EVENT_SENDING
 
     def resultsReceivedEvent(self, results):
         """
@@ -118,4 +120,8 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
         SameTabsNotebook.loadBciSettingsEvent(self, file)
         if not self.hasTabs():
             self.loadDefaultValue()
+        return c.STOP_EVENT_SENDING
+
+    def loadEegEvent(self, directory):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.loadEegEvent(directory))
         return c.STOP_EVENT_SENDING

@@ -29,20 +29,6 @@ class Bci(MessagingInterface.Bci):
         self.main_window.exit()
 
 
-class Recording(MessagingInterface.Recording):
-    def __init__(self, connection):
-        MessagingInterface.Recording.__init__(self)
-        self.connection = connection
-
-    def saveEegEvent(self, file):
-        self.connection.sendMessage(c.SAVE_EEG_MESSAGE)
-        self.connection.sendMessage(file)
-
-    def loadEegEvent(self, file):
-        self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
-        self.connection.sendMessage(file)
-
-
 class Results(MessagingInterface.Results):
     def __init__(self, connection):
         MessagingInterface.Results.__init__(self)
@@ -80,10 +66,10 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
-class MainWindowMessageHandler(Bci, Recording, Results, Robot, MessagingInterface.Root, MessagingInterface.Targets):
+class MainWindowMessageHandler(Bci, MessagingInterface.Recording, Results, Robot, MessagingInterface.Root, MessagingInterface.Targets):
     def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
-        Recording.__init__(self, connection)
+        MessagingInterface.Recording.__init__(self)
         Results.__init__(self, connection)
         Robot.__init__(self, connection)
         MessagingInterface.Root.__init__(self, [main_frame], post_office_message_handler)

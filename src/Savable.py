@@ -31,3 +31,15 @@ class Loadable(object):
         if file is not None:
             self.loadFromFile(file)
             file.close()
+
+
+class SavableDirectory(object):
+    def saveToFile(self, file):
+        raise NotImplementedError("saveToFile not implemented!")
+
+    def askSaveFile(self):
+        self.saveFile(os.path.join(getLocation(), tkFileDialog.askdirectory(initialdir=getLocation())))
+
+    def saveFile(self, directory):
+        if directory is not None:
+            self.saveToFile(directory)

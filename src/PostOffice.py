@@ -22,10 +22,6 @@ class PostOffice(object):
                     self.bci_controller.showResults()
                 elif message == c.SAVE_RESULTS_MESSAGE:
                     self.bci_controller.saveResults(self.main_connection.receiveMessageBlock())
-                elif message == c.LOAD_EEG_MESSAGE:
-                    self.bci_controller.loadEeg(self.main_connection.receiveMessageBlock())
-                elif message == c.SAVE_EEG_MESSAGE:
-                    self.bci_controller.saveEeg(self.main_connection.receiveMessageBlock())
                 elif message == c.GET_RESULTS_MESSAGE:
                     self.main_connection.sendMessage(self.bci_controller.getResults())
                 elif message == c.GET_NEW_RESULTS_MESSAGE:
