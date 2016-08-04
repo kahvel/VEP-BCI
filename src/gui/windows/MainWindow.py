@@ -46,7 +46,8 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
 
     def loadValuesAtStartup(self):
         try:
-            self.main_frame.load(self.getDefaultSettingsFile())
+            file = self.getDefaultSettingsFile()
+            self.sendEventToRoot(lambda x: x.loadBciSettingsEvent(file))
         except IOError:
             self.main_frame.loadDefaultValue()
 
@@ -58,10 +59,10 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         print("Exited main window")
 
     def saveToFile(self, file):
-        self.main_frame.save(file)
+        self.sendEventToRoot(lambda x: x.saveBciSettingsEvent(file))
 
     def loadFromFile(self, file):
-        self.main_frame.load(file)
+        self.sendEventToRoot(lambda x: x.loadBciSettingsEvent(file))
 
     def sendEventToRoot(self, function, needs_stopped_state=False):
         self.message_handler.sendEventToRoot(function, needs_stopped_state)

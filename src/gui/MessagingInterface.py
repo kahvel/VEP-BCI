@@ -1,3 +1,4 @@
+import constants as c
 
 
 class Bci(object):
@@ -14,6 +15,10 @@ class Bci(object):
     def loadBciEvent(self): pass
 
     def exitBciEvent(self): pass
+
+    def saveBciSettingsEvent(self, file): pass
+
+    def loadBciSettingsEvent(self, file): pass
 
 
 class Recording(object):
@@ -76,38 +81,77 @@ class MessagingInterface(Bci, Recording, Results, Robot, Targets):
         Robot.__init__(self)
         Targets.__init__(self)
 
-    def sendEventToRoot(self, function, needs_stopped_state=False):
-        raise NotImplementedError("sendEventToRoot not implemented!")
+    def trialEndedEvent(self): pass
+
+
+class MessageDown(object):
+    def __init__(self):
+        pass
 
     def sendEventToChildren(self, function):
         raise NotImplementedError("sendEventToChildren not implemented!")
 
-    def trialEndedEvent(self): pass
+
+class Leaf(MessageDown):
+    def __init__(self):
+        MessageDown.__init__(self)
+
+    def sendEventToChildren(self, function):
+        function(self)
 
 
-class MessagingInterfaceWithParent(MessagingInterface):
+class NonLeaf(MessageDown):
+    def __init__(self, widgets_list):
+        MessageDown.__init__(self)
+        self.widgets_list = widgets_list
+
+    def sendEventToChildren(self, function):
+        message = function(self)
+        if not message == c.STOP_EVENT_SENDING:
+            for widget in self.widgets_list:
+                widget.sendEventToChildren(function)
+
+
+class MessageUp(object):
+    def __init__(self):
+        pass
+
+    def sendEventToRoot(self, function, needs_stopped_state=False):
+        raise NotImplementedError("sendEventToRoot not implemented!")
+
+
+class NonRoot(MessageUp):
     def __init__(self, parent):
-        MessagingInterface.__init__(self)
+        MessageUp.__init__(self)
         self.parent = parent
 
     def sendEventToRoot(self, function, needs_stopped_state=False):
         self.parent.sendEventToRoot(function, needs_stopped_state)
 
 
-class WidgetMessagingInterface(MessagingInterfaceWithParent):
+class Root(MessageUp, NonLeaf):
+    def __init__(self, widgets_list, post_office_message_handler):
+        MessageUp.__init__(self)
+        NonLeaf.__init__(self, widgets_list)
+        self.post_office_message_handler = post_office_message_handler
+
+    def bciIsStopped(self):
+        return self.post_office_message_handler.isStopped()
+
+    def sendEventToRoot(self, function, needs_stopped_state=False):
+        if needs_stopped_state and self.bciIsStopped() or not needs_stopped_state:
+            self.sendEventToChildren(function)
+        else:
+            print "BCI has to be stopped to use this functionality!"
+
+
+class Widget(NonRoot, Leaf, MessagingInterface):
     def __init__(self, parent):
-        MessagingInterfaceWithParent.__init__(self, parent)
-
-    def sendEventToChildren(self, function):
-        function(self)
+        NonRoot.__init__(self, parent)
+        Leaf.__init__(self)
 
 
-class FrameMessagingInterface(MessagingInterfaceWithParent):
+class Frame(NonRoot, NonLeaf, MessagingInterface):
     def __init__(self, parent, widgets_list):
-        MessagingInterfaceWithParent.__init__(self, parent)
-        self.widgets_list = widgets_list
-
-    def sendEventToChildren(self, function):
-        function(self)
-        for widget in self.widgets_list:
-            widget.sendEventToChildren(function)
+        NonRoot.__init__(self, parent)
+        NonLeaf.__init__(self, widgets_list)

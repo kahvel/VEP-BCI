@@ -96,10 +96,10 @@ class TargetChoosingMenu(OptionMenu):
         self.disabled_tabs = copy.deepcopy(tabs)
         self.deleteAndAddAll()
 
-    def save(self, file):
+    def saveBciSettingsEvent(self, file):
         file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(list(int(value) for value in self.disabled_tabs)).strip("[]")+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
-    def load(self, file):
+    def loadBciSettingsEvent(self, file):
         name, value, disabled, disabled_tabs, disablers = file.readline().strip("\n").split(";")
         self.setValue(value)
         self.disabled = int(disabled)

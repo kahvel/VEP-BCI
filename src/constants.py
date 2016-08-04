@@ -384,3 +384,6 @@ RESULTS_DATA_F1 = "F1"
 RESULTS_DATA_TIMESTAMP = "Timestamp"
 TIMESTAMP_FRAME = "TimestampFrame"
 RECORD_TAB_FRAME = "Record"
+
+
+STOP_EVENT_SENDING = "StopSending"

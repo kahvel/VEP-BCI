@@ -9,7 +9,7 @@ def getLocation():
 
 class Savable(object):
     def saveToFile(self, file):
-        raise NotImplementedError("save not implemented!")
+        raise NotImplementedError("saveToFile not implemented!")
 
     def askSaveFile(self):
         self.saveFile(tkFileDialog.asksaveasfile(defaultextension=".txt", initialdir=getLocation()))
@@ -22,7 +22,7 @@ class Savable(object):
 
 class Loadable(object):
     def loadFromFile(self, file):
-        raise NotImplementedError("load not implemented!")
+        raise NotImplementedError("loadFromFile not implemented!")
 
     def askLoadFile(self):
         self.loadFile(tkFileDialog.askopenfile(defaultextension=".txt", initialdir=getLocation()))

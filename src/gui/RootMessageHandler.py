@@ -83,28 +83,20 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
-class MainWindowMessageHandler(Bci, Recording, Results, Robot, MessagingInterface.FrameMessagingInterface):
+class MainWindowMessageHandler(Bci, Recording, Results, Robot, MessagingInterface.Root, MessagingInterface.Targets):
     def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
         Recording.__init__(self, connection)
         Results.__init__(self, connection)
         Robot.__init__(self, connection)
-        MessagingInterface.FrameMessagingInterface.__init__(self, None, [main_frame])
+        MessagingInterface.Root.__init__(self, [main_frame], post_office_message_handler)
+        MessagingInterface.Targets.__init__(self)
         self.main_frame = main_frame
-
-    def bciIsStopped(self):
-        return self.post_office_message_handler.isStopped()
 
     def checkPostOfficeMessages(self):
         message = self.connection.receiveMessageInstant()
         if self.post_office_message_handler.canHandle(message):
             self.post_office_message_handler.handle(message)
-
-    def sendEventToRoot(self, function, needs_stopped_state=False):
-        if needs_stopped_state and self.bciIsStopped() or not needs_stopped_state:
-            self.sendEventToChildren(function)
-        else:
-            print "BCI has to be stopped to use this functionality!"
 
     def trialEndedEvent(self):
         self.evokeResultsReceivedEvent()

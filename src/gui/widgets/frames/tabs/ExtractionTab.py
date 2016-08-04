@@ -126,18 +126,18 @@ class TargetsFrame(Frame.Frame):
         self.widgets_list[current_tab].enable("TargetTab")
         self.disabled_tabs[current_tab] = False
 
-    def save(self, file):
+    def saveBciSettingsEvent(self, file):
         file.write(str(list(int(value) for value in self.disabled_tabs)).strip("[]") + "\n")
-        Frame.Frame.save(self, file)
+        Frame.Frame.saveBciSettingsEvent(self, file)
 
-    def load(self, file):
+    def loadBciSettingsEvent(self, file):
         disabled_tabs = file.readline().strip("\n")
         disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
         self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
         self.deleteOptions()
         for i, disabled in enumerate(self.disabled_tabs):
             self.addOption(i+1, disabled, 1)
-        Frame.Frame.load(self, file)
+        Frame.Frame.loadBciSettingsEvent(self, file)
 
 
 class ExtractionTabNotebook(Notebook.Notebook):

@@ -22,7 +22,7 @@ class SameTabsNotebook(Notebook.Notebook):
         current = self.getCurrentTab()
         del self.widgets_list[current]
         self.tab_count -= 1
-        if self.tab_count != -1:
+        if self.hasTabs():
             self.changeActiveTab(current)
         self.widget.forget(current)
         return current
@@ -38,11 +38,20 @@ class SameTabsNotebook(Notebook.Notebook):
                 self.widget.tab(current, text=self.widget.tab(current, "text")-1)
                 current += 1
 
+    def hasTabs(self):
+        return self.tab_count != -1
+
     def getValue(self):
         return {i+1: widget.getValue() for i, widget in enumerate(self.widgets_list) if not widget.disabled}
 
     def tabDefaultValues(self, tab_index):
         self.widgets_list[tab_index].loadDefaultValue()
+
+    def deleteAllTabs(self):
+        if self.hasTabs():
+            self.widget.select(0)
+            while self.tab_count > 0:
+                self.deleteTab()
 
 
 class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
@@ -104,3 +113,13 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
     def loadFromFile(self, file):
         # to stuff
         self.load_successful = True
+
+    def saveBciSettingsEvent(self, file):
+        SameTabsNotebook.saveBciSettingsEvent(self, file)
+        return c.STOP_EVENT_SENDING
+
+    def loadBciSettingsEvent(self, file):
+        SameTabsNotebook.loadBciSettingsEvent(self, file)
+        if not self.hasTabs():
+            self.loadDefaultValue()
+        return c.STOP_EVENT_SENDING

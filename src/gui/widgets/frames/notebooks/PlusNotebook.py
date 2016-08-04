@@ -23,30 +23,24 @@ class PlusNotebook(SameTabsNotebook.SameTabsNotebook):
         for i in range(self.tab_count+1):
             self.tabDefaultValues(i)
 
-    def save(self, file):
+    def saveBciSettingsEvent(self, file):
         file.write(str(self.tab_count)+"\n")
-        SameTabsNotebook.SameTabsNotebook.save(self, file)
+        SameTabsNotebook.SameTabsNotebook.saveBciSettingsEvent(self, file)
 
-    def load(self, file):
+    def loadBciSettingsEvent(self, file):
         if self.tab_count == -1:
             self.addInitialTabs()
         self.deleteAllTabs()
         tab_count = int(file.readline())
         for i in range(tab_count):
             self.plusTabClicked()
-        SameTabsNotebook.SameTabsNotebook.load(self, file)
+        SameTabsNotebook.SameTabsNotebook.loadBciSettingsEvent(self, file)
 
     def plusTabClicked(self):
         self.tab_count += 1
         self.widgets_list.append(self.last_tab)
         self.widget.tab(self.tab_count, text=self.tab_count+1)
         self.last_tab = self.addTab(c.PLUS_TAB)
-
-    def deleteAllTabs(self):
-        if self.tab_count != -1:
-            self.widget.select(0)
-            while self.tab_count > 0:
-                self.deleteTab()
 
 
 class ExtractionNotebook(PlusNotebook):
@@ -76,7 +70,7 @@ class TargetNotebook(PlusNotebook):
             widget.changeFreq()
 
     def plusTabClicked(self):  # Updates TargetChoosingMenus
-        self.sendEventToRoot(lambda x: x.targetAddedEvent)
+        self.sendEventToRoot(lambda x: x.targetAddedEvent())
         PlusNotebook.plusTabClicked(self)
 
     def getEnabledTabs(self):

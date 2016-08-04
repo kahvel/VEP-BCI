@@ -4,10 +4,10 @@ from gui import MessagingInterface
 import Tkinter
 
 
-class AbstractFrame(AbstractWidget.Widget, MessagingInterface.FrameMessagingInterface):
+class AbstractFrame(AbstractWidget.Widget, MessagingInterface.Frame):
     def __init__(self, parent, name, row, column, **kwargs):
         AbstractWidget.Widget.__init__(self, parent, name, row, column, **kwargs)
-        MessagingInterface.FrameMessagingInterface.__init__(self, parent, [])
+        MessagingInterface.Frame.__init__(self, parent, [])
         self.widgets_dict = {}
 
     def addChildWidgets(self, child_widgets):
@@ -44,16 +44,6 @@ class AbstractFrame(AbstractWidget.Widget, MessagingInterface.FrameMessagingInte
                 widget.enable(disabler.name)
             else:
                 widget.disable(disabler.name)
-
-    def save(self, file):
-        AbstractWidget.Widget.save(self, file)
-        for widget in self.widgets_list:
-            widget.save(file)
-
-    def load(self, file):
-        AbstractWidget.Widget.load(self, file)
-        for widget in self.widgets_list:
-            widget.load(file)
 
     def validate(self):
         return all(map(lambda x: x.validate(), self.widgets_list))

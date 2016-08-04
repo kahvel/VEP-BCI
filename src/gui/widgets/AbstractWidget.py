@@ -48,10 +48,10 @@ class Widget(object):
                 self.disablers.append(disabler)
             self.disabled = True
 
-    def save(self, file):
+    def saveBciSettingsEvent(self, file):
         file.write(self.name+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
 
-    def load(self, file):
+    def loadBciSettingsEvent(self, file):
         name, disabled, disablers = file.readline().strip("\n").split(";")
         self.disabled = int(disabled)
         self.disablers = disablers.split(", ") if disablers != "" else []
@@ -70,10 +70,10 @@ class Widget(object):
         return True
 
 
-class WidgetWithCommand(Widget, MessagingInterface.WidgetMessagingInterface):
+class WidgetWithCommand(Widget, MessagingInterface.Widget):
     def __init__(self, parent, name, row, column, **kwargs):
         Widget.__init__(self, parent, name, row, column, **kwargs)
-        MessagingInterface.WidgetMessagingInterface.__init__(self, parent)
+        MessagingInterface.Widget.__init__(self, parent)
         self.default_value = kwargs.get("default_value", 0)
         self.disabled_state = kwargs.get("disabled_state", "disabled")
         self.enabled_state = Tkinter.NORMAL
@@ -83,7 +83,7 @@ class WidgetWithCommand(Widget, MessagingInterface.WidgetMessagingInterface):
         Widget.loadDefaultValue(self)
         self.updateState()
 
-    def load(self, file):
+    def loadBciSettingsEvent(self, file):
         name, value, disabled, disablers = file.readline().strip("\n").split(";")
         self.setValue(value)
         self.disabled = int(disabled)
@@ -103,5 +103,5 @@ class WidgetWithCommand(Widget, MessagingInterface.WidgetMessagingInterface):
         if not self.always_enabled:
             self.widget.config(state=self.disabled_state)
 
-    def save(self, file):
+    def saveBciSettingsEvent(self, file):
         file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
