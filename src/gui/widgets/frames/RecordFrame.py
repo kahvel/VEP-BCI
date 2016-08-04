@@ -1,9 +1,9 @@
 from gui.widgets import OptionMenu, Buttons
 from gui.widgets.frames import Frame
 from gui.widgets.frames.notebooks import SameTabsNotebook
-
-import Savable
 import constants as c
+import Savable
+import os
 
 
 class RecordFrame(Frame.Frame, Savable.LoadableDirectory):
@@ -25,3 +25,7 @@ class RecordFrame(Frame.Frame, Savable.LoadableDirectory):
         :return:
         """
         self.sendEventToRoot(lambda x: x.loadEegEvent(directory), True)
+
+    def saveEegEvent(self, directory):
+        file = open(os.path.join(directory, "settings.txt"), "w")
+        self.sendEventToRoot(lambda x: x.saveBciSettingsEvent(file))

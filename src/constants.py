@@ -379,6 +379,8 @@ RESULTS_DATA_F1 = "F1"
 RESULTS_DATA_TIMESTAMP = "Timestamp"
 TIMESTAMP_FRAME = "TimestampFrame"
 RECORD_TAB_FRAME = "Record"
+DIRECTORY_FRAME = "DirectoryFrame"
+RESULTS_DATA_DIRECTORY = "Directory"
 
 
 STOP_EVENT_SENDING = "StopSending"

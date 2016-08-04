@@ -15,22 +15,28 @@ class RecordTab(DisableDeleteNotebookTab.Delete):
             ResultsFrame(self, 0, 0),
             RecordFrame(self, 1, 0),
             TimestampFrame(self, 2, 0),
-            self.getDeleteButton(3, 0, deleteTab),
+            DirectoryFrame(self, 3, 0),
+            self.getDeleteButton(4, 0, deleteTab),
         ))
+
+    def setDirectory(self, directory):
+        self.widgets_dict[c.DIRECTORY_FRAME].setDirectory(directory)
 
     def saveEegEvent(self, directory):
         if self.saveMe():
-            file = open(os.path.join(directory, "file.txt"), "w")
+            file = open(os.path.join(directory, "results.txt"), "w")
             self.sendEventToChildren(lambda x: x.saveBciSettingsEvent(file))
+            self.setDirectory(directory)
 
     def saveMe(self):
         return self.widgets_dict[c.RECORD_FRAME].saveMe()
 
     def loadEegEvent(self, directory):
-        file_name = os.path.join(directory, "file.txt")
+        file_name = os.path.join(directory, "results.txt")
         if os.path.isfile(file_name):
             file = open(file_name, "r")
             self.sendEventToChildren(lambda x: x.loadBciSettingsEvent(file))
+            self.setDirectory(directory)
         else:
             print file_name, "does not exist!"
 
@@ -47,6 +53,23 @@ class TimestampFrame(Frame.Frame):
 
     def getTimestamp(self):
         return datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S %d.%m.%Y')
+
+
+class DirectoryFrame(Frame.Frame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, c.DIRECTORY_FRAME, row, column, **kwargs)
+        self.addChildWidgets((
+            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_DIRECTORY, 0, 0, width=30, columnspan=3),
+        ))
+
+    def setDirectory(self, directory):
+        self.widgets_dict[c.RESULTS_DATA_DIRECTORY].setValue(directory)
+
+    def saveBciSettingsEvent(self, file):
+        pass
+
+    def loadBciSettingsEvent(self, file):
+        pass
 
 
 class RecordFrame(Frame.Frame, Savable.SavableDirectory):

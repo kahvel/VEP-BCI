@@ -24,9 +24,9 @@ class Bci(object):
 class Recording(object):
     def __init__(self): pass
 
-    def saveEegEvent(self, file): pass
+    def saveEegEvent(self, directory): pass
 
-    def loadEegEvent(self, file): pass
+    def loadEegEvent(self, directory): pass
 
 
 class Results(object):
