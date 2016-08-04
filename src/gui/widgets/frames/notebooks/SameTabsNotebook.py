@@ -54,11 +54,9 @@ class SameTabsNotebook(Notebook.Notebook):
                 self.deleteTab()
 
 
-class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
+class ResultsNotebook(SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.RESULTS_NOTEBOOK, row, column, **kwargs)
-        Savable.Loadable.__init__(self)
-        self.load_successful = False
         self.tab_to_fill = None
 
     def loadDefaultValue(self):
@@ -89,7 +87,20 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
         :param results:
         :return:
         """
-        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.fillResultsFrameEvent(results))
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.resultsReceivedEvent(results))
+        return c.STOP_EVENT_SENDING
+
+    def recordedEegReceivedEvent(self, eeg):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.recordedEegReceivedEvent(eeg))
+        return c.STOP_EVENT_SENDING
+
+    def recordedFrequenciesReceivedEvent(self, frequencies):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.recordedFrequenciesReceivedEvent(frequencies))
+        return c.STOP_EVENT_SENDING
+
+    def recordedFeaturesReceivedEvent(self, features):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.recordedFeaturesReceivedEvent(features))
+        return c.STOP_EVENT_SENDING
 
     def addNewTab(self):
         self.tab_count += 1
@@ -97,20 +108,6 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
 
     def newTab(self, deleteTab):
         return RecordTab.RecordTab(self, deleteTab)
-
-    # def tabChangedEvent(self, event):
-    #     if event.widget.index("current") == self.tab_count+1:
-    #         self.askLoadFile()
-    #         if not self.load_successful:
-    #             self.changeActiveTab(self.getCurrentTab())
-    #         else:
-    #             self.addNewTab()
-    #             self.tabDefaultValues(-1)
-    #         self.load_successful = False
-
-    def loadFromFile(self, file):
-        # to stuff
-        self.load_successful = True
 
     def saveBciSettingsEvent(self, file):
         SameTabsNotebook.saveBciSettingsEvent(self, file)
@@ -124,4 +121,7 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
 
     def loadEegEvent(self, directory):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.loadEegEvent(directory))
+        self.addNewTab()
+        self.tabDefaultValues(-1)
+        self.tab_to_fill = self.tab_count
         return c.STOP_EVENT_SENDING

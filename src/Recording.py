@@ -1,11 +1,7 @@
 import Switchable
 import constants as c
 
-# def save(self, file_name):
-#     with open(self.changeFileName(file_name), "w") as csv_file:
-#         writer = csv.DictWriter(csv_file, c.SENSORS)
-#         writer.writeheader()
-#         writer.writerows(self.data)
+import csv
 
 
 class DataAndExpectedTargets(Switchable.Switchable):
@@ -19,11 +15,35 @@ class DataAndExpectedTargets(Switchable.Switchable):
             self.data.append(data)
             self.expected_targets.append(expected_target)
 
+    def getLength(self):
+        return len(self.data)
+
+
+class Eeg(DataAndExpectedTargets):
+    def __init__(self):
+        DataAndExpectedTargets.__init__(self)
+
+    def save(self, file_name):
+        with open(file_name, "w") as csv_file:
+            writer = csv.DictWriter(csv_file, c.SENSORS)
+            writer.writeheader()
+            writer.writerows(self.data)
+
+    def load(self, file_name):
+        with open(file_name, "r") as csv_file:
+            reader = csv.DictReader(csv_file, c.SENSORS)
+            return list(reader)[1:]
+
+
+class Features(DataAndExpectedTargets):
+    def __init__(self):
+        DataAndExpectedTargets.__init__(self)
+
 
 class Recording(object):
     def __init__(self, target_freqs, record_option):
-        self.normal_eeg = DataAndExpectedTargets()
-        self.features = DataAndExpectedTargets()
+        self.normal_eeg = Eeg()
+        self.features = Features()
         self.target_frequencies = target_freqs
         self.setRecordingState(record_option)
 

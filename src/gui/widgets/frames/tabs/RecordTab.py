@@ -3,6 +3,7 @@ from gui.widgets.frames import Frame
 from gui.widgets.frames.tabs import DisableDeleteNotebookTab
 import constants as c
 import Savable
+import Recording
 import datetime
 import time
 import os
@@ -12,11 +13,12 @@ class RecordTab(DisableDeleteNotebookTab.Delete):
     def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.Delete.__init__(self, parent, c.RECORD_TAB, **kwargs)
         self.addChildWidgets((
-            ResultsFrame(self, 0, 0),
-            RecordFrame(self, 1, 0),
-            TimestampFrame(self, 2, 0),
-            DirectoryFrame(self, 3, 0),
-            self.getDeleteButton(4, 0, deleteTab),
+            ResultsFrame(self, 0, 0, columnspan=3),
+            TimestampFrame(self, 1, 0, columnspan=3),
+            DirectoryFrame(self, 2, 0, columnspan=3),
+            EegFrame(self, 3, 0, columnspan=3),
+            RecordFrame(self, 4, 0),
+            self.getDeleteButton(4, 1, deleteTab)
         ))
 
     def setDirectory(self, directory):
@@ -27,6 +29,8 @@ class RecordTab(DisableDeleteNotebookTab.Delete):
             file = open(os.path.join(directory, "results.txt"), "w")
             self.sendEventToChildren(lambda x: x.saveBciSettingsEvent(file))
             self.setDirectory(directory)
+        else:
+            return c.STOP_EVENT_SENDING
 
     def saveMe(self):
         return self.widgets_dict[c.RECORD_FRAME].saveMe()
@@ -55,6 +59,28 @@ class TimestampFrame(Frame.Frame):
         return datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S %d.%m.%Y')
 
 
+class EegFrame(Frame.Frame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, c.EEG_FRAME, row, column, **kwargs)
+        self.addChildWidgets((
+            Textboxes.DisabledTextLabelTextbox(self, c.EEG_LENGTH, 0, 0),
+        ))
+        self.eeg = Recording.Eeg()
+
+    def recordedEegReceivedEvent(self, eeg):
+        self.eeg = eeg
+        self.widgets_dict[c.EEG_LENGTH].setValue(eeg.getLength())
+
+    def getFilePath(self, directory):
+        return os.path.join(directory, "eeg.csv")
+
+    def loadEegEvent(self, directory):
+        self.eeg.load(self.getFilePath(directory))
+
+    def saveEegEvent(self, directory):
+        self.eeg.save(self.getFilePath(directory))
+
+
 class DirectoryFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.DIRECTORY_FRAME, row, column, **kwargs)
@@ -76,8 +102,7 @@ class RecordFrame(Frame.Frame, Savable.SavableDirectory):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.RECORD_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            Buttons.Button(self, c.TRAINING_SAVE_EEG,  1, 0, command=self.saveEegClicked),
-
+            Buttons.Button(self, c.TRAINING_SAVE_EEG, 0, 0, command=self.saveEegClicked),
         ))
         self.save_me = False
 
@@ -115,7 +140,7 @@ class ResultsFrame(Frame.Frame):
         ))
         self.results = None
 
-    def fillResultsFrameEvent(self, results):
+    def resultsReceivedEvent(self, results):
         self.results = results
         for key in self.widgets_dict:
             self.widgets_dict[key].setValue(results[key])

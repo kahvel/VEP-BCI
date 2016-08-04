@@ -65,8 +65,8 @@ WINDOW_MONITOR = "Monitor"
 
 # Training tab buttons
 TRAINING_RECORD = "Record"
-TRAINING_SAVE_EEG = "Save EEG"
-TRAINING_LOAD_EEG = "Load EEG"
+TRAINING_SAVE_EEG = "Save"
+TRAINING_LOAD_EEG = "Load"
 
 # Training tab options menu
 TRAINING_RECORD_NORMAL = "Normal"
@@ -374,6 +374,8 @@ TIMESTAMP_FRAME = "TimestampFrame"
 RECORD_TAB_FRAME = "Record"
 DIRECTORY_FRAME = "DirectoryFrame"
 RESULTS_DATA_DIRECTORY = "Directory"
+EEG_FRAME = "EegFrame"
+EEG_LENGTH = "Packets"
 
 
 STOP_EVENT_SENDING = "StopSending"
