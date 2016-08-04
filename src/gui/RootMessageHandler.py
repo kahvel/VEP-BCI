@@ -42,9 +42,6 @@ class Recording(MessagingInterface.Recording):
         self.connection.sendMessage(c.LOAD_EEG_MESSAGE)
         self.connection.sendMessage(file)
 
-    def resetEegEvent(self):
-        self.connection.sendMessage(c.RESET_EEG_MESSAGE)
-
 
 class Results(MessagingInterface.Results):
     def __init__(self, connection):

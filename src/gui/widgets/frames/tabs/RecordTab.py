@@ -38,7 +38,6 @@ class RecordFrame(Frame.Frame, Savable.Savable, Savable.Loadable):
         self.addChildWidgets((
             Buttons.Button(self, c.TRAINING_SAVE_EEG,  1, 0, command=self.saveEegClicked),
             Buttons.Button(self, c.TRAINING_LOAD_EEG,  1, 1, command=self.loadEegClicked),
-            Buttons.Button(self, c.TRAINING_RESET_EEG, 1, 2, command=self.resetEegClicked),
         ))
 
     def saveEegClicked(self):
@@ -46,9 +45,6 @@ class RecordFrame(Frame.Frame, Savable.Savable, Savable.Loadable):
 
     def loadEegClicked(self):
         self.askLoadFile()
-
-    def resetEegClicked(self):
-        self.sendEventToRoot(lambda x: x.resetEegEvent(), True)
 
     def saveToFile(self, file):
         """

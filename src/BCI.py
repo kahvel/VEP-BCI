@@ -167,6 +167,3 @@ class BCI(object):
         self.saveResults(file)
         self.recording.saveEeg(file.name)
         file.close()
-
-    def resetRecording(self):
-        self.recording.reset()

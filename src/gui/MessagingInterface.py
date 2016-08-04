@@ -28,8 +28,6 @@ class Recording(object):
 
     def loadEegEvent(self, file): pass
 
-    def resetEegEvent(self): pass
-
 
 class Results(object):
     def __init__(self): pass

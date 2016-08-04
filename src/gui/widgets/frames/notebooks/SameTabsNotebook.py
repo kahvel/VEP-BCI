@@ -58,7 +58,6 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
     def __init__(self, parent, row, column, **kwargs):
         SameTabsNotebook.__init__(self, parent, c.RESULTS_NOTEBOOK, row, column, **kwargs)
         Savable.Loadable.__init__(self)
-        self.widget.bind("<<NotebookTabChanged>>", self.tabChangedEvent)
         self.load_successful = False
         self.tab_to_fill = None
 
@@ -75,7 +74,6 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
                 return widget.getValue()
 
     def addInitialTabs(self):
-        self.last_tab = self.addTab("Load")
         self.addNewTab()
 
     def trialEndedEvent(self):
@@ -93,22 +91,20 @@ class ResultsNotebook(SameTabsNotebook, Savable.Loadable):
 
     def addNewTab(self):
         self.tab_count += 1
-        self.widgets_list.append(self.last_tab)
-        self.widget.tab(self.tab_count, text=self.tab_count+1)
-        self.last_tab = self.addTab("Load")
+        self.widgets_list.append(self.addTab(self.tab_count+1))
 
     def newTab(self, deleteTab):
         return RecordTab.RecordTab(self, deleteTab)
 
-    def tabChangedEvent(self, event):
-        if event.widget.index("current") == self.tab_count+1:
-            self.askLoadFile()
-            if not self.load_successful:
-                self.changeActiveTab(self.getCurrentTab())
-            else:
-                self.addNewTab()
-                self.tabDefaultValues(-1)
-            self.load_successful = False
+    # def tabChangedEvent(self, event):
+    #     if event.widget.index("current") == self.tab_count+1:
+    #         self.askLoadFile()
+    #         if not self.load_successful:
+    #             self.changeActiveTab(self.getCurrentTab())
+    #         else:
+    #             self.addNewTab()
+    #             self.tabDefaultValues(-1)
+    #         self.load_successful = False
 
     def loadFromFile(self, file):
         # to stuff
