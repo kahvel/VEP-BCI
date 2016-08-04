@@ -75,11 +75,14 @@ class ResultsNotebook(SameTabsNotebook):
         self.addNewTab()
 
     def trialEndedEvent(self):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.trialEndedEvent())
+        self.addNewTabToFill()
+        return c.STOP_EVENT_SENDING
+
+    def addNewTabToFill(self):
         self.addNewTab()
         self.tabDefaultValues(-1)
-        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.trialEndedEvent())
         self.tab_to_fill = self.tab_count
-        return c.STOP_EVENT_SENDING
 
     def resultsReceivedEvent(self, results):
         """
@@ -121,7 +124,14 @@ class ResultsNotebook(SameTabsNotebook):
 
     def loadEegEvent(self, directory):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.loadEegEvent(directory))
-        self.addNewTab()
-        self.tabDefaultValues(-1)
-        self.tab_to_fill = self.tab_count
+        self.addNewTabToFill()
         return c.STOP_EVENT_SENDING
+
+    def deleteTab(self):
+        """
+        Do not allow to delete last tab (the one to be filled).
+        :return:
+        """
+        if self.widget.index("current") != self.tab_count:
+            SameTabsNotebook.deleteTab(self)
+            self.tab_to_fill -= 1
