@@ -1,5 +1,5 @@
 from utils import readFeaturesWithTargets, removeResultsAfterChange
-from TargetIdentification import ResultsParser
+from FeaturesParser import ResultsParser
 from ParameterHandler import NewTrainingParameterHandler
 
 import matplotlib.pyplot as plt

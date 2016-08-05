@@ -1,3 +1,4 @@
+import FeaturesParser
 import constants as c
 import pickle
 
@@ -63,121 +64,13 @@ class ResultCounter(object):
             return max_freq
 
 
-class ResultsParser(object):
-    def __init__(self, add_sum=True, data_has_method=False):
-        self.data = None
-        self.parse_result = None
-        self.add_sum = add_sum
-        self.data_has_method = data_has_method
-
-    def setup(self, data):
-        self.data = data
-
-    def parseSensorResults(self, parse_result, results, data):
-        for sensor in results:
-            # if sensor in data:  # Currently data does not contain sensors
-                self.parseHarmonicResults(self.parseResultValue(parse_result, sensor), results[sensor], data)
-
-    def parseHarmonicResults(self, parse_result, results, data):
-        for harmonic in results:
-            if harmonic in data:
-                self.parseFrequencyResults(self.parseResultValue(parse_result, harmonic), results[harmonic], data[harmonic])
-
-    def parseFrequencyResults(self, parse_result, result, data):
-        raise NotImplementedError("parseFrequencyResult not implemented!")
-
-    def parseResultValue(self, parse_result, key):
-        if key not in parse_result:
-            parse_result[key] = {}
-        return parse_result[key]
-
-    def parseResults(self, results):
-        for tab in results:
-            for method in results[tab]:
-                if tab in self.data:
-                    parse_result = self.parseResultValue(self.parse_result, tab)
-                    parse_result = self.parseResultValue(parse_result, method)
-                    if self.data_has_method:
-                        data = self.data[tab][method]
-                    else:
-                        data = self.data[tab]
-                    if method[0] == c.CCA or method[0] == c.LRT:
-                        if self.add_sum:
-                            self.parseHarmonicResults(parse_result, {c.RESULT_SUM: results[tab][method]}, data)
-                        else:
-                            self.parseHarmonicResults(parse_result, results[tab][method], data)
-                    elif method[0] == c.SUM_PSDA:
-                        self.parseHarmonicResults(parse_result, results[tab][method], data)
-                    elif method[0] == c.PSDA:
-                        self.parseSensorResults(parse_result, results[tab][method], data)
-                    elif method[0] == c.SNR_PSDA:
-                        self.parseHarmonicResults(parse_result, results[tab][method], data)
-        return self.parse_result
-
-
-class WeightFinder(ResultsParser):
-    def __init__(self):
-        ResultsParser.__init__(self)
-
-    def parseFrequencyResults(self, parse_result, result, data):
-        if len(result) != 0:
-            # total = result[0][1]/sum(map(lambda x: x[1], result))*data
-            if result[0][0] in parse_result:
-                parse_result[result[0][0]] += data
-            else:
-                parse_result[result[0][0]] = data
-
-    def parseResultValue(self, parse_result, key):
-        return parse_result
-
-    def parseResults(self, results):
-        self.parse_result = {}
-        return ResultsParser.parseResults(self, results)
-
-
-class DifferenceFinder(ResultsParser):
-    def __init__(self):
-        ResultsParser.__init__(self)
-        self.comparison = []
-
-    def parseResults(self, results):
-        self.comparison = []
-        self.parse_result = {}
-        return ResultsParser.parseResults(self, results)
-
-    def parseFrequencyResults(self, parse_result, result, data):
-        if len(result) > 1:  # If we have at least 2 targets in the result dict
-            difference = result[0][1]-result[1][1]
-            parse_result[result[0][0], result[1][0]] = difference
-            self.comparison.append(difference >= data)
-
-
-class RatioFinder(ResultsParser):
-    def __init__(self):
-        ResultsParser.__init__(self)
-
-    def parseFrequencyResults(self, parse_result, result, data):
-        if len(result) != 0:
-            for frequency, value in result:
-                processed_value = self.getValue(value, result, data, frequency)
-                parse_result[frequency] = processed_value
-
-    def getValue(self, value, result, data, frequency):
-        results_sum = sum(map(lambda x: data(x), dict(result).values()))
-        return data(value)/results_sum
-
-    def parseResults(self, results):
-        self.parse_result = {}
-        return ResultsParser.parseResults(self, results)
-
-
 class TargetIdentification(object):
     def __init__(self, master_connection, results, new_results, standby):
         self.prev_results = ResultCounter()
         self.actual_results = ResultCounter()
-        self.difference_finder = DifferenceFinder()
-        self.weight_finder = WeightFinder()
-        self.ratio_finder = RatioFinder()
+        self.difference_finder = FeaturesParser.DifferenceFinder()
+        self.weight_finder = FeaturesParser.WeightFinder()
+        self.ratio_finder = FeaturesParser.RatioFinder()
         self.need_new_target = None
         self.new_target_counter = None
         self.master_connection = master_connection
@@ -298,8 +191,8 @@ class TargetIdentification(object):
     def handleFreqMessages1(self, message, target_freqs, current_target, filter_by_comparison=True):
         results = message
         if results is not None:
-            freq_weights = self.weight_finder.parseResults(results)
-            differences = self.difference_finder.parseResults(results)
+            freq_weights = self.weight_finder.parseResultsNewDict(results)
+            differences = self.difference_finder.parseResultsNewDict(results)
             difference_comparisons = self.difference_finder.comparison
             current_frequency = target_freqs[current_target] if current_target in target_freqs else None
             predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, difference_comparisons, filter_by_comparison)
@@ -309,7 +202,7 @@ class TargetIdentification(object):
     def handleFreqMessages(self, message, target_freqs, current_target, filter_by_comparison=True):
         results = message
         if results is not None:
-            results = self.ratio_finder.parseResults(results)
+            results = self.ratio_finder.parseResultsNewDict(results)
             frequencies = sorted(target_freqs.values())
             psda_keys = [1, 2]
             cca_results_dict = dict(results[2][('CCA', ('P7', 'O1', 'O2', 'P8'))])["Sum"]

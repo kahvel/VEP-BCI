@@ -94,6 +94,12 @@ class Features(DataAndExpectedTargets):
     def __init__(self):
         DataAndExpectedTargets.__init__(self)
 
+    def flattenData(self):
+        for features in self.data:
+            for tab in sorted(features.keys()):
+                for
+
+
 
 class Recording(object):
     def __init__(self, target_freqs, record_option):

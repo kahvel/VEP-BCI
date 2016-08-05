@@ -220,9 +220,9 @@ PSDA = "PSDA"
 SUM_PSDA = "Sum PSDA"
 SNR_PSDA = "SNR PSDA"
 CCA = "CCA"
-BOTH = "Both"
-SUM_BOTH = "Sum Both"
 LRT = "LRT"
+
+EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, SNR_PSDA, CCA, LRT)  # Fixes the order for CSV files
 
 # Plot type buttons
 SIGNAL = "Signal"
