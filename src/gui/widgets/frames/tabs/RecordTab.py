@@ -124,9 +124,9 @@ class ResultsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.RESULTS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_TRUE_POSITIVES, 0, 0),
-            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_FALSE_POSITIVES, 0, 2),
-            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_PRECISION, 0, 4),
+            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_DIAGONAL_ELEMENTS, 0, 0),
+            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_OFF_DIAGONAL_ELEMENTS, 0, 2),
+            Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_ACCURACY, 0, 4),
             Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_ITR_BIT_PER_TRIAL, 1, 2),
             Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_ITR_BIT_PER_MIN, 1, 4),
             Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_TOTAL_TIME_SECONDS, 2, 0),

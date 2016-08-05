@@ -44,22 +44,22 @@ class Result(object):
         else:
             return float(total_time)/total_results
 
-    def getTrueFalsePositives(self):
+    def countMatrixElements(self):
         """
         Returns the number of true positives and false positives.
         If detected is None, then negative class was predicted.
         :return:
         """
-        true_positives = 0
-        false_positives = 0
+        diagonal = 0
+        off_diagonal = 0
         for correct in self.results:
             for detected in self.results[correct]:
                 if detected is not None:
                     if correct == detected:
-                        true_positives += self.results[correct][detected]
+                        diagonal += self.results[correct][detected]
                     else:
-                        false_positives += self.results[correct][detected]
-        return true_positives, false_positives
+                        off_diagonal += self.results[correct][detected]
+        return diagonal, off_diagonal
 
     def getPrecision(self, true_positives, false_positives):
         if true_positives+false_positives == 0:
@@ -135,19 +135,19 @@ class Result(object):
         ) for frequency in self.target_frequencies}
 
     def getData(self, beta=1, weighted=True):
-        true_positives, false_positives = self.getTrueFalsePositives()
-        precision = self.getPrecision(true_positives, false_positives)
+        diagonal_elements, off_diagonal_elements = self.countMatrixElements()
+        accuracy = self.getPrecision(diagonal_elements, off_diagonal_elements)
         time_in_sec = self.getTimeInSec(self.total_packets)
-        time_per_target = self.getTimePerTarget(true_positives+false_positives, time_in_sec)
-        itr = self.getItrBitPerTrial(precision, self.target_count)
+        time_per_target = self.getTimePerTarget(diagonal_elements+off_diagonal_elements, time_in_sec)
+        itr = self.getItrBitPerTrial(accuracy, self.target_count)
         f1_scores = self.calculateF1ScoreDict(beta)
         return {
             c.RESULTS_DATA_TOTAL_TIME_PACKETS: self.total_packets,
             c.RESULTS_DATA_TOTAL_TIME_SECONDS: time_in_sec,
             c.RESULTS_DATA_TIME_PER_TARGET: time_per_target,
-            c.RESULTS_DATA_PRECISION: precision,
-            c.RESULTS_DATA_TRUE_POSITIVES: true_positives,
-            c.RESULTS_DATA_FALSE_POSITIVES: false_positives,
+            c.RESULTS_DATA_ACCURACY: accuracy,
+            c.RESULTS_DATA_DIAGONAL_ELEMENTS: diagonal_elements,
+            c.RESULTS_DATA_OFF_DIAGONAL_ELEMENTS: off_diagonal_elements,
             c.RESULTS_DATA_ITR_BIT_PER_TRIAL: itr,
             c.RESULTS_DATA_ITR_BIT_PER_MIN: self.getItrBitPerMin(itr, self.target_count),
             c.RESULTS_DATA_F1: f1_scores,
