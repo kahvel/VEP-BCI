@@ -89,17 +89,19 @@ class BCI(object):
         message = self.getNextPacket()
         if message is not None:
             self.message_counter += 1
-            self.recording.collectPacket(message, current_target)
+            self.recording.collectPacket(message, current_target, self.message_counter)
             self.connections.sendExtractionMessage(message)
             self.connections.sendPlotMessage(message)
             self.handleExtractionMessages(target_freqs, current_target)
 
     def handleExtractionMessages(self, target_freqs, current_target):
-        self.target_identification.handleFreqMessages(
-            self.connections.receiveExtractionMessage(),
-            target_freqs,
-            current_target
-        )
+        features = self.connections.receiveExtractionMessage()
+        predicted_target = None
+        if features is not None:
+            self.recording.collectFeatures(features, current_target, self.message_counter)
+            predicted_target = self.target_identification.handleFreqMessages(features, target_freqs, current_target)
+            self.recording.addPredictionToFeatures(predicted_target)
+        self.recording.addPredictionToEeg(predicted_target)
 
     def getNextPacket(self):
         return self.connections.receiveEmotivMessage()

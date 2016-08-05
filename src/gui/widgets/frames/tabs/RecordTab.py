@@ -71,14 +71,11 @@ class EegFrame(Frame.Frame):
         self.eeg = eeg
         self.widgets_dict[c.EEG_LENGTH].setValue(eeg.getLength())
 
-    def getFilePath(self, directory):
-        return os.path.join(directory, "eeg.csv")
-
     def loadEegEvent(self, directory):
-        self.eeg.load(self.getFilePath(directory))
+        self.eeg.load(directory)
 
     def saveEegEvent(self, directory):
-        self.eeg.save(self.getFilePath(directory))
+        self.eeg.save(directory)
 
 
 class DirectoryFrame(Frame.Frame):
