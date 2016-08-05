@@ -1,3 +1,4 @@
+import FeaturesParser
 import Switchable
 import constants as c
 
@@ -26,7 +27,22 @@ class DataAndExpectedTargets(Switchable.Switchable):
     def getLength(self):
         return len(self.data)
 
-    def combineData(self):
+    def writeCsv(self, file_name, header, data):
+        with open(file_name, "w") as csv_file:
+            writer = csv.DictWriter(csv_file, header)
+            writer.writeheader()
+            writer.writerows(data)
+
+    def getDataFilePath(self, directory):
+        raise NotImplementedError("getDataFilePath not implemented!")
+
+    def getLabelsFilePath(self, directory):
+        raise NotImplementedError("getLabelsFilePath not implemented!")
+
+    def getDataForSaving(self):
+        raise NotImplementedError("getDataForSaving not implemented!")
+
+    def getLabelsForSaving(self):
         combined_data = []
         for expected, packet, predicted in zip(self.expected_targets, self.packet_number, self.predicted_targets):
             combined_data.append({
@@ -36,26 +52,29 @@ class DataAndExpectedTargets(Switchable.Switchable):
             })
         return combined_data
 
-    def writeCsv(self, file_name, header, data):
-        with open(file_name, "w") as csv_file:
-            writer = csv.DictWriter(csv_file, header)
-            writer.writeheader()
-            writer.writerows(data)
+    def getDataFileHeader(self):
+        raise NotImplementedError("getDataFileHeader not implemented!")
+
+    def save(self, directory):
+        self.writeCsv(self.getDataFilePath(directory), self.getDataFileHeader(), self.getDataForSaving())
+        self.writeCsv(self.getLabelsFilePath(directory), c.CSV_LABEL_FILE_HEADER, self.getLabelsForSaving())
 
 
 class Eeg(DataAndExpectedTargets):
     def __init__(self):
         DataAndExpectedTargets.__init__(self)
 
-    def getEegFilePath(self, directory):
+    def getDataFilePath(self, directory):
         return os.path.join(directory, "eeg.csv")
 
     def getLabelsFilePath(self, directory):
         return os.path.join(directory, "eeg_labels.csv")
 
-    def save(self, directory):
-        self.writeCsv(self.getEegFilePath(directory), c.SENSORS, self.data)
-        self.writeCsv(self.getLabelsFilePath(directory), c.CSV_LABEL_FILE_HEADER, self.combineData())
+    def getDataFileHeader(self):
+        return c.SENSORS
+
+    def getDataForSaving(self):
+        return self.data
 
     def toInt(self, string):
         if string != "":
@@ -80,7 +99,7 @@ class Eeg(DataAndExpectedTargets):
         return rows
 
     def load(self, directory):
-        with open(self.getEegFilePath(directory), "r") as csv_file:
+        with open(self.getDataFilePath(directory), "r") as csv_file:
             self.data = self.getRows(list(csv.DictReader(csv_file, c.SENSORS))[1:])
             print self.data
         with open(self.getLabelsFilePath(directory), "r") as csv_file:
@@ -93,12 +112,28 @@ class Eeg(DataAndExpectedTargets):
 class Features(DataAndExpectedTargets):
     def __init__(self):
         DataAndExpectedTargets.__init__(self)
+        self.flattener = FeaturesParser.Flattener()
 
     def flattenData(self):
-        for features in self.data:
-            for tab in sorted(features.keys()):
-                for
+        flattened = []
+        for feature_vector in self.data:
+            flattened.append(self.flattenFeatureVector(feature_vector))
+        return flattened
 
+    def flattenFeatureVector(self, feature_vector):
+        return self.flattener.parseFeatures(feature_vector)
+
+    def getDataFilePath(self, directory):
+        return os.path.join(directory, "features.csv")
+
+    def getLabelsFilePath(self, directory):
+        return os.path.join(directory, "features_labels.csv")
+
+    def getDataForSaving(self):
+        return self.flattenData()
+
+    def getDataFileHeader(self):
+        return sorted(self.flattenFeatureVector(self.data[0]).keys()) if len(self.data) > 0 else []
 
 
 class Recording(object):
@@ -120,9 +155,11 @@ class Recording(object):
 
     def disableRecording(self):
         self.normal_eeg.disable()
+        self.features.disable()
 
     def enableNormal(self):
         self.normal_eeg.enable()
+        self.features.enable()
 
     def enableNeutral(self):
         """

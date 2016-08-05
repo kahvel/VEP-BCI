@@ -205,14 +205,14 @@ class TargetIdentification(object):
             results = self.ratio_finder.parseResultsNewDict(results)
             frequencies = sorted(target_freqs.values())
             psda_keys = [1, 2]
-            cca_results_dict = dict(results[2][('CCA', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
-            for frequency in frequencies:
-                self.matrix_result.append(cca_results_dict[frequency])
-            for i, key in enumerate(psda_keys):
-                psda_results = results[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][key]
-                psda_results_dict = dict(psda_results)
-                for frequency in frequencies:
-                    self.matrix_result.append(psda_results_dict[frequency])
+            # cca_results_dict = dict(results[2][('CCA', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
+            # for frequency in frequencies:
+            #     self.matrix_result.append(cca_results_dict[frequency])
+            # for i, key in enumerate(psda_keys):
+            #     psda_results = results[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][key]
+            #     psda_results_dict = dict(psda_results)
+            #     for frequency in frequencies:
+            #         self.matrix_result.append(psda_results_dict[frequency])
             # cca_results_dict = dict(results[3][('LRT', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
             # for frequency in frequencies:
             #     self.matrix_result.append(cca_results_dict[frequency])

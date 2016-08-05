@@ -375,7 +375,8 @@ RECORD_TAB_FRAME = "Record"
 DIRECTORY_FRAME = "DirectoryFrame"
 RESULTS_DATA_DIRECTORY = "Directory"
 EEG_FRAME = "EegFrame"
-EEG_LENGTH = "Packets"
+PACKET_COUNT = "Packets"
+FEATURE_COUNT = "Features"
 
 
 CSV_TRUE_LABEL = "True"
