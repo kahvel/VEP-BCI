@@ -28,6 +28,8 @@ class Recording(object):
 
     def loadEegEvent(self, directory): pass
 
+    def recordTabRemoved(self, deleted_tab): pass
+
 
 class Results(object):
     def __init__(self): pass

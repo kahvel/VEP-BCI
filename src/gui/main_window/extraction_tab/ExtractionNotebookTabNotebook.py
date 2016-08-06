@@ -69,7 +69,7 @@ class OptionsTab(Frame.Frame):
 
 class TargetsFrame(AddingCheckbuttonsFrame.AddingCheckbuttonsFrame):
     def __init__(self, parent, row, column, **kwargs):
-        AddingCheckbuttonsFrame.AddingCheckbuttonsFrame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, **kwargs)
+        AddingCheckbuttonsFrame.AddingCheckbuttonsFrame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, [False], **kwargs)
 
     def targetAddedEvent(self):
         self.addButton(False)

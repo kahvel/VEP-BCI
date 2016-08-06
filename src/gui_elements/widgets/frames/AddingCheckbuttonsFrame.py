@@ -3,10 +3,11 @@ from gui_elements.widgets import Checkbutton
 
 
 class AddingCheckbuttonsFrame(Frame.Frame):
-    def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
+    def __init__(self, parent, name, row, column, initial_tabs, buttons_in_row=7, **kwargs):
         Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
         self.disabled_tabs = []
         self.buttons_in_row = buttons_in_row
+        self.initial_tabs = initial_tabs
 
     def loadDefaultValue(self):
         """
@@ -14,7 +15,7 @@ class AddingCheckbuttonsFrame(Frame.Frame):
         :return:
         """
         Frame.Frame.loadDefaultValue(self)
-        for disabled in [False]:
+        for disabled in self.initial_tabs:
             self.addButton(disabled)
 
     def addButton(self, disabled=False):

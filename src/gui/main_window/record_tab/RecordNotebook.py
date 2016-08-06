@@ -81,6 +81,8 @@ class RecordNotebook(SameTabsNotebook.SameTabsNotebook):
         Do not allow to delete last tab (the one to be filled).
         :return:
         """
-        if self.widget.index("current") != self.tab_count:
+        current_tab = self.widget.index("current")
+        if current_tab != self.tab_count:
             SameTabsNotebook.SameTabsNotebook.deleteTab(self)
             self.tab_to_fill -= 1
+            self.sendEventToRoot(lambda x: x.recordTabRemoved(current_tab))
