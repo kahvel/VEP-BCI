@@ -70,13 +70,13 @@ class TrainingInputParser(AbstractInputParser):
 
 class MainInputParser(AbstractInputParser):
     def parseData(self, all_data):
-        target_data = self.parseTargetData(all_data[c.TARGETS_NOTEBOOK])
+        target_data = self.parseTargetData(all_data[c.MAIN_NOTEBOOK_WINDOW_TAB][c.WINDOW_TAB_TARGETS_NOTEBOOK])
         target_freqs = self.parseFrequencies(target_data)
         return {
-            c.DATA_BACKGROUND: all_data[c.WINDOW_TAB],
+            c.DATA_BACKGROUND: all_data[c.MAIN_NOTEBOOK_WINDOW_TAB][c.WINDOW_TAB_MONITOR_FRAME],
             c.DATA_TARGETS: target_data,
             c.DATA_FREQS: target_freqs,
-            c.DATA_PLOTS: self.parsePlotNotebookData(all_data[c.PLOT_NOTEBOOK]),
+            c.DATA_PLOTS: self.parsePlotNotebookData(all_data[c.MAIN_NOTEBOOK_PLOT_TAB]),
             c.DATA_EXTRACTION: self.parseExtractionOptions(all_data[c.EXTRACTION_NOTEBOOK], target_freqs),
             c.DATA_TEST: all_data[c.TEST_TAB],
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseHarmonicData),

@@ -1,9 +1,8 @@
 MAIN_NOTEBOOK = "MainNotebook"
 
 # Tab names
-WINDOW_TAB = "Window"
-PLOT_NOTEBOOK = "Plot"
-TARGETS_NOTEBOOK = "Targets"
+MAIN_NOTEBOOK_WINDOW_TAB = "Window"
+MAIN_NOTEBOOK_PLOT_TAB = "Plot"
 EXTRACTION_NOTEBOOK = "Extraction"
 RESULTS_NOTEBOOK = "Results"
 TEST_TAB = "Test"
@@ -11,6 +10,9 @@ ROBOT_TAB = "Robot"
 EMOTIV_TAB = "Emotiv"
 RECORD_TAB = "Record"
 TRAINING_TAB = "Train"
+
+WINDOW_TAB_MONITOR_FRAME = "WindowTabMonitorFrame"
+WINDOW_TAB_TARGETS_NOTEBOOK = "WindowTabTargetsNotebook"
 
 TARGETS_TAB = "Targets"
 PLOT_TAB = "Plot"

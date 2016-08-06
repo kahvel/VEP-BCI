@@ -15,9 +15,6 @@ class TargetsTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
             self.getDisableDeleteFrame(1, 0, deleteTab)
         ))
 
-    def changeFreq(self):
-        self.widgets_dict[c.TARGET_FRAME].changeFreq()
-
     def disable(self, disabler):  # Updates TargetChoosingMenus
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.disable(self, disabler)
         self.sendEventToRoot(lambda x: x.targetDisabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
@@ -104,6 +101,9 @@ class TargetFrame(Frame.Frame):
 
     def calculateNewFreq(self, freq_on, freq_off):
         return self.getMonitorFreq()/(freq_off+freq_on)
+
+    def monitorFrequencyChangedEvent(self):
+        self.changeFreq()
 
     def changeFreq(self, increase=False, decrease=False):
         freq_on, freq_off = self.calculateOnOffFreq(increase, decrease)

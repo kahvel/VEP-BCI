@@ -44,17 +44,16 @@ class PlusNotebook(SameTabsNotebook.SameTabsNotebook):
 
 
 class ExtractionNotebook(PlusNotebook):
-    def __init__(self, parent, row, column, target_notebook_widgets, **kwargs):
+    def __init__(self, parent, row, column, **kwargs):
         PlusNotebook.__init__(self, parent, c.EXTRACTION_NOTEBOOK, row, column, **kwargs)
-        self.target_notebook_widgets = target_notebook_widgets
 
     def newTab(self, deleteTab):
-        return ExtractionTab.ExtractionTab(self, deleteTab, self.target_notebook_widgets)
+        return ExtractionTab.ExtractionTab(self, deleteTab)
 
 
 class PlotNotebook(PlusNotebook):
     def __init__(self, parent, row, column, **kwargs):
-        PlusNotebook.__init__(self, parent, c.PLOT_NOTEBOOK, row, column, **kwargs)
+        PlusNotebook.__init__(self, parent, c.MAIN_NOTEBOOK_PLOT_TAB, row, column, **kwargs)
 
     def newTab(self, deletaTab):
         return PlotTab.PlotTab(self, deletaTab)
@@ -62,12 +61,8 @@ class PlotNotebook(PlusNotebook):
 
 class TargetNotebook(PlusNotebook):
     def __init__(self, parent, row, column, getMonitorFreq, **kwargs):
-        PlusNotebook.__init__(self, parent, c.TARGETS_NOTEBOOK, row, column, **kwargs)
+        PlusNotebook.__init__(self, parent, c.WINDOW_TAB_TARGETS_NOTEBOOK, row, column, **kwargs)
         self.getMonitorFreq = getMonitorFreq
-
-    def changeFreq(self):
-        for widget in self.widgets_list:
-            widget.changeFreq()
 
     def plusTabClicked(self):  # Updates TargetChoosingMenus
         self.sendEventToRoot(lambda x: x.targetAddedEvent())

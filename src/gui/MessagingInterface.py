@@ -68,6 +68,8 @@ class Targets(object):
 
     def targetEnabledEvent(self, tabs, current_tab): pass
 
+    def monitorFrequencyChangedEvent(self): pass
+
 
 class MessagingInterface(Bci, Recording, Results, Robot, Targets):
     def __init__(self):
