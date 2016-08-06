@@ -1,4 +1,3 @@
-import FeaturesParser
 import Switchable
 import constants as c
 
@@ -52,12 +51,49 @@ class DataAndExpectedTargets(Switchable.Switchable):
             })
         return combined_data
 
+    def toInt(self, string):
+        if string != "":
+            return int(string)
+        else:
+            return None
+
+    def toFloat(self, string):
+        return float(string)
+
+    def getColumns(self, list_of_dicts):
+        columns = {}
+        for dict in list_of_dicts:
+            for key in dict:
+                if key in columns:
+                    columns[key].append(self.toInt(dict[key]))
+                else:
+                    columns[key] = [self.toInt(dict[key])]
+        return columns
+
     def getDataFileHeader(self):
         raise NotImplementedError("getDataFileHeader not implemented!")
 
     def save(self, directory):
         self.writeCsv(self.getDataFilePath(directory), self.getDataFileHeader(), self.getDataForSaving())
         self.writeCsv(self.getLabelsFilePath(directory), c.CSV_LABEL_FILE_HEADER, self.getLabelsForSaving())
+
+    def getRows(self, list_of_dicts):
+        raise NotImplementedError("getRows not implemented!")
+
+    def loadData(self, directory):
+        with open(self.getDataFilePath(directory), "r") as csv_file:
+            self.data = self.getRows(csv.DictReader(csv_file))
+
+    def loadLabels(self, directory):
+        with open(self.getLabelsFilePath(directory), "r") as csv_file:
+            columns = self.getColumns(csv.DictReader(csv_file))
+            self.expected_targets = columns[c.CSV_TRUE_LABEL]
+            self.predicted_targets = columns[c.CSV_PREDICTED_LABEL]
+            self.packet_number = columns[c.CSV_PACKET_NUMBER]
+
+    def load(self, directory):
+        self.loadData(directory)
+        self.loadLabels(directory)
 
 
 class Eeg(DataAndExpectedTargets):
@@ -76,52 +112,16 @@ class Eeg(DataAndExpectedTargets):
     def getDataForSaving(self):
         return self.data
 
-    def toInt(self, string):
-        if string != "":
-            return int(string)
-        else:
-            return None
-
-    def getColumns(self, list_of_dicts):
-        columns = {}
-        for dict in list_of_dicts:
-            for key in dict:
-                if key in columns:
-                    columns[key].append(self.toInt(dict[key]))
-                else:
-                    columns[key] = [self.toInt(dict[key])]
-        return columns
-
     def getRows(self, list_of_dicts):
         rows = []
         for dict in list_of_dicts:
             rows.append({key: self.toInt(dict[key]) for key in dict})
         return rows
 
-    def load(self, directory):
-        with open(self.getDataFilePath(directory), "r") as csv_file:
-            self.data = self.getRows(list(csv.DictReader(csv_file, c.SENSORS))[1:])
-            print self.data
-        with open(self.getLabelsFilePath(directory), "r") as csv_file:
-            columns = self.getColumns(list(csv.DictReader(csv_file, c.CSV_LABEL_FILE_HEADER))[1:])
-            self.expected_targets = columns[c.CSV_TRUE_LABEL]
-            self.predicted_targets = columns[c.CSV_PREDICTED_LABEL]
-            self.packet_number = columns[c.CSV_PACKET_NUMBER]
-
 
 class Features(DataAndExpectedTargets):
     def __init__(self):
         DataAndExpectedTargets.__init__(self)
-        self.flattener = FeaturesParser.Flattener()
-
-    def flattenData(self):
-        flattened = []
-        for feature_vector in self.data:
-            flattened.append(self.flattenFeatureVector(feature_vector))
-        return flattened
-
-    def flattenFeatureVector(self, feature_vector):
-        return self.flattener.parseFeatures(feature_vector)
 
     def getDataFilePath(self, directory):
         return os.path.join(directory, "features.csv")
@@ -130,10 +130,16 @@ class Features(DataAndExpectedTargets):
         return os.path.join(directory, "features_labels.csv")
 
     def getDataForSaving(self):
-        return self.flattenData()
+        return self.data
 
     def getDataFileHeader(self):
-        return sorted(self.flattenFeatureVector(self.data[0]).keys()) if len(self.data) > 0 else []
+        return sorted(self.data[0].keys()) if len(self.data) > 0 else []
+
+    def getRows(self, list_of_dicts):
+        rows = []
+        for dict in list_of_dicts:
+            rows.append([self.toFloat(dict[key]) for key in sorted(dict)])
+        return rows
 
 
 class Recording(object):

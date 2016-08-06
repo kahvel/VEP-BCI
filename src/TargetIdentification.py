@@ -202,7 +202,7 @@ class TargetIdentification(object):
     def handleFreqMessages(self, message, target_freqs, current_target, filter_by_comparison=True):
         results = message
         if results is not None:
-            results = self.ratio_finder.parseResultsNewDict(results)
+            # results = self.ratio_finder.parseResultsNewDict(results)
             frequencies = sorted(target_freqs.values())
             psda_keys = [1, 2]
             # cca_results_dict = dict(results[2][('CCA', ('P7', 'O1', 'O2', 'P8'))])["Sum"]

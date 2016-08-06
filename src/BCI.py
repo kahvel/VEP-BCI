@@ -4,6 +4,7 @@ import Results
 import TargetIdentification
 import Standby
 import Recording
+import FeaturesParser
 
 import random
 
@@ -21,6 +22,10 @@ class BCI(object):
         self.previous_target_change = 0
         self.target_duration_seconds = 9
         self.record_option = None
+        self.flattener = FeaturesParser.Flattener()
+
+    def flattenFeatureVector(self, feature_vector):
+        return self.flattener.parseFeatures(feature_vector)
 
     def setup(self, options):
         self.connections.setup(options)
@@ -98,6 +103,7 @@ class BCI(object):
         features = self.connections.receiveExtractionMessage()
         predicted_target = None
         if features is not None:
+            features = self.flattenFeatureVector(features)  # Use only with new target identification
             self.recording.collectFeatures(features, current_target, self.message_counter)
             predicted_target = self.target_identification.handleFreqMessages(features, target_freqs, current_target)
             self.recording.addPredictionToFeatures(predicted_target)
