@@ -1,6 +1,5 @@
 from gui_elements.widgets.frames.notebooks import Notebook
-from gui_elements.widgets.frames import Frame
-from gui_elements.widgets.frames import OptionsFrame
+from gui_elements.widgets.frames import Frame, OptionsFrame, AddingCheckbuttonsFrame
 from gui_elements.widgets import Checkbutton, Textboxes, Buttons
 import constants as c
 
@@ -68,62 +67,21 @@ class OptionsTab(Frame.Frame):
         ))
 
 
-class TargetsFrame(Frame.Frame):
+class TargetsFrame(AddingCheckbuttonsFrame.AddingCheckbuttonsFrame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, **kwargs)
-        self.disabled_tabs = []
+        AddingCheckbuttonsFrame.AddingCheckbuttonsFrame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, **kwargs)
 
-    def loadDefaultValue(self):
-        Frame.Frame.loadDefaultValue(self)
-        for disabled in [False]:
-            self.targetAddedEvent(disabled)
-
-    def addOption(self, option, disabled, state):
-        new_widget = Checkbutton.Checkbutton(self, str(option), (option-1) // 7, (option-1) % 7, default_value=state, padx=0, pady=0)
-        self.addChildWidgets((new_widget,))
-        new_widget.loadDefaultValue()
-        if disabled:
-            new_widget.disable("TargetTab")
-
-    def addDefaultOptions(self):
-        pass
-
-    def addTargetOptions(self, button_states):
-        for i, disabled in enumerate(self.disabled_tabs):
-            self.addOption(i+1, disabled, button_states[i])
-
-    def targetAddedEvent(self, disabled=False):
-        self.disabled_tabs.append(disabled)
-        self.addOption(len(self.disabled_tabs), disabled, 1)
-
-    def deleteOptions(self):
-        for i in range(len(self.widgets_list)-1, -1, -1):
-            self.removeWidget(self.widgets_list[i])
-
-    def getCheckbuttonStates(self, deleted_tab):
-        states = []
-        for i in range(len(self.widgets_list)):
-            if i != deleted_tab:
-                states.append(self.widgets_list[i].getValue())
-        return states
-
-    def deleteAndAddAll(self, deleted_tab):
-        button_states = self.getCheckbuttonStates(deleted_tab)
-        self.deleteOptions()
-        self.addDefaultOptions()
-        self.addTargetOptions(button_states)
+    def targetAddedEvent(self):
+        self.addButton(False)
 
     def targetRemovedEvent(self, deleted_tab):
-        del self.disabled_tabs[deleted_tab]
-        self.deleteAndAddAll(deleted_tab)
+        self.deleteButton(deleted_tab)
 
     def targetDisabledEvent(self, tabs, current_tab):
-        self.widgets_list[current_tab].disable("TargetTab")
-        self.disabled_tabs[current_tab] = True
+        self.disableButton(current_tab)
 
     def targetEnabledEvent(self, tabs, current_tab):
-        self.widgets_list[current_tab].enable("TargetTab")
-        self.disabled_tabs[current_tab] = False
+        self.enableButton(current_tab)
 
     def saveBciSettingsEvent(self, file):
         file.write(str(list(int(value) for value in self.disabled_tabs)).strip("[]") + "\n")
@@ -133,9 +91,9 @@ class TargetsFrame(Frame.Frame):
         disabled_tabs = file.readline().strip("\n")
         disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
         self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
-        self.deleteOptions()
+        self.deleteAllButtonsGraphics()
         for i, disabled in enumerate(self.disabled_tabs):
-            self.addOption(i+1, disabled, 1)
+            self.addButtonGraphics(i+1, disabled, 1)
         Frame.Frame.loadBciSettingsEvent(self, file)
 
 
