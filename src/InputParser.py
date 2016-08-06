@@ -47,6 +47,10 @@ class AbstractInputParser(object):
             c.DATA_ALWAYS_DELETE:    data[c.TEST_TAB][c.IDENTIFICATION_OPTIONS_FRAME][frame_name][c.TEST_ALWAYS_DELETE],
         }
 
+    def parseEegTab(self, data):
+        data.update({c.DISABLE: data[c.EEG_TAB_EEG_SOURCE_OPTION_MENU] == c.EEG_SOURCE_RECORDED})
+        return data
+
     def parseData(self, all_data):
         raise NotImplementedError("parseData not implemented!")
 
@@ -81,7 +85,7 @@ class MainInputParser(AbstractInputParser):
             c.DATA_TEST: all_data[c.TEST_TAB],
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.ROBOT_TAB],
-            c.DATA_EMOTIV: all_data[c.EEG_TAB],
+            c.DATA_EMOTIV: self.parseEegTab(all_data[c.EEG_TAB]),
             c.DATA_RECORD: all_data[c.RECORD_TAB_FRAME][c.TRAINING_RECORD],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.EXTRACTION_NOTEBOOK], self.parseDifferenceData),
