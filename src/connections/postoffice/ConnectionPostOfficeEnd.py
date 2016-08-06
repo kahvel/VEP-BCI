@@ -1,7 +1,8 @@
 from connections import Connections
 from connections.process import ConnectionProcessEnd
-from gui import TargetsWindow
-from gui.windows import MainWindow
+from gui_elements import TargetsWindow
+from gui.main_window import MainWindow
+from gui.training_window import TrainingWindow
 
 import MyEmotiv
 import Robot
@@ -46,7 +47,7 @@ class MainConnection(Connections.Connection):
 
 class TrainingConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, MainWindow.TrainingWindow, ConnectionProcessEnd.MainConnection)
+        Connections.Connection.__init__(self, TrainingWindow.TrainingWindow, ConnectionProcessEnd.MainConnection)
         self.connection = self.newProcess()
 
 

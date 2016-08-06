@@ -1,7 +1,7 @@
 import constants as c
 import BCI
 import ParameterHandler
-import TargetIdentification
+import FeaturesParser
 
 import copy
 import scipy.optimize
@@ -14,8 +14,8 @@ class Training(BCI.BCI):
         self.expected_targets = []
         self.expected_target_index = 0
         self.target_freqs = {}
-        # self.difference_finder = TargetIdentification.DifferenceFinder()
-        # self.weight_finder = TargetIdentification.WeightFinder()
+        # self.difference_finder = FeaturesParser.DifferenceFinder()
+        # self.weight_finder = FeaturesParser.WeightFinder()
         self.result_finder = ResultAdder()
         self.result = 0
         self.difference_finder = DifferenceFinder()
@@ -217,7 +217,7 @@ class Training(BCI.BCI):
             self.result += self.difference_finder.result
 
 
-class ResultAdder(TargetIdentification.WeightFinder):
+class ResultAdder(FeaturesParser.WeightFinder):
     def parseFrequencyResults(self, parse_result, result, data):
         if len(result) != 0:
             if result[0][0] in parse_result:
@@ -226,9 +226,9 @@ class ResultAdder(TargetIdentification.WeightFinder):
                 parse_result[result[0][0]] = result[0][1] * data
 
 
-class DifferenceFinder(TargetIdentification.DifferenceFinder):
+class DifferenceFinder(FeaturesParser.DifferenceFinder):
     def __init__(self):
-        TargetIdentification.DifferenceFinder.__init__(self)
+        FeaturesParser.DifferenceFinder.__init__(self)
         self.result = None
         self.current_target = None
 

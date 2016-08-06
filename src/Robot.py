@@ -1,5 +1,5 @@
 import constants as c
-from gui.windows import VideoStream
+from gui_elements.windows import VideoStream
 
 import socket
 import cv2
