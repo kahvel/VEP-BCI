@@ -63,7 +63,7 @@ class ControlFrame(Frame.Frame):
         ))
 
     def trainButtonClicked(self):
-        self.sendEventToRoot(lambda x: x.trainButtonClickedEvent(), True)
+        self.sendEventToRoot(lambda x: x.trainButtonClickedEvent())
 
 
 class ClassificationTab(Frame.Frame):
@@ -75,3 +75,6 @@ class ClassificationTab(Frame.Frame):
             LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_VALIDATION, 2, 0),
             IdentificationOptionsFrame(self, 3, 0),
         ))
+
+    def getClassificationOptionsEvent(self):
+        self.sendEventToRoot(lambda x: x.sendClassificationOptionsToRootEvent(self.getValue()), True)

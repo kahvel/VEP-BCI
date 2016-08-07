@@ -54,9 +54,13 @@ class Classification(MessagingInterface.Classification):
     def __init__(self):
         MessagingInterface.Classification.__init__(self)
         self.features = []
+        self.classification_options = []
 
-    def sendRecordingToRootEvent(self, results):
+    def sendFeaturesToRootEvent(self, results):
         self.features.append(results)
+
+    def sendClassificationOptionsToRootEvent(self, classification_options):
+        self.classification_options = classification_options
 
     def resetFeatures(self):
         self.features = []
@@ -109,7 +113,17 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
         results = self.getResults(c.GET_RECORDED_FREQUENCIES)
         self.sendEventToChildren(lambda x: x.recordedFrequenciesReceivedEvent(results))
 
-    def trainButtonClickedEvent(self):
+    def sendFeatureRecrding(self):
         self.resetFeatures()
         self.sendEventToChildren(lambda x: x.getFeaturesEvent())
-        # self.connection.sendMessage(self.features)
+        self.connection.sendMessage(c.SEND_RECORDED_FEATURES)
+        self.connection.sendMessage(self.features)
+
+    def sendClassificationOptions(self):
+        self.sendEventToChildren(lambda x: x.getClassificationOptionsEvent())
+        self.connection.sendMessage(c.SEND_CLASSIFICATION_OPTIONS)
+        self.connection.sendMessage(self.classification_options)
+
+    def trainButtonClickedEvent(self):
+        self.sendFeatureRecrding()
+        self.sendClassificationOptions()

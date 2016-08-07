@@ -6,15 +6,16 @@ from sklearn.cross_validation import cross_val_predict
 
 class ModelTrainer(object):
     def __init__(self):
-        self.target_count = None
         self.recordings = []
         self.features_to_use = None
-        self.look_back_length = None
+        self.look_back_length = 10
         self.cross_validation_folds = 5
 
-    def setup(self):
-        self.target_count = 3
-        self.recordings = []
+    def setRecordings(self, recordings):
+        self.recordings = recordings
+
+    def setup(self, options):
+        pass
 
     def buildDataMatrix(self, recording):
         return [column for method, column in self.iterateColumns(recording)]
@@ -77,7 +78,7 @@ class ModelTrainer(object):
         all_labels = []
         for recording in self.recordings:
             ratio_matrix = self.buildRatioMatrix(recording, scaling_functions)
-            look_back_ratio_matrix, labels = self.groupWithPreviousSamples(ratio_matrix, recording.expected_targets)
+            look_back_ratio_matrix, labels = self.groupWithPreviousSamples(ratio_matrix, recording.expected_targets, self.look_back_length)
             all_matrices.append(look_back_ratio_matrix)
             all_labels.append(labels)
         return all_matrices, all_labels

@@ -1,3 +1,4 @@
+from training import ModelTrainer
 import constants as c
 
 
@@ -6,6 +7,7 @@ class PostOffice(object):
         self.main_connection = main_connection
         self.connections = connections
         self.bci_controller = bci_controller
+        self.trainer = ModelTrainer.ModelTrainer()
         self.bci_message_handler = StartStopSetupHandler(self.bci_controller, self.main_connection, self.connections, self.setExitFlag)
         self.exit_flag = False
         self.waitConnections()
@@ -26,6 +28,10 @@ class PostOffice(object):
                     self.main_connection.sendMessage(self.bci_controller.getResults())
                 elif message == c.GET_NEW_RESULTS_MESSAGE:
                     self.main_connection.sendMessage(self.bci_controller.getNewResults())
+                elif message == c.SEND_RECORDED_FEATURES:
+                    self.trainer.setRecordings(self.main_connection.receiveMessageBlock())
+                elif message == c.SEND_CLASSIFICATION_OPTIONS:
+                    self.trainer.setup(self.main_connection.receiveMessageBlock())
                 elif message in c.ROBOT_COMMANDS:
                     self.connections.sendRobotMessage(message)
                 else:

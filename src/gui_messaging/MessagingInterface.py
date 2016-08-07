@@ -50,9 +50,13 @@ class Classification(object):
 
     def trainButtonClickedEvent(self): pass
 
+    def sendFeaturesToRootEvent(self, results): pass
+
     def getFeaturesEvent(self): pass
 
-    def sendRecordingToRootEvent(self, results): pass
+    def sendClassificationOptionsToRootEvent(self, features_to_use): pass
+
+    def getClassificationOptionsEvent(self): pass
 
 
 class Robot(object):

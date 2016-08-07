@@ -89,7 +89,7 @@ class EegFrame(Frame.Frame):
 
     def getFeaturesEvent(self):
         if self.has_features:
-            self.sendEventToRoot(lambda x: x.sendRecordingToRootEvent(self.features))
+            self.sendEventToRoot(lambda x: x.sendFeaturesToRootEvent(self.features))
 
 
 class DirectoryFrame(Frame.Frame):
