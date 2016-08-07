@@ -1,4 +1,7 @@
 import numpy as np
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.metrics import confusion_matrix
+from sklearn.cross_validation import cross_val_predict
 
 
 class ModelTrainer(object):
@@ -6,6 +9,8 @@ class ModelTrainer(object):
         self.target_count = None
         self.recordings = []
         self.features_to_use = None
+        self.look_back_length = None
+        self.cross_validation_folds = 5
 
     def setup(self):
         self.target_count = 3
@@ -44,35 +49,52 @@ class ModelTrainer(object):
         grouped_rows = self.getRatioRowsGroupedByMethod(grouped_columns)
         return self.concatenateMatricesOfRows(grouped_rows)
 
+    def extendNewSample(self, previous_labels, sample_count, new_data, new_sample, sample, label, new_labels):
+        if len(previous_labels) == sample_count:
+            if all(map(lambda x: x == previous_labels[0], previous_labels)):
+                new_data.append(np.concatenate(new_sample))
+                new_labels.append(previous_labels[0])
+            del previous_labels[0]
+            del new_sample[0]
+            previous_labels.append(label)
+            new_sample.append(sample)
+        else:
+            previous_labels.append(label)
+            new_sample.append(sample)
+
     def groupWithPreviousSamples(self, matrix, labels, sample_count):
         new_data = []
         new_labels = []
         previous_labels = []
         new_sample = []
         for sample, label in zip(matrix, labels):
-            if len(previous_labels) == sample_count:
-                if all(map(lambda x: x == previous_labels[0], previous_labels)):
-                    new_data.append(np.concatenate(new_sample))
-                    new_labels.append(previous_labels[0])
-                del previous_labels[0]
-                del new_sample[0]
-                previous_labels.append(label)
-                new_sample.append(sample)
-            else:
-                previous_labels.append(label)
-                new_sample.append(sample)
-        if len(previous_labels) == sample_count:
-            if all(map(lambda x: x == previous_labels[0], previous_labels)):
-                new_data.append(np.concatenate(new_sample))
-                new_labels.append(previous_labels[0])
+            self.extendNewSample(previous_labels, sample_count, new_data, new_sample, sample, label, new_labels)
+        self.extendNewSample(previous_labels, sample_count, new_data, new_sample, sample, label, new_labels)
         return np.array(new_data), new_labels
+
+    def getAllLookBackRatioMatrices(self, scaling_functions):
+        all_matrices = []
+        all_labels = []
+        for recording in self.recordings:
+            ratio_matrix = self.buildRatioMatrix(recording, scaling_functions)
+            look_back_ratio_matrix, labels = self.groupWithPreviousSamples(ratio_matrix, recording.expected_targets)
+            all_matrices.append(look_back_ratio_matrix)
+            all_labels.append(labels)
+        return all_matrices, all_labels
 
     def start(self):
         minimum = self.getMin()
         maximum = self.getMax()
         scaling_functions = self.getScalingFunctions(minimum, maximum)
-        for recording in self.recordings:
-            ratio_matrix = self.buildRatioMatrix(recording, scaling_functions)
+        matrices, labels = self.getAllLookBackRatioMatrices(scaling_functions)
+        data_matrix = np.concatenate(matrices, axis=0)
+        data_labels = np.concatenate(labels, axis=0)
+        model = LinearDiscriminantAnalysis()
+        model.fit(data_matrix, data_labels)
+        prediction = model.predict(data_matrix)
+        training_confusion_matrix = confusion_matrix(data_labels, prediction)
+        cross_validation_prediction = cross_val_predict(model, data_matrix, data_labels, cv=self.cross_validation_folds)
+        cross_validation_confusion_matrix = confusion_matrix(data_labels, cross_validation_prediction)
 
     def setFeaturesToUse(self, features_to_use):
         if features_to_use is None:
