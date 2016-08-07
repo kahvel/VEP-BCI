@@ -7,7 +7,7 @@ import constants as c
 
 class PlotNotebookTab(gui_elements.widgets.frames.tabs.DisableDeleteNotebookTab.DisableDeleteNotebookTab):
     def __init__(self, parent, deleteTab, **kwargs):
-        gui_elements.widgets.frames.tabs.DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.PLOT_TAB_TAB, **kwargs)
+        gui_elements.widgets.frames.tabs.DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.PLOT_NOTEBOOK_TAB, **kwargs)
         self.addChildWidgets((
             OptionsFrame.SensorsFrame(self, 0, 0),
             PlotTabButtonFrame(self, 1, 0),

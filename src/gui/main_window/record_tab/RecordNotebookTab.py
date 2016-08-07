@@ -11,7 +11,7 @@ import os
 
 class RecordNotebookTab(DisableDeleteNotebookTab.Delete):
     def __init__(self, parent, deleteTab, **kwargs):
-        DisableDeleteNotebookTab.Delete.__init__(self, parent, c.RECORD_TAB, **kwargs)
+        DisableDeleteNotebookTab.Delete.__init__(self, parent, c.RECORD_NOTEBOOK_TAB, **kwargs)
         self.addChildWidgets((
             ResultsFrame(self, 0, 0, columnspan=3),
             TimestampFrame(self, 1, 0, columnspan=3),
@@ -33,7 +33,7 @@ class RecordNotebookTab(DisableDeleteNotebookTab.Delete):
             return c.STOP_EVENT_SENDING
 
     def saveMe(self):
-        return self.widgets_dict[c.RECORD_FRAME].saveMe()
+        return self.widgets_dict[c.RECORD_NOTEBOOK_TAB_SAVE_BUTTON_FRAME].saveMe()
 
     def loadEegEvent(self, directory):
         file_name = os.path.join(directory, "results.txt")
@@ -105,7 +105,7 @@ class DirectoryFrame(Frame.Frame):
 
 class RecordFrame(Frame.Frame, Savable.SavableDirectory):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.RECORD_FRAME, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.RECORD_NOTEBOOK_TAB_SAVE_BUTTON_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.Button(self, c.TRAINING_SAVE_EEG, 0, 0, command=self.saveEegClicked),
         ))
@@ -130,7 +130,7 @@ class RecordFrame(Frame.Frame, Savable.SavableDirectory):
 
 class ResultsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.RESULTS_FRAME, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.RECORD_NOTEBOOK_TAB_RESULTS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_DIAGONAL_ELEMENTS, 0, 0),
             Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_OFF_DIAGONAL_ELEMENTS, 0, 2),

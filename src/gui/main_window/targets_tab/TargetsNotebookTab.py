@@ -7,7 +7,7 @@ import math
 
 class TargetsNotebookTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
     def __init__(self, parent, getMonitorFreq, deleteTab, getEnabledTabs, getCurrentTab, **kwargs):
-        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.TARGETS_TAB_TAB, **kwargs)
+        DisableDeleteNotebookTab.DisableDeleteNotebookTab.__init__(self, parent, c.TARGETS_NOTEBOOK_TAB, **kwargs)
         self.getEnabledTabs = getEnabledTabs
         self.getCurrentTab = getCurrentTab
         self.addChildWidgets((

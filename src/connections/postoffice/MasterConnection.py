@@ -94,7 +94,7 @@ class MasterConnection(AbstractMasterConnection):
                 c.CONNECTION_ROBOT:      ConnectionPostOfficeEnd.RobotConnection()
             },
             {
-                c.CONNECTION_EMOTIV:     c.DATA_EMOTIV,
+                c.CONNECTION_EMOTIV:     c.DATA_TEST,
                 c.CONNECTION_PSYCHOPY:   c.DATA_BACKGROUND,
                 c.CONNECTION_PLOT:       c.DATA_PLOTS,
                 c.CONNECTION_EXTRACTION: c.DATA_EXTRACTION,

@@ -56,9 +56,9 @@ class MonitorFrame(DisableDeleteNotebookTab.Disable):
             self.loading_default_value = False
 
 
-class WindowTab(Frame.Frame):
+class TargetsTab(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_WINDOW_TAB, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_TARGETS_TAB, row, column, **kwargs)
         self.addChildWidgets((
             MonitorFrame(self),
             TargetsNotebook.TargetsNotebook(self, 1, 0, self.getMonitorFreq),

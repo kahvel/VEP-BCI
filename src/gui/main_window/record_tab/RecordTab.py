@@ -9,7 +9,7 @@ import Savable
 
 class RecordTab(Frame.Frame, Savable.LoadableDirectory):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.RECORD_TAB_FRAME, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_RECORD_TAB, row, column, **kwargs)
         self.addChildWidgets((
             OptionMenu.OptionMenuFrame(self, c.TRAINING_RECORD, 0, 0, c.TRAINING_RECORD_NAMES),
             Buttons.Button(self, c.TRAINING_LOAD_EEG,  0, 1, command=self.loadEegClicked),

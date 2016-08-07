@@ -6,7 +6,7 @@ import constants as c
 
 class RobotTab(DisableDeleteNotebookTab.Disable):
     def __init__(self, parent, **kwargs):
-        Frame.Frame.__init__(self, parent, c.ROBOT_TAB, 0, 0, **kwargs)
+        Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_ROBOT_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
             OptionMenu.TargetChoosingMenu(self, c.ROBOT_OPTION_FORWARD, 0, 1, (c.ROBOT_NONE,)),
             OptionMenu.TargetChoosingMenu(self, c.ROBOT_OPTION_BACKWARD, 1, 1, (c.ROBOT_NONE,)),

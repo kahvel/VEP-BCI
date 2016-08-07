@@ -31,15 +31,15 @@ class HarmonicFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, row, 0, padx=0, pady=0, **kwargs)
         self.addChildWidgets((
             Checkbutton.Checkbutton(self, name,                  0, 0, command=self.enableTextboxes, default_value=not disabled),
-            Textboxes.Textbox      (self, c.HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
-            Textboxes.Textbox      (self, c.HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
+            Textboxes.Textbox      (self, c.EXTRACTION_TAB_HARMONIC_WEIGHT,     0, 1, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
+            Textboxes.Textbox      (self, c.EXTRACTION_TAB_HARMONIC_DIFFERENCE, 0, 2, default_disability=disabled, default_disablers=self.getDefaultDisabler(disabled), allow_zero=True),
         ))
 
     def enableTextboxes(self):
         self.conditionalDisabling(
             self.widgets_dict[self.name],
             (1,),
-            (self.widgets_dict[c.HARMONIC_WEIGHT], self.widgets_dict[c.HARMONIC_DIFFERENCE])
+            (self.widgets_dict[c.EXTRACTION_TAB_HARMONIC_WEIGHT], self.widgets_dict[c.EXTRACTION_TAB_HARMONIC_DIFFERENCE])
         )
 
     def getDefaultDisabler(self, disabled):

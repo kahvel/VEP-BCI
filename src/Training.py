@@ -161,7 +161,7 @@ class Training(BCI.BCI):
         options[c.DATA_TEST][c.TEST_STANDBY] = c.TEST_NONE
         options[c.DATA_BACKGROUND] = {c.DISABLE: 1}
         options[c.DATA_ROBOT] = {c.DISABLE: 1}
-        options[c.DATA_EMOTIV] = {c.DISABLE: 1}
+        options[c.DATA_TEST] = {c.DISABLE: 1}
         options[c.DATA_PLOTS] = {}
 
     def setTrainingTime(self, options):

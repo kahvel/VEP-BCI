@@ -5,7 +5,7 @@ import constants as c
 
 class RecordNotebook(SameTabsNotebook.SameTabsNotebook):
     def __init__(self, parent, row, column, **kwargs):
-        SameTabsNotebook.SameTabsNotebook.__init__(self, parent, c.RESULTS_NOTEBOOK, row, column, **kwargs)
+        SameTabsNotebook.SameTabsNotebook.__init__(self, parent, c.RECORD_NOTEBOOK, row, column, **kwargs)
         self.tab_to_fill = None
 
     def loadDefaultValue(self):
