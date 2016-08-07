@@ -1,11 +1,10 @@
-from utils import readFeaturesWithTargets, removeResultsAfterChange
-from FeaturesParser import ResultsParser
-from ParameterHandler import NewTrainingParameterHandler
-
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
-import pandas as pd
+
+from utils import readFeaturesWithTargets, removeResultsAfterChange
+from parsers.FeaturesParser import ResultsParser
+from ParameterHandler import NewTrainingParameterHandler
 
 
 class Collector(ResultsParser):

@@ -1,4 +1,5 @@
 from gui_messaging import MessagingInterface
+from parsers import ClassificationParser
 import constants as c
 
 
@@ -55,12 +56,13 @@ class Classification(MessagingInterface.Classification):
         MessagingInterface.Classification.__init__(self)
         self.features = []
         self.classification_options = []
+        self.classification_tab_parser = ClassificationParser.ClassificationParser()
 
     def sendFeaturesToRootEvent(self, results):
         self.features.append(results)
 
     def sendClassificationOptionsToRootEvent(self, classification_options):
-        self.classification_options = classification_options
+        self.classification_options = self.classification_tab_parser.parseData(classification_options)
 
     def resetFeatures(self):
         self.features = []

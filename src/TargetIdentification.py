@@ -1,6 +1,7 @@
-import FeaturesParser
-import constants as c
 import pickle
+
+from parsers import FeaturesParser
+import constants as c
 
 
 class ResultCounter(object):
@@ -86,8 +87,8 @@ class TargetIdentification(object):
     def setup(self, options):
         self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
         self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
-        self.prev_results.setup(options[c.DATA_PREV_RESULTS])
-        self.actual_results.setup(options[c.DATA_ACTUAL_RESULTS])
+        self.prev_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS])
+        self.actual_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
         scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model11_mm.pkl")))
         self.scaling_functions = {

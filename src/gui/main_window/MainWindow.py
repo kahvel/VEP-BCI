@@ -1,7 +1,7 @@
 from gui.main_window import MainFrame
 from gui import AbstractMainWindow
 import PostOfficeMessageHandler
-import InputParser
+from parsers import InputParser
 import constants as c
 
 

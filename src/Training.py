@@ -1,10 +1,11 @@
+import copy
+
+import scipy.optimize
+
 import constants as c
 import BCI
 import ParameterHandler
-import FeaturesParser
-
-import copy
-import scipy.optimize
+from parsers import FeaturesParser
 
 
 class Training(BCI.BCI):
@@ -88,9 +89,9 @@ class Training(BCI.BCI):
         #all_options[c.DATA_EXTRACTION_WEIGHTS] = new_options[c.DATA_EXTRACTION_WEIGHTS]
         all_options[c.DATA_EXTRACTION_DIFFERENCES] = new_options[c.DATA_EXTRACTION_DIFFERENCES]
         # new_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_ACTUAL_RESULTS][c.DATA_ALWAYS_DELETE]
-        new_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_PREV_RESULTS][c.DATA_ALWAYS_DELETE]
+        new_options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS][c.DATA_ALWAYS_DELETE] = all_options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS][c.DATA_ALWAYS_DELETE]
         # all_options[c.DATA_ACTUAL_RESULTS] = new_options[c.DATA_ACTUAL_RESULTS]
-        all_options[c.DATA_PREV_RESULTS] = new_options[c.DATA_PREV_RESULTS]
+        all_options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS] = new_options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS]
         BCI.BCI.setup(self, all_options)
         BCI.BCI.start(self, all_options)
         wrong_result_count = self.target_identification.results.list[-1]["Wrong"]

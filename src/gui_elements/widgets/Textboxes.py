@@ -77,12 +77,14 @@ class LabelTextbox(Textbox):
         label.grid(row=self.row, column=column, padx=self.padx, pady=self.pady, columnspan=label_columnspan)
 
 
-class DisabledTextLabelTextbox(LabelTextbox):
-    def __init__(self, parent, name, row, column, **kwargs):
-        LabelTextbox.__init__(self, parent, name, row, column, default_disability=1, default_disablers=["Always Disabled"], default_value="", **kwargs)
-
+class LabelTextboxNoValidation(LabelTextbox):
     def validationFunction(self):
         pass
+
+
+class DisabledTextLabelTextbox(LabelTextboxNoValidation):
+    def __init__(self, parent, name, row, column, **kwargs):
+        LabelTextbox.__init__(self, parent, name, row, column, default_disability=1, default_disablers=["Always Disabled"], default_value="", **kwargs)
 
 
 class SequenceTextbox(LabelTextbox):

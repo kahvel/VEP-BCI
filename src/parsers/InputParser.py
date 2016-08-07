@@ -1,7 +1,11 @@
+import ClassificationParser
 import constants as c
 
 
 class AbstractInputParser(object):
+    def __init__(self):
+        self.classification_tab_parser = ClassificationParser.ClassificationParser()
+
     def parseFrequencies(self, enabled_targets):
         return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
 
@@ -40,13 +44,6 @@ class AbstractInputParser(object):
     def parseExtractionOptions(self, data, target_data):
         return {key: self.parseExtractionTab(value[c.EXTRACTION_TAB_NOTEBOOK], target_data) for key, value in data.items()}
 
-    def parseIdentificationResultParameters(self, data, frame_name):
-        return {
-            c.DATA_TARGET_THRESHOLD: data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB][c.CLASSIFICATION_TAB_FILTER_OPTIONS_FRAME][frame_name][c.CLASSIFICATION_TAB_RESULT_COUNTER],
-            c.DATA_WEIGHT_THRESHOLD: data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB][c.CLASSIFICATION_TAB_FILTER_OPTIONS_FRAME][frame_name][c.CLASSIFICATION_TAB_RESULT_THRESHOLD],
-            c.DATA_ALWAYS_DELETE:    data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB][c.CLASSIFICATION_TAB_FILTER_OPTIONS_FRAME][frame_name][c.CLASSIFICATION_TAB_ALWAYS_DELETE],
-        }
-
     def addEegDeviceState(self, data):
         data.update({c.DISABLE: data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU] == c.EEG_SOURCE_RECORDED})
         return data
@@ -59,13 +56,11 @@ class TrainingInputParser(AbstractInputParser):
     def parseData(self, all_data):
         return {
             c.DATA_EXTRACTION: self.parseExtractionOptions(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], []),
-            c.DATA_CLASSIFICATION: all_data[c.MAIN_NOTEBOOK_TEST_TAB],
+            c.DATA_CLASSIFICATION: self.classification_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB]),
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseHarmonicData),
             c.DATA_RECORD: all_data[c.RECORD_NOTEBOOK_TAB],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseDifferenceData),
-            c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.CLASSIFICATION_TAB_RESULT_FILTER_FRAME),
-            c.DATA_PREV_RESULTS: self.parseIdentificationResultParameters(all_data, c.CLASSIFICATION_TAB_PREV_RESULT_FILTER_FRAME),
             c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_CLEAR_BUFFERS],
             c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_PROCESS_SHORT_SIGNALS],
             c.DATA_TRAINING: all_data[c.MAIN_NOTEBOOK_TRAINING_TAB],
@@ -82,15 +77,13 @@ class MainInputParser(AbstractInputParser):
             c.DATA_FREQS: target_freqs,
             c.DATA_PLOTS: self.parsePlotNotebookData(all_data[c.MAIN_NOTEBOOK_PLOT_TAB]),
             c.DATA_EXTRACTION: self.parseExtractionOptions(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], target_freqs),
-            c.DATA_CLASSIFICATION: all_data[c.MAIN_NOTEBOOK_TEST_TAB],
+            c.DATA_CLASSIFICATION: self.classification_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB]),
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.MAIN_NOTEBOOK_ROBOT_TAB],
             c.DATA_TEST: self.addEegDeviceState(all_data[c.MAIN_NOTEBOOK_TEST_TAB]),
             c.DATA_RECORD: all_data[c.MAIN_NOTEBOOK_RECORD_TAB][c.TRAINING_RECORD],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseDifferenceData),
-            c.DATA_ACTUAL_RESULTS: self.parseIdentificationResultParameters(all_data, c.CLASSIFICATION_TAB_RESULT_FILTER_FRAME),
-            c.DATA_PREV_RESULTS: self.parseIdentificationResultParameters(all_data, c.CLASSIFICATION_TAB_PREV_RESULT_FILTER_FRAME),
             c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_CLEAR_BUFFERS],
             c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_PROCESS_SHORT_SIGNALS],
         }

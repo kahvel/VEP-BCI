@@ -66,14 +66,25 @@ class ControlFrame(Frame.Frame):
         self.sendEventToRoot(lambda x: x.trainButtonClickedEvent())
 
 
+class OptionsFrame(Frame.Frame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, c.CLASSIFICATION_TAB_OPTIONS_FRAME, row, column, **kwargs)
+        self.addChildWidgets((
+            Textboxes.LabelTextbox(self, c.CLASSIFICATION_TAB_LOOK_BACK_LENGTH, 0, 0, command=int, default_value=1),
+            Textboxes.LabelTextbox(self, c.CLASSIFICATION_TAB_CV_FOLDS, 0, 2, command=int, default_value=5),
+            Textboxes.LabelTextboxNoValidation(self, c.CLASSIFICATION_TAB_FEATURES_TO_USE, 1, 0, default_value="", width=20, columnspan=3),
+        ))
+
+
 class ClassificationTab(Frame.Frame):
     def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_CLASSIFICATION_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
             ControlFrame(self, 0, 0),
-            LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_TRAINING, 1, 0),
-            LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_VALIDATION, 2, 0),
-            IdentificationOptionsFrame(self, 3, 0),
+            OptionsFrame(self, 1, 0),
+            LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_TRAINING, 2, 0),
+            LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_VALIDATION, 3, 0),
+            IdentificationOptionsFrame(self, 4, 0),
         ))
 
     def getClassificationOptionsEvent(self):

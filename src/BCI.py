@@ -1,12 +1,11 @@
-import constants as c
+import random
 
+import constants as c
 import Results
 import TargetIdentification
 import Standby
 import Recording
-import FeaturesParser
-
-import random
+from parsers import FeaturesParser
 
 
 class BCI(object):

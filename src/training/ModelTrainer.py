@@ -3,19 +3,27 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.metrics import confusion_matrix
 from sklearn.cross_validation import cross_val_predict
 
+import constants as c
+
 
 class ModelTrainer(object):
     def __init__(self):
         self.recordings = []
         self.features_to_use = None
-        self.look_back_length = 10
-        self.cross_validation_folds = 5
+        self.look_back_length = None
+        self.cross_validation_folds = None
+        self.training_recordings = []
+        self.validation_recordings = []
 
     def setRecordings(self, recordings):
         self.recordings = recordings
 
     def setup(self, options):
-        pass
+        self.features_to_use = options[c.CLASSIFICATION_PARSE_FEATURES_TO_USE]
+        self.look_back_length = options[c.CLASSIFICATION_PARSE_LOOK_BACK_LENGTH]
+        self.cross_validation_folds = options[c.CLASSIFICATION_PARSE_CV_FOLDS]
+        self.training_recordings = options[c.CLASSIFICATION_PARSE_RECORDING_FOR_TRAINING]
+        self.validation_recordings = options[c.CLASSIFICATION_PARSE_RECORDING_FOR_VALIDATION]
 
     def buildDataMatrix(self, recording):
         return [column for method, column in self.iterateColumns(recording)]
@@ -96,12 +104,6 @@ class ModelTrainer(object):
         training_confusion_matrix = confusion_matrix(data_labels, prediction)
         cross_validation_prediction = cross_val_predict(model, data_matrix, data_labels, cv=self.cross_validation_folds)
         cross_validation_confusion_matrix = confusion_matrix(data_labels, cross_validation_prediction)
-
-    def setFeaturesToUse(self, features_to_use):
-        if features_to_use is None:
-            self.features_to_use = None
-        else:
-            self.features_to_use = sorted(features_to_use)
 
     def getMethodFromFeature(self, feature):
         return "_".join(feature.split("_")[:-1])

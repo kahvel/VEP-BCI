@@ -109,13 +109,15 @@ class DifferentialEvolutionIdentification(object):
                     c.RESULT_SUM: numbers[9],
                 }
             },
-            # c.DATA_ACTUAL_RESULTS: {
-            #     c.DATA_TARGET_THRESHOLD: numbers[10],
-            #     c.DATA_WEIGHT_THRESHOLD: numbers[11],
-            # },
-            c.DATA_PREV_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: numbers[10],
-                c.DATA_WEIGHT_THRESHOLD: numbers[11],
+            c.DATA_CLASSIFICATION: {
+                # c.DATA_ACTUAL_RESULTS: {
+                #     c.DATA_TARGET_THRESHOLD: numbers[10],
+                #     c.DATA_WEIGHT_THRESHOLD: numbers[11],
+                # },
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: numbers[10],
+                    c.DATA_WEIGHT_THRESHOLD: numbers[11],
+                },
             }
         }
 
@@ -145,9 +147,11 @@ class DifferentialEvolution4Params(object):
                     c.RESULT_SUM: numbers[2],
                 }
             },
-            c.DATA_PREV_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: 1,
-                c.DATA_WEIGHT_THRESHOLD: numbers[3],
+            c.DATA_CLASSIFICATION: {
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,
+                    c.DATA_WEIGHT_THRESHOLD: numbers[3],
+                },
             },
             # c.DATA_EXTRACTION_WEIGHTS: {
             #     1: {
@@ -234,15 +238,17 @@ class NewTrainingParameterHandler(object):
                     c.RESULT_SUM: numbers[19],
                 },
             },
-            c.DATA_ACTUAL_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
-                c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
-                c.DATA_ALWAYS_DELETE: False,
-            },
-            c.DATA_PREV_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
-                c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
-                c.DATA_ALWAYS_DELETE: False,
+            c.DATA_CLASSIFICATION: {
+                c.CLASSIFICATION_PARSE_ACTUAL_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
+                    c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
+                    c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
             },
             c.DATA_CLEAR_BUFFERS: True,
         }
@@ -284,15 +290,17 @@ class BruteForceHandler(object):
                     c.RESULT_SUM: numbers[3],
                 },
             },
-            c.DATA_ACTUAL_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
-                c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
-                c.DATA_ALWAYS_DELETE: False,
-            },
-            c.DATA_PREV_RESULTS: {
-                c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
-                c.DATA_WEIGHT_THRESHOLD: 1.5,#numbers[13],
-                c.DATA_ALWAYS_DELETE: False,
+            c.DATA_CLASSIFICATION: {
+                c.CLASSIFICATION_PARSE_ACTUAL_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
+                    c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
+                    c.DATA_WEIGHT_THRESHOLD: 1.5,#numbers[13],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
             },
             c.DATA_CLEAR_BUFFERS: False,
         }
