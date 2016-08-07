@@ -138,8 +138,14 @@ class Features(DataAndExpectedTargets):
     def getRows(self, list_of_dicts):
         rows = []
         for dict in list_of_dicts:
-            rows.append([self.toFloat(dict[key]) for key in sorted(dict)])
+            rows.append({key: self.toFloat(dict[key]) for key in dict})
         return rows
+
+    # def getRows(self, list_of_dicts):
+    #     rows = []
+    #     for dict in list_of_dicts:
+    #         rows.append([self.toFloat(dict[key]) for key in sorted(dict)])
+    #     return rows
 
 
 class Recording(object):

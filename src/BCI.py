@@ -99,8 +99,11 @@ class BCI(object):
             self.connections.sendPlotMessage(message)
             self.handleExtractionMessages(target_freqs, current_target)
 
+    def getFeatures(self):
+        return self.connections.receiveExtractionMessage()
+
     def handleExtractionMessages(self, target_freqs, current_target):
-        features = self.connections.receiveExtractionMessage()
+        features = self.getFeatures()
         predicted_target = None
         if features is not None:
             features = self.flattenFeatureVector(features)  # Use only with new target identification
