@@ -85,4 +85,4 @@ class RecordNotebook(SameTabsNotebook.SameTabsNotebook):
         if current_tab != self.tab_count:
             SameTabsNotebook.SameTabsNotebook.deleteTab(self)
             self.tab_to_fill -= 1
-            self.sendEventToRoot(lambda x: x.recordTabRemoved(current_tab))
+            self.sendEventToAll(lambda x: x.recordTabRemoved(current_tab))

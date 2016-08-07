@@ -9,23 +9,23 @@ class Bci(MessagingInterface.Bci):
         self.post_office_message_handler = post_office_message_handler
         self.main_window = main_window
 
-    def startBciEvent(self):
+    def startButtonClickedEvent(self):
         self.post_office_message_handler.start()
 
-    def stopBciEvent(self):
+    def stopButtonClickedEvent(self):
         self.post_office_message_handler.stop()
 
-    def setupBciEvent(self):
+    def setupButtonClickedEvent(self):
         self.post_office_message_handler.setup()
 
-    def saveBciEvent(self):
+    def saveButtonClickedEvent(self):
         self.main_window.askSaveFile()
 
-    def loadBciEvent(self):
+    def loadButtonClickedEvent(self):
         self.main_window.askLoadFile()
         self.button_state_controller.setInitialStates()
 
-    def exitBciEvent(self):
+    def exitButtonClickedEvent(self):
         self.main_window.exit()
 
 
@@ -50,7 +50,19 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
-class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInterface.Results, Robot, MessagingInterface.Root, MessagingInterface.Targets):
+class Classification(MessagingInterface.Classification):
+    def __init__(self):
+        MessagingInterface.Classification.__init__(self)
+        self.features = []
+
+    def sendRecordingToRootEvent(self, results):
+        self.features.append(results)
+
+    def resetFeatures(self):
+        self.features = []
+
+
+class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInterface.Results, Robot, MessagingInterface.Root, MessagingInterface.Targets, Classification):
     def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
         MessagingInterface.Recording.__init__(self)
@@ -58,6 +70,7 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
         Robot.__init__(self, connection)
         MessagingInterface.Root.__init__(self, [main_frame], post_office_message_handler)
         MessagingInterface.Targets.__init__(self)
+        Classification.__init__(self)
         self.main_frame = main_frame
 
     def checkPostOfficeMessages(self):
@@ -95,3 +108,8 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
     def evokeRecordedFrequenciesReceivedEvent(self):
         results = self.getResults(c.GET_RECORDED_FREQUENCIES)
         self.sendEventToChildren(lambda x: x.recordedFrequenciesReceivedEvent(results))
+
+    def trainButtonClickedEvent(self):
+        self.resetFeatures()
+        self.sendEventToChildren(lambda x: x.getFeaturesEvent())
+        # self.connection.sendMessage(self.features)

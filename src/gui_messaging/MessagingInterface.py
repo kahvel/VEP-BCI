@@ -4,17 +4,17 @@ import constants as c
 class Bci(object):
     def __init__(self): pass
 
-    def startBciEvent(self): pass
+    def startButtonClickedEvent(self): pass
 
-    def stopBciEvent(self): pass
+    def stopButtonClickedEvent(self): pass
 
-    def setupBciEvent(self): pass
+    def setupButtonClickedEvent(self): pass
 
-    def saveBciEvent(self): pass
+    def saveButtonClickedEvent(self): pass
 
-    def loadBciEvent(self): pass
+    def loadButtonClickedEvent(self): pass
 
-    def exitBciEvent(self): pass
+    def exitButtonClickedEvent(self): pass
 
     def saveBciSettingsEvent(self, file): pass
 
@@ -45,6 +45,16 @@ class Results(object):
     def recordedFrequenciesReceivedEvent(self, frequencies): pass
 
 
+class Classification(object):
+    def __init__(self): pass
+
+    def trainButtonClickedEvent(self): pass
+
+    def getFeaturesEvent(self): pass
+
+    def sendRecordingToRootEvent(self, results): pass
+
+
 class Robot(object):
     def __init__(self): pass
 
@@ -73,13 +83,14 @@ class Targets(object):
     def monitorFrequencyChangedEvent(self): pass
 
 
-class MessagingInterface(Bci, Recording, Results, Robot, Targets):
+class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification):
     def __init__(self):
         Bci.__init__(self)
         Recording.__init__(self)
         Results.__init__(self)
         Robot.__init__(self)
         Targets.__init__(self)
+        Classification.__init__(self)
 
     def trialEndedEvent(self): pass
 
@@ -128,6 +139,9 @@ class NonRoot(MessageUp):
     def sendEventToRoot(self, function, needs_stopped_state=False):
         self.parent.sendEventToRoot(function, needs_stopped_state)
 
+    def sendEventToAll(self, function, needs_stopped_state=False):
+        self.parent.sendEventToAll(function, needs_stopped_state)
+
 
 class Root(MessageUp, NonLeaf):
     def __init__(self, widgets_list, post_office_message_handler):
@@ -138,11 +152,17 @@ class Root(MessageUp, NonLeaf):
     def bciIsStopped(self):
         return self.post_office_message_handler.isStopped()
 
-    def sendEventToRoot(self, function, needs_stopped_state=False):
+    def checkIfStopped(self, function, needs_stopped_state):
         if needs_stopped_state and self.bciIsStopped() or not needs_stopped_state:
-            self.sendEventToChildren(function)
+            function()
         else:
             print "BCI has to be stopped to use this functionality!"
+
+    def sendEventToRoot(self, function, needs_stopped_state=False):
+        self.checkIfStopped(lambda: function(self), needs_stopped_state)
+
+    def sendEventToAll(self, function, needs_stopped_state=False):
+        self.checkIfStopped(lambda: self.sendEventToChildren(function), needs_stopped_state)
 
 
 class Widget(NonRoot, Leaf, MessagingInterface):

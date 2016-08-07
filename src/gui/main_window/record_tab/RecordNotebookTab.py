@@ -68,6 +68,7 @@ class EegFrame(Frame.Frame):
         ))
         self.eeg = Recording.Eeg()
         self.features = Recording.Features()
+        self.has_features = False
 
     def recordedEegReceivedEvent(self, eeg):
         self.eeg = eeg
@@ -80,10 +81,15 @@ class EegFrame(Frame.Frame):
     def loadEegEvent(self, directory):
         self.eeg.load(directory)
         self.features.load(directory)
+        self.has_features = True
 
     def saveEegEvent(self, directory):
         self.eeg.save(directory)
         self.features.save(directory)
+
+    def getFeaturesEvent(self):
+        if self.has_features:
+            self.sendEventToRoot(lambda x: x.sendRecordingToRootEvent(self.features))
 
 
 class DirectoryFrame(Frame.Frame):
@@ -124,7 +130,7 @@ class RecordFrame(Frame.Frame, Savable.SavableDirectory):
         :return:
         """
         self.save_me = True
-        self.sendEventToRoot(lambda x: x.saveEegEvent(file), True)
+        self.sendEventToAll(lambda x: x.saveEegEvent(file), True)
         self.save_me = False
 
 

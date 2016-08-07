@@ -9,7 +9,7 @@ class TargetsNotebook(PlusNotebook.PlusNotebook):
         self.getMonitorFreq = getMonitorFreq
 
     def plusTabClicked(self):  # Updates TargetChoosingMenus
-        self.sendEventToRoot(lambda x: x.targetAddedEvent())
+        self.sendEventToAll(lambda x: x.targetAddedEvent())
         PlusNotebook.PlusNotebook.plusTabClicked(self)
 
     def getEnabledTabs(self):
@@ -20,4 +20,4 @@ class TargetsNotebook(PlusNotebook.PlusNotebook):
 
     def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = PlusNotebook.PlusNotebook.deleteTab(self)
-        self.sendEventToRoot(lambda x: x.targetRemovedEvent(deleted_tab))
+        self.sendEventToAll(lambda x: x.targetRemovedEvent(deleted_tab))

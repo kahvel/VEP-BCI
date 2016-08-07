@@ -30,22 +30,22 @@ class BottomFrame(Frame.Frame):
         ))
 
     def startClicked(self):
-        self.sendEventToRoot(lambda x: x.startBciEvent())
+        self.sendEventToRoot(lambda x: x.startButtonClickedEvent())
 
     def stopClicked(self):
-        self.sendEventToRoot(lambda x: x.stopBciEvent())
+        self.sendEventToRoot(lambda x: x.stopButtonClickedEvent())
 
     def setupClicked(self):
-        self.sendEventToRoot(lambda x: x.setupBciEvent())
+        self.sendEventToRoot(lambda x: x.setupButtonClickedEvent())
 
     def saveClicked(self):
-        self.sendEventToRoot(lambda x: x.saveBciEvent(), True)
+        self.sendEventToRoot(lambda x: x.saveButtonClickedEvent(), True)
 
     def loadClicked(self):
-        self.sendEventToRoot(lambda x: x.loadBciEvent(), True)
+        self.sendEventToRoot(lambda x: x.loadButtonClickedEvent(), True)
 
     def exitClicked(self):
-        self.sendEventToRoot(lambda x: x.exitBciEvent())
+        self.sendEventToRoot(lambda x: x.exitButtonClickedEvent())
 
 
 class MainFrame(AbstractMainFrame):

@@ -25,8 +25,8 @@ class RecordTab(Frame.Frame, Savable.LoadableDirectory):
         :param directory:
         :return:
         """
-        self.sendEventToRoot(lambda x: x.loadEegEvent(directory), True)
+        self.sendEventToAll(lambda x: x.loadEegEvent(directory), True)
 
     def saveEegEvent(self, directory):
         file = open(os.path.join(directory, "settings.txt"), "w")
-        self.sendEventToRoot(lambda x: x.saveBciSettingsEvent(file))
+        self.sendEventToAll(lambda x: x.saveBciSettingsEvent(file))

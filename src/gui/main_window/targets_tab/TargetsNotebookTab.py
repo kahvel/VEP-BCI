@@ -17,11 +17,11 @@ class TargetsNotebookTab(DisableDeleteNotebookTab.DisableDeleteNotebookTab):
 
     def disable(self, disabler):  # Updates TargetChoosingMenus
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.disable(self, disabler)
-        self.sendEventToRoot(lambda x: x.targetDisabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
+        self.sendEventToAll(lambda x: x.targetDisabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
 
     def enable(self, enabler):  # Updates TargetChoosingMenus
         DisableDeleteNotebookTab.DisableDeleteNotebookTab.enable(self, enabler)
-        self.sendEventToRoot(lambda x: x.targetEnabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
+        self.sendEventToAll(lambda x: x.targetEnabledEvent(self.getEnabledTabs(), self.getCurrentTab()))
 
 
 class TargetsNotebookTabFrame(Frame.Frame):

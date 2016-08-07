@@ -51,7 +51,7 @@ class MonitorFrame(DisableDeleteNotebookTab.Disable):
     def monitorFrequencyTextboxCommand(self, value):
         float(value)
         if not self.loading_default_value:
-            self.sendEventToRoot(lambda x: x.monitorFrequencyChangedEvent())
+            self.sendEventToAll(lambda x: x.monitorFrequencyChangedEvent())
         else:
             self.loading_default_value = False
 

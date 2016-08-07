@@ -1,5 +1,5 @@
 from gui_elements.widgets.frames import Frame, AddingCheckbuttonsFrame
-from gui_elements.widgets import Checkbutton, Textboxes
+from gui_elements.widgets import Checkbutton, Textboxes, OptionMenu, Buttons
 import constants as c
 
 import Tkinter
@@ -17,6 +17,12 @@ class CheckbuttonFrame(AddingCheckbuttonsFrame.AddingCheckbuttonsFrame):
 
     def loadEegEvent(self, directory):
         self.addButton()
+
+    def saveBciSettingsEvent(self, file):
+        return c.STOP_EVENT_SENDING
+
+    def loadBciSettingsEvent(self, file):
+        return c.STOP_EVENT_SENDING
 
 
 class LabelledCheckbuttonFrame(Frame.Frame):
@@ -48,10 +54,23 @@ class ResultFilterFrame(Frame.Frame):
         ))
 
 
+class ControlFrame(Frame.Frame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, c.CLASSIFICATION_TAB_CONTROL_FRAME, row, column, **kwargs)
+        self.addChildWidgets((
+            OptionMenu.OptionMenu(self, c.CLASSIFICATION_TAB_TYPE_OPTION_MENU, 0, 1, c.CLASSIFICATION_TYPE_NAMES),
+            Buttons.Button(self, c.CLASSIFICATION_TAB_TRAIN_MODEL, 0, 3, command=self.trainButtonClicked)
+        ))
+
+    def trainButtonClicked(self):
+        self.sendEventToRoot(lambda x: x.trainButtonClickedEvent(), True)
+
+
 class ClassificationTab(Frame.Frame):
     def __init__(self, parent, **kwargs):
         Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_CLASSIFICATION_TAB, 0, 0, **kwargs)
         self.addChildWidgets((
+            ControlFrame(self, 0, 0),
             LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_TRAINING, 1, 0),
             LabelledCheckbuttonFrame(self, c.CLASSIFICATION_TAB_RECORDING_FOR_VALIDATION, 2, 0),
             IdentificationOptionsFrame(self, 3, 0),
