@@ -24,17 +24,26 @@ class ButtonsStateController(object):
     def enableSetup(self):
         self.main_frame.enableWidget(self.path_to_frame + (c.SETUP_BUTTON,))
 
+    def enableExit(self):
+        self.main_frame.enableWidget(self.path_to_frame + (c.EXIT_BUTTON,))
+
+    def disableExit(self):
+        self.main_frame.disableWidget(self.path_to_frame + (c.EXIT_BUTTON,))
+
     def setInitialStates(self):
         self.disableStart()
         self.disableStop()
         self.enableSetup()
+        self.enableExit()
 
     def startClicked(self):
         self.disableSetup()
         self.disableStart()
         self.enableStop()
+        self.disableExit()
 
     def stopClicked(self):
         self.enableSetup()
         self.enableStart()
         self.disableStop()
+        self.enableExit()

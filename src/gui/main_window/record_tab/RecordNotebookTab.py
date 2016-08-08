@@ -64,7 +64,7 @@ class EegFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.EEG_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Textboxes.DisabledTextLabelTextbox(self, c.PACKET_COUNT, 0, 0),
-            Textboxes.DisabledTextLabelTextbox(self, c.FEATURE_COUNT, 0, 2),
+            Textboxes.DisabledTextLabelTextbox(self, c.SAMPLE_COUNT, 0, 2),
         ))
         self.eeg = Recording.Eeg()
         self.features = Recording.Features()
@@ -76,7 +76,7 @@ class EegFrame(Frame.Frame):
 
     def recordedFeaturesReceivedEvent(self, features):
         self.features = features
-        self.widgets_dict[c.FEATURE_COUNT].setValue(features.getLength())
+        self.widgets_dict[c.SAMPLE_COUNT].setValue(features.getLength())
 
     def loadEegEvent(self, directory):
         self.eeg.load(directory)

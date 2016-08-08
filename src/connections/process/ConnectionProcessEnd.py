@@ -47,40 +47,25 @@ class Connection(Connections.AbstractConnection):
         self.connection.close()
         self.connection = None
 
-    def receiveOptions(self):
-        raise NotImplementedError("receiveOptions not implemented!")
-
 
 class PsychopyConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_PSYCHOPY_NAME)
-
-    def receiveOptions(self):
-        return self.receiveMessageBlock()
 
 
 class ExtractionConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_EXTRACTION_NAME)
 
-    def receiveOptions(self):
-        return self.receiveMessageBlock()
-
 
 class PlotConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_PLOT_NAME)
 
-    def receiveOptions(self):
-        return self.receiveMessageBlock()
-
 
 class MainConnection(Connection):
     def __init__(self, connection):
         Connection.__init__(self, connection, c.CONNECTION_MAIN_NAME)
-
-    def sendMessage(self, message):
-        self.connection.send(message)
 
 
 class EmotivConnection(Connection):

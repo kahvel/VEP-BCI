@@ -42,10 +42,6 @@ class PostOfficeQueueConnection(Connections.Connection):
     def receiveMessage(self):
         return self.receiving_queue.recv()
 
-    def sendOptions(self, options):
-        self.sendSetupMessage()
-        self.connection.send(options)
-
     def newProcess(self):
         self.connection = QueueConnection()
         threading.Thread(target=self.process, args=(self.connection_other_end(self.receiving_queue, self.connection),)).start()

@@ -83,8 +83,10 @@ class TargetIdentification(object):
         self.matrix_result = None
         self.scaling_functions = None
         self.thresholds = None
+        self.allow_repeating = None
 
     def setup(self, options):
+        self.allow_repeating = options[c.DATA_TEST][c.TEST_TAB_ALLOW_REPEATING]
         self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
         self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
         self.prev_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS])
@@ -138,23 +140,21 @@ class TargetIdentification(object):
             self.prev_results.reset(target_freqs)
 
     def filterRepeatingResults(self, predicted_frequency, current_frequency, target_freqs_dict):
-        if not self.clear_buffers:
-            if not self.results.isPrevResult(predicted_frequency):
-                self.sendCommand(predicted_frequency, current_frequency, target_freqs_dict)
-        else:
-            self.sendCommand(predicted_frequency, current_frequency, target_freqs_dict)
-            self.clearBuffers(target_freqs_dict.values())
+        if self.allow_repeating or not self.allow_repeating and not self.results.isPrevResult(predicted_frequency):
+            self.chooseTarget(predicted_frequency, current_frequency, target_freqs_dict)
 
     def clearBuffers(self, target_freq):
-        self.master_connection.sendClearBuffersMessage()
-        self.actual_results.reset(target_freq)
-        self.prev_results.reset(target_freq)
+        if self.clear_buffers:
+            self.master_connection.sendClearBuffersMessage()
+            self.actual_results.reset(target_freq)
+            self.prev_results.reset(target_freq)
 
-    def sendCommand(self, predicted_frequency, current_frequency, target_freqs_dict):
+    def chooseTarget(self, predicted_frequency, current_frequency, target_freqs_dict):
         self.master_connection.sendRobotMessage(self.getDictKey(target_freqs_dict, predicted_frequency))
         # self.printResult(predicted_frequency, current_frequency)
         self.results.add(current_frequency, predicted_frequency)
         self.holdResultTarget(predicted_frequency, current_frequency)
+        self.clearBuffers(target_freqs_dict.values())
 
     def printResult(self, result_frequency, current):
         if result_frequency != current:

@@ -11,20 +11,11 @@ import Robot
 class PsychopyConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, TargetsWindow.TargetsWindow, ConnectionProcessEnd.PsychopyConnection)
-        self.connection = self.newProcess()
-
-    def sendOptions(self, options):
-        self.sendSetupMessage()
-        self.connection.send(options)
 
 
 class ExtractionConnection(Connections.Connection):
     def __init__(self, process):
         Connections.Connection.__init__(self, process, ConnectionProcessEnd.ExtractionConnection)
-
-    def sendOptions(self, options):
-        self.sendSetupMessage()
-        self.connection.send(options)
 
     def receiveExtractionMessages(self):
         return self.receiveMessageBlock()
@@ -33,10 +24,6 @@ class ExtractionConnection(Connections.Connection):
 class PlotConnection(Connections.Connection):
     def __init__(self, process):
         Connections.Connection.__init__(self, process, ConnectionProcessEnd.PlotConnection)
-
-    def sendOptions(self, options):
-        self.sendSetupMessage()
-        self.sendMessage(options)
 
 
 class MainConnection(Connections.Connection):
@@ -54,17 +41,9 @@ class TrainingConnection(Connections.Connection):
 class EmotivConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, MyEmotiv.MyEmotiv, ConnectionProcessEnd.EmotivConnection)
-        self.connection = self.newProcess()
-
-    def sendOptions(self, *options):
-        self.sendSetupMessage()
 
 
 class RobotConnection(Connections.Connection):
     def __init__(self):
         Connections.Connection.__init__(self, Robot.Robot, ConnectionProcessEnd.RobotConnection)
         self.connection = self.newProcess()
-
-    def sendOptions(self, options):
-        self.sendSetupMessage()
-        self.sendMessage(options)

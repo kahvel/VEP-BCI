@@ -123,6 +123,7 @@ class MyEmotiv(object):
         self.cipher = AES.new(key, AES.MODE_ECB, iv)
 
     def connectionSetup(self):
+        options = self.connection.receiveMessageBlock()
         self.device, self.serialNum = self.setupWin()
         if self.serialNum is None:
             print("Emotiv USB receiver not found")

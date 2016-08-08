@@ -223,12 +223,12 @@ class TargetsWindow(object):
         self.connection.waitMessages(self.start, self.exit, self.updateWindow, self.setup)
 
     def setup(self):
-        options = self.connection.receiveOptions()
+        options = self.connection.receiveMessageBlock()
         self.window = self.getWindow(options[c.DATA_BACKGROUND])
         self.monitor_frequency = self.getMonitorFreq(options[c.DATA_BACKGROUND])
-        self.targets = self.getTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_COLOR], self.window)
+        self.targets = self.getTargets(options[c.DATA_TARGETS], options[c.DATA_TEST][c.TEST_TAB_COLOR], self.window)
         self.generators = self.getGenerators(self.targets)
-        self.setStandbyTarget(options[c.DATA_TEST][c.TEST_STANDBY])
+        self.setStandbyTarget(options[c.DATA_TEST][c.TEST_TAB_STANDBY])
         self.video_stream = self.getVideoStreamImage(self.window, options[c.DATA_ROBOT])
         return c.SETUP_SUCCEEDED_MESSAGE
 
@@ -281,7 +281,7 @@ class TargetsWindow(object):
         return [self.setupGenerator(target.generator()) for target in targets]
 
     def setStandbyTarget(self, standby):
-        if standby != c.TEST_NONE:
+        if standby != c.TEST_TARGET_NONE:
             self.targets[standby-1].setStandbyTarget(True)
 
     def setCurrentTarget(self, target):

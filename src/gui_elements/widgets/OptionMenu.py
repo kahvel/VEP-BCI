@@ -69,7 +69,7 @@ class TargetChoosingMenu(OptionMenu):
             target = int(target)
             if target == tab:
                 print("Warning: OptionMenu (" + self.name + ") in Test tab reset to " + self.reset_value)
-                self.setValue(c.TEST_NONE)
+                self.setValue(c.TEST_TARGET_NONE)
             else:
                 additionalFunction(target, tab)
 

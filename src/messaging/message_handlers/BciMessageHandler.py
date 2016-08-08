@@ -2,6 +2,8 @@ from messaging.message_handlers import AbstractMessageHandler
 import BCI
 import constants as c
 
+import threading
+
 
 class BciDataExchangeHandler(AbstractMessageHandler.MessageHandler):
     def __init__(self, main_connection, bci_controller):
@@ -41,9 +43,9 @@ class BciControlsHandler(AbstractMessageHandler.MessageHandler):
         """
         AbstractMessageHandler.MessageHandler.__init__(self, c.BCI_CONTROL_MESSAGES)
         self.bci_controller = bci_controller
-        self.options = None
         self.main_connection = main_connection
         self.connections = connections
+        self.bci_thread = None
 
     def handle(self, message):
         if message == c.START_MESSAGE:
@@ -51,26 +53,44 @@ class BciControlsHandler(AbstractMessageHandler.MessageHandler):
         elif message == c.SETUP_MESSAGE:
             self.handleSetup()
         elif message == c.STOP_MESSAGE:
-            print("Stop PostOffice")
+            self.handleStop()
+
+    def handleStop(self):
+        self.bci_controller.setExitFlag(True)
 
     def handleStart(self):
-        message = self.bci_controller.start(self.options)
-        if message is not None:
-            self.handle(message)
+        self.bci_thread = threading.Thread(target=self.bci_controller.start)
+        self.bci_thread.start()
 
     def handleSetup(self):
-        self.options = self.main_connection.receiveMessageBlock()
-        setup_message = self.bci_controller.setup(self.options)
-        if setup_message == c.SETUP_FAILED_MESSAGE:
+        options = self.main_connection.receiveMessageBlock()
+        self.connections.setup(options)
+        self.bci_controller.setup(options)
+        if self.connections.setupSuccessful() and self.bci_controller.setupSucceeded():
+            self.main_connection.sendMessage(c.SETUP_SUCCEEDED_MESSAGE)
+        else:
+            self.main_connection.sendMessage(c.SETUP_FAILED_MESSAGE)
             self.connections.close()
-        print("Setup " + setup_message + "!")
-        self.main_connection.sendMessage(setup_message)
+
+    def checkThread(self):
+        if not self.bci_thread.isAlive():
+            self.bci_thread = None
+            return True
+        else:
+            return False
+
+    def threadJustDied(self):
+        if self.bci_thread is not None:
+            return self.checkThread()
+        else:
+            return False
 
 
 class BciMessageHandler(AbstractMessageHandler.MessageHandler):
     def __init__(self, main_connection, connections):
         AbstractMessageHandler.MessageHandler.__init__(self, c.BCI_MESSAGES)
-        bci_controller = BCI.BCI(connections, main_connection)
+        self.main_connection = main_connection
+        bci_controller = BCI.BCI(connections)
         self.control_message_handler = BciControlsHandler(bci_controller, main_connection, connections)
         self.data_exchange_handler = BciDataExchangeHandler(main_connection, bci_controller)
 
@@ -79,3 +99,6 @@ class BciMessageHandler(AbstractMessageHandler.MessageHandler):
             self.control_message_handler.handle(message)
         elif self.data_exchange_handler.canHandle(message):
             self.data_exchange_handler.handle(message)
+
+    def handleThreadDied(self):
+        self.main_connection.sendMessage(c.BCI_STOPPED_MESSAGE)

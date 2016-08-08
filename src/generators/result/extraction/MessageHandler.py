@@ -52,7 +52,7 @@ class MessageHandler(AbstractGenerator.AbstractMyGenerator):
         :return:
         """
         self.counter = {key: 0 for key in range(5)}
-        self.options = self.connection.receiveOptions()
+        self.options = self.connection.receiveMessageBlock()
         self.sensors = tuple(self.options[c.DATA_SENSORS])
         self.setupCoordinatesGenerator()
         AbstractGenerator.AbstractMyGenerator.setup(self, self.options)

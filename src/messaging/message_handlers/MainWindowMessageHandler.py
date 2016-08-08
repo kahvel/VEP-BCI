@@ -13,13 +13,15 @@ class MainWindowMessageHandler(AbstractMessageHandler.MessageHandler):
         self.stopped = True
 
     def handle(self, message):
-        if message == c.STOP_MESSAGE:
+        if message == c.BCI_STOPPED_MESSAGE:
             self.buttons_state_controller.stopClicked()
             self.stopped = True
             self.evokeTrialEndedEvent()
-        elif message == c.SETUP_SUCCEEDED_MESSAGE:  # Setup was successful
+        elif message == c.SETUP_SUCCEEDED_MESSAGE:
+            print "Setup succeeded!"
             self.buttons_state_controller.enableStart()
-        elif message == c.SETUP_FAILED_MESSAGE:  # Setup failed
+        elif message == c.SETUP_FAILED_MESSAGE:
+            print "Setup failed!"
             self.buttons_state_controller.disableStart()
 
     def setup(self):
@@ -39,10 +41,7 @@ class MainWindowMessageHandler(AbstractMessageHandler.MessageHandler):
         self.stopped = False
 
     def stop(self):
-        self.buttons_state_controller.stopClicked()
         self.connection.sendMessage(c.STOP_MESSAGE)
-        self.stopped = True
-        self.evokeTrialEndedEvent()
 
     def isStopped(self):
         return self.stopped

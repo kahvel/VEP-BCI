@@ -34,7 +34,7 @@ class Plot(AbstractGenerator.AbstractMyGenerator):
         raise NotImplementedError("updatePlot not implemented!")
 
     def setup(self, options=None):
-        self.options = self.connection.receiveOptions()
+        self.options = self.connection.receiveMessageBlock()
         self.sensors = self.options[c.DATA_SENSORS]
         AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
         self.closeWindow()

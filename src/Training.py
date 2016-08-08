@@ -159,20 +159,20 @@ class Training(BCI.BCI):
 
     def disableUnnecessaryOptions(self, options):
         options[c.DATA_RECORD][c.TRAINING_RECORD] = c.TRAINING_RECORD_DISABLED
-        options[c.DATA_TEST][c.TEST_STANDBY] = c.TEST_NONE
+        options[c.DATA_TEST][c.TEST_TAB_STANDBY] = c.TEST_TARGET_NONE
         options[c.DATA_BACKGROUND] = {c.DISABLE: 1}
         options[c.DATA_ROBOT] = {c.DISABLE: 1}
         options[c.DATA_TEST] = {c.DISABLE: 1}
         options[c.DATA_PLOTS] = {}
 
     def setTrainingTime(self, options):
-        options[c.DATA_TEST][c.TEST_UNLIMITED] = False
-        options[c.DATA_TEST][c.TEST_TIME] = self.getTotalTrainingTime()
+        options[c.DATA_TEST][c.TEST_TAB_UNLIMITED] = False
+        options[c.DATA_TEST][c.TEST_TAB_TIME] = self.getTotalTrainingTime()
 
     def getTotalTrainingTime(self):
         return len(self.packets)
 
-    def getTarget(self, test_target, target_freqs, previous_target):
+    def getNextTarget(self, test_target, target_freqs, previous_target):
         return None
 
     def getExpectedTarget(self):

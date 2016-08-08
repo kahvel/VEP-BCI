@@ -61,8 +61,8 @@ class TrainingInputParser(AbstractInputParser):
             c.DATA_RECORD: all_data[c.RECORD_NOTEBOOK_TAB],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseDifferenceData),
-            c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_CLEAR_BUFFERS],
-            c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_PROCESS_SHORT_SIGNALS],
+            c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_TAB_CLEAR_BUFFERS],
+            c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_TAB_PROCESS_SHORT_SIGNALS],
             c.DATA_TRAINING: all_data[c.MAIN_NOTEBOOK_TRAINING_TAB],
         }
 
@@ -84,6 +84,6 @@ class MainInputParser(AbstractInputParser):
             c.DATA_RECORD: all_data[c.MAIN_NOTEBOOK_RECORD_TAB][c.TRAINING_RECORD],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseDifferenceData),
-            c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_CLEAR_BUFFERS],
-            c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_PROCESS_SHORT_SIGNALS],
+            c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_TAB_CLEAR_BUFFERS],
+            c.DATA_PROCESS_SHORT_SIGNAL: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_TAB_PROCESS_SHORT_SIGNALS],
         }

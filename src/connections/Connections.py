@@ -14,9 +14,6 @@ class AbstractConnection(object):
     def receiveMessage(self):
         raise NotImplementedError("receiveMessage not implemented!")
 
-    def sendOptions(self, *options):
-        raise NotImplementedError("sendOptions not implemented!")
-
     def setupSuccessful(self):
         raise NotImplementedError("setupSuccessful not implemented!")
 
@@ -72,10 +69,11 @@ class Connection(AbstractConnection):
     def receiveMessage(self):
         return self.connection.recv()
 
-    def setup(self, *options):
+    def setup(self, options):
         if self.connection is None:
             self.connection = self.newProcess()
-        self.sendOptions(*options)
+        self.sendSetupMessage()
+        self.sendMessage(options)
 
     def newProcess(self):
         from_process, to_process = multiprocessing.Pipe()
@@ -85,16 +83,19 @@ class Connection(AbstractConnection):
     def isClosed(self):
         return self.connection is None
 
+    def waitForSuccessMessage(self):
+        while True:
+            message = self.receiveMessageBlock()
+            if message == c.SETUP_SUCCEEDED_MESSAGE:
+                return True
+            elif message == c.SETUP_FAILED_MESSAGE:
+                return False
+            else:
+                print("Connection.setupSuccessful: " + str(message))
+
     def setupSuccessful(self):
         if not self.isClosed():
-            while True:
-                message = self.receiveMessageBlock()
-                if message == c.SETUP_SUCCEEDED_MESSAGE:
-                    return True
-                elif message == c.SETUP_FAILED_MESSAGE:
-                    return False
-                else:
-                    print("Connection.setupSuccessful: " + str(message))
+            return self.waitForSuccessMessage()
         else:
             return True
 

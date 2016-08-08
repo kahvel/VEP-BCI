@@ -4,20 +4,20 @@ import constants as c
 
 
 class Bci(MessagingInterface.Bci):
-    def __init__(self, post_office_message_handler, main_window, button_state_controller):
+    def __init__(self, main_window_message_handler, main_window, button_state_controller):
         MessagingInterface.Bci.__init__(self)
         self.button_state_controller = button_state_controller
-        self.post_office_message_handler = post_office_message_handler
+        self.main_window_message_handler = main_window_message_handler
         self.main_window = main_window
 
     def startButtonClickedEvent(self):
-        self.post_office_message_handler.start()
+        self.main_window_message_handler.start()
 
     def stopButtonClickedEvent(self):
-        self.post_office_message_handler.stop()
+        self.main_window_message_handler.stop()
 
     def setupButtonClickedEvent(self):
-        self.post_office_message_handler.setup()
+        self.main_window_message_handler.setup()
 
     def saveButtonClickedEvent(self):
         self.main_window.askSaveFile()
@@ -69,20 +69,20 @@ class Classification(MessagingInterface.Classification):
 
 
 class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInterface.Results, Robot, MessagingInterface.Root, MessagingInterface.Targets, Classification):
-    def __init__(self, connection, post_office_message_handler, main_frame, main_window, button_state_controller):
-        Bci.__init__(self, post_office_message_handler, main_window, button_state_controller)
+    def __init__(self, connection, main_window_message_handler, main_frame, main_window, button_state_controller):
+        Bci.__init__(self, main_window_message_handler, main_window, button_state_controller)
         MessagingInterface.Recording.__init__(self)
         MessagingInterface.Results.__init__(self)
         Robot.__init__(self, connection)
-        MessagingInterface.Root.__init__(self, [main_frame], post_office_message_handler)
+        MessagingInterface.Root.__init__(self, [main_frame], main_window_message_handler)
         MessagingInterface.Targets.__init__(self)
         Classification.__init__(self)
         self.main_frame = main_frame
 
     def checkPostOfficeMessages(self):
         message = self.connection.receiveMessageInstant()
-        if self.post_office_message_handler.canHandle(message):
-            self.post_office_message_handler.handle(message)
+        if self.main_window_message_handler.canHandle(message):
+            self.main_window_message_handler.handle(message)
 
     def trialEndedEvent(self):
         self.evokeResultsReceivedEvent()

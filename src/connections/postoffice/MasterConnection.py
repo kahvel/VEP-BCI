@@ -55,10 +55,6 @@ class AbstractMasterConnection(Connections.MultipleConnections):
         for key in self.connections:
             self.connections[key].sendSetupMessage()
 
-    def sendOptions(self, options):
-        for key in self.connections:
-            self.connections[key].sendOptions(options)
-
     def setup(self, options):
         for key in self.connections:
             print options
@@ -154,10 +150,6 @@ class TrainingMasterConnection(AbstractMasterConnection):
     def sendSetupMessage(self):
         for key in self.connections:
             self.connections[key].sendSetupMessage()
-
-    def sendOptions(self, options):
-        for key in self.connections:
-            self.connections[key].sendOptions(options)
 
     def setup(self, options):
         self.connections[c.CONNECTION_EXTRACTION].setup(options)
