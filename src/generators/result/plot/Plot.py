@@ -39,7 +39,7 @@ class Plot(AbstractGenerator.AbstractMyGenerator):
         AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
         self.closeWindow()
         self.newWindow(self.getTitle(self.options))
-        return c.SUCCESS_MESSAGE
+        return c.SETUP_SUCCEEDED_MESSAGE
 
     def getTitle(self, options):
         return str(options[c.DATA_METHOD]) + " " + str(options[c.DATA_SENSORS])

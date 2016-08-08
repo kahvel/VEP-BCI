@@ -56,7 +56,7 @@ class MessageHandler(AbstractGenerator.AbstractMyGenerator):
         self.sensors = tuple(self.options[c.DATA_SENSORS])
         self.setupCoordinatesGenerator()
         AbstractGenerator.AbstractMyGenerator.setup(self, self.options)
-        return c.SUCCESS_MESSAGE
+        return c.SETUP_SUCCEEDED_MESSAGE
 
     def setupCoordinatesGenerator(self): # Used for resetting and setting up the generator (options has to be attribute)
         self.coordinates_generator = self.getCoordinatesGenerator()

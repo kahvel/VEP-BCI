@@ -1,7 +1,7 @@
 import Tkinter
 
 from gui_elements.widgets import AbstractWidget
-from gui_messaging import MessagingInterface
+from messaging.gui_messaging import MessagingInterface
 
 
 class AbstractFrame(AbstractWidget.Widget, MessagingInterface.Frame):

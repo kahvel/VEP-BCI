@@ -33,9 +33,9 @@ class BCI(object):
         self.setupStandby(options)
         if self.connections.setupSuccessful():
             self.target_identification.setup(options)
-            return c.SUCCESS_MESSAGE
+            return c.SETUP_SUCCEEDED_MESSAGE
         else:
-            return c.FAIL_MESSAGE
+            return c.SETUP_FAILED_MESSAGE
 
     def start(self, options):
         self.message_counter = 0
@@ -137,7 +137,7 @@ class BCI(object):
     def startPacketSending(self, target_freqs, current_target, total_time, test_target_option):
         while not self.needNewTarget(test_target_option) and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
-            if main_message in c.ROBOT_COMMANDS:
+            if main_message in c.ROBOT_MESSAGES:
                 self.connections.sendRobotMessage(main_message)
             elif main_message is not None:
                 return main_message

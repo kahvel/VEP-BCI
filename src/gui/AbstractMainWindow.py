@@ -1,10 +1,10 @@
+import os
+
 from gui import ButtonsStateController
-from gui_messaging import RootMessageHandler
+from messaging.gui_messaging import RootMessageHandler
 from gui_elements.windows import MyWindows
 import Savable
 import constants as c
-
-import os
 
 
 class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):

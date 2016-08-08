@@ -188,7 +188,7 @@ class Training(BCI.BCI):
     def startPacketSending(self, target_freqs, dummy_current_target, total_time, test_target_option):
         while not self.needNewTarget(test_target_option) and self.message_counter < total_time:
             main_message = self.main_connection.receiveMessageInstant()
-            if main_message in c.ROBOT_COMMANDS:
+            if main_message in c.ROBOT_MESSAGES:
                 self.connections.sendRobotMessage(main_message)
             elif main_message is not None:
                 print main_message + "!!!"

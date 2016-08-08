@@ -89,9 +89,9 @@ class Connection(AbstractConnection):
         if not self.isClosed():
             while True:
                 message = self.receiveMessageBlock()
-                if message == c.SUCCESS_MESSAGE:
+                if message == c.SETUP_SUCCEEDED_MESSAGE:
                     return True
-                elif message == c.FAIL_MESSAGE:
+                elif message == c.SETUP_FAILED_MESSAGE:
                     return False
                 else:
                     print("Connection.setupSuccessful: " + str(message))

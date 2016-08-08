@@ -1,4 +1,4 @@
-from gui_messaging import MessagingInterface
+from messaging.gui_messaging import MessagingInterface
 from parsers import ClassificationParser
 import constants as c
 
@@ -108,21 +108,21 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
         self.sendEventToChildren(lambda x: x.newResultsReceivedEvent(results))
 
     def evokeRecordedEegReceivedEvent(self):
-        results = self.getResults(c.GET_RECORDED_EEG)
+        results = self.getResults(c.GET_RECORDED_EEG_MESSAGE)
         self.sendEventToChildren(lambda x: x.recordedEegReceivedEvent(results))
 
     def evokeRecordedFeaturesReceivedEvent(self):
-        results = self.getResults(c.GET_RECORDED_FEATURES)
+        results = self.getResults(c.GET_RECORDED_FEATURES_MESSAGE)
         self.sendEventToChildren(lambda x: x.recordedFeaturesReceivedEvent(results))
 
     def evokeRecordedFrequenciesReceivedEvent(self):
-        results = self.getResults(c.GET_RECORDED_FREQUENCIES)
+        results = self.getResults(c.GET_RECORDED_FREQUENCIES_MESSAGE)
         self.sendEventToChildren(lambda x: x.recordedFrequenciesReceivedEvent(results))
 
     def sendFeatureRecrding(self):
         self.resetFeatures()
         self.sendEventToChildren(lambda x: x.getFeaturesEvent())
-        self.connection.sendMessage(c.SEND_RECORDED_FEATURES)
+        self.connection.sendMessage(c.SEND_RECORDED_FEATURES_MESSAGE)
         self.connection.sendMessage(self.features)
 
     def sendClassificationOptions(self):

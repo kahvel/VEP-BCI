@@ -120,19 +120,28 @@ class ModelTrainer(object):
             all_labels.append(labels)
         return all_matrices, all_labels
 
+    def getConcatenatedMatrix(self, recordings, scaling_functions):
+        matrices, labels = self.getAllLookBackRatioMatrices(scaling_functions, recordings)
+        data_matrix = np.concatenate(matrices, axis=0)
+        data_labels = np.concatenate(labels, axis=0)
+        return data_matrix, data_labels
+
+    def getConfusionMatrix(self, model, data, labels):
+        prediction = model.predict(data)
+        return confusion_matrix(labels, prediction)
+
     def start(self):
         minimum = self.getMin(self.recordings)
         maximum = self.getMax(self.recordings)
         scaling_functions = self.getScalingFunctions(minimum, maximum)
-        matrices, labels = self.getAllLookBackRatioMatrices(scaling_functions, self.training_recordings)
-        data_matrix = np.concatenate(matrices, axis=0)
-        data_labels = np.concatenate(labels, axis=0)
+        data_matrix, data_labels = self.getConcatenatedMatrix(self.training_recordings, scaling_functions)
         model = LinearDiscriminantAnalysis()
         model.fit(data_matrix, data_labels)
-        prediction = model.predict(data_matrix)
-        training_confusion_matrix = confusion_matrix(data_labels, prediction)
+        training_confusion_matrix = self.getConfusionMatrix(model, data_matrix, data_labels)
         cross_validation_prediction = cross_val_predict(model, data_matrix, data_labels, cv=self.cross_validation_folds)
         cross_validation_confusion_matrix = confusion_matrix(data_labels, cross_validation_prediction)
+        validation_matrix, validation_labels = self.getConcatenatedMatrix(self.validation_recordings, scaling_functions)
+        validation_confusion_matrix = self.getConfusionMatrix(model, validation_matrix, validation_labels)
 
     def getMethodFromFeature(self, feature):
         return "_".join(feature.split("_")[:-1])

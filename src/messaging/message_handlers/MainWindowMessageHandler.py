@@ -1,8 +1,10 @@
+from messaging.message_handlers import AbstractMessageHandler
 import constants as c
 
 
-class PostOfficeMessageHandler(object):
+class MainWindowMessageHandler(AbstractMessageHandler.MessageHandler):
     def __init__(self, main_frame, buttons_state_controller, input_parser, connection):
+        AbstractMessageHandler.MessageHandler.__init__(self, c.MAIN_WINDOW_MESSAGES)
         self.main_frame = main_frame
         self.buttons_state_controller = buttons_state_controller
         self.options = None
@@ -10,17 +12,14 @@ class PostOfficeMessageHandler(object):
         self.connection = connection
         self.stopped = True
 
-    def canHandle(self, message):
-        return message in c.BCI_MESSAGES
-
     def handle(self, message):
         if message == c.STOP_MESSAGE:
             self.buttons_state_controller.stopClicked()
             self.stopped = True
             self.evokeTrialEndedEvent()
-        elif message == c.SUCCESS_MESSAGE:  # Setup was successful
+        elif message == c.SETUP_SUCCEEDED_MESSAGE:  # Setup was successful
             self.buttons_state_controller.enableStart()
-        elif message == c.FAIL_MESSAGE:  # Setup failed
+        elif message == c.SETUP_FAILED_MESSAGE:  # Setup failed
             self.buttons_state_controller.disableStart()
 
     def setup(self):

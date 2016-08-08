@@ -1,7 +1,6 @@
 from connections.postoffice import MasterConnection, ConnectionPostOfficeEnd
 import Training
-import PostOffice
-
+from messaging.message_handlers import PostOffice
 
 if __name__ == "__main__":
     main_connection = ConnectionPostOfficeEnd.TrainingConnection()

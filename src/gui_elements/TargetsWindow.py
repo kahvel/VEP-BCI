@@ -230,7 +230,7 @@ class TargetsWindow(object):
         self.generators = self.getGenerators(self.targets)
         self.setStandbyTarget(options[c.DATA_TEST][c.TEST_STANDBY])
         self.video_stream = self.getVideoStreamImage(self.window, options[c.DATA_ROBOT])
-        return c.SUCCESS_MESSAGE
+        return c.SETUP_SUCCEEDED_MESSAGE
 
     def getVideoStreamImage(self, window, options):
         if options[c.ROBOT_STREAM] and not options[c.DISABLE]:

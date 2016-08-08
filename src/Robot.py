@@ -27,7 +27,7 @@ class Robot(object):
             if message is not None:
                 if isinstance(message, int):
                     self.sendMessage(self.target_to_command[message])
-                elif message in c.ROBOT_COMMANDS:
+                elif message in c.ROBOT_MESSAGES:
                     self.sendMessage(message)
                 elif isinstance(message, basestring):
                     return message
@@ -76,7 +76,7 @@ class Robot(object):
             print("Could not send message to robot (did you click setup? Is PiTank switched on and computer connected to PiTank?): " + str(e))
 
     def sendMessage(self, message):
-        if message in c.ROBOT_COMMANDS:
+        if message in c.ROBOT_MESSAGES:
             self.sendRobotMessage(message)
         else:
             print("Unknown message in Robot: " + str(message))
@@ -113,7 +113,7 @@ class Robot(object):
         try:
             self.stream = urllib.urlopen("http://192.168.42.1:8080/?action=stream")
             self.bytes = ""
-            return c.SUCCESS_MESSAGE
+            return c.SETUP_SUCCEEDED_MESSAGE
         except Exception, e:
             print("Error: " + str(e))
-            return c.FAIL_MESSAGE
+            return c.SETUP_FAILED_MESSAGE

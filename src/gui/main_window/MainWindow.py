@@ -1,6 +1,6 @@
 from gui.main_window import MainFrame
 from gui import AbstractMainWindow
-import PostOfficeMessageHandler
+from messaging.message_handlers import MainWindowMessageHandler
 from parsers import InputParser
 import constants as c
 
@@ -14,4 +14,4 @@ class MainWindow(AbstractMainWindow.AbstractMainWindow):
 
     def getMessageHandler(self, main_frame, bottom_frame_buttons_states, connection):
         input_parser = InputParser.MainInputParser()
-        return PostOfficeMessageHandler.PostOfficeMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)
+        return MainWindowMessageHandler.MainWindowMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)

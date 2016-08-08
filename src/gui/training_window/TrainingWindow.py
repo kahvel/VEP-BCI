@@ -1,6 +1,6 @@
 from gui.main_window import MainFrame
 from gui import AbstractMainWindow
-import PostOfficeMessageHandler
+from messaging.message_handlers import MainWindowMessageHandler
 from parsers import InputParser
 import constants as c
 
@@ -14,7 +14,7 @@ class TrainingWindow(AbstractMainWindow.AbstractMainWindow):
 
     def getMessageHandler(self, main_frame, bottom_frame_buttons_states, connection):
         input_parser = InputParser.TrainingInputParser()
-        return PostOfficeMessageHandler.PostOfficeMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)
+        return MainWindowMessageHandler.MainWindowMessageHandler(main_frame, bottom_frame_buttons_states, input_parser, connection)
 
     def loadEeg(self, file):  # TODO this is broken due to new recording system
         AbstractMainWindow.AbstractMainWindow.loadEeg(self, file)

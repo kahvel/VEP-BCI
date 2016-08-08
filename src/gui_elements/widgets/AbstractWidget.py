@@ -1,6 +1,6 @@
 import Tkinter
 
-from gui_messaging import MessagingInterface
+from messaging.gui_messaging import MessagingInterface
 
 
 class Widget(object):
