@@ -9,7 +9,7 @@ class CheckbuttonFrame(AddingCheckbuttonsFrame.AddingCheckbuttonsFrame):
     def __init__(self, parent, name, row, column, **kwargs):
         AddingCheckbuttonsFrame.AddingCheckbuttonsFrame.__init__(self, parent, name, row, column, [], **kwargs)
 
-    def trialEndedEvent(self):
+    def addNewRecordingTabEvent(self):
         self.addButton()
 
     def recordTabRemoved(self, deleted_tab):

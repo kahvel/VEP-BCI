@@ -44,6 +44,8 @@ class Results(object):
 
     def recordedFrequenciesReceivedEvent(self, frequencies): pass
 
+    def addNewRecordingTabEvent(self): pass
+
 
 class Classification(object):
     def __init__(self): pass
@@ -85,6 +87,10 @@ class Targets(object):
     def targetEnabledEvent(self, tabs, current_tab): pass
 
     def monitorFrequencyChangedEvent(self): pass
+
+    def getTargetNotebookWidgetsEvent(self): pass
+
+    def sendTargetNotebookWidgetsEvent(self, target_notebook_widgets): pass
 
 
 class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification):

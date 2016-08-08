@@ -90,6 +90,10 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
         self.evokeRecordedEegReceivedEvent()
         self.evokeRecordedFeaturesReceivedEvent()
         self.evokeRecordedFrequenciesReceivedEvent()
+        self.evokeAddNewRecordingTabEvent()  # Has to be last
+
+    def evokeAddNewRecordingTabEvent(self):
+        self.sendEventToChildren(lambda x: x.addNewRecordingTabEvent())
 
     def getResults(self, message):
         self.connection.sendMessage(message)
@@ -126,6 +130,10 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
         self.connection.sendMessage(c.SEND_CLASSIFICATION_OPTIONS)
         self.connection.sendMessage(self.classification_options)
 
+    def sendStartTraining(self):
+        self.connection.sendMessage(c.TRAINING_START_MESSAGE)
+
     def trainButtonClickedEvent(self):
         self.sendFeatureRecrding()
         self.sendClassificationOptions()
+        self.sendStartTraining()

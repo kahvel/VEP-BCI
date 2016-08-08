@@ -7,7 +7,7 @@ class AddingCheckbuttonsFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
         self.disabled_tabs = []
         self.buttons_in_row = buttons_in_row
-        self.initial_tabs = initial_tabs
+        self.target_notebook_widgets = None
 
     def loadDefaultValue(self):
         """
@@ -15,8 +15,15 @@ class AddingCheckbuttonsFrame(Frame.Frame):
         :return:
         """
         Frame.Frame.loadDefaultValue(self)
-        for disabled in self.initial_tabs:
-            self.addButton(disabled)
+        self.evokeGetTargetNotebookWidgetsEvent()
+        for widget in self.target_notebook_widgets:
+            self.addButton(widget.disabled)
+
+    def evokeGetTargetNotebookWidgetsEvent(self):
+        self.sendEventToAll(lambda x: x.getTargetNotebookWidgetsEvent())
+
+    def sendTargetNotebookWidgetsEvent(self, target_notebook_widgets):
+        self.target_notebook_widgets = target_notebook_widgets
 
     def addButton(self, disabled=False):
         self.disabled_tabs.append(disabled)

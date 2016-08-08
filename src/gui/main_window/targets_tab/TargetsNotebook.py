@@ -21,3 +21,6 @@ class TargetsNotebook(PlusNotebook.PlusNotebook):
     def deleteTab(self):  # Updates TargetChoosingMenus
         deleted_tab = PlusNotebook.PlusNotebook.deleteTab(self)
         self.sendEventToAll(lambda x: x.targetRemovedEvent(deleted_tab))
+
+    def getTargetNotebookWidgetsEvent(self):
+        self.sendEventToAll(lambda x: x.sendTargetNotebookWidgetsEvent(self.widgets_list))

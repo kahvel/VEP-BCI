@@ -52,7 +52,7 @@ class TimestampFrame(Frame.Frame):
             Textboxes.DisabledTextLabelTextbox(self, c.RESULTS_DATA_TIMESTAMP, 0, 0, width=30, columnspan=3),
         ))
 
-    def trialEndedEvent(self):
+    def addNewRecordingTabEvent(self):
         self.widgets_dict[c.RESULTS_DATA_TIMESTAMP].setValue(self.getTimestamp())
 
     def getTimestamp(self):

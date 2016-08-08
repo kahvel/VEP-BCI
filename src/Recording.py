@@ -60,15 +60,36 @@ class DataAndExpectedTargets(Switchable.Switchable):
     def toFloat(self, string):
         return float(string)
 
-    def getColumns(self, list_of_dicts):
+    def getColumns(self, list_of_dicts, function):
         columns = {}
         for dict in list_of_dicts:
             for key in dict:
                 if key in columns:
-                    columns[key].append(self.toInt(dict[key]))
+                    columns[key].append(function(dict[key]))
                 else:
-                    columns[key] = [self.toInt(dict[key])]
+                    columns[key] = [function(dict[key])]
         return columns
+
+    def getColumnsAsIntegers(self, list_of_dicts):
+        return self.getColumns(list_of_dicts, self.toInt)
+
+    def getColumnsAsFloats(self, list_of_dicts):
+        return self.getColumns(list_of_dicts, self.toFloat)
+
+    def getRows(self, list_of_dicts, function):
+        rows = []
+        for dict in list_of_dicts:
+            rows.append({key: function(dict[key]) for key in dict})
+        return rows
+
+    def getRowsAsIntegers(self, list_of_dicts):
+        return self.getRows(list_of_dicts, self.toInt)
+
+    def getRowsAsFloats(self, list_of_dicts):
+        return self.getRows(list_of_dicts, self.toFloat)
+
+    def defaultGetRows(self, list_of_dicts):
+        raise NotImplementedError("defaultGetRows not implemented!")
 
     def getDataFileHeader(self):
         raise NotImplementedError("getDataFileHeader not implemented!")
@@ -77,16 +98,13 @@ class DataAndExpectedTargets(Switchable.Switchable):
         self.writeCsv(self.getDataFilePath(directory), self.getDataFileHeader(), self.getDataForSaving())
         self.writeCsv(self.getLabelsFilePath(directory), c.CSV_LABEL_FILE_HEADER, self.getLabelsForSaving())
 
-    def getRows(self, list_of_dicts):
-        raise NotImplementedError("getRows not implemented!")
-
     def loadData(self, directory):
         with open(self.getDataFilePath(directory), "r") as csv_file:
-            self.data = self.getRows(csv.DictReader(csv_file))
+            self.data = self.defaultGetRows(csv.DictReader(csv_file))
 
     def loadLabels(self, directory):
         with open(self.getLabelsFilePath(directory), "r") as csv_file:
-            columns = self.getColumns(csv.DictReader(csv_file))
+            columns = self.getColumnsAsIntegers(csv.DictReader(csv_file))
             self.expected_targets = columns[c.CSV_TRUE_LABEL]
             self.predicted_targets = columns[c.CSV_PREDICTED_LABEL]
             self.packet_number = columns[c.CSV_PACKET_NUMBER]
@@ -112,11 +130,8 @@ class Eeg(DataAndExpectedTargets):
     def getDataForSaving(self):
         return self.data
 
-    def getRows(self, list_of_dicts):
-        rows = []
-        for dict in list_of_dicts:
-            rows.append({key: self.toInt(dict[key]) for key in dict})
-        return rows
+    def defaultGetRows(self, list_of_dicts):
+        return self.getRowsAsIntegers(list_of_dicts)
 
 
 class Features(DataAndExpectedTargets):
@@ -135,11 +150,8 @@ class Features(DataAndExpectedTargets):
     def getDataFileHeader(self):
         return sorted(self.data[0].keys()) if len(self.data) > 0 else []
 
-    def getRows(self, list_of_dicts):
-        rows = []
-        for dict in list_of_dicts:
-            rows.append({key: self.toFloat(dict[key]) for key in dict})
-        return rows
+    def defaultGetRows(self, list_of_dicts):
+        return self.getRowsAsFloats(list_of_dicts)
 
     # def getRows(self, list_of_dicts):
     #     rows = []

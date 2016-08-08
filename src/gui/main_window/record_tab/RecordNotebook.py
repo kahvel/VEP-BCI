@@ -23,8 +23,8 @@ class RecordNotebook(SameTabsNotebook.SameTabsNotebook):
     def addInitialTabs(self):
         self.addNewTab()
 
-    def trialEndedEvent(self):
-        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.trialEndedEvent())
+    def addNewRecordingTabEvent(self):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.addNewRecordingTabEvent())
         self.addNewTabToFill()
         return c.STOP_EVENT_SENDING
 

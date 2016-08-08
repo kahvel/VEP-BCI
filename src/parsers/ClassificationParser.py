@@ -16,7 +16,10 @@ class ClassificationParser(object):
         return int(all_data[c.CLASSIFICATION_TAB_OPTIONS_FRAME][c.CLASSIFICATION_TAB_CV_FOLDS])
 
     def parseTargetCheckboxes(self, all_data, key):
-        return [int(number)-1 for number, enabled in all_data[key][key].items() if enabled == 1]
+        if all_data[key][key] is not None:
+            return [int(number)-1 for number, enabled in all_data[key][key].items() if enabled == 1]
+        else:
+            return []
 
     def parseIdentificationResultParameters(self, all_data, frame_name):
         return {

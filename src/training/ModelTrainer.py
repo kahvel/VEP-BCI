@@ -19,11 +19,40 @@ class ModelTrainer(object):
         self.recordings = recordings
 
     def setup(self, options):
-        self.features_to_use = options[c.CLASSIFICATION_PARSE_FEATURES_TO_USE]
+        self.setFeaturesToUse(options[c.CLASSIFICATION_PARSE_FEATURES_TO_USE])
         self.look_back_length = options[c.CLASSIFICATION_PARSE_LOOK_BACK_LENGTH]
         self.cross_validation_folds = options[c.CLASSIFICATION_PARSE_CV_FOLDS]
-        self.training_recordings = options[c.CLASSIFICATION_PARSE_RECORDING_FOR_TRAINING]
-        self.validation_recordings = options[c.CLASSIFICATION_PARSE_RECORDING_FOR_VALIDATION]
+        self.training_recordings = [self.recordings[i] for i in options[c.CLASSIFICATION_PARSE_RECORDING_FOR_TRAINING]]
+        self.validation_recordings = [self.recordings[i] for i in options[c.CLASSIFICATION_PARSE_RECORDING_FOR_VALIDATION]]
+
+    def setFeaturesToUse(self, features_to_use):
+        self.features_to_use = self.getFeaturesToUse(features_to_use)
+        self.printWarningIfBadFeatures(features_to_use)
+
+    def getFeaturesToUse(self, features_to_use):
+        if features_to_use is None:
+            return self.getHeaderOfFirstRecording()
+        else:
+            return features_to_use
+
+    def printWarningIfBadFeatures(self, features_to_use):
+        if not self.checkFeatures(features_to_use):
+            print "Recordings are missing features!"
+
+    def getHeaderOfFirstRecording(self):
+        return self.recordings[0].getDataFileHeader()
+
+    def allFeaturesInRecordings(self, features_to_use):
+        return all(feature in recording.getDataFileHeader() for feature in features_to_use for recording in self.recordings)
+
+    def allRecordingsSameFeatures(self):
+        return all(self.getHeaderOfFirstRecording() == recording.getDataFileHeader() for recording in self.recordings)
+
+    def checkFeatures(self, features_to_use):
+        if features_to_use is None:
+            return self.allRecordingsSameFeatures()
+        else:
+            return self.allFeaturesInRecordings(features_to_use)
 
     def buildDataMatrix(self, recording):
         return [column for method, column in self.iterateColumns(recording)]
@@ -34,7 +63,7 @@ class ModelTrainer(object):
     def getScaledColumnsGroupedByMethod(self, recording, scaling_functions):
         grouped_columns = {method: [] for method in self.getExtractionMethodNames()}
         for method, column in self.iterateColumns(recording):
-            grouped_columns[method].append(scaling_functions[method](column))
+            grouped_columns[method].append(map(scaling_functions[method], column))
         return grouped_columns
 
     def getGroupRatioRows(self, group):
@@ -81,10 +110,10 @@ class ModelTrainer(object):
         self.extendNewSample(previous_labels, sample_count, new_data, new_sample, sample, label, new_labels)
         return np.array(new_data), new_labels
 
-    def getAllLookBackRatioMatrices(self, scaling_functions):
+    def getAllLookBackRatioMatrices(self, scaling_functions, recordings):
         all_matrices = []
         all_labels = []
-        for recording in self.recordings:
+        for recording in recordings:
             ratio_matrix = self.buildRatioMatrix(recording, scaling_functions)
             look_back_ratio_matrix, labels = self.groupWithPreviousSamples(ratio_matrix, recording.expected_targets, self.look_back_length)
             all_matrices.append(look_back_ratio_matrix)
@@ -92,10 +121,10 @@ class ModelTrainer(object):
         return all_matrices, all_labels
 
     def start(self):
-        minimum = self.getMin()
-        maximum = self.getMax()
+        minimum = self.getMin(self.recordings)
+        maximum = self.getMax(self.recordings)
         scaling_functions = self.getScalingFunctions(minimum, maximum)
-        matrices, labels = self.getAllLookBackRatioMatrices(scaling_functions)
+        matrices, labels = self.getAllLookBackRatioMatrices(scaling_functions, self.training_recordings)
         data_matrix = np.concatenate(matrices, axis=0)
         data_labels = np.concatenate(labels, axis=0)
         model = LinearDiscriminantAnalysis()
@@ -111,39 +140,30 @@ class ModelTrainer(object):
     def getExtractionMethodNames(self):
         return sorted(set(self.getMethodFromFeature(feature) for feature in self.features_to_use))
 
-    def allFeaturesInRecordings(self):
-        return all(feature in recording.getDataFileHeader() for feature in self.features_to_use for recording in self.recordings)
-
-    def allRecordingsSameFeatures(self):
-        return all(self.recordings[0].getDataFileHeader() == recording.getDataFileHeader() for recording in self.recordings)
-
-    def checkFeatures(self):
-        if self.features_to_use is None:
-            return self.allRecordingsSameFeatures()
-        else:
-            return self.allFeaturesInRecordings()
-
     def iterateColumns(self, recording):
         extraction_method_names = self.getExtractionMethodNames()
-        columns = recording.getColumns()
+        columns = recording.getColumnsAsFloats(recording.data)
         for key in sorted(columns):
             method = self.getMethodFromFeature(key)
             if method in extraction_method_names:
                 yield method, columns[key]
 
-    def getExtremum(self, function):
+    def getExtremum(self, function, recordings):
         extraction_method_names = self.getExtractionMethodNames()
         extrema = {method: [] for method in extraction_method_names}
-        for recording in self.recordings:
+        for recording in recordings:
             for method, column in self.iterateColumns(recording):
                 extrema[method].append(function(column))
-        return {method: min(extrema[method]) for method in extraction_method_names}
+        return {method: function(extrema[method]) for method in extraction_method_names}
 
-    def getMin(self):
-        return self.getExtremum(min)
+    def getMin(self, recordings):
+        return self.getExtremum(min, recordings)
 
-    def getMax(self):
-        return self.getExtremum(max)
+    def getMax(self, recordings):
+        return self.getExtremum(max, recordings)
+
+    def getScalingFunction(self, minimum, maximum):
+        return lambda x: (x-minimum)/(maximum-minimum)+1
 
     def getScalingFunctions(self, minimums, maximums):
-        return {method: lambda x: (x-minimums[method])/(maximums[method]-minimums[method]) for method in self.getExtractionMethodNames()}
+        return {method: self.getScalingFunction(minimums[method], maximums[method]) for method in self.getExtractionMethodNames()}

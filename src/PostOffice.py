@@ -32,6 +32,8 @@ class PostOffice(object):
                     self.trainer.setRecordings(self.main_connection.receiveMessageBlock())
                 elif message == c.SEND_CLASSIFICATION_OPTIONS:
                     self.trainer.setup(self.main_connection.receiveMessageBlock())
+                elif message == c.TRAINING_START_MESSAGE:
+                    self.trainer.start()
                 elif message in c.ROBOT_COMMANDS:
                     self.connections.sendRobotMessage(message)
                 else:
