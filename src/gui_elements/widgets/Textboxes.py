@@ -1,5 +1,7 @@
 import Tkinter
 import tkColorChooser
+import datetime
+import time
 
 from gui_elements.widgets.frames import PlusMinusFrame, Frame
 from gui_elements.widgets import AbstractWidget, Buttons
@@ -85,6 +87,28 @@ class LabelTextboxNoValidation(LabelTextbox):
 class DisabledTextLabelTextbox(LabelTextboxNoValidation):
     def __init__(self, parent, name, row, column, **kwargs):
         LabelTextbox.__init__(self, parent, name, row, column, default_disability=1, default_disablers=["Always Disabled"], default_value="", **kwargs)
+
+
+class TimestampTextbox(DisabledTextLabelTextbox):
+    def __init__(self, parent, row, column, **kwargs):
+        DisabledTextLabelTextbox.__init__(self, parent, c.TIMESTAMP_TEXTBOX, row, column, width=30, columnspan=3, **kwargs)
+
+    def setTimestamp(self):
+        self.setValue(self.getTimestamp())
+
+    def getTimestamp(self):
+        return datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M:%S %d.%m.%Y')
+
+
+class DirectoryTextbox(DisabledTextLabelTextbox):
+    def __init__(self, parent, row, column, **kwargs):
+        DisabledTextLabelTextbox.__init__(self, parent, c.DIRECTORY_TEXTBOX, row, column, width=30, columnspan=3, **kwargs)
+
+    def saveBciSettingsEvent(self, file):
+        self.setValue(file.name)
+
+    def loadBciSettingsEvent(self, file):
+        self.setValue(file.name)
 
 
 class SequenceTextbox(LabelTextbox):

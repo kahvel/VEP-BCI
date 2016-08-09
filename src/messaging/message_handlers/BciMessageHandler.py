@@ -100,5 +100,9 @@ class BciMessageHandler(AbstractMessageHandler.MessageHandler):
         elif self.data_exchange_handler.canHandle(message):
             self.data_exchange_handler.handle(message)
 
+    def handleThread(self):
+        if self.control_message_handler.threadJustDied():
+            self.handleThreadDied()
+
     def handleThreadDied(self):
         self.main_connection.sendMessage(c.BCI_STOPPED_MESSAGE)

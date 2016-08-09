@@ -9,10 +9,16 @@ class CheckbuttonFrame(AddingCheckbuttonsFrame.AddingCheckbuttonsFrame):
     def __init__(self, parent, name, row, column, **kwargs):
         AddingCheckbuttonsFrame.AddingCheckbuttonsFrame.__init__(self, parent, name, row, column, [], **kwargs)
 
+    def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets):
+        self.setWidgetsNotebook(recording_notebook_widgets)
+
+    def getNotebookWidgetsEvent(self):
+        self.sendEventToAll(lambda x: x.getRecordingNotebookWidgetsEvent())
+
     def addNewRecordingTabEvent(self):
         self.addButton()
 
-    def recordTabRemoved(self, deleted_tab):
+    def recordTabRemovedEvent(self, deleted_tab):
         self.deleteButton(deleted_tab)
 
     def loadEegEvent(self, directory):

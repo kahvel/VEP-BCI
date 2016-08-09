@@ -15,4 +15,10 @@ class TrainingMessageHandler(AbstractMessageHandler.MessageHandler):
         elif message == c.SEND_CLASSIFICATION_OPTIONS:
             self.trainer.setup(self.main_connection.receiveMessageBlock())
         elif message == c.TRAINING_START_MESSAGE:
-            self.trainer.start()
+            self.handleTrainingStart()
+        elif message == c.GET_MODEL_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getModel())
+
+    def handleTrainingStart(self):
+        self.trainer.start()
+        self.main_connection.sendMessage(c.TRAINING_STOPPED_MESSAGE)

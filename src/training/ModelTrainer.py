@@ -14,6 +14,7 @@ class ModelTrainer(object):
         self.cross_validation_folds = None
         self.training_recordings = []
         self.validation_recordings = []
+        self.model = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
@@ -142,6 +143,7 @@ class ModelTrainer(object):
         cross_validation_confusion_matrix = confusion_matrix(data_labels, cross_validation_prediction)
         validation_matrix, validation_labels = self.getConcatenatedMatrix(self.validation_recordings, scaling_functions)
         validation_confusion_matrix = self.getConfusionMatrix(model, validation_matrix, validation_labels)
+        self.model = model
 
     def getMethodFromFeature(self, feature):
         return "_".join(feature.split("_")[:-1])
@@ -176,3 +178,6 @@ class ModelTrainer(object):
 
     def getScalingFunctions(self, minimums, maximums):
         return {method: self.getScalingFunction(minimums[method], maximums[method]) for method in self.getExtractionMethodNames()}
+
+    def getModel(self):
+        return self.model

@@ -14,15 +14,29 @@ class MainWindowMessageHandler(AbstractMessageHandler.MessageHandler):
 
     def handle(self, message):
         if message == c.BCI_STOPPED_MESSAGE:
-            self.buttons_state_controller.stopClicked()
-            self.stopped = True
-            self.evokeTrialEndedEvent()
+            self.handleBciStopped()
         elif message == c.SETUP_SUCCEEDED_MESSAGE:
-            print "Setup succeeded!"
-            self.buttons_state_controller.enableStart()
+            self.handleSetupSucceeded()
         elif message == c.SETUP_FAILED_MESSAGE:
-            print "Setup failed!"
-            self.buttons_state_controller.disableStart()
+            self.handleSetupFailed()
+        elif message == c.TRAINING_STOPPED_MESSAGE:
+            self.handleTrainingStopped()
+
+    def handleBciStopped(self):
+        self.buttons_state_controller.stopClicked()
+        self.stopped = True
+        self.evokeTrialEndedEvent()
+
+    def handleSetupSucceeded(self):
+        print "Setup succeeded!"
+        self.buttons_state_controller.enableStart()
+
+    def handleSetupFailed(self):
+        print "Setup failed!"
+        self.buttons_state_controller.disableStart()
+
+    def handleTrainingStopped(self):
+        self.evokeTrainingEndedEvent()
 
     def setup(self):
         not_validated = self.main_frame.getNotValidated()
@@ -48,3 +62,6 @@ class MainWindowMessageHandler(AbstractMessageHandler.MessageHandler):
 
     def evokeTrialEndedEvent(self):
         self.main_frame.sendEventToRoot(lambda x: x.trialEndedEvent())
+
+    def evokeTrainingEndedEvent(self):
+        self.main_frame.sendEventToRoot(lambda x: x.trainingEndedEvent())

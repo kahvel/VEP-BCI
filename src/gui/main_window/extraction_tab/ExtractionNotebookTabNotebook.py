@@ -71,6 +71,12 @@ class TargetsFrame(AddingCheckbuttonsFrame.AddingCheckbuttonsFrame):
     def __init__(self, parent, row, column, **kwargs):
         AddingCheckbuttonsFrame.AddingCheckbuttonsFrame.__init__(self, parent, c.EXTRACTION_TAB_TARGETS_FRAME, row, column, [False], **kwargs)
 
+    def sendTargetNotebookWidgetsEvent(self, targets_notebook_widgets):
+        self.setWidgetsNotebook(targets_notebook_widgets)
+
+    def getNotebookWidgetsEvent(self):
+        self.sendEventToAll(lambda x: x.getTargetNotebookWidgetsEvent())
+
     def targetAddedEvent(self):
         self.addButton(False)
 

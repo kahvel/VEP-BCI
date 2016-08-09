@@ -23,8 +23,7 @@ class PostOffice(AbstractMessageHandler.MessageHandler):
         self.main_connection.close()
 
     def handleNonMessages(self):
-        if self.bci_message_handler.control_message_handler.threadJustDied():
-            self.bci_message_handler.handleThreadDied()
+        self.bci_message_handler.handleThread()
 
     def handle(self, message):
         if message is not None:

@@ -28,7 +28,11 @@ class Recording(object):
 
     def loadEegEvent(self, directory): pass
 
-    def recordTabRemoved(self, deleted_tab): pass
+    def recordTabRemovedEvent(self, deleted_tab): pass
+
+    def getRecordingNotebookWidgetsEvent(self): pass
+
+    def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets): pass
 
 
 class Results(object):
@@ -93,7 +97,21 @@ class Targets(object):
     def sendTargetNotebookWidgetsEvent(self, target_notebook_widgets): pass
 
 
-class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification):
+class Training(object):
+    def __init__(self): pass
+
+    def addNewModelTabEvent(self): pass
+
+    def modelTabRemovedEvent(self): pass
+
+    def modelReceivedEvent(self, model): pass
+
+    def saveModelEvent(self, directory): pass
+
+    def loadModelEvent(self, directory): pass
+
+
+class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification, Training):
     def __init__(self):
         Bci.__init__(self)
         Recording.__init__(self)
@@ -101,8 +119,11 @@ class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification
         Robot.__init__(self)
         Targets.__init__(self)
         Classification.__init__(self)
+        Training.__init__(self)
 
     def trialEndedEvent(self): pass
+
+    def trainingEndedEvent(self): pass
 
 
 class MessageDown(object):

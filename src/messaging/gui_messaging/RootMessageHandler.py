@@ -68,7 +68,7 @@ class Classification(MessagingInterface.Classification):
         self.features = []
 
 
-class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInterface.Results, Robot, MessagingInterface.Root, MessagingInterface.Targets, Classification):
+class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInterface.Results, Robot, MessagingInterface.Root, MessagingInterface.Targets, Classification, MessagingInterface.Training):
     def __init__(self, connection, main_window_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, main_window_message_handler, main_window, button_state_controller)
         MessagingInterface.Recording.__init__(self)
@@ -77,12 +77,24 @@ class MainWindowMessageHandler(Bci, MessagingInterface.Recording, MessagingInter
         MessagingInterface.Root.__init__(self, [main_frame], main_window_message_handler)
         MessagingInterface.Targets.__init__(self)
         Classification.__init__(self)
+        MessagingInterface.Training.__init__(self)
         self.main_frame = main_frame
 
     def checkPostOfficeMessages(self):
         message = self.connection.receiveMessageInstant()
         if self.main_window_message_handler.canHandle(message):
             self.main_window_message_handler.handle(message)
+
+    def trainingEndedEvent(self):
+        self.evokeModelReceivedEvent()
+        self.evokeAddNewModelTabEvent()
+
+    def evokeAddNewModelTabEvent(self):
+        self.sendEventToChildren(lambda x: x.addNewModelTabEvent())
+
+    def evokeModelReceivedEvent(self):
+        model = self.getResults(c.GET_MODEL_MESSAGE)
+        self.sendEventToChildren(lambda x: x.modelReceivedEvent(model))
 
     def trialEndedEvent(self):
         self.evokeResultsReceivedEvent()

@@ -6,6 +6,7 @@ from gui.main_window.test_tab import TestTab
 from gui.main_window.robot_tab import RobotTab
 from gui.main_window.classification_tab import ClassificationTab
 from gui.main_window.record_tab import RecordTab
+from gui.main_window.models_tab import ModelsTab
 import constants as c
 
 
@@ -20,4 +21,5 @@ class MainNotebook(Notebook.Notebook):
             RobotTab.RobotTab(self),
             ClassificationTab.ClassificationTab(self),
             RecordTab.RecordTab(self, 0, 0),
+            ModelsTab.ModelsTab(self, 0, 0),
         ))

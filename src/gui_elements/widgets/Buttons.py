@@ -1,4 +1,5 @@
 from gui_elements.widgets import AbstractWidget
+import Savable
 
 import Tkinter
 
@@ -53,3 +54,27 @@ class DisableButton(SunkenButton):
         else:
             self.enable_command(self.name)
 
+
+class EventNotebookSaveButton(Button, Savable.SavableDirectory):
+    def __init__(self, parent, name, row, column, **kwargs):
+        Button.__init__(self, parent, name, row, column, command=self.saveButtonClicked, **kwargs)
+        self.save_me = False
+
+    def saveMe(self):
+        return self.save_me
+
+    def saveButtonClicked(self):
+        self.askSaveFile()
+
+    def sendSaveEvent(self, file):
+        raise NotImplementedError("saveEvent not implemented!")
+
+    def saveToFile(self, file):
+        """
+        askSaveFile calls this function when corresponding button is pressed.
+        :param file:
+        :return:
+        """
+        self.save_me = True
+        self.sendEventToAll(self.sendSaveEvent(file), True)
+        self.save_me = False
