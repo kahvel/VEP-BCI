@@ -43,8 +43,8 @@ class TargetChoosingMenu(OptionMenu):
         self.reset_value = kwargs.get("reset_value", values[0])
         self.disabled_tabs = []
 
-    def addOption(self, option, command=lambda x: None):
-        self.widget["menu"].add_command(label=option, command=Tkinter._setit(self.variable, option, callback=command))
+    def addOption(self, option):
+        self.widget["menu"].add_command(label=option, command=Tkinter._setit(self.variable, option, callback=self.command))
 
     def addDefaultOptions(self):
         for option in self.values:

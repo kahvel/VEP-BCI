@@ -38,9 +38,9 @@ class AbstractFrame(AbstractWidget.Widget, MessagingInterface.FrameMessageHandle
         for child in self.widgets_list:
             child.loadDefaultValue()
 
-    def conditionalDisabling(self, disabler, values, widgets):
+    def conditionalDisabling(self, disabler, values_when_enabled, widgets):
         for widget in widgets:
-            if disabler.variable.get() in values:
+            if disabler.variable.get() in values_when_enabled:
                 widget.enable(disabler.name)
             else:
                 widget.disable(disabler.name)

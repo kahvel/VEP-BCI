@@ -115,7 +115,7 @@ class TargetIdentification(object):
             functions[group] = lambda x: (x-minimum)/(maximum-minimum)
         return functions
 
-    def resetTargetVariables(self):
+    def resetNeedNewTarget(self):
         self.need_new_target = False
         self.new_target_counter = 0
 

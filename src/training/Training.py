@@ -70,7 +70,7 @@ def costFunction(numbers, options_handler, frequencies):
     new_options = options_handler.numbersToOptions(numbers)
     target_identification.results.start(frequencies.values())
     target_identification.new_results.start(frequencies.values())
-    target_identification.resetTargetVariables()
+    target_identification.resetNeedNewTarget()
     target_identification.setup(new_options)
     target_identification.resetResults(frequencies.values())
     clear_buffers = False

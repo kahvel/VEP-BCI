@@ -167,7 +167,7 @@ class Training(BCI.BCI):
 
     def setTrainingTime(self, options):
         options[c.DATA_TEST][c.TEST_TAB_UNLIMITED] = False
-        options[c.DATA_TEST][c.TEST_TAB_TIME] = self.getTotalTrainingTime()
+        options[c.DATA_TEST][c.TEST_TAB_TOTAL_TIME] = self.getTotalTrainingTime()
 
     def getTotalTrainingTime(self):
         return len(self.packets)
