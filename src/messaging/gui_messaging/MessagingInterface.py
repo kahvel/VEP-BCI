@@ -1,4 +1,4 @@
-import constants as c
+import AbstractMessageSenders
 
 
 class Bci(object):
@@ -106,12 +106,32 @@ class Training(object):
 
     def modelReceivedEvent(self, model): pass
 
+    def validationDataReceivedEvent(self, validation_data): pass
+
+    def validationLabelsReceivedEvent(self, validation_labels): pass
+
+    def trainingDataReceivedEvent(self, training_data): pass
+
+    def trainingLabelsReceivedEvent(self, training_labels): pass
+
     def saveModelEvent(self, directory): pass
 
     def loadModelEvent(self, directory): pass
 
 
-class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification, Training):
+class TrialEndedHandler(object):
+    def __init__(self): pass
+
+    def trialEndedEvent(self): pass
+
+
+class TrainingEndedHandler(object):
+    def __init__(self): pass
+
+    def trainingEndedEvent(self): pass
+
+
+class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification, Training, TrialEndedHandler, TrainingEndedHandler):
     def __init__(self):
         Bci.__init__(self)
         Recording.__init__(self)
@@ -120,89 +140,17 @@ class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification
         Targets.__init__(self)
         Classification.__init__(self)
         Training.__init__(self)
-
-    def trialEndedEvent(self): pass
-
-    def trainingEndedEvent(self): pass
+        TrialEndedHandler.__init__(self)
+        TrainingEndedHandler.__init__(self)
 
 
-class MessageDown(object):
-    def __init__(self):
-        pass
-
-    def sendEventToChildren(self, function):
-        raise NotImplementedError("sendEventToChildren not implemented!")
-
-
-class Leaf(MessageDown):
-    def __init__(self):
-        MessageDown.__init__(self)
-
-    def sendEventToChildren(self, function):
-        function(self)
-
-
-class NonLeaf(MessageDown):
-    def __init__(self, widgets_list):
-        MessageDown.__init__(self)
-        self.widgets_list = widgets_list
-
-    def sendEventToChildren(self, function):
-        message = function(self)
-        if not message == c.STOP_EVENT_SENDING:
-            for widget in self.widgets_list:
-                widget.sendEventToChildren(function)
-
-
-class MessageUp(object):
-    def __init__(self):
-        pass
-
-    def sendEventToRoot(self, function, needs_stopped_state=False):
-        raise NotImplementedError("sendEventToRoot not implemented!")
-
-
-class NonRoot(MessageUp):
-    def __init__(self, parent):
-        MessageUp.__init__(self)
-        self.parent = parent
-
-    def sendEventToRoot(self, function, needs_stopped_state=False):
-        self.parent.sendEventToRoot(function, needs_stopped_state)
-
-    def sendEventToAll(self, function, needs_stopped_state=False):
-        self.parent.sendEventToAll(function, needs_stopped_state)
-
-
-class Root(MessageUp, NonLeaf):
-    def __init__(self, widgets_list, post_office_message_handler):
-        MessageUp.__init__(self)
-        NonLeaf.__init__(self, widgets_list)
-        self.post_office_message_handler = post_office_message_handler
-
-    def bciIsStopped(self):
-        return self.post_office_message_handler.isStopped()
-
-    def checkIfStopped(self, function, needs_stopped_state):
-        if needs_stopped_state and self.bciIsStopped() or not needs_stopped_state:
-            function()
-        else:
-            print "BCI has to be stopped to use this functionality!"
-
-    def sendEventToRoot(self, function, needs_stopped_state=False):
-        self.checkIfStopped(lambda: function(self), needs_stopped_state)
-
-    def sendEventToAll(self, function, needs_stopped_state=False):
-        self.checkIfStopped(lambda: self.sendEventToChildren(function), needs_stopped_state)
-
-
-class Widget(NonRoot, Leaf, MessagingInterface):
-    def __init__(self, parent):
-        NonRoot.__init__(self, parent)
-        Leaf.__init__(self)
-
-
-class Frame(NonRoot, NonLeaf, MessagingInterface):
+class FrameMessageHandler(MessagingInterface, AbstractMessageSenders.Frame):
     def __init__(self, parent, widgets_list):
-        NonRoot.__init__(self, parent)
-        NonLeaf.__init__(self, widgets_list)
+        MessagingInterface.__init__(self)
+        AbstractMessageSenders.Frame.__init__(self, parent, widgets_list)
+
+
+class WidgetMessageHandler(MessagingInterface, AbstractMessageSenders.Widget):
+    def __init__(self, parent):
+        MessagingInterface.__init__(self)
+        AbstractMessageSenders.Widget.__init__(self, parent)

@@ -15,6 +15,10 @@ class ModelTrainer(object):
         self.training_recordings = []
         self.validation_recordings = []
         self.model = None
+        self.training_data = None
+        self.training_labels = None
+        self.validation_data = None
+        self.validation_labels = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
@@ -135,15 +139,19 @@ class ModelTrainer(object):
         minimum = self.getMin(self.recordings)
         maximum = self.getMax(self.recordings)
         scaling_functions = self.getScalingFunctions(minimum, maximum)
-        data_matrix, data_labels = self.getConcatenatedMatrix(self.training_recordings, scaling_functions)
+        training_data, training_labels = self.getConcatenatedMatrix(self.training_recordings, scaling_functions)
         model = LinearDiscriminantAnalysis()
-        model.fit(data_matrix, data_labels)
-        training_confusion_matrix = self.getConfusionMatrix(model, data_matrix, data_labels)
-        cross_validation_prediction = cross_val_predict(model, data_matrix, data_labels, cv=self.cross_validation_folds)
-        cross_validation_confusion_matrix = confusion_matrix(data_labels, cross_validation_prediction)
-        validation_matrix, validation_labels = self.getConcatenatedMatrix(self.validation_recordings, scaling_functions)
-        validation_confusion_matrix = self.getConfusionMatrix(model, validation_matrix, validation_labels)
+        model.fit(training_data, training_labels)
+        training_confusion_matrix = self.getConfusionMatrix(model, training_data, training_labels)
+        cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
+        cross_validation_confusion_matrix = confusion_matrix(training_labels, cross_validation_prediction)
+        validation_data, validation_labels = self.getConcatenatedMatrix(self.validation_recordings, scaling_functions)
+        validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels)
         self.model = model
+        self.training_data = training_data
+        self.training_labels = training_labels
+        self.validation_data = validation_data
+        self.validation_labels = validation_labels
 
     def getMethodFromFeature(self, feature):
         return "_".join(feature.split("_")[:-1])
@@ -181,3 +189,15 @@ class ModelTrainer(object):
 
     def getModel(self):
         return self.model
+
+    def getTrainingData(self):
+        return self.training_data
+
+    def getTrainingLabels(self):
+        return self.training_labels
+
+    def getValidationData(self):
+        return self.validation_data
+
+    def getValidationLabels(self):
+        return self.validation_labels

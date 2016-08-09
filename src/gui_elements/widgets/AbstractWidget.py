@@ -70,10 +70,10 @@ class Widget(object):
         return True
 
 
-class WidgetWithCommand(Widget, MessagingInterface.Widget):
+class WidgetWithCommand(Widget, MessagingInterface.WidgetMessageHandler):
     def __init__(self, parent, name, row, column, **kwargs):
         Widget.__init__(self, parent, name, row, column, **kwargs)
-        MessagingInterface.Widget.__init__(self, parent)
+        MessagingInterface.WidgetMessageHandler.__init__(self, parent)
         self.default_value = kwargs.get("default_value", 0)
         self.disabled_state = kwargs.get("disabled_state", "disabled")
         self.enabled_state = Tkinter.NORMAL

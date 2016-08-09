@@ -64,3 +64,15 @@ class ModelFrame(Frame.Frame):
 
     def modelReceivedEvent(self, model):
         self.model = model
+
+    def trainingDataReceivedEvent(self, training_data):
+        print training_data
+
+    def trainingLabelsReceivedEvent(self, training_labels):
+        print training_labels
+
+    def validationDataReceivedEvent(self, validation_data):
+        print validation_data
+
+    def validationLabelsReceivedEvent(self, validation_labels):
+        print validation_labels

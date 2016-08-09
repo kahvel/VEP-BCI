@@ -4,10 +4,10 @@ from gui_elements.widgets import AbstractWidget
 from messaging.gui_messaging import MessagingInterface
 
 
-class AbstractFrame(AbstractWidget.Widget, MessagingInterface.Frame):
+class AbstractFrame(AbstractWidget.Widget, MessagingInterface.FrameMessageHandler):
     def __init__(self, parent, name, row, column, **kwargs):
         AbstractWidget.Widget.__init__(self, parent, name, row, column, **kwargs)
-        MessagingInterface.Frame.__init__(self, parent, [])
+        MessagingInterface.FrameMessageHandler.__init__(self, parent, [])
         self.widgets_dict = {}
 
     def addChildWidgets(self, child_widgets):
