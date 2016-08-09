@@ -27,6 +27,7 @@ class BCI(object):
         self.flattener = FeaturesParser.Flattener()
         self.setup_succeeded = False
         self.exit_flag = False
+        self.recording_targets = None
 
     def flattenFeatureVector(self, feature_vector):
         return self.flattener.parseFeatures(feature_vector)
@@ -35,12 +36,13 @@ class BCI(object):
         self.setup_succeeded = False
         self.record_option = options[c.DATA_RECORD][c.TRAINING_RECORD]
         self.allow_repeating = options[c.DATA_TEST][c.TEST_TAB_ALLOW_REPEATING]
-        self.test_target_option = options[c.DATA_TEST][c.TEST_TAB_TARGET]
+        self.test_target_option = options[c.DATA_TEST][c.TEST_TAB_TARGET_OPTION_MENU]
         self.total_time = self.getTotalTime(options[c.DATA_TEST][c.TEST_TAB_UNLIMITED], options[c.DATA_TEST][c.TEST_TAB_TIME])
         self.target_freqs = options[c.DATA_FREQS]
         self.setStandbyState(options[c.DATA_TEST][c.TEST_TAB_STANDBY])
         self.setupStandby(options)
         self.target_identification.setup(options)
+        self.recording_targets = []
         self.setup_succeeded = True
 
     def setupSucceeded(self):
@@ -77,9 +79,22 @@ class BCI(object):
         else:
             return self.getRandomNonRepeatingTarget(targets, previous_target)
 
+    def getTrainingTarget(self, targets):
+        """
+        Makes sure that we get enough data for all targets when recording.
+        If choosing completely randomly, we might not get enough data for some targets.
+        :param targets:
+        :return:
+        """
+        if self.recording_targets == []:
+            self.recording_targets = targets
+        return self.recording_targets.pop(random.randint(0, len(self.recording_targets)-1))
+
     def getNextTarget(self, previous_target):
         if self.isRandom() or self.isTimed():
             return self.getRandomTarget(self.target_freqs.keys(), previous_target)
+        elif self.isRecording():
+            return self.getTrainingTarget(self.target_freqs.keys())
         elif self.test_target_option != c.TEST_TARGET_NONE:
             return self.test_target_option
         else:
@@ -90,6 +105,9 @@ class BCI(object):
 
     def isTimed(self):
         return self.test_target_option == c.TEST_TARGET_TIMED
+
+    def isRecording(self):
+        return self.test_target_option == c.TEST_TARGET_RECORDING
 
     def handleTargetChanging(self, target):
         target = self.getNextTarget(target)
@@ -144,7 +162,7 @@ class BCI(object):
     def needNewTarget(self):
         if self.isRandom():
             return self.target_identification.need_new_target
-        elif self.isTimed():
+        elif self.isTimed() or self.isRecording():
             return self.checkTimeExceeded()
         else:
             return False

@@ -9,7 +9,7 @@ class TestTab(Frame.Frame):
         self.addChildWidgets((
             OptionMenu.OptionMenu(self, c.TEST_TAB_EEG_SOURCE_OPTION_MENU, 0, 1, c.EEG_SOURCE_NAMES),
             Checkbutton.Checkbutton(self, c.TEST_TAB_ALLOW_REPEATING, 0, 3),
-            OptionMenu.TargetChoosingMenu(self, c.TEST_TAB_TARGET, 1, 1, (c.TEST_TARGET_NONE, c.TEST_TARGET_RANDOM, c.TEST_TARGET_TIMED), columnspan=2),
+            OptionMenu.TargetChoosingMenu(self, c.TEST_TAB_TARGET_OPTION_MENU, 1, 1, c.TEST_TARGET_OPTIONS, columnspan=2),
             Checkbutton.Checkbutton(self, c.TEST_TAB_CLEAR_BUFFERS, 1, 3),
             OptionMenu.TargetChoosingMenu(self, c.TEST_TAB_STANDBY, 2, 1, (c.TEST_TARGET_NONE,), columnspan=2),
             Checkbutton.Checkbutton(self, c.TEST_TAB_PROCESS_SHORT_SIGNALS, 2, 3),
