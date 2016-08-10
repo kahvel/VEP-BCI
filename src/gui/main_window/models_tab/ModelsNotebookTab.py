@@ -1,5 +1,5 @@
 from gui_elements.widgets import Buttons, Textboxes
-from gui_elements.widgets.frames import Frame
+from gui_elements.widgets.frames import Frame, AddingCheckbuttonsFrame
 from gui_elements.widgets.frames.tabs import DisableDeleteNotebookTab
 import constants as c
 
@@ -13,11 +13,12 @@ class ModelsNotebookTab(DisableDeleteNotebookTab.Delete):
     def __init__(self, parent, deleteTab, **kwargs):
         DisableDeleteNotebookTab.Delete.__init__(self, parent, c.MODELS_NOTEBOOK_TAB, **kwargs)
         self.addChildWidgets((
-            ModelFrame(self, 0, 0, columnspan=4),
-            Textboxes.TimestampTextbox(self, 1, 0),
-            Textboxes.DirectoryTextbox(self, 2, 0),
-            SaveButton(self, 3, 0),
-            self.getDeleteButton(3, 1, deleteTab)
+            OptionsFrame(self, 0, 0, columnspan=4),
+            ModelFrame(self, 1, 0, columnspan=4),
+            Textboxes.TimestampTextbox(self, 2, 0),
+            Textboxes.DirectoryTextbox(self, 3, 0),
+            SaveButton(self, 4, 0),
+            self.getDeleteButton(4, 1, deleteTab)
         ))
 
     def saveModelEvent(self, directory):
@@ -42,6 +43,44 @@ class ModelsNotebookTab(DisableDeleteNotebookTab.Delete):
         self.widgets_dict[c.TIMESTAMP_TEXTBOX].setTimestamp()
 
 
+class CheckbuttonFrame(AddingCheckbuttonsFrame.LabelledEventNotebookAddingCheckbuttonFrame):
+    def __init__(self, parent, name, row, column, **kwargs):
+        AddingCheckbuttonsFrame.LabelledEventNotebookAddingCheckbuttonFrame.__init__(self, parent, name, row, column, columnspan=6, **kwargs)
+
+    def addNewRecordingTabEvent(self):
+        self.addButton()
+
+    def recordTabRemovedEvent(self, deleted_tab):
+        self.deleteButton(deleted_tab)
+
+    def loadEegEvent(self, directory):
+        self.addButton()
+
+    def saveBciSettingsEvent(self, file):
+        return c.STOP_EVENT_SENDING
+
+    def loadBciSettingsEvent(self, file):
+        return c.STOP_EVENT_SENDING
+
+
+class OptionsFrame(Frame.Frame):
+    def __init__(self, parent, row, column, **kwargs):
+        Frame.Frame.__init__(self, parent, c.MODELS_TAB_OPTIONS_FRAME, row, column, **kwargs)
+        self.addChildWidgets((
+            CheckbuttonFrame(self, c.MODELS_TAB_RECORDING_FOR_TRAINING, 0, 0),
+            CheckbuttonFrame(self, c.MODELS_TAB_RECORDING_FOR_VALIDATION, 1, 0),
+            Textboxes.LabelTextbox(self, c.MODELS_TAB_LOOK_BACK_LENGTH, 2, 0, command=int, default_value=1),
+            Textboxes.LabelTextbox(self, c.MODELS_TAB_CV_FOLDS, 2, 2, command=int, default_value=5),
+            Textboxes.LabelTextboxNoValidation(self, c.MODELS_TAB_FEATURES_TO_USE, 3, 0, default_value="", width=20, columnspan=3),
+        ))
+
+    def disableModelOptionsEvent(self):
+        self.disable(c.MODEL_TRAINED_DISABLER)
+
+    def getModelOptionsEvent(self):
+        self.sendEventToRoot(lambda x: x.sendModelOptionsToRootEvent(self.getValue()), True)
+
+
 class SaveButton(Buttons.EventNotebookSaveButton):
     def __init__(self, parent, row, column, **kwargs):
         Buttons.EventNotebookSaveButton.__init__(self, parent, c.MODELS_TAB_SAVE_MODEL, row, column, **kwargs)
@@ -56,8 +95,8 @@ class ModelFrame(Frame.Frame):
         self.addChildWidgets((
             Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_ROC, 0, 0, command=self.showTrainingRoc),
             Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_ROC, 0, 1, command=self.showValidationRoc),
-            Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_PROJECTION, 1, 0, command=self.showTrainingDataProjection),
-            Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_PROJECTION, 1, 1, command=self.showValidationDataProjection),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_LDA, 1, 0, command=self.showTrainingDataProjection),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_LDA, 1, 1, command=self.showValidationDataProjection),
         ))
         self.model = None
         self.training_data = None

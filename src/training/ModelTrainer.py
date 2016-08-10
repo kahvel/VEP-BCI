@@ -29,11 +29,11 @@ class ModelTrainer(object):
         self.recordings = recordings
 
     def setup(self, options):
-        self.setFeaturesToUse(options[c.CLASSIFICATION_PARSE_FEATURES_TO_USE])
-        self.look_back_length = options[c.CLASSIFICATION_PARSE_LOOK_BACK_LENGTH]
-        self.cross_validation_folds = options[c.CLASSIFICATION_PARSE_CV_FOLDS]
-        self.training_recordings = [self.recordings[i] for i in options[c.CLASSIFICATION_PARSE_RECORDING_FOR_TRAINING]]
-        self.validation_recordings = [self.recordings[i] for i in options[c.CLASSIFICATION_PARSE_RECORDING_FOR_VALIDATION]]
+        self.setFeaturesToUse(options[c.MODELS_PARSE_FEATURES_TO_USE])
+        self.look_back_length = options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
+        self.cross_validation_folds = options[c.MODELS_PARSE_CV_FOLDS]
+        self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
+        self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
 
     def setFeaturesToUse(self, features_to_use):
         self.features_to_use = self.getFeaturesToUse(features_to_use)

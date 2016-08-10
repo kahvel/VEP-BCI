@@ -16,9 +16,6 @@ class RecordNotebook(EventNotebook.EventNotebook):
     def sendTabRemovedEvent(self, current_tab):
         self.sendEventToAll(lambda x: x.recordTabRemovedEvent(current_tab))
 
-    def getRecordingNotebookWidgetsEvent(self):
-        self.sendEventToAll(lambda x: x.sendRecordingNotebookWidgetsEvent(self.widgets_list))
-
     def resultsReceivedEvent(self, results):
         """
         Since currently tab frames do not know their number we have to send the event to only the correct tab.

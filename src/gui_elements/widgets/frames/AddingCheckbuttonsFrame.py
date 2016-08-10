@@ -1,29 +1,14 @@
 from gui_elements.widgets.frames import Frame
 from gui_elements.widgets import Checkbutton
 
+import Tkinter
+
 
 class AddingCheckbuttonsFrame(Frame.Frame):
-    def __init__(self, parent, name, row, column, initial_tabs, buttons_in_row=7, **kwargs):
+    def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
         Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
         self.disabled_tabs = []
         self.buttons_in_row = buttons_in_row
-        self.notebook_widgets = None
-
-    def loadDefaultValue(self):
-        """
-        Assume that by default there is one tab and it is not disabled.
-        :return:
-        """
-        Frame.Frame.loadDefaultValue(self)
-        self.getNotebookWidgetsEvent()
-        for widget in self.notebook_widgets:
-            self.addButton(widget.disabled)
-
-    def getNotebookWidgetsEvent(self):
-        raise NotImplementedError("getNotebookWidgetsEvent not implemented!")
-
-    def setWidgetsNotebook(self, notebook_widgets):
-        self.notebook_widgets = notebook_widgets
 
     def addButton(self, disabled=False):
         self.disabled_tabs.append(disabled)
@@ -78,3 +63,41 @@ class AddingCheckbuttonsFrame(Frame.Frame):
     def disableButton(self, current_tab):
         self.widgets_list[current_tab].disable("TargetTab")
         self.disabled_tabs[current_tab] = True
+
+
+class EventNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
+    def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
+        AddingCheckbuttonsFrame.__init__(self, parent, name, row, column, buttons_in_row, **kwargs)
+
+
+class PlusTabNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
+    def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
+        AddingCheckbuttonsFrame.__init__(self, parent, name, row, column, buttons_in_row, **kwargs)
+        self.notebook_widgets = None
+
+    def loadDefaultValue(self):
+        Frame.Frame.loadDefaultValue(self)
+        self.getNotebookWidgetsEvent()
+        for widget in self.notebook_widgets:
+            self.addButton(widget.disabled)
+
+    def getNotebookWidgetsEvent(self):
+        raise NotImplementedError("getNotebookWidgetsEvent not implemented!")
+
+    def setWidgetsNotebook(self, notebook_widgets):
+        self.notebook_widgets = notebook_widgets
+
+
+class LabelledEventNotebookAddingCheckbuttonFrame(Frame.Frame):
+    def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
+        Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
+        Tkinter.Label(self.widget, text=name).grid(row=row, column=column, padx=self.padx, pady=self.pady, columnspan=1)
+        self.addChildWidgets((
+            AddingCheckbuttonsFrame(self, name, row, column+1, buttons_in_row),
+        ))
+
+    def addButton(self):
+        self.widgets_dict[self.name].addButton()
+
+    def deleteButton(self, deleted_tab):
+        self.widgets_dict[self.name].deleteButton(deleted_tab)

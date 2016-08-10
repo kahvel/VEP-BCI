@@ -32,3 +32,7 @@ class ModelsNotebook(EventNotebook.EventNotebook):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.loadModelEvent(directory))
         self.addNewTabToFill()
         return c.STOP_EVENT_SENDING
+
+    def disableModelOptionsEvent(self):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.disableModelOptionsEvent())
+        return c.STOP_EVENT_SENDING

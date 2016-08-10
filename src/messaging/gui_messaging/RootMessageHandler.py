@@ -1,5 +1,5 @@
 from messaging.gui_messaging import MessagingInterface, AbstractMessageSenders
-from parsers import ClassificationParser
+from parsers import ModelsParser
 import constants as c
 
 
@@ -51,20 +51,20 @@ class Robot(MessagingInterface.Robot):
         self.connection.sendMessage(c.MOVE_STOP)
 
 
-class Classification(MessagingInterface.Classification, AbstractMessageSenders.NonLeaf):
+class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
     def __init__(self, widgets_list, connection):
-        MessagingInterface.Classification.__init__(self)
+        MessagingInterface.Models.__init__(self)
         AbstractMessageSenders.NonLeaf.__init__(self, widgets_list)
         self.features = []
-        self.classification_options = []
-        self.classification_tab_parser = ClassificationParser.ClassificationParser()
+        self.model_options = []
+        self.model_tab_parser = ModelsParser.ModelsParser()
         self.connection = connection
 
     def sendFeaturesToRootEvent(self, results):
         self.features.append(results)
 
-    def sendClassificationOptionsToRootEvent(self, classification_options):
-        self.classification_options = self.classification_tab_parser.parseData(classification_options)
+    def sendModelOptionsToRootEvent(self, classification_options):
+        self.model_options = self.model_tab_parser.parseData(classification_options)
 
     def resetFeatures(self):
         self.features = []
@@ -76,14 +76,18 @@ class Classification(MessagingInterface.Classification, AbstractMessageSenders.N
         self.connection.sendMessage(self.features)
 
     def sendClassificationOptions(self):
-        self.sendEventToChildren(lambda x: x.getClassificationOptionsEvent())
+        self.sendEventToChildren(lambda x: x.getModelOptionsEvent())
         self.connection.sendMessage(c.SEND_CLASSIFICATION_OPTIONS)
-        self.connection.sendMessage(self.classification_options)
+        self.connection.sendMessage(self.model_options)
 
     def sendStartTraining(self):
         self.connection.sendMessage(c.TRAINING_START_MESSAGE)
 
+    def sendDisableModelOptions(self):
+        self.sendEventToChildren(lambda x: x.disableModelOptionsEvent())
+
     def trainButtonClickedEvent(self):
+        self.sendDisableModelOptions()
         self.sendFeatureRecrding()
         self.sendClassificationOptions()
         self.sendStartTraining()
@@ -193,11 +197,11 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
         self.sendEventToChildren(lambda x: x.validationRocReceivedEvent(validation_roc))
 
 
-class MainWindowMessageHandler(Bci, Robot, Classification, TrialEndedHandler, TrainingEndedHandler, AbstractMessageSenders.Root, MessagingInterface.MessagingInterface):
+class MainWindowMessageHandler(Bci, Robot, Models, TrialEndedHandler, TrainingEndedHandler, AbstractMessageSenders.Root, MessagingInterface.MessagingInterface):
     def __init__(self, connection, main_window_message_handler, main_frame, main_window, button_state_controller):
         Bci.__init__(self, main_window_message_handler, main_window, button_state_controller)
         Robot.__init__(self, connection)
-        Classification.__init__(self, [main_frame], connection)
+        Models.__init__(self, [main_frame], connection)
         TrialEndedHandler.__init__(self, [main_frame], connection)
         TrainingEndedHandler.__init__(self, [main_frame], connection)
         AbstractMessageSenders.Root.__init__(self, [main_frame], main_window_message_handler)

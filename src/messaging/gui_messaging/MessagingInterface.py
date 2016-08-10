@@ -30,14 +30,6 @@ class Recording(object):
 
     def recordTabRemovedEvent(self, deleted_tab): pass
 
-    def getRecordingNotebookWidgetsEvent(self): pass
-
-    def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets): pass
-
-
-class Results(object):
-    def __init__(self): pass
-
     def resultsReceivedEvent(self, results): pass
 
     def newResultsReceivedEvent(self, new_results): pass
@@ -53,16 +45,6 @@ class Results(object):
 
 class Classification(object):
     def __init__(self): pass
-
-    def trainButtonClickedEvent(self): pass
-
-    def sendFeaturesToRootEvent(self, results): pass
-
-    def getFeaturesEvent(self): pass
-
-    def sendClassificationOptionsToRootEvent(self, features_to_use): pass
-
-    def getClassificationOptionsEvent(self): pass
 
 
 class Robot(object):
@@ -97,7 +79,7 @@ class Targets(object):
     def sendTargetNotebookWidgetsEvent(self, target_notebook_widgets): pass
 
 
-class Training(object):
+class Models(object):
     def __init__(self): pass
 
     def addNewModelTabEvent(self): pass
@@ -126,6 +108,18 @@ class Training(object):
 
     def loadModelEvent(self, directory): pass
 
+    def trainButtonClickedEvent(self): pass
+
+    def sendFeaturesToRootEvent(self, results): pass
+
+    def getFeaturesEvent(self): pass
+
+    def sendModelOptionsToRootEvent(self, features_to_use): pass
+
+    def getModelOptionsEvent(self): pass
+
+    def disableModelOptionsEvent(self): pass
+
 
 class TrialEndedHandler(object):
     def __init__(self): pass
@@ -139,15 +133,14 @@ class TrainingEndedHandler(object):
     def trainingEndedEvent(self): pass
 
 
-class MessagingInterface(Bci, Recording, Results, Robot, Targets, Classification, Training, TrialEndedHandler, TrainingEndedHandler):
+class MessagingInterface(Bci, Recording, Robot, Targets, Classification, Models, TrialEndedHandler, TrainingEndedHandler):
     def __init__(self):
         Bci.__init__(self)
         Recording.__init__(self)
-        Results.__init__(self)
         Robot.__init__(self)
         Targets.__init__(self)
         Classification.__init__(self)
-        Training.__init__(self)
+        Models.__init__(self)
         TrialEndedHandler.__init__(self)
         TrainingEndedHandler.__init__(self)
 
