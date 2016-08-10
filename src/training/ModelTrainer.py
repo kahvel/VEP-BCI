@@ -1,6 +1,7 @@
 import numpy as np
+import sklearn.metrics
+import scipy
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.metrics import confusion_matrix
 from sklearn.cross_validation import cross_val_predict
 
 import constants as c
@@ -19,6 +20,10 @@ class ModelTrainer(object):
         self.training_labels = None
         self.validation_data = None
         self.validation_labels = None
+        self.thresholds = None
+        self.min_max = None
+        self.validation_roc = None
+        self.training_roc = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
@@ -131,27 +136,101 @@ class ModelTrainer(object):
         data_labels = np.concatenate(labels, axis=0)
         return data_matrix, data_labels
 
-    def getConfusionMatrix(self, model, data, labels):
+    def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
-        return confusion_matrix(labels, prediction)
+        return sklearn.metrics.confusion_matrix(labels, prediction, labels=label_order)
+
+    def calculateBinaryRoc(self, predictions, binary_labels, labels_order):
+        predictions = np.transpose(predictions)
+        fpr = dict()
+        tpr = dict()
+        thresholds = dict()
+        roc_auc = dict()
+        for i in range(len(labels_order)):
+            fpr[i], tpr[i], thresholds[i] = sklearn.metrics.roc_curve(binary_labels[i], predictions[i])
+            roc_auc[i] = sklearn.metrics.auc(fpr[i], tpr[i])
+        return fpr, tpr, thresholds, roc_auc
+
+    def addMicroRoc(self, roc, predictions, binary_labels):
+        predictions = np.array(predictions)
+        fpr, tpr, _, roc_auc = roc
+        fpr["micro"], tpr["micro"], _ = sklearn.metrics.roc_curve(np.array(binary_labels).ravel(), predictions.ravel())
+        roc_auc["micro"] = sklearn.metrics.auc(fpr["micro"], tpr["micro"])
+
+    def addMacroRoc(self, roc, labels_order):
+        fpr, tpr, _, roc_auc = roc
+        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(len(labels_order))]))
+        mean_tpr = np.zeros_like(all_fpr)
+        for i in range(len(labels_order)):
+            mean_tpr += scipy.interp(all_fpr, fpr[i], tpr[i])
+        mean_tpr /= len(labels_order)
+        fpr["macro"] = all_fpr
+        tpr["macro"] = mean_tpr
+        roc_auc["macro"] = sklearn.metrics.auc(fpr["macro"], tpr["macro"])
+
+    def calculateThresholds(self, roc, labels_order, fpr_threshold=0.05):
+        fpr, tpr, thresholds, _ = roc
+        cut_off_threshold = []
+        for i in range(len(labels_order)):
+            for false_positive_rate, true_positive_rate, threshold in zip(fpr[i], tpr[i], thresholds[i]):
+                if false_positive_rate > fpr_threshold:
+                    cut_off_threshold.append(threshold)
+                    break
+            else:
+                print "Warning: no cutoff obtained!"
+        return cut_off_threshold
+
+    def getDecisionFunctionValues(self, model, data, use_prediction=False):  # TODO remove loop
+        predictions = []
+        for features in data:
+            if not use_prediction:
+                predictions.append(model.decision_function([features])[0])
+            else:
+                predictions.append(model.predict_proba([features])[0])
+        return predictions
+
+    def getBinaryLabels(self, labels, label_order):
+        binary_labels = []
+        for label in label_order:
+            binary_labels.append(list(map(lambda x: x == label, labels)))
+        return binary_labels
+
+    def calculateMulticlassRoc(self, decision_function_values, binary_labels, label_order):
+        roc = self.calculateBinaryRoc(decision_function_values, binary_labels, label_order)
+        self.addMicroRoc(roc, decision_function_values, binary_labels)
+        self.addMacroRoc(roc, binary_labels)
+        return roc
+
+    def calculateRoc(self, model, data, labels, label_order):
+        binary_labels = self.getBinaryLabels(labels, label_order)
+        decision_function_values = self.getDecisionFunctionValues(model, data)
+        return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
 
     def start(self):
-        minimum = self.getMin(self.recordings)
-        maximum = self.getMax(self.recordings)
+        minimum = self.findMin(self.recordings)
+        maximum = self.findMax(self.recordings)
         scaling_functions = self.getScalingFunctions(minimum, maximum)
         training_data, training_labels = self.getConcatenatedMatrix(self.training_recordings, scaling_functions)
         model = LinearDiscriminantAnalysis()
         model.fit(training_data, training_labels)
-        training_confusion_matrix = self.getConfusionMatrix(model, training_data, training_labels)
-        cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
-        cross_validation_confusion_matrix = confusion_matrix(training_labels, cross_validation_prediction)
+        label_order = model.classes_
+        # training_confusion_matrix = self.getConfusionMatrix(model, training_data, training_labels, label_order)
+        # cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
+        # cross_validation_confusion_matrix = sklearn.metrics.confusion_matrix(training_labels, cross_validation_prediction, labels=label_order)
         validation_data, validation_labels = self.getConcatenatedMatrix(self.validation_recordings, scaling_functions)
-        validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels)
+        # validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels, label_order)
+        validation_roc = self.calculateRoc(model, validation_data, validation_labels, label_order)
+        thresholds = self.calculateThresholds(validation_roc, label_order)
+        training_roc = self.calculateRoc(model, training_data, training_labels, label_order)
         self.model = model
         self.training_data = training_data
         self.training_labels = training_labels
         self.validation_data = validation_data
         self.validation_labels = validation_labels
+        self.thresholds = thresholds
+        self.min_max = minimum, maximum
+        self.training_roc = training_roc
+        self.validation_roc = validation_roc
 
     def getMethodFromFeature(self, feature):
         return "_".join(feature.split("_")[:-1])
@@ -167,7 +246,7 @@ class ModelTrainer(object):
             if method in extraction_method_names:
                 yield method, columns[key]
 
-    def getExtremum(self, function, recordings):
+    def findExtremum(self, function, recordings):
         extraction_method_names = self.getExtractionMethodNames()
         extrema = {method: [] for method in extraction_method_names}
         for recording in recordings:
@@ -175,11 +254,11 @@ class ModelTrainer(object):
                 extrema[method].append(function(column))
         return {method: function(extrema[method]) for method in extraction_method_names}
 
-    def getMin(self, recordings):
-        return self.getExtremum(min, recordings)
+    def findMin(self, recordings):
+        return self.findExtremum(min, recordings)
 
-    def getMax(self, recordings):
-        return self.getExtremum(max, recordings)
+    def findMax(self, recordings):
+        return self.findExtremum(max, recordings)
 
     def getScalingFunction(self, minimum, maximum):
         return lambda x: (x-minimum)/(maximum-minimum)+1
@@ -201,3 +280,15 @@ class ModelTrainer(object):
 
     def getValidationLabels(self):
         return self.validation_labels
+
+    def getThresholds(self):
+        return self.thresholds
+
+    def getMinMax(self):
+        return self.min_max
+
+    def getTrainingRoc(self):
+        return self.training_roc
+
+    def getValidationRoc(self):
+        return self.validation_roc

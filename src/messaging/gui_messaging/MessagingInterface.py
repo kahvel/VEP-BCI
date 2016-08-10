@@ -114,6 +114,14 @@ class Training(object):
 
     def trainingLabelsReceivedEvent(self, training_labels): pass
 
+    def minMaxReceivedEvent(self, min_max): pass
+
+    def thresholdsReceivedEvent(self, thresholds): pass
+
+    def trainingRocReceivedEvent(self, training_roc): pass
+
+    def validationRocReceivedEvent(self, validation_roc): pass
+
     def saveModelEvent(self, directory): pass
 
     def loadModelEvent(self, directory): pass

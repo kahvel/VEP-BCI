@@ -147,6 +147,10 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
         self.evokeTrainingLabelsReceivedEvent()
         self.evokeValidationDataReceivedEvent()
         self.evokeValidationLabelsReceivedEvent()
+        self.evokeThresholdsReceivedEvent()
+        self.evokeMinMaxReceivedEvent()
+        self.evokeTrainingRocReceivedEvent()
+        self.evokeValidationRocReceivedEvent()
         self.evokeAddNewModelTabEvent()
 
     def evokeAddNewModelTabEvent(self):
@@ -171,6 +175,22 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
     def evokeTrainingLabelsReceivedEvent(self):
         data = self.getData(c.GET_TRAINING_LABELS_MESSAGE)
         self.sendEventToChildren(lambda x: x.trainingLabelsReceivedEvent(data))
+
+    def evokeThresholdsReceivedEvent(self):
+        thresholds = self.getData(c.GET_THRESHOLDS_MESSAGE)
+        self.sendEventToChildren(lambda x: x.thresholdsReceivedEvent(thresholds))
+
+    def evokeMinMaxReceivedEvent(self):
+        min_max = self.getData(c.GET_MIN_MAX)
+        self.sendEventToChildren(lambda x: x.minMaxReceivedEvent(min_max))
+
+    def evokeTrainingRocReceivedEvent(self):
+        training_roc = self.getData(c.GET_TRAINING_ROC)
+        self.sendEventToChildren(lambda x: x.trainingRocReceivedEvent(training_roc))
+
+    def evokeValidationRocReceivedEvent(self):
+        validation_roc = self.getData(c.GET_VALIDATION_ROC)
+        self.sendEventToChildren(lambda x: x.validationRocReceivedEvent(validation_roc))
 
 
 class MainWindowMessageHandler(Bci, Robot, Classification, TrialEndedHandler, TrainingEndedHandler, AbstractMessageSenders.Root, MessagingInterface.MessagingInterface):

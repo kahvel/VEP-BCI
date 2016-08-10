@@ -55,6 +55,14 @@ class ModelFrame(Frame.Frame):
         #
         # ))
         self.model = None
+        self.training_data = None
+        self.validation_data = None
+        self.training_labels = None
+        self.validation_labels = None
+        self.min_max = None
+        self.thresholds = None
+        self.training_roc = None
+        self.validation_roc = None
 
     def loadModelEvent(self, directory):
         self.model = pickle.load(file(os.path.join(directory, "model.pkl")))
@@ -66,13 +74,25 @@ class ModelFrame(Frame.Frame):
         self.model = model
 
     def trainingDataReceivedEvent(self, training_data):
-        print training_data
+        self.training_data = training_data
 
     def trainingLabelsReceivedEvent(self, training_labels):
-        print training_labels
+        self.training_labels = training_labels
 
     def validationDataReceivedEvent(self, validation_data):
-        print validation_data
+        self.validation_data = validation_data
 
     def validationLabelsReceivedEvent(self, validation_labels):
-        print validation_labels
+        self.validation_labels = validation_labels
+
+    def minMaxReceivedEvent(self, min_max):
+        self.min_max = min_max
+
+    def thresholdsReceivedEvent(self, thresholds):
+        self.thresholds = thresholds
+
+    def trainingRocReceivedEvent(self, training_roc):
+        self.training_roc = training_roc
+
+    def validationRocReceivedEvent(self, validation_roc):
+        self.validation_roc = validation_roc
