@@ -37,7 +37,7 @@ class OptionMenuFrame(Frame.Frame):
         ))
 
 
-class TargetChoosingMenu(OptionMenu):
+class EventOptionMenu(OptionMenu):
     def __init__(self, parent, name, row, column, values, **kwargs):
         OptionMenu.__init__(self, parent, name, row, column, values, **kwargs)
         self.reset_value = kwargs.get("reset_value", values[0])
@@ -50,28 +50,25 @@ class TargetChoosingMenu(OptionMenu):
         for option in self.values:
             self.addOption(option)
 
-    def addTargetOptions(self):
+    def addOptions(self):
         for i, disabled in enumerate(self.disabled_tabs):
             if not disabled:
                 self.addOption(i+1)
 
-    def targetAddedEvent(self):
-        self.disabled_tabs.append(False)
-        self.addOption(len(self.disabled_tabs))
-
     def deleteOptions(self):
         self.widget["menu"].delete(0, Tkinter.END)
 
-    def updateAfterDeleteOrDisable(self, tab, additionalFunction=lambda x, y: None):
+    def updateAfterDeleteOrDisable(self, tab, removed):
         tab += 1
-        target = self.getValue()
-        if target not in self.values:
-            target = int(target)
-            if target == tab:
-                print("Warning: OptionMenu (" + self.name + ") in Test tab reset to " + self.reset_value)
-                self.setValue(c.TEST_TARGET_NONE)
+        value = self.getValue()
+        if value not in self.values:
+            value = int(value)
+            if value == tab:
+                print("Warning: OptionMenu (" + self.name + ") reset to " + self.reset_value)
+                self.setValue(self.reset_value)
             else:
-                additionalFunction(target, tab)
+                if removed:
+                    self.decreaseLargerTabs(value, tab)
 
     def decreaseLargerTabs(self, target, tab):
         if target > tab:
@@ -80,21 +77,7 @@ class TargetChoosingMenu(OptionMenu):
     def deleteAndAddAll(self):
         self.deleteOptions()
         self.addDefaultOptions()
-        self.addTargetOptions()
-
-    def targetRemovedEvent(self, deleted_tab):
-        del self.disabled_tabs[deleted_tab]
-        self.deleteAndAddAll()
-        self.updateAfterDeleteOrDisable(deleted_tab, self.decreaseLargerTabs)
-
-    def targetDisabledEvent(self, tabs, current_tab):
-        self.disabled_tabs = copy.deepcopy(tabs)
-        self.deleteAndAddAll()
-        self.updateAfterDeleteOrDisable(current_tab)
-
-    def targetEnabledEvent(self, tabs, current_tab):
-        self.disabled_tabs = copy.deepcopy(tabs)
-        self.deleteAndAddAll()
+        self.addOptions()
 
     def saveBciSettingsEvent(self, file):
         file.write(self.name+";"+str(self.getValue())+";"+str(int(self.disabled))+";"+str(list(int(value) for value in self.disabled_tabs)).strip("[]")+";"+str(self.disablers).replace("'", "").strip("[]")+"\n")
@@ -113,3 +96,52 @@ class TargetChoosingMenu(OptionMenu):
             return int(self.variable.get())
         except:
             return self.variable.get()
+
+    def eventAdded(self):
+        self.disabled_tabs.append(False)
+        self.addOption(len(self.disabled_tabs))
+
+    def eventRemoved(self, deleted_tab):
+        del self.disabled_tabs[deleted_tab]
+        self.deleteAndAddAll()
+        self.updateAfterDeleteOrDisable(deleted_tab, True)
+
+    def eventDisabled(self, tabs, current_tab):
+        self.disabled_tabs = copy.deepcopy(tabs)
+        self.deleteAndAddAll()
+        self.updateAfterDeleteOrDisable(current_tab, False)
+
+    def eventEnabled(self, tabs):
+        self.disabled_tabs = copy.deepcopy(tabs)
+        self.deleteAndAddAll()
+
+
+class ModelChoosingMenu(EventOptionMenu):
+    def __init__(self, parent, name, row, column, values, **kwargs):
+        EventOptionMenu.__init__(self, parent, name, row, column, values, **kwargs)
+
+    def addNewModelTabEvent(self):
+        self.eventAdded()
+
+    def modelTabRemovedEvent(self, deleted_tab):
+        self.eventRemoved(deleted_tab)
+
+    def loadModelEvent(self, directory):
+        self.eventAdded()
+
+
+class TargetChoosingMenu(EventOptionMenu):
+    def __init__(self, parent, name, row, column, values, **kwargs):
+        EventOptionMenu.__init__(self, parent, name, row, column, values, **kwargs)
+
+    def targetAddedEvent(self):
+        self.eventAdded()
+
+    def targetRemovedEvent(self, deleted_tab):
+        self.eventRemoved(deleted_tab)
+
+    def targetDisabledEvent(self, tabs, current_tab):
+        self.eventDisabled(tabs, current_tab)
+
+    def targetEnabledEvent(self, tabs, current_tab):
+        self.eventEnabled(tabs)

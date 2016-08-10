@@ -62,6 +62,12 @@ class CheckbuttonFrame(AddingCheckbuttonsFrame.LabelledEventNotebookAddingCheckb
     def loadBciSettingsEvent(self, file):
         return c.STOP_EVENT_SENDING
 
+    def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets):
+        self.setWidgetsNotebook(recording_notebook_widgets)
+
+    def getNotebookWidgetsEvent(self):
+        self.sendEventToAll(lambda x: x.getRecordingNotebookWidgetsEvent())
+
 
 class OptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
@@ -79,6 +85,18 @@ class OptionsFrame(Frame.Frame):
 
     def getModelOptionsEvent(self):
         self.sendEventToRoot(lambda x: x.sendModelOptionsToRootEvent(self.getValue()), True)
+
+    def addNewRecordingTabEvent(self):
+        if self.disabled:
+            return c.STOP_EVENT_SENDING
+
+    def recordTabRemovedEvent(self, deleted_tab):
+        if self.disabled:
+            return c.STOP_EVENT_SENDING
+
+    def loadEegEvent(self, directory):
+        if self.disabled:
+            return c.STOP_EVENT_SENDING
 
 
 class SaveButton(Buttons.EventNotebookSaveButton):

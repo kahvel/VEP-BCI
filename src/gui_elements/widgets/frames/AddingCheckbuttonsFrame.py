@@ -9,6 +9,13 @@ class AddingCheckbuttonsFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
         self.disabled_tabs = []
         self.buttons_in_row = buttons_in_row
+        self.notebook_widgets = None
+
+    def getNotebookWidgetsEvent(self):
+        raise NotImplementedError("getNotebookWidgetsEvent not implemented!")
+
+    def setWidgetsNotebook(self, notebook_widgets):
+        self.notebook_widgets = notebook_widgets
 
     def addButton(self, disabled=False):
         self.disabled_tabs.append(disabled)
@@ -69,23 +76,22 @@ class EventNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
     def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
         AddingCheckbuttonsFrame.__init__(self, parent, name, row, column, buttons_in_row, **kwargs)
 
+    def loadDefaultValue(self):
+        Frame.Frame.loadDefaultValue(self)
+        self.getNotebookWidgetsEvent()
+        for widget in self.notebook_widgets[-1]:
+            self.addButton(widget.disabled)
+
 
 class PlusTabNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
     def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
         AddingCheckbuttonsFrame.__init__(self, parent, name, row, column, buttons_in_row, **kwargs)
-        self.notebook_widgets = None
 
     def loadDefaultValue(self):
         Frame.Frame.loadDefaultValue(self)
         self.getNotebookWidgetsEvent()
         for widget in self.notebook_widgets:
             self.addButton(widget.disabled)
-
-    def getNotebookWidgetsEvent(self):
-        raise NotImplementedError("getNotebookWidgetsEvent not implemented!")
-
-    def setWidgetsNotebook(self, notebook_widgets):
-        self.notebook_widgets = notebook_widgets
 
 
 class LabelledEventNotebookAddingCheckbuttonFrame(Frame.Frame):
@@ -101,3 +107,6 @@ class LabelledEventNotebookAddingCheckbuttonFrame(Frame.Frame):
 
     def deleteButton(self, deleted_tab):
         self.widgets_dict[self.name].deleteButton(deleted_tab)
+
+    def setWidgetsNotebook(self, widgets_notebook):
+        self.widgets_dict[self.name].setWidgetsNotebook(widgets_notebook)

@@ -30,6 +30,7 @@ class ControlFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.CLASSIFICATION_TAB_CONTROL_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             OptionMenu.OptionMenu(self, c.CLASSIFICATION_TAB_TYPE_OPTION_MENU, 0, 1, c.CLASSIFICATION_TYPE_NAMES),
+            OptionMenu.ModelChoosingMenu(self, c.CLASSIFICATION_TAB_MODEL_OPTION_MENU, 0, 4, c.CLASSIFICATION_MODEL_NAMES),
         ))
 
 

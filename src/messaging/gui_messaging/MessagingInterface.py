@@ -42,6 +42,10 @@ class Recording(object):
 
     def addNewRecordingTabEvent(self): pass
 
+    def getRecordingNotebookWidgetsEvent(self): pass
+
+    def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets): pass
+
 
 class Classification(object):
     def __init__(self): pass
@@ -84,7 +88,7 @@ class Models(object):
 
     def addNewModelTabEvent(self): pass
 
-    def modelTabRemovedEvent(self): pass
+    def modelTabRemovedEvent(self, deleted_tab): pass
 
     def modelReceivedEvent(self, model): pass
 

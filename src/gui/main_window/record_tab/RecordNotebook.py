@@ -8,6 +8,9 @@ class RecordNotebook(EventNotebook.EventNotebook):
         EventNotebook.EventNotebook.__init__(self, parent, c.RECORD_NOTEBOOK, row, column, **kwargs)
         self.tab_to_fill = None
 
+    def getRecordingNotebookWidgetsEvent(self):
+        self.sendEventToAll(lambda x: x.sendRecordingNotebookWidgetsEvent(self.widgets_list))
+
     def addNewRecordingTabEvent(self):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.addNewRecordingTabEvent())
         self.addNewTabToFill()
