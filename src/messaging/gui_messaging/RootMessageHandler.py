@@ -57,7 +57,7 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
         AbstractMessageSenders.NonLeaf.__init__(self, widgets_list)
         self.features = []
         self.model_options = []
-        self.model_tab_parser = ModelsParser.ModelsParser()
+        self.model_tab_parser = ModelsParser.ModelsOptionsParser()
         self.connection = connection
 
     def sendFeaturesToRootEvent(self, results):

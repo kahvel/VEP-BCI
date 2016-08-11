@@ -128,7 +128,11 @@ class ModelFrame(Frame.Frame):
 
     def getValue(self):
         frame_value = Frame.Frame.getValue(self)
-        frame_value.update({c.MODELS_TAB_MODEL: self.model})
+        frame_value.update({c.MODELS_TAB_MODEL_DATA: {
+            c.MODELS_TAB_MODEL: self.model,
+            c.MODELS_TAB_MIN_MAX: self.min_max,
+            c.MODELS_TAB_THRESHOLDS: self.thresholds,
+        }})
         return frame_value
 
     def plotRoc(self, roc):

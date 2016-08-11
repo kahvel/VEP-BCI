@@ -14,10 +14,10 @@ class EventNotebook(SameTabsNotebook.SameTabsNotebook):
             self.tabDefaultValues(i)
         self.tab_to_fill = 0
 
-    def getValue(self):
-        for i, widget in enumerate(self.widgets_list):
-            if not widget.disabled and i == self.tab_to_fill:
-                return widget.getValue()
+    # def getValue(self):
+    #     for i, widget in enumerate(self.widgets_list):
+    #         if not widget.disabled and i == self.tab_to_fill:
+    #             return widget.getValue()
 
     def addInitialTabs(self):
         self.addNewTab()

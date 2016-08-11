@@ -1,7 +1,7 @@
 import constants as c
 
 
-class ModelsParser(object):
+class ModelsOptionsParser(object):
     def parseLookBackTextbox(self, all_data):
         return int(all_data[c.MODELS_TAB_LOOK_BACK_LENGTH])
 
@@ -29,3 +29,23 @@ class ModelsParser(object):
             c.MODELS_PARSE_CV_FOLDS: self.parseCvFolds(all_data),
             c.MODELS_PARSE_FEATURES_TO_USE: self.parseFeaturesToUse(all_data),
         }
+
+
+class ModelsParser(object):
+    def __init__(self):
+        self.options_parser = ModelsOptionsParser()
+
+    def parseOptions(self, data):
+        return self.options_parser.parseData(data)
+
+    def parseAllData(self, all_data, model_number):
+        return {
+            c.MODELS_PARSE_OPTIONS: self.parseOptions(all_data[c.MODELS_NOTEBOOK][model_number][c.MODELS_TAB_OPTIONS_FRAME]),
+            c.MODELS_TAB_MODEL_DATA: all_data[c.MODELS_NOTEBOOK][model_number][c.MODELS_TAB_MODEL_FRAME][c.MODELS_TAB_MODEL_DATA],
+        }
+
+    def parseData(self, all_data, model_number):
+        if model_number is None:
+            return None
+        else:
+            return self.parseAllData(all_data, model_number)

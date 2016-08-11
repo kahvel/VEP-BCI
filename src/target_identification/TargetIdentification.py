@@ -1,6 +1,5 @@
-import pickle
-
 from parsers import FeaturesParser
+from target_identification import LdaModel
 import constants as c
 
 
@@ -79,11 +78,9 @@ class TargetIdentification(object):
         self.new_results = new_results
         self.standby = standby
         self.clear_buffers = None
-        self.saved_model = None
-        self.matrix_result = None
-        self.scaling_functions = None
-        self.thresholds = None
         self.allow_repeating = None
+        self.model = None
+        self.thresholds = None
 
     def setup(self, options):
         self.allow_repeating = options[c.DATA_TEST][c.TEST_TAB_ALLOW_REPEATING]
@@ -92,28 +89,17 @@ class TargetIdentification(object):
         self.prev_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS])
         self.actual_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
-        scaling_functions = self.getScalingFunction(pickle.load(file("U:\\data\\my\\pickle\\model11_mm.pkl")))
-        self.scaling_functions = {
-            1: {
-                1: scaling_functions["PSDA_h1"],
-                2: scaling_functions["PSDA_h2"],
-            },
-            2: {
-                c.RESULT_SUM: scaling_functions["CCA"]
-            }
-        }
-        self.saved_model = pickle.load(file("U:\\data\\my\\pickle\\model11.pkl"))
-        self.thresholds = pickle.load(file("U:\\data\\my\\pickle\\model11_thresh.pkl"))
-        self.ratio_finder.setup(self.scaling_functions)
-        self.matrix_result = []
+        # self.ratio_finder.setup(self.scaling_functions)
+        self.setupModel(options[c.DATA_MODEL][c.MODELS_TAB_MODEL_DATA], options[c.DATA_MODEL][c.MODELS_PARSE_OPTIONS])
 
-    def getScalingFunction(self, min_max):
-        group_names = ["CCA", "PSDA_h1", "PSDA_h2"]#, "PSDA_sum"]
-        functions = {}
-        for group in group_names:
-            minimum, maximum = min_max[group]
-            functions[group] = lambda x: (x-minimum)/(maximum-minimum)
-        return functions
+    def setupModel(self, model_data, model_options):
+        minimum, maximum = model_data[c.MODELS_TAB_MIN_MAX]
+        model = model_data[c.MODELS_TAB_MODEL]
+        self.thresholds = model_data[c.MODELS_TAB_THRESHOLDS]
+        features_to_use = model_options[c.MODELS_PARSE_FEATURES_TO_USE]
+        sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
+        self.model = LdaModel.OnlineLdaModel()
+        self.model.setup(minimum, maximum, features_to_use, sample_count, model)
 
     def resetNeedNewTarget(self):
         self.need_new_target = False
@@ -200,45 +186,24 @@ class TargetIdentification(object):
             self.new_results.add(current_frequency, predicted_frequency)
             return predicted_frequency
 
-    def handleFreqMessages(self, message, target_freqs, current_target, filter_by_comparison=True):
-        results = message
-        if results is not None:
-            # results = self.ratio_finder.parseResultsNewDict(results)
-            frequencies = sorted(target_freqs.values())
-            psda_keys = [1, 2]
-            # cca_results_dict = dict(results[2][('CCA', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
-            # for frequency in frequencies:
-            #     self.matrix_result.append(cca_results_dict[frequency])
-            # for i, key in enumerate(psda_keys):
-            #     psda_results = results[1][('Sum PSDA', ('P7', 'O1', 'O2', 'P8'))][key]
-            #     psda_results_dict = dict(psda_results)
-            #     for frequency in frequencies:
-            #         self.matrix_result.append(psda_results_dict[frequency])
-            # cca_results_dict = dict(results[3][('LRT', ('P7', 'O1', 'O2', 'P8'))])["Sum"]
-            # for frequency in frequencies:
-            #     self.matrix_result.append(cca_results_dict[frequency])
-            # for key in psda_keys:
-            #     psda_results = results[4][('SNR PSDA', ('P7', 'O1', 'O2', 'P8'))][key]
-            #     psda_results_dict = dict(psda_results)
-            #     for frequency in frequencies:
-            #         self.matrix_result.append(psda_results_dict[frequency])
-            if len(self.matrix_result) == 90:
-                # predicted = self.saved_model.predict([self.matrix_result])[0]
-                scores = list(self.saved_model.decision_function([self.matrix_result])[0])
+    def handleFreqMessages(self, features, target_freqs, current_target, filter_by_comparison=True):
+        if features is not None:
+            ratios = self.model.buildRatioMatrix(features)
+            combined_ratios = self.model.collectSamples(ratios)
+            if combined_ratios is not None:
+                scores = list(self.model.decisionFunction([combined_ratios])[0])
                 predicted = None
                 for i in range(len(scores)):
                     if scores[i] > self.thresholds[i] and all(map(lambda (j, (s, t)): s < t or j == i, enumerate(zip(scores, self.thresholds)))):
                         predicted = i
                         break
                 if predicted is not None:
-                    predicted_frequency = frequencies[predicted-1]
+                    predicted_target = self.model.getOrderedLabels()[predicted]
+                    predicted_frequency = target_freqs[predicted_target]
                     current_frequency = target_freqs[current_target] if current_target in target_freqs else None
                     self.new_results.add(current_frequency, predicted_frequency)
-                    freq_weights = {predicted_frequency: 1.5}
+                    freq_weights = {predicted_frequency: float("inf")}
                     predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, [True], False)
-                    print predicted_frequency, current_frequency, self.saved_model.predict_proba([self.matrix_result]), self.saved_model.decision_function([self.matrix_result])
-                    # self.matrix_result = self.matrix_result[9:]
-                    self.matrix_result = []  # TODO to clear the array or not to clear?
+                    print predicted_frequency, current_frequency, self.model.decision_function([combined_ratios])
+                    self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
                     return predicted_frequency
-                else:
-                    self.matrix_result = self.matrix_result[9:]

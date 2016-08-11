@@ -98,10 +98,10 @@ class OnlineLdaModel(LdaModel):
     def __init__(self):
         LdaModel.__init__(self)
 
-    def setup(self, minimum, maximum, features_to_use, sample_count):
+    def setup(self, minimum, maximum, features_to_use, sample_count, model):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use)
         self.setupScalingFunctions(minimum, maximum, self.extraction_method_names)
-        self.model = LinearDiscriminantAnalysis()
+        self.model = model
         self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names)
 
     def setupScalingFunctions(self, minimum, maximum, extraction_method_names):
@@ -120,3 +120,6 @@ class OnlineLdaModel(LdaModel):
 
     def collectSamples(self, features):
         return self.collector.handleSample(features)
+
+    def resetCollectedSamples(self):
+        self.collector.resetCollectedSamples()

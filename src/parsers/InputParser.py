@@ -1,10 +1,12 @@
 import ClassificationParser
+import ModelsParser
 import constants as c
 
 
 class AbstractInputParser(object):
     def __init__(self):
         self.classification_tab_parser = ClassificationParser.ClassificationParser()
+        self.model_tab_parser = ModelsParser.ModelsParser()
 
     def parseFrequencies(self, enabled_targets):
         return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
@@ -71,6 +73,7 @@ class MainInputParser(AbstractInputParser):
     def parseData(self, all_data):
         target_data = self.parseTargetData(all_data[c.MAIN_NOTEBOOK_TARGETS_TAB][c.WINDOW_TAB_TARGETS_NOTEBOOK])
         target_freqs = self.parseFrequencies(target_data)
+        model_number = self.classification_tab_parser.parseModelNumber(all_data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB])
         return {
             c.DATA_BACKGROUND: all_data[c.MAIN_NOTEBOOK_TARGETS_TAB][c.WINDOW_TAB_MONITOR_FRAME],
             c.DATA_TARGETS: target_data,
@@ -78,6 +81,7 @@ class MainInputParser(AbstractInputParser):
             c.DATA_PLOTS: self.parsePlotNotebookData(all_data[c.MAIN_NOTEBOOK_PLOT_TAB]),
             c.DATA_EXTRACTION: self.parseExtractionOptions(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], target_freqs),
             c.DATA_CLASSIFICATION: self.classification_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB]),
+            c.DATA_MODEL: self.model_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_MODELS_TAB], model_number),
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.MAIN_NOTEBOOK_ROBOT_TAB],
             c.DATA_TEST: self.addEegDeviceState(all_data[c.MAIN_NOTEBOOK_TEST_TAB]),
