@@ -38,7 +38,7 @@ class ModelTrainer(object):
     def setFeatureAndExtractionNames(self, features_to_use):
         self.features_to_use = self.getFeaturesToUse(features_to_use)
         self.extraction_method_names = self.getExtractionMethodNames(self.features_to_use)
-        print features_to_use, self.extraction_method_names
+        print self.features_to_use, self.extraction_method_names
         self.printWarningIfBadFeatures(features_to_use)
 
     def getFeaturesToUse(self, features_to_use):
@@ -70,9 +70,8 @@ class ModelTrainer(object):
         all_matrices = []
         all_labels = []
         for recording in recordings:
-            collector = DataCollectors.TrainingCollector(self.look_back_length)
-            ratio_matrix = model.buildRatioMatrix(recording)
-            look_back_ratio_matrix, labels = collector.combineSamples(ratio_matrix, recording.expected_targets)
+            ratio_matrix = model.buildRatioMatrix(self.iterateColumns(recording.getColumnsAsFloats(recording.data), self.extraction_method_names))
+            look_back_ratio_matrix, labels = model.collectSamples(ratio_matrix, recording.expected_targets)
             all_matrices.append(look_back_ratio_matrix)
             all_labels.append(labels)
         return all_matrices, all_labels
@@ -156,7 +155,7 @@ class ModelTrainer(object):
     def start(self):
         minimum = self.findMin(self.recordings)
         maximum = self.findMax(self.recordings)
-        model = LdaModel.LdaModel()
+        model = LdaModel.TrainingLdaModel(self.look_back_length)
         model.setupNoThreshold(minimum, maximum, self.extraction_method_names)
         training_data, training_labels = self.getConcatenatedMatrix(self.training_recordings, model)
         model.fit(training_data, training_labels)
@@ -185,9 +184,15 @@ class ModelTrainer(object):
     def findExtremum(self, function, recordings):
         extrema = {method: [] for method in self.extraction_method_names}
         for recording in recordings:
-            for method, column in recording.iterateColumns(self.extraction_method_names):
+            for method, column in self.iterateColumns(recording.getColumnsAsFloats(recording.data), self.extraction_method_names):
                 extrema[method].append(function(column))
         return {method: function(extrema[method]) for method in self.extraction_method_names}
+
+    def iterateColumns(self, columns, extraction_method_names):
+        for key in sorted(columns):
+            method = FeaturesParser.getMethodFromFeature(key)
+            if method in extraction_method_names:
+                yield method, columns[key]
 
     def findMin(self, recordings):
         return self.findExtremum(min, recordings)

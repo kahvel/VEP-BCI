@@ -154,13 +154,6 @@ class Features(DataAndExpectedTargets):
     def defaultGetRows(self, list_of_dicts):
         return self.getRowsAsFloats(list_of_dicts)
 
-    def iterateColumns(self, extraction_method_names):
-        columns = self.getColumnsAsFloats(self.data)
-        for key in sorted(columns):
-            method = FeaturesParser.getMethodFromFeature(key)
-            if method in extraction_method_names:
-                yield method, columns[key]
-
     # def getRows(self, list_of_dicts):
     #     rows = []
     #     for dict in list_of_dicts:
