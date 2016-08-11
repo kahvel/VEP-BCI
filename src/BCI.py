@@ -1,10 +1,10 @@
+from parsers import FeaturesParser
+from target_identification import TargetIdentification
 import constants as c
 import Results
-import TargetIdentification
 import Standby
 import Recording
 import TargetSwitcher
-from parsers import FeaturesParser
 
 
 class BCI(object):

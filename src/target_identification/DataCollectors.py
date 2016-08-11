@@ -30,6 +30,9 @@ class DataCollector(object):
     def getCollectedSamples(self):
         return self.collected_samples
 
+    def resetCollectedSamples(self):
+        self.collected_samples = []
+
     def handleSample(self, sample, previous_labels=None):
         self.removeFirstSample()
         self.addLastSample(sample)
@@ -58,6 +61,9 @@ class AbstractTrainingCollector(DataCollector):
     def getResult(self):
         return np.array(self.result)
 
+    def resetResult(self):
+        self.result = []
+
 
 class TrainingLabelCollector(AbstractTrainingCollector):
     def __init__(self, sample_count):
@@ -79,6 +85,12 @@ class TrainingCollector(object):
     def __init__(self, sample_count):
         self.label_collector = TrainingLabelCollector(sample_count)
         self.feature_collector = TrainingFeatureCollector(sample_count)
+
+    def reset(self):
+        self.label_collector.resetCollectedSamples()
+        self.label_collector.resetResult()
+        self.feature_collector.resetCollectedSamples()
+        self.feature_collector.resetResult()
 
     def handleSample(self, features, label):
         previous_labels = self.label_collector.getCollectedSamples()

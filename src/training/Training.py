@@ -1,5 +1,5 @@
 import Results
-import TargetIdentification
+import target_identification
 import Standby
 import constants as c
 
@@ -46,7 +46,7 @@ new_results = Results.Results()
 standby = Standby.Standby()
 standby.disable()
 master_connection = DummyMasterConnection()
-target_identification = TargetIdentification.TargetIdentification(master_connection, results, new_results, standby)
+target_identification = target_identification.TargetIdentification(master_connection, results, new_results, standby)
 
 features_list, expected, frequencies = readData([11])
 print len(features_list), len(features_list[0])

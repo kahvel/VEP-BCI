@@ -88,7 +88,7 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
 
     def trainButtonClickedEvent(self):
         self.sendDisableModelOptions()
-        self.sendFeatureRecrding()
+        self.sendFeatureRecrding()  # Has to be before sendClassificationOptions!
         self.sendClassificationOptions()
         self.sendStartTraining()
 

@@ -1,18 +1,14 @@
-from parsers import FeaturesParser
-from training import LdaModel, DataCollectors
-import constants as c
-
 import numpy as np
 import sklearn.metrics
 import scipy
-from sklearn.cross_validation import cross_val_predict
+
+from target_identification import LdaModel
+import constants as c
 
 
 class ModelTrainer(object):
     def __init__(self):
         self.recordings = []
-        self.features_to_use = None
-        self.extraction_method_names = None
         self.look_back_length = None
         self.cross_validation_folds = None
         self.training_recordings = []
@@ -24,63 +20,20 @@ class ModelTrainer(object):
         self.validation_roc = None
         self.training_roc = None
         self.model = None
+        self.thresholds = None
+        self.min_max = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
 
     def setup(self, options):
-        self.setFeatureAndExtractionNames(options[c.MODELS_PARSE_FEATURES_TO_USE])
+        features_to_use = options[c.MODELS_PARSE_FEATURES_TO_USE]
         self.look_back_length = options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.cross_validation_folds = options[c.MODELS_PARSE_CV_FOLDS]
         self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
-
-    def setFeatureAndExtractionNames(self, features_to_use):
-        self.features_to_use = self.getFeaturesToUse(features_to_use)
-        self.extraction_method_names = self.getExtractionMethodNames(self.features_to_use)
-        print self.features_to_use, self.extraction_method_names
-        self.printWarningIfBadFeatures(features_to_use)
-
-    def getFeaturesToUse(self, features_to_use):
-        if features_to_use is None:
-            return self.getHeaderOfFirstRecording()
-        else:
-            return features_to_use
-
-    def printWarningIfBadFeatures(self, features_to_use):
-        if not self.checkFeatures(features_to_use):
-            print "Recordings are missing features!"
-
-    def getHeaderOfFirstRecording(self):
-        return self.recordings[0].getDataFileHeader()
-
-    def allFeaturesInRecordings(self, features_to_use):
-        return all(feature in recording.getDataFileHeader() for feature in features_to_use for recording in self.recordings)
-
-    def allRecordingsSameFeatures(self):
-        return all(self.getHeaderOfFirstRecording() == recording.getDataFileHeader() for recording in self.recordings)
-
-    def checkFeatures(self, features_to_use):
-        if features_to_use is None:
-            return self.allRecordingsSameFeatures()
-        else:
-            return self.allFeaturesInRecordings(features_to_use)
-
-    def getAllLookBackRatioMatrices(self, recordings, model):
-        all_matrices = []
-        all_labels = []
-        for recording in recordings:
-            ratio_matrix = model.buildRatioMatrix(self.iterateColumns(recording.getColumnsAsFloats(recording.data), self.extraction_method_names))
-            look_back_ratio_matrix, labels = model.collectSamples(ratio_matrix, recording.expected_targets)
-            all_matrices.append(look_back_ratio_matrix)
-            all_labels.append(labels)
-        return all_matrices, all_labels
-
-    def getConcatenatedMatrix(self, recordings, model):
-        matrices, labels = self.getAllLookBackRatioMatrices(recordings, model)
-        data_matrix = np.concatenate(matrices, axis=0)
-        data_labels = np.concatenate(labels, axis=0)
-        return data_matrix, data_labels
+        self.model = LdaModel.TrainingLdaModel()
+        self.model.setup(features_to_use, self.look_back_length, self.recordings)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -126,14 +79,18 @@ class ModelTrainer(object):
                 print "Warning: no cutoff obtained!"
         return cut_off_threshold
 
-    def getDecisionFunctionValues(self, model, data, use_proba=False):  # TODO remove loop
-        predictions = []
-        for features in data:
-            if not use_proba:
-                predictions.append(model.decisionFunction([features])[0])
-            else:
-                predictions.append(model.predict_proba([features])[0])
-        return predictions
+    def getDecisionFunctionValues(self, model, data, use_proba=False):
+        """
+        If use_proba=False then the function does not work with less than 3 classes.
+        :param model:
+        :param data:
+        :param use_proba:
+        :return:
+        """
+        if use_proba:
+            return model.decisionFunction(data)
+        else:
+            return model.predictProba(data)
 
     def getBinaryLabels(self, labels, label_order):
         binary_labels = []
@@ -153,52 +110,26 @@ class ModelTrainer(object):
         return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
 
     def start(self):
-        minimum = self.findMin(self.recordings)
-        maximum = self.findMax(self.recordings)
-        model = LdaModel.TrainingLdaModel(self.look_back_length)
-        model.setupNoThreshold(minimum, maximum, self.extraction_method_names)
-        training_data, training_labels = self.getConcatenatedMatrix(self.training_recordings, model)
-        model.fit(training_data, training_labels)
-        label_order = model.getOrderedLabels()
+        training_data, training_labels = self.model.getConcatenatedMatrix(self.training_recordings)
+        self.model.fit(training_data, training_labels)
+        label_order = self.model.getOrderedLabels()
         # training_confusion_matrix = self.getConfusionMatrix(model, training_data, training_labels, label_order)
         # cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
         # cross_validation_confusion_matrix = sklearn.metrics.confusion_matrix(training_labels, cross_validation_prediction, labels=label_order)
-        validation_data, validation_labels = self.getConcatenatedMatrix(self.validation_recordings, model)
+        validation_data, validation_labels = self.model.getConcatenatedMatrix(self.validation_recordings)
         # validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels, label_order)
-        validation_roc = self.calculateRoc(model, validation_data, validation_labels, label_order)
+        validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
         thresholds = self.calculateThresholds(validation_roc, label_order)
-        training_roc = self.calculateRoc(model, training_data, training_labels, label_order)
-        self.model = model
+        training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
         self.training_data = training_data
         self.training_labels = training_labels
         self.validation_data = validation_data
         self.validation_labels = validation_labels
         self.thresholds = thresholds
-        self.min_max = minimum, maximum
+        self.min_max = self.model.getMinMax()
+        self.model = self.model.model
         self.training_roc = training_roc
         self.validation_roc = validation_roc
-
-    def getExtractionMethodNames(self, features):
-        return sorted(set(FeaturesParser.getMethodFromFeature(feature) for feature in features))
-
-    def findExtremum(self, function, recordings):
-        extrema = {method: [] for method in self.extraction_method_names}
-        for recording in recordings:
-            for method, column in self.iterateColumns(recording.getColumnsAsFloats(recording.data), self.extraction_method_names):
-                extrema[method].append(function(column))
-        return {method: function(extrema[method]) for method in self.extraction_method_names}
-
-    def iterateColumns(self, columns, extraction_method_names):
-        for key in sorted(columns):
-            method = FeaturesParser.getMethodFromFeature(key)
-            if method in extraction_method_names:
-                yield method, columns[key]
-
-    def findMin(self, recordings):
-        return self.findExtremum(min, recordings)
-
-    def findMax(self, recordings):
-        return self.findExtremum(max, recordings)
 
     def getModel(self):
         return self.model
