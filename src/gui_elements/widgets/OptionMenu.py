@@ -129,6 +129,9 @@ class ModelChoosingMenu(EventOptionMenu):
     def loadModelEvent(self, directory):
         self.eventAdded()
 
+    def getChosenModelNumber(self):
+        self.sendEventToRoot(lambda x: x.sendChosenModelNumber(self.getValue()))
+
 
 class TargetChoosingMenu(EventOptionMenu):
     def __init__(self, parent, name, row, column, values, **kwargs):

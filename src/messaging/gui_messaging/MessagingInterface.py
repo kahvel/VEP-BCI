@@ -50,6 +50,10 @@ class Recording(object):
 class Classification(object):
     def __init__(self): pass
 
+    def sendChosenModelNumber(self, model_number): pass
+
+    def getChosenModelNumber(self): pass
+
 
 class Robot(object):
     def __init__(self): pass

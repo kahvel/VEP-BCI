@@ -10,7 +10,7 @@ class ModelsParser(object):
         if data == "":
             return None
         else:
-            return sorted(map(lambda x: x.strip('"'), data.split(",")))
+            return sorted(map(lambda x: x, data.strip('"').split('","')))
 
     def parseCvFolds(self, all_data):
         return int(all_data[c.MODELS_TAB_CV_FOLDS])

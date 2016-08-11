@@ -104,6 +104,10 @@ class RatioFinder(ResultsParser):
         return data(value)/results_sum
 
 
+def getMethodFromFeature(feature):
+    return "_".join(feature.split("_")[:-1])
+
+
 class Flattener(object):
     def __init__(self):
         pass

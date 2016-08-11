@@ -109,7 +109,7 @@ class SaveButton(Buttons.EventNotebookSaveButton):
 
 class ModelFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
-        Frame.Frame.__init__(self, parent, c.EEG_FRAME, row, column, **kwargs)
+        Frame.Frame.__init__(self, parent, c.MODELS_TAB_MODEL_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_ROC, 0, 0, command=self.showTrainingRoc),
             Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_ROC, 0, 1, command=self.showValidationRoc),
@@ -125,6 +125,11 @@ class ModelFrame(Frame.Frame):
         self.thresholds = None
         self.training_roc = None
         self.validation_roc = None
+
+    def getValue(self):
+        frame_value = Frame.Frame.getValue(self)
+        frame_value.update({c.MODELS_TAB_MODEL: self.model})
+        return frame_value
 
     def plotRoc(self, roc):
         fpr, tpr, _, roc_auc = roc
