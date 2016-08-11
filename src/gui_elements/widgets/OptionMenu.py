@@ -1,7 +1,6 @@
 from gui_elements.widgets.frames import Frame
 from gui_elements.widgets import AbstractWidget
 
-import constants as c
 import Tkinter
 import copy
 
@@ -14,10 +13,10 @@ class OptionMenu(AbstractWidget.WidgetWithCommand):
         }))
         self.values = values
         self.variable = Tkinter.StringVar()
-        self.command = kwargs.get("command", lambda: None)
+        self.command = kwargs.get("command", lambda x: None)
         label = Tkinter.Label(parent.widget, text=self.name)
         label.grid(row=self.row, column=self.column-1, padx=self.padx, pady=self.pady)
-        self.create(Tkinter.OptionMenu(parent.widget, self.variable, *self.values, command=lambda x: self.command()))
+        self.create(Tkinter.OptionMenu(parent.widget, self.variable, *self.values, command=lambda x: self.command(x)))
 
     def getValue(self):
         return self.variable.get()
