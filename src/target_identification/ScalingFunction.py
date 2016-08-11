@@ -17,6 +17,8 @@ class ScalingFunctions(object):
         return lambda x: (x-minimum)/(maximum-minimum)+1
 
     def getScalingFunctions(self, minima, maxima, extraction_method_names):
+        self.minima = minima
+        self.maxima = maxima
         return {method: self.getScalingFunction(minima[method], maxima[method]) for method in extraction_method_names}
 
 
@@ -26,9 +28,9 @@ class TrainingScalingFunctions(ScalingFunctions):
 
     def setup(self, extraction_method_names, recordings):
         min_max_finder = MinMaxFinder(extraction_method_names)
-        self.minima = min_max_finder.findMin(recordings)
-        self.maxima = min_max_finder.findMax(recordings)
-        self.scaling_functions = self.getScalingFunctions(self.minima, self.maxima, extraction_method_names)
+        minima = min_max_finder.findMin(recordings)
+        maxima = min_max_finder.findMax(recordings)
+        self.scaling_functions = self.getScalingFunctions(minima, maxima, extraction_method_names)
 
 
 class OnlineScalingFunctions(ScalingFunctions):
@@ -36,7 +38,7 @@ class OnlineScalingFunctions(ScalingFunctions):
         ScalingFunctions.__init__(self)
 
     def setup(self, minima, maxima, extraction_method_names):
-        self.scaling_functions = self.getScalingFunctions(self.minima, self.maxima, extraction_method_names)
+        self.scaling_functions = self.getScalingFunctions(minima, maxima, extraction_method_names)
 
 
 class MinMaxFinder(target_identification.ColumnsIterator.ColumnsIterator):

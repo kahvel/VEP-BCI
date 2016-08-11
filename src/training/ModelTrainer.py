@@ -20,6 +20,7 @@ class ModelTrainer(object):
         self.validation_roc = None
         self.training_roc = None
         self.model = None
+        self.sklearn_model = None
         self.thresholds = None
         self.min_max = None
 
@@ -127,12 +128,12 @@ class ModelTrainer(object):
         self.validation_labels = validation_labels
         self.thresholds = thresholds
         self.min_max = self.model.getMinMax()
-        self.model = self.model.model
+        self.sklearn_model = self.model.model
         self.training_roc = training_roc
         self.validation_roc = validation_roc
 
     def getModel(self):
-        return self.model
+        return self.sklearn_model
 
     def getTrainingData(self):
         return self.training_data
@@ -157,3 +158,6 @@ class ModelTrainer(object):
 
     def getValidationRoc(self):
         return self.validation_roc
+
+    def getUsedFeatures(self):
+        return self.model.getUsedFeatures()

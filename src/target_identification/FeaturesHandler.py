@@ -28,6 +28,9 @@ class FeaturesHandler(object):
     def getExtractionMethodNames(self):
         return self.extraction_method_names
 
+    def getUsedFeatures(self):
+        return self.features_to_use
+
 
 class OnlineFeaturesHandler(FeaturesHandler):
     def __init__(self):

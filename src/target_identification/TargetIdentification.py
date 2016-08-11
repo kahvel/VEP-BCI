@@ -100,6 +100,7 @@ class TargetIdentification(object):
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
         self.model.setup(minimum, maximum, features_to_use, sample_count, model)
+        print self.model.getOrderedLabels()
 
     def resetNeedNewTarget(self):
         self.need_new_target = False

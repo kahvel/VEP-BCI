@@ -86,6 +86,9 @@ class OptionsFrame(Frame.Frame):
     def getModelOptionsEvent(self):
         self.sendEventToRoot(lambda x: x.sendModelOptionsToRootEvent(self.getValue()), True)
 
+    def usedFeaturesReceivedEvent(self, used_features):
+        self.widgets_dict[c.MODELS_TAB_FEATURES_TO_USE].setValue('"'+'","'.join(used_features)+'"')
+
     def addNewRecordingTabEvent(self):
         if self.disabled:
             return c.STOP_EVENT_SENDING

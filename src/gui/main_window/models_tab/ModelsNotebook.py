@@ -36,3 +36,6 @@ class ModelsNotebook(EventNotebook.EventNotebook):
     def disableModelOptionsEvent(self):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.disableModelOptionsEvent())
         return c.STOP_EVENT_SENDING
+
+    def usedFeaturesReceivedEvent(self, used_features):
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.usedFeaturesReceivedEvent(used_features))

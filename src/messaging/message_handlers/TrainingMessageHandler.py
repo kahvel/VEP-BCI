@@ -20,14 +20,16 @@ class TrainingGetDataHandler(AbstractMessageHandler.MessageHandler):
             self.main_connection.sendMessage(self.trainer.getValidationLabels())
         elif message == c.GET_MODEL_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getModel())
-        elif message == c.GET_MIN_MAX:
+        elif message == c.GET_MIN_MAX_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getMinMax())
         elif message == c.GET_THRESHOLDS_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getThresholds())
-        elif message == c.GET_TRAINING_ROC:
+        elif message == c.GET_TRAINING_ROC_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getTrainingRoc())
-        elif message == c.GET_VALIDATION_ROC:
+        elif message == c.GET_VALIDATION_ROC_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getValidationRoc())
+        elif message == c.GET_USED_FEATURES_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getUsedFeatures())
 
 
 class TrainingSendDataHandler(AbstractMessageHandler.MessageHandler):

@@ -122,11 +122,13 @@ class Models(object):
 
     def getFeaturesEvent(self): pass
 
-    def sendModelOptionsToRootEvent(self, features_to_use): pass
+    def sendModelOptionsToRootEvent(self, options): pass
 
     def getModelOptionsEvent(self): pass
 
     def disableModelOptionsEvent(self): pass
+
+    def usedFeaturesReceivedEvent(self, used_features): pass
 
 
 class TrialEndedHandler(object):

@@ -52,6 +52,7 @@ class LdaModel(ColumnsIterator.ColumnsIterator):
 class TrainingLdaModel(LdaModel):
     def __init__(self):
         LdaModel.__init__(self)
+        self.features_to_use = None
 
     def setup(self, features_to_use, sample_count, recordings):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
@@ -71,6 +72,7 @@ class TrainingLdaModel(LdaModel):
     def setupFeaturesHandler(self, features_to_use, recordings):
         self.features_handler = FeaturesHandler.TrainingFeaturesHandler(recordings)
         self.features_handler.setup(features_to_use)
+        self.features_to_use = self.features_handler.getUsedFeatures()
         return self.features_handler.getExtractionMethodNames()
 
     def collectSamples(self, features, labels):
@@ -92,6 +94,9 @@ class TrainingLdaModel(LdaModel):
         data_matrix = np.concatenate(matrices, axis=0)
         data_labels = np.concatenate(labels, axis=0)
         return data_matrix, data_labels
+
+    def getUsedFeatures(self):
+        return self.features_to_use
 
 
 class OnlineLdaModel(LdaModel):
