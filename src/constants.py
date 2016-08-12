@@ -472,6 +472,10 @@ EEG_FRAME = "EegFrame"
 PACKET_COUNT = "Packets"
 SAMPLE_COUNT = "Samples"
 
+RECORDING_TAB_EEG = "EEG"
+RECORDING_TAB_FEATURES = "Features"
+RECORDING_TAB_RECORDING_DATA = "RecordingTabRecordingData"
+
 
 CSV_TRUE_LABEL = "True"
 CSV_PREDICTED_LABEL = "Predicted"

@@ -1,5 +1,4 @@
-import ClassificationParser
-import ModelsParser
+from parsers import ClassificationParser, ModelsParser, TestParser, RecordParser
 import constants as c
 
 
@@ -7,6 +6,8 @@ class AbstractInputParser(object):
     def __init__(self):
         self.classification_tab_parser = ClassificationParser.ClassificationParser()
         self.model_tab_parser = ModelsParser.ModelsParser()
+        self.test_tab_parser = TestParser.TestParser()
+        self.recording_tab_parser = RecordParser.RecordParser()
 
     def parseFrequencies(self, enabled_targets):
         return {key: target[c.DATA_FREQ] for key, target in enabled_targets.items()}
@@ -46,14 +47,6 @@ class AbstractInputParser(object):
     def parseExtractionOptions(self, data, target_data):
         return {key: self.parseExtractionTab(value[c.EXTRACTION_TAB_NOTEBOOK], target_data) for key, value in data.items()}
 
-    def parseTestTab(self, data):
-        if data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU] == c.EEG_SOURCE_DEVICE:
-            data[c.DISABLE] = False
-        else:
-            data[c.DISABLE] = True
-            data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU] = int(data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU])
-        return data
-
     def parseData(self, all_data):
         raise NotImplementedError("parseData not implemented!")
 
@@ -78,6 +71,7 @@ class MainInputParser(AbstractInputParser):
         target_data = self.parseTargetData(all_data[c.MAIN_NOTEBOOK_TARGETS_TAB][c.WINDOW_TAB_TARGETS_NOTEBOOK])
         target_freqs = self.parseFrequencies(target_data)
         model_number = self.classification_tab_parser.parseModelNumber(all_data[c.MAIN_NOTEBOOK_CLASSIFICATION_TAB])
+        recording_number = self.test_tab_parser.parseRecordingNumber(all_data[c.MAIN_NOTEBOOK_TEST_TAB])
         return {
             c.DATA_BACKGROUND: all_data[c.MAIN_NOTEBOOK_TARGETS_TAB][c.WINDOW_TAB_MONITOR_FRAME],
             c.DATA_TARGETS: target_data,
@@ -88,8 +82,8 @@ class MainInputParser(AbstractInputParser):
             c.DATA_MODEL: self.model_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_MODELS_TAB], model_number),
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.MAIN_NOTEBOOK_ROBOT_TAB],
-            c.DATA_TEST: self.parseTestTab(all_data[c.MAIN_NOTEBOOK_TEST_TAB]),
-            c.DATA_RECORD: all_data[c.MAIN_NOTEBOOK_RECORD_TAB][c.TRAINING_RECORD],
+            c.DATA_TEST: self.test_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_TEST_TAB]),
+            c.DATA_RECORD: self.recording_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_RECORD_TAB], recording_number),
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseDifferenceData),
             c.DATA_CLEAR_BUFFERS: all_data[c.MAIN_NOTEBOOK_TEST_TAB][c.TEST_TAB_CLEAR_BUFFERS],

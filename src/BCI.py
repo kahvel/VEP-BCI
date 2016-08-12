@@ -31,6 +31,7 @@ class BCI(object):
         self.setup_succeeded = True
         self.target_switcher.setup(options)
         self.record_option = options[c.DATA_RECORD][c.TRAINING_RECORD]
+        print options[c.DATA_RECORD][c.RECORDING_TAB_RECORDING_DATA]
         self.total_time = self.getTotalTime(options[c.DATA_TEST][c.TEST_TAB_UNLIMITED], options[c.DATA_TEST][c.TEST_TAB_TOTAL_TIME])
         self.target_freqs = options[c.DATA_FREQS]
         self.setStandbyState(options[c.DATA_TEST][c.TEST_TAB_STANDBY])

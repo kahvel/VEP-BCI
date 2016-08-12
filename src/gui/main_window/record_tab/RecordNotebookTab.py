@@ -59,6 +59,14 @@ class EegFrame(Frame.Frame):
         self.features = Recording.Features()
         self.has_features = False
 
+    def getValue(self):
+        frame_value = Frame.Frame.getValue(self)
+        frame_value.update({c.RECORDING_TAB_RECORDING_DATA: {
+            c.RECORDING_TAB_EEG: self.eeg,
+            c.RECORDING_TAB_FEATURES: self.features,
+        }})
+        return frame_value
+
     def recordedEegReceivedEvent(self, eeg):
         self.eeg = eeg
         self.widgets_dict[c.PACKET_COUNT].setValue(eeg.getLength())
