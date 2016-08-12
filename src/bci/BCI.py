@@ -1,10 +1,8 @@
 from parsers import FeaturesParser
 from target_identification import TargetIdentification
+from bci import Results, Standby, Recording, TargetSwitcher, DataIterator
+
 import constants as c
-import Results
-import Standby
-import Recording
-import TargetSwitcher
 
 
 class BCI(object):
@@ -22,21 +20,34 @@ class BCI(object):
         self.flattener = FeaturesParser.Flattener()
         self.setup_succeeded = True
         self.exit_flag = False
-        self.target_switcher = TargetSwitcher.TargetSwitcher(self.connections)
+        self.target_switcher = None
+        self.data_iterator = DataIterator.DataIterator(connections, self)
+        self.source_option = None
 
     def flattenFeatureVector(self, feature_vector):
-        return self.flattener.parseFeatures(feature_vector)
+        if self.source_option == c.EEG_SOURCE_DEVICE:
+            return self.flattener.parseFeatures(feature_vector)
+        else:
+            return feature_vector
 
     def setup(self, options):
         self.setup_succeeded = True
-        self.target_switcher.setup(options)
+        self.data_iterator.setup(options)
+        self.source_option = options[c.DATA_TEST][c.TEST_TAB_EEG_SOURCE_OPTION_MENU]
+        self.setupTargetSwitcher(options, self.source_option)
         self.record_option = options[c.DATA_RECORD][c.TRAINING_RECORD]
-        print options[c.DATA_RECORD][c.RECORDING_TAB_RECORDING_DATA]
         self.total_time = self.getTotalTime(options[c.DATA_TEST][c.TEST_TAB_UNLIMITED], options[c.DATA_TEST][c.TEST_TAB_TOTAL_TIME])
         self.target_freqs = options[c.DATA_FREQS]
         self.setStandbyState(options[c.DATA_TEST][c.TEST_TAB_STANDBY])
         self.setupStandby(options)
         self.target_identification.setup(options)
+
+    def setupTargetSwitcher(self, options, source_option):
+        if source_option == c.EEG_SOURCE_DEVICE:
+            self.target_switcher = TargetSwitcher.TargetSwitcher(self.connections)
+        else:
+            self.target_switcher = TargetSwitcher.RecordedTargetSwitcher(self)
+        self.target_switcher.setup(options)
 
     def setupSucceeded(self):
         return self.setup_succeeded and self.target_identification.setupSucceeded()
@@ -72,6 +83,7 @@ class BCI(object):
     def handleEmotivMessages(self, current_target):
         message = self.getNextPacket()
         if message is not None:
+            print current_target, message
             self.message_counter += 1
             self.recording.collectPacket(message, current_target, self.message_counter)
             self.connections.sendExtractionMessage(message)
@@ -79,20 +91,21 @@ class BCI(object):
             self.handleExtractionMessages(current_target)
 
     def getFeatures(self):
-        return self.connections.receiveExtractionMessage()
+        return self.data_iterator.getFeatures()
 
     def handleExtractionMessages(self, current_target):
         features = self.getFeatures()
         predicted_target = None
         if features is not None:
-            flat_features = self.flattenFeatureVector(features)  # Use only with new target identification
+            print features, current_target
+            flat_features = self.flattenFeatureVector(features)
             self.recording.collectFeatures(flat_features, current_target, self.message_counter)
             predicted_target = self.target_identification.handleFreqMessages(flat_features, features, self.target_freqs, current_target)
             self.recording.addPredictionToFeatures(predicted_target)
         self.recording.addPredictionToEeg(predicted_target)
 
     def getNextPacket(self):
-        return self.connections.receiveEmotivMessage()
+        return self.data_iterator.getNextPacket()
 
     def handleVideoStreamMessages(self):
         message = self.connections.receiveRobotMessage()
@@ -103,9 +116,11 @@ class BCI(object):
         return self.target_switcher.needNewTarget(self.target_identification.need_new_target, self.message_counter)
 
     def startPacketSending(self, current_target):
-        while not self.needNewTarget() and self.message_counter < self.total_time and not self.exit_flag:
+        while True:
             self.handleEmotivMessages(current_target)
             self.handleVideoStreamMessages()
+            if self.needNewTarget() or self.message_counter >= self.total_time or self.exit_flag:
+                break
 
     def setStandbyState(self, option):
         if option == c.TEST_TARGET_NONE:

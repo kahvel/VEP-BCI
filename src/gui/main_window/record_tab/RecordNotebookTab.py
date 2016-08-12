@@ -1,9 +1,10 @@
+import os
+
 from gui_elements.widgets import Buttons, Textboxes
 from gui_elements.widgets.frames import Frame
 from gui_elements.widgets.frames.tabs import DisableDeleteNotebookTab
 import constants as c
-import Recording
-import os
+from bci import Recording
 
 
 class RecordNotebookTab(DisableDeleteNotebookTab.Delete):

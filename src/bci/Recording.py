@@ -114,6 +114,12 @@ class DataAndExpectedTargets(Switchable.Switchable):
         self.loadData(directory)
         self.loadLabels(directory)
 
+    def getExpectedTargets(self):
+        return self.expected_targets
+
+    def getData(self):
+        return self.data
+
 
 class Eeg(DataAndExpectedTargets):
     def __init__(self):

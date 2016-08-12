@@ -1,10 +1,26 @@
+from bci import DataIterator
 import constants as c
 
 import random
 
 
-class TargetSwitcher(object):
+class AbstractTargetSwitcher(object):
+    def __init__(self):
+        pass
+
+    def resetPreviousTargetChangeAndRecordingTargets(self):
+        raise NotImplementedError("resetPreviousTargetChangeAndRecordingTargets not implemented!")
+
+    def handleTargetChanging(self, target):
+        raise NotImplementedError("handleTargetChanging not implemented!")
+
+    def needNewTarget(self, target_identified, message_counter):
+        raise NotImplementedError("needNewTarget not implemented!")
+
+
+class TargetSwitcher(AbstractTargetSwitcher):
     def __init__(self, connections):
+        AbstractTargetSwitcher.__init__(self)
         self.previous_target_change = 0
         self.target_duration_seconds = None
         self.target_duration_plus_minus = None
@@ -13,7 +29,7 @@ class TargetSwitcher(object):
         self.target_freqs = None
         self.connections = connections
         self.random_target_duration = None
-        self.recording_targets = []
+        self.recently_not_used_targets = []
 
     def setup(self, options):
         self.target_duration_seconds = options[c.DATA_TEST][c.TEST_TAB_TIME_PER_TARGET]
@@ -21,11 +37,11 @@ class TargetSwitcher(object):
         self.allow_repeating = options[c.DATA_TEST][c.TEST_TAB_ALLOW_REPEATING]
         self.test_target_option = options[c.DATA_TEST][c.TEST_TAB_TARGET_OPTION_MENU]
         self.target_freqs = options[c.DATA_FREQS]
-        self.recording_targets = []
+        self.recently_not_used_targets = []
 
     def resetPreviousTargetChangeAndRecordingTargets(self):
         self.previous_target_change = 0
-        self.recording_targets = []
+        self.recently_not_used_targets = []
 
     def getRandomNonRepeatingTarget(self, targets, previous_target):
         if previous_target is not None and len(targets) > 1:
@@ -45,9 +61,9 @@ class TargetSwitcher(object):
         :param targets:
         :return:
         """
-        if self.recording_targets == []:
-            self.recording_targets = targets
-        return self.recording_targets.pop(random.randint(0, len(self.recording_targets)-1))
+        if self.recently_not_used_targets == []:
+            self.recently_not_used_targets = targets
+        return self.recently_not_used_targets.pop(random.randint(0, len(self.recently_not_used_targets)-1))
 
     def setRandomTargetDuration(self):
         if self.isTimed() or self.isRecording():
@@ -99,3 +115,28 @@ class TargetSwitcher(object):
             return True
         else:
             return False
+
+
+class RecordedTargetSwitcher(AbstractTargetSwitcher, DataIterator.AbstractDataIterator):
+    def __init__(self, bci):
+        AbstractTargetSwitcher.__init__(self)
+        DataIterator.AbstractDataIterator.__init__(self, bci)
+        self.eeg_or_features_option = None
+        self.recording = None
+
+    def setup(self, options):
+        self.eeg_or_features_option = options[c.DATA_TEST][c.TEST_TAB_RECORDED_TYPE_OPTION_MENU]
+        if self.eeg_or_features_option == c.TEST_RECORDED_TYPE_EEG:
+            self.recording = options[c.DATA_RECORD][c.RECORDING_TAB_RECORDING_DATA][c.RECORDING_TAB_EEG].getExpectedTargets()
+        elif self.eeg_or_features_option == c.TEST_RECORDED_TYPE_FEATURES:
+            self.recording = options[c.DATA_RECORD][c.RECORDING_TAB_RECORDING_DATA][c.RECORDING_TAB_FEATURES].getExpectedTargets()
+        self.setupIndexAndLength(len(self.recording))
+
+    def resetPreviousTargetChangeAndRecordingTargets(self):
+        pass
+
+    def handleTargetChanging(self, target):
+        return self.recording[self.getIndexAndIncrease()]
+
+    def needNewTarget(self, target_identified, message_counter):
+        return True

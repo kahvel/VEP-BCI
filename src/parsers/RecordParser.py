@@ -13,6 +13,6 @@ class RecordParser(object):
 
     def parseData(self, all_data, recording_number):
         return {
-            c.TRAINING_RECORD: all_data[c.TRAINING_RECORD],
+            c.TRAINING_RECORD: all_data[c.TRAINING_RECORD][c.TRAINING_RECORD],
             c.RECORDING_TAB_RECORDING_DATA: self.parseRecordingData(all_data, recording_number)
         }

@@ -1,13 +1,9 @@
-import Results
+from bci import Results, Standby
 import target_identification
-import Standby
 import constants as c
 
 from ParameterHandler import NewTrainingParameterHandler, BruteForceHandler
 from utils import readFeaturesWithTargets, removeResultsAfterChange
-
-import scipy.optimize
-import numpy as np
 
 
 class DummyMasterConnection(object):

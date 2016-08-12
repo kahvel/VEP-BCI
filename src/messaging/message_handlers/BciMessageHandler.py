@@ -1,5 +1,5 @@
 from messaging.message_handlers import AbstractMessageHandler
-import BCI
+from bci import BCI
 import constants as c
 
 import threading
