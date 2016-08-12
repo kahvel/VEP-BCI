@@ -46,8 +46,12 @@ class AbstractInputParser(object):
     def parseExtractionOptions(self, data, target_data):
         return {key: self.parseExtractionTab(value[c.EXTRACTION_TAB_NOTEBOOK], target_data) for key, value in data.items()}
 
-    def addEegDeviceState(self, data):
-        data.update({c.DISABLE: data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU] == c.EEG_SOURCE_RECORDED})
+    def parseTestTab(self, data):
+        if data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU] == c.EEG_SOURCE_DEVICE:
+            data[c.DISABLE] = False
+        else:
+            data[c.DISABLE] = True
+            data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU] = int(data[c.TEST_TAB_EEG_SOURCE_OPTION_MENU])
         return data
 
     def parseData(self, all_data):
@@ -84,7 +88,7 @@ class MainInputParser(AbstractInputParser):
             c.DATA_MODEL: self.model_tab_parser.parseData(all_data[c.MAIN_NOTEBOOK_MODELS_TAB], model_number),
             c.DATA_HARMONICS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseHarmonicData),
             c.DATA_ROBOT: all_data[c.MAIN_NOTEBOOK_ROBOT_TAB],
-            c.DATA_TEST: self.addEegDeviceState(all_data[c.MAIN_NOTEBOOK_TEST_TAB]),
+            c.DATA_TEST: self.parseTestTab(all_data[c.MAIN_NOTEBOOK_TEST_TAB]),
             c.DATA_RECORD: all_data[c.MAIN_NOTEBOOK_RECORD_TAB][c.TRAINING_RECORD],
             c.DATA_EXTRACTION_WEIGHTS: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseWeightData),
             c.DATA_EXTRACTION_DIFFERENCES: self.parseHarmonicsTab(all_data[c.MAIN_NOTEBOOK_EXTRACTION_TAB], self.parseDifferenceData),

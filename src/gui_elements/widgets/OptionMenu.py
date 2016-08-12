@@ -128,8 +128,22 @@ class ModelChoosingMenu(EventOptionMenu):
     def loadModelEvent(self, directory):
         self.eventAdded()
 
-    def getChosenModelNumber(self):
+    def getChosenModelNumber(self):  # Currently not used
         self.sendEventToRoot(lambda x: x.sendChosenModelNumber(self.getValue()))
+
+
+class RecordingChoosingMenu(EventOptionMenu):
+    def __init__(self, parent, name, row, column, values, **kwargs):
+        EventOptionMenu.__init__(self, parent, name, row, column, values, **kwargs)
+
+    def addNewRecordingTabEvent(self):
+        self.eventAdded()
+
+    def recordTabRemovedEvent(self, deleted_tab):
+        self.eventRemoved(deleted_tab)
+
+    def loadEegEvent(self, directory):
+        self.eventAdded()
 
 
 class TargetChoosingMenu(EventOptionMenu):

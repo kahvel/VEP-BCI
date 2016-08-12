@@ -22,7 +22,6 @@ class BCI(object):
         self.flattener = FeaturesParser.Flattener()
         self.setup_succeeded = True
         self.exit_flag = False
-        self.recording_targets = None
         self.target_switcher = TargetSwitcher.TargetSwitcher(self.connections)
 
     def flattenFeatureVector(self, feature_vector):
@@ -37,7 +36,6 @@ class BCI(object):
         self.setStandbyState(options[c.DATA_TEST][c.TEST_TAB_STANDBY])
         self.setupStandby(options)
         self.target_identification.setup(options)
-        self.recording_targets = []
 
     def setupSucceeded(self):
         return self.setup_succeeded and self.target_identification.setupSucceeded()
@@ -48,7 +46,7 @@ class BCI(object):
     def start(self):
         self.exit_flag = False
         self.message_counter = 0
-        self.target_switcher.resetPreviousTargetChange()
+        self.target_switcher.resetPreviousTargetChangeAndRecordingTargets()
         self.target_identification.resetPrevResults(self.target_freqs.values())
         self.results = Results.Result(self.target_freqs)
         self.new_results = Results.Result(self.target_freqs)

@@ -7,7 +7,7 @@ class TestTab(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.MAIN_NOTEBOOK_TEST_TAB, row, column, **kwargs)
         self.addChildWidgets((
-            OptionMenu.OptionMenu(self, c.TEST_TAB_EEG_SOURCE_OPTION_MENU, 0, 1, c.EEG_SOURCE_NAMES),
+            OptionMenu.RecordingChoosingMenu(self, c.TEST_TAB_EEG_SOURCE_OPTION_MENU, 0, 1, c.EEG_SOURCE_NAMES),
             Checkbutton.Checkbutton(self, c.TEST_TAB_ALLOW_REPEATING, 0, 3),
             OptionMenu.TargetChoosingMenu(self, c.TEST_TAB_TARGET_OPTION_MENU, 1, 1, c.TEST_TARGET_OPTIONS, command=self.enableTimePerTarget, columnspan=2),
             Checkbutton.Checkbutton(self, c.TEST_TAB_CLEAR_BUFFERS, 1, 3),

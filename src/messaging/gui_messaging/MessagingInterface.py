@@ -50,9 +50,9 @@ class Recording(object):
 class Classification(object):
     def __init__(self): pass
 
-    def sendChosenModelNumber(self, model_number): pass
+    def sendChosenModelNumber(self, model_number): pass  # Currently not used
 
-    def getChosenModelNumber(self): pass
+    def getChosenModelNumber(self): pass  # Currently not used
 
 
 class Robot(object):

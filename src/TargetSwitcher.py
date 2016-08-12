@@ -13,6 +13,7 @@ class TargetSwitcher(object):
         self.target_freqs = None
         self.connections = connections
         self.random_target_duration = None
+        self.recording_targets = []
 
     def setup(self, options):
         self.target_duration_seconds = options[c.DATA_TEST][c.TEST_TAB_TIME_PER_TARGET]
@@ -20,9 +21,11 @@ class TargetSwitcher(object):
         self.allow_repeating = options[c.DATA_TEST][c.TEST_TAB_ALLOW_REPEATING]
         self.test_target_option = options[c.DATA_TEST][c.TEST_TAB_TARGET_OPTION_MENU]
         self.target_freqs = options[c.DATA_FREQS]
+        self.recording_targets = []
 
-    def resetPreviousTargetChange(self):
+    def resetPreviousTargetChangeAndRecordingTargets(self):
         self.previous_target_change = 0
+        self.recording_targets = []
 
     def getRandomNonRepeatingTarget(self, targets, previous_target):
         if previous_target is not None and len(targets) > 1:
