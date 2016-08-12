@@ -65,7 +65,7 @@ class ResultCounter(object):
 
 
 class TargetIdentification(object):
-    def __init__(self, master_connection, results, new_results, standby):
+    def __init__(self, master_connection, standby):
         self.prev_results = ResultCounter()
         self.actual_results = ResultCounter()
         self.difference_finder = FeaturesParser.DifferenceFinder()
@@ -74,15 +74,23 @@ class TargetIdentification(object):
         self.need_new_target = None
         self.new_target_counter = None
         self.master_connection = master_connection
-        self.results = results
-        self.new_results = new_results
+        self.results = None
+        self.new_results = None
         self.standby = standby
         self.clear_buffers = None
         self.allow_repeating = None
         self.model = None
         self.thresholds = None
+        self.classification_type_options = None
+        self.setup_succeeded = True
 
     def setup(self, options):
+        self.setup_succeeded = True
+        self.classification_type_options = options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_TYPE]
+        model_number = options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_MODEL]
+        if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW and model_number == c.CLASSIFICATION_MODEL_NONE:
+            self.setup_succeeded = False
+            print "Error: New classification method but no model chosen!"
         self.allow_repeating = options[c.DATA_TEST][c.TEST_TAB_ALLOW_REPEATING]
         self.difference_finder.setup(options[c.DATA_EXTRACTION_DIFFERENCES])
         self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
@@ -90,7 +98,11 @@ class TargetIdentification(object):
         self.actual_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_ACTUAL_RESULTS])
         self.clear_buffers = options[c.DATA_CLEAR_BUFFERS]
         # self.ratio_finder.setup(self.scaling_functions)
-        self.setupModel(options[c.DATA_MODEL][c.MODELS_TAB_MODEL_DATA], options[c.DATA_MODEL][c.MODELS_PARSE_OPTIONS])
+        if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW and model_number != c.CLASSIFICATION_MODEL_NONE:
+            self.setupModel(options[c.DATA_MODEL][c.MODELS_TAB_MODEL_DATA], options[c.DATA_MODEL][c.MODELS_PARSE_OPTIONS])
+
+    def setupSucceeded(self):
+        return self.setup_succeeded
 
     def setupModel(self, model_data, model_options):
         minimum, maximum = model_data[c.MODELS_TAB_MIN_MAX]
@@ -100,15 +112,18 @@ class TargetIdentification(object):
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
         self.model.setup(minimum, maximum, features_to_use, sample_count, model)
-        print self.model.getOrderedLabels()
 
     def resetNeedNewTarget(self):
         self.need_new_target = False
         self.new_target_counter = 0
 
-    def resetResults(self, freqs):
+    def resetPrevResults(self, freqs):
         self.prev_results.reset(freqs)
         self.actual_results.reset(freqs)
+
+    def setResults(self, results, new_results):
+        self.results = results
+        self.new_results = new_results
 
     def initialiseCounter(self, rounded_target_freqs):
         return {freq: 0 for freq in rounded_target_freqs}
@@ -127,7 +142,7 @@ class TargetIdentification(object):
             self.prev_results.reset(target_freqs)
 
     def filterRepeatingResults(self, predicted_frequency, current_frequency, target_freqs_dict):
-        if self.allow_repeating or not self.allow_repeating and not self.results.isPrevResult(predicted_frequency):
+        if self.allow_repeating or not self.allow_repeating and not self.results.isEqualToPreviousResult(predicted_frequency):
             self.chooseTarget(predicted_frequency, current_frequency, target_freqs_dict)
 
     def clearBuffers(self, target_freq):
@@ -176,7 +191,7 @@ class TargetIdentification(object):
             self.prev_results.removeWeight()
             self.actual_results.removeWeight()
 
-    def handleFreqMessages1(self, message, target_freqs, current_target, filter_by_comparison=True):
+    def handleFreqMessagesOld(self, message, target_freqs, current_target, filter_by_comparison=True):
         results = message
         if results is not None:
             freq_weights = self.weight_finder.parseResultsNewDict(results)
@@ -187,12 +202,12 @@ class TargetIdentification(object):
             self.new_results.add(current_frequency, predicted_frequency)
             return predicted_frequency
 
-    def handleFreqMessages(self, features, target_freqs, current_target, filter_by_comparison=True):
+    def handleFreqMessagesNew(self, features, target_freqs, current_target, filter_by_comparison=True):
         if features is not None:
             ratios = self.model.buildRatioMatrix(features)
             combined_ratios = self.model.collectSamples(ratios)
             if combined_ratios is not None:
-                scores = list(self.model.decisionFunction([combined_ratios])[0])
+                scores = list(self.model.decisionFunction(combined_ratios)[0])
                 predicted = None
                 for i in range(len(scores)):
                     if scores[i] > self.thresholds[i] and all(map(lambda (j, (s, t)): s < t or j == i, enumerate(zip(scores, self.thresholds)))):
@@ -205,6 +220,14 @@ class TargetIdentification(object):
                     self.new_results.add(current_frequency, predicted_frequency)
                     freq_weights = {predicted_frequency: float("inf")}
                     predicted_frequency = self.filterResults(freq_weights, target_freqs, current_frequency, [True], False)
-                    print predicted_frequency, current_frequency, self.model.decision_function([combined_ratios])
+                    # print predicted_frequency, current_frequency, self.model.decisionFunction(combined_ratios)
                     self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
                     return predicted_frequency
+
+    def handleFreqMessages(self, features, old_features, target_freqs, current_target, filter_by_comparison=True):
+        if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW:
+            self.handleFreqMessagesNew(features, target_freqs, current_target, filter_by_comparison)
+        elif self.classification_type_options == c.CLASSIFICATION_TYPE_OLD:
+            self.handleFreqMessagesOld(old_features, target_freqs, current_target, filter_by_comparison)
+        elif self.classification_type_options == c.CLASSIFICATION_TYPE_NONE:
+            pass

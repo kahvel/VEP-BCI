@@ -45,7 +45,7 @@ class ModelsParser(object):
         }
 
     def parseData(self, all_data, model_number):
-        if model_number is None:
+        if model_number == c.CLASSIFICATION_MODEL_NONE:
             return None
         else:
             return self.parseAllData(all_data, model_number)

@@ -12,7 +12,7 @@ class ClassificationParser(object):
     def parseModelNumber(self, all_data):
         value = all_data[c.CLASSIFICATION_TAB_CONTROL_FRAME][c.CLASSIFICATION_TAB_MODEL_OPTION_MENU]
         if value == c.CLASSIFICATION_MODEL_NONE:
-            return None
+            return c.CLASSIFICATION_MODEL_NONE
         else:
             return int(value)
 
