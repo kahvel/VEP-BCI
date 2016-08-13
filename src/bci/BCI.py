@@ -48,7 +48,7 @@ class BCI(object):
         if source_option == c.EEG_SOURCE_DEVICE:
             self.target_switcher = TargetSwitcher.TargetSwitcher(self.connections)
         else:
-            self.target_switcher = TargetSwitcher.RecordedTargetSwitcher(self)
+            self.target_switcher = TargetSwitcher.RecordedTargetSwitcher(self, self.connections)
         self.target_switcher.setup(options)
 
     def setupSucceeded(self):

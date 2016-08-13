@@ -5,8 +5,8 @@ import random
 
 
 class AbstractTargetSwitcher(object):
-    def __init__(self):
-        pass
+    def __init__(self, connections):
+        self.connections = connections
 
     def resetPreviousTargetChangeAndRecordingTargets(self):
         raise NotImplementedError("resetPreviousTargetChangeAndRecordingTargets not implemented!")
@@ -20,14 +20,13 @@ class AbstractTargetSwitcher(object):
 
 class TargetSwitcher(AbstractTargetSwitcher):
     def __init__(self, connections):
-        AbstractTargetSwitcher.__init__(self)
+        AbstractTargetSwitcher.__init__(self, connections)
         self.previous_target_change = 0
         self.target_duration_seconds = None
         self.target_duration_plus_minus = None
         self.allow_repeating = None
         self.test_target_option = None
         self.target_freqs = None
-        self.connections = connections
         self.random_target_duration = None
         self.recently_not_used_targets = []
 
@@ -118,8 +117,8 @@ class TargetSwitcher(AbstractTargetSwitcher):
 
 
 class RecordedTargetSwitcher(AbstractTargetSwitcher, DataIterator.AbstractDataIterator):
-    def __init__(self, bci):
-        AbstractTargetSwitcher.__init__(self)
+    def __init__(self, bci, connections):
+        AbstractTargetSwitcher.__init__(self, connections)
         DataIterator.AbstractDataIterator.__init__(self, bci)
         self.eeg_or_features_option = None
         self.recording = None
@@ -135,8 +134,11 @@ class RecordedTargetSwitcher(AbstractTargetSwitcher, DataIterator.AbstractDataIt
     def resetPreviousTargetChangeAndRecordingTargets(self):
         pass
 
-    def handleTargetChanging(self, target):
-        return self.recording[self.getIndexAndIncrease()]
+    def handleTargetChanging(self, previous_target):
+        target = self.recording[self.getIndexAndIncrease()]
+        if target != previous_target:
+            self.connections.sendTargetMessage(target)
+        return target
 
     def needNewTarget(self, target_identified, message_counter):
         return True

@@ -205,12 +205,9 @@ class TargetIdentification(object):
     def handleFreqMessagesNew(self, features, target_freqs, current_target, filter_by_comparison=True):
         if features is not None:
             ratios = self.model.buildRatioMatrix(features)
-            print ratios
             combined_ratios = self.model.collectSamples(ratios[0])
             if combined_ratios is not None:
-                print combined_ratios
                 scores = list(self.model.decisionFunction([combined_ratios])[0])
-                print scores
                 predicted = None
                 for i in range(len(scores)):
                     if scores[i] > self.thresholds[i] and all(map(lambda (j, (s, t)): s < t or j == i, enumerate(zip(scores, self.thresholds)))):
