@@ -86,7 +86,7 @@ class OptionsFrame(Frame.Frame):
             (self.widgets_dict[c.OPTIONS_TO], self.widgets_dict[c.OPTIONS_TAPS])
         )
 
-    def enableWindow(self):
+    def enableWindow(self, dummy_arg_for_option_menu):
         self.conditionalDisabling(
             self.widgets_dict[c.OPTIONS_WINDOW],
             (c.WINDOW_KAISER,),

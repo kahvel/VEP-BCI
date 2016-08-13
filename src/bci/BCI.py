@@ -23,9 +23,10 @@ class BCI(object):
         self.target_switcher = None
         self.data_iterator = DataIterator.DataIterator(connections, self)
         self.source_option = None
+        self.eeg_or_features_option = None
 
     def flattenFeatureVector(self, feature_vector):
-        if self.source_option == c.EEG_SOURCE_DEVICE:
+        if self.source_option == c.EEG_SOURCE_DEVICE or self.source_option != c.EEG_SOURCE_DEVICE and self.eeg_or_features_option == c.TEST_RECORDED_TYPE_EEG:
             return self.flattener.parseFeatures(feature_vector)
         else:
             return feature_vector
@@ -34,6 +35,7 @@ class BCI(object):
         self.setup_succeeded = True
         self.data_iterator.setup(options)
         self.source_option = options[c.DATA_TEST][c.TEST_TAB_EEG_SOURCE_OPTION_MENU]
+        self.eeg_or_features_option = options[c.DATA_TEST][c.TEST_TAB_RECORDED_TYPE_OPTION_MENU]
         self.setupTargetSwitcher(options, self.source_option)
         self.record_option = options[c.DATA_RECORD][c.TRAINING_RECORD]
         self.total_time = self.getTotalTime(options[c.DATA_TEST][c.TEST_TAB_UNLIMITED], options[c.DATA_TEST][c.TEST_TAB_TOTAL_TIME])
@@ -83,7 +85,6 @@ class BCI(object):
     def handleEmotivMessages(self, current_target):
         message = self.getNextPacket()
         if message is not None:
-            print current_target, message
             self.message_counter += 1
             self.recording.collectPacket(message, current_target, self.message_counter)
             self.connections.sendExtractionMessage(message)
@@ -97,7 +98,6 @@ class BCI(object):
         features = self.getFeatures()
         predicted_target = None
         if features is not None:
-            print features, current_target
             flat_features = self.flattenFeatureVector(features)
             self.recording.collectFeatures(flat_features, current_target, self.message_counter)
             predicted_target = self.target_identification.handleFreqMessages(flat_features, features, self.target_freqs, current_target)

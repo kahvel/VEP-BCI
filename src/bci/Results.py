@@ -149,7 +149,7 @@ class Result(object):
             c.RESULTS_DATA_DIAGONAL_ELEMENTS: diagonal_elements,
             c.RESULTS_DATA_OFF_DIAGONAL_ELEMENTS: off_diagonal_elements,
             c.RESULTS_DATA_ITR_BIT_PER_TRIAL: itr,
-            c.RESULTS_DATA_ITR_BIT_PER_MIN: self.getItrBitPerMin(itr, self.target_count),
+            c.RESULTS_DATA_ITR_BIT_PER_MIN: self.getItrBitPerMin(itr, time_per_target),
             c.RESULTS_DATA_F1: f1_scores,
             c.RESULTS_DATA_MACRO_F1: self.calculateMeanF1(f1_scores, weighted),
         }
