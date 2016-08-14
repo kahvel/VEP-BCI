@@ -27,8 +27,6 @@ class BciDataExchangeHandler(AbstractMessageHandler.MessageHandler):
             self.main_connection.sendMessage(self.bci_controller.getRecordedFrequencies())
         elif message == c.GET_RESULTS_MESSAGE:
             self.main_connection.sendMessage(self.bci_controller.getResults())
-        elif message == c.GET_NEW_RESULTS_MESSAGE:
-            self.main_connection.sendMessage(self.bci_controller.getNewResults())
 
 
 class BciControlsHandler(AbstractMessageHandler.MessageHandler):

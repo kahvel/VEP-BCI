@@ -110,7 +110,6 @@ class TrialEndedHandler(MessagingInterface.TrialEndedHandler, GetDataHandler):
 
     def trialEndedEvent(self):
         self.evokeResultsReceivedEvent()
-        self.evokeNewResultsReceivedEvent()
         self.evokeRecordedEegReceivedEvent()
         self.evokeRecordedFeaturesReceivedEvent()
         self.evokeRecordedFrequenciesReceivedEvent()
@@ -119,10 +118,6 @@ class TrialEndedHandler(MessagingInterface.TrialEndedHandler, GetDataHandler):
     def evokeResultsReceivedEvent(self):
         results = self.getData(c.GET_RESULTS_MESSAGE)
         self.sendEventToChildren(lambda x: x.resultsReceivedEvent(results))
-
-    def evokeNewResultsReceivedEvent(self):
-        results = self.getData(c.GET_NEW_RESULTS_MESSAGE)
-        self.sendEventToChildren(lambda x: x.newResultsReceivedEvent(results))
 
     def evokeRecordedEegReceivedEvent(self):
         results = self.getData(c.GET_RECORDED_EEG_MESSAGE)

@@ -32,8 +32,6 @@ class Recording(object):
 
     def resultsReceivedEvent(self, results): pass
 
-    def newResultsReceivedEvent(self, new_results): pass
-
     def recordedEegReceivedEvent(self, eeg): pass
 
     def recordedFeaturesReceivedEvent(self, features): pass

@@ -14,8 +14,11 @@ class AbstractTargetSwitcher(object):
     def handleTargetChanging(self, target):
         raise NotImplementedError("handleTargetChanging not implemented!")
 
-    def needNewTarget(self, target_identified, message_counter):
+    def needNewTarget(self, message_counter):
         raise NotImplementedError("needNewTarget not implemented!")
+
+    def targetDetected(self):
+        raise NotImplementedError("targetDetected not implemented!")
 
 
 class TargetSwitcher(AbstractTargetSwitcher):
@@ -29,6 +32,7 @@ class TargetSwitcher(AbstractTargetSwitcher):
         self.target_freqs = None
         self.random_target_duration = None
         self.recently_not_used_targets = []
+        self.need_new_target = None
 
     def setup(self, options):
         self.target_duration_seconds = options[c.DATA_TEST][c.TEST_TAB_TIME_PER_TARGET]
@@ -37,6 +41,7 @@ class TargetSwitcher(AbstractTargetSwitcher):
         self.test_target_option = options[c.DATA_TEST][c.TEST_TAB_TARGET_OPTION_MENU]
         self.target_freqs = options[c.DATA_FREQS]
         self.recently_not_used_targets = []
+        self.need_new_target = True
 
     def resetPreviousTargetChangeAndRecordingTargets(self):
         self.previous_target_change = 0
@@ -105,11 +110,12 @@ class TargetSwitcher(AbstractTargetSwitcher):
         target = self.getNextTarget(target)
         if target is not None:
             self.connections.sendTargetMessage(target)
+        self.need_new_target = False
         return target
 
-    def needNewTarget(self, target_identified, message_counter):
+    def needNewTarget(self, message_counter):
         if self.isRandom():
-            return target_identified
+            return self.need_new_target
         elif self.isTimed() or self.isRecording():
             return self.checkTimeExceeded(message_counter)
         else:
@@ -124,6 +130,9 @@ class TargetSwitcher(AbstractTargetSwitcher):
             return True
         else:
             return False
+
+    def targetDetected(self):
+        self.need_new_target = True
 
 
 class RecordedTargetSwitcher(AbstractTargetSwitcher, DataIterator.AbstractDataIterator):
@@ -150,5 +159,8 @@ class RecordedTargetSwitcher(AbstractTargetSwitcher, DataIterator.AbstractDataIt
             self.connections.sendTargetMessage(target)
         return target
 
-    def needNewTarget(self, target_identified, message_counter):
+    def needNewTarget(self, message_counter):
         return True
+
+    def targetDetected(self):
+        pass
