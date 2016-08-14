@@ -53,7 +53,14 @@ class TargetSwitcher(AbstractTargetSwitcher):
         else:
             return self.getRandomNonRepeatingTarget(targets, previous_target)
 
-    def getRecordingTarget(self, targets):
+    def getRecordingNonRepeatingTarget(self, recently_not_used_targets, previous_target):
+        targets = recently_not_used_targets[:]
+        targets.remove(previous_target)
+        target = random.choice(targets)
+        recently_not_used_targets.remove(target)
+        return target
+
+    def getRecordingTarget(self, targets, previous_target):
         """
         Makes sure that we get enough data for all targets when recording.
         If choosing completely randomly, we might not get enough data for some targets.
@@ -62,7 +69,10 @@ class TargetSwitcher(AbstractTargetSwitcher):
         """
         if self.recently_not_used_targets == []:
             self.recently_not_used_targets = targets
-        return self.recently_not_used_targets.pop(random.randint(0, len(self.recently_not_used_targets)-1))
+        if self.allow_repeating or not self.allow_repeating and previous_target not in self.recently_not_used_targets:
+            return self.recently_not_used_targets.pop(random.randint(0, len(self.recently_not_used_targets)-1))
+        else:
+            return self.getRecordingNonRepeatingTarget(self.recently_not_used_targets, previous_target)
 
     def setRandomTargetDuration(self):
         if self.isTimed() or self.isRecording():
@@ -72,7 +82,7 @@ class TargetSwitcher(AbstractTargetSwitcher):
         if self.isRandom() or self.isTimed():
             return self.getRandomTarget(self.target_freqs.keys(), previous_target)
         elif self.isRecording():
-            return self.getRecordingTarget(self.target_freqs.keys())
+            return self.getRecordingTarget(self.target_freqs.keys(), previous_target)
         elif self.test_target_option != c.TEST_TARGET_NONE:
             return self.test_target_option
         else:

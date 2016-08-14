@@ -42,7 +42,7 @@ class RobotTab(DisableDeleteNotebookTab.Disable):
         self.sendEventToRoot(lambda x: x.robotStopEvent())
 
     def enableCoordinates(self):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[c.ROBOT_STREAM],
             (1,),
             (self.widgets_dict[c.STREAM_X], self.widgets_dict[c.STREAM_Y], self.widgets_dict[c.STREAM_WIDTH], self.widgets_dict[c.STREAM_HEIGHT])

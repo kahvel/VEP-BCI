@@ -36,7 +36,7 @@ class HarmonicFrame(Frame.Frame):
         ))
 
     def enableTextboxes(self):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[self.name],
             (1,),
             (self.widgets_dict[c.EXTRACTION_TAB_HARMONIC_WEIGHT], self.widgets_dict[c.EXTRACTION_TAB_HARMONIC_DIFFERENCE])

@@ -59,35 +59,35 @@ class OptionsFrame(Frame.Frame):
         self.enableTaps()
 
     def enableBreak(self):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[c.OPTIONS_DETREND],
             (c.CONSTANT_DETREND, c.LINEAR_DETREND),
             (self.widgets_dict[c.OPTIONS_BREAK],)
         )
 
     def enableTaps(self):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[c.OPTIONS_FILTER],
             (c.LOWPASS_FILTER, c.HIGHPASS_FILTER, c.BANDPASS_FILTER),
             (self.widgets_dict[c.OPTIONS_TAPS],)
         )
 
     def enableFrom(self):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[c.OPTIONS_FILTER],
             (c.HIGHPASS_FILTER, c.BANDPASS_FILTER),
             (self.widgets_dict[c.OPTIONS_FROM], self.widgets_dict[c.OPTIONS_TAPS])
         )
 
     def enableTo(self):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[c.OPTIONS_FILTER],
             (c.LOWPASS_FILTER, c.BANDPASS_FILTER),
             (self.widgets_dict[c.OPTIONS_TO], self.widgets_dict[c.OPTIONS_TAPS])
         )
 
     def enableWindow(self, dummy_arg_for_option_menu):
-        self.conditionalDisabling(
+        self.conditionalEnabling(
             self.widgets_dict[c.OPTIONS_WINDOW],
             (c.WINDOW_KAISER,),
             (self.widgets_dict[c.OPTIONS_ARG],)

@@ -29,9 +29,17 @@ class ControlFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.CLASSIFICATION_TAB_CONTROL_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            OptionMenu.OptionMenu(self, c.CLASSIFICATION_TAB_TYPE_OPTION_MENU, 0, 1, c.CLASSIFICATION_TYPE_NAMES),
+            OptionMenu.OptionMenu(self, c.CLASSIFICATION_TAB_TYPE_OPTION_MENU, 0, 1, c.CLASSIFICATION_TYPE_NAMES, command=self.enableModelOptionMenu),
             OptionMenu.ModelChoosingMenu(self, c.CLASSIFICATION_TAB_MODEL_OPTION_MENU, 0, 4, c.CLASSIFICATION_MODEL_NAMES),
         ))
+
+    def enableModelOptionMenu(self, dummy_arg_for_option_menu_command):
+        self.conditionalEnabling(
+            self.widgets_dict[c.CLASSIFICATION_TAB_TYPE_OPTION_MENU],
+            (c.CLASSIFICATION_TYPE_NEW,),
+            (self.widgets_dict[c.CLASSIFICATION_TAB_MODEL_OPTION_MENU],)
+        )
+
 
 
 class ClassificationTab(Frame.Frame):
