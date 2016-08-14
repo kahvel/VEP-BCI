@@ -71,6 +71,19 @@ class AddingCheckbuttonsFrame(Frame.Frame):
         self.widgets_list[current_tab].disable("TargetTab")
         self.disabled_tabs[current_tab] = True
 
+    def saveBciSettingsEvent(self, file):
+        file.write(str(list(int(value) for value in self.disabled_tabs)).strip("[]") + "\n")
+        Frame.Frame.saveBciSettingsEvent(self, file)
+
+    def loadBciSettingsEvent(self, file):
+        disabled_tabs = file.readline().strip("\n")
+        disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
+        self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
+        self.deleteAllButtonsGraphics()
+        for i, disabled in enumerate(self.disabled_tabs):
+            self.addButtonGraphics(i+1, disabled, 1)
+        Frame.Frame.loadBciSettingsEvent(self, file)
+
 
 class EventNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
     def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
@@ -79,7 +92,7 @@ class EventNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
     def loadDefaultValue(self):
         Frame.Frame.loadDefaultValue(self)
         self.getNotebookWidgetsEvent()
-        for widget in self.notebook_widgets[-1]:
+        for widget in self.notebook_widgets[:-1]:
             self.addButton(widget.disabled)
 
 
@@ -92,21 +105,3 @@ class PlusTabNotebookAddingCheckbuttonFrame(AddingCheckbuttonsFrame):
         self.getNotebookWidgetsEvent()
         for widget in self.notebook_widgets:
             self.addButton(widget.disabled)
-
-
-class LabelledEventNotebookAddingCheckbuttonFrame(Frame.Frame):
-    def __init__(self, parent, name, row, column, buttons_in_row=7, **kwargs):
-        Frame.Frame.__init__(self, parent, name, row, column, **kwargs)
-        Tkinter.Label(self.widget, text=name).grid(row=row, column=column, padx=self.padx, pady=self.pady, columnspan=1)
-        self.addChildWidgets((
-            AddingCheckbuttonsFrame(self, name, row, column+1, buttons_in_row),
-        ))
-
-    def addButton(self):
-        self.widgets_dict[self.name].addButton()
-
-    def deleteButton(self, deleted_tab):
-        self.widgets_dict[self.name].deleteButton(deleted_tab)
-
-    def setWidgetsNotebook(self, widgets_notebook):
-        self.widgets_dict[self.name].setWidgetsNotebook(widgets_notebook)

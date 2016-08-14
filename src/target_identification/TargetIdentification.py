@@ -226,8 +226,8 @@ class TargetIdentification(object):
 
     def handleFreqMessages(self, features, old_features, target_freqs, current_target, filter_by_comparison=True):
         if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW:
-            self.handleFreqMessagesNew(features, target_freqs, current_target, filter_by_comparison)
+            return self.handleFreqMessagesNew(features, target_freqs, current_target, filter_by_comparison)
         elif self.classification_type_options == c.CLASSIFICATION_TYPE_OLD:
-            self.handleFreqMessagesOld(old_features, target_freqs, current_target, filter_by_comparison)
+            return self.handleFreqMessagesOld(old_features, target_freqs, current_target, filter_by_comparison)
         elif self.classification_type_options == c.CLASSIFICATION_TYPE_NONE:
-            pass
+            return

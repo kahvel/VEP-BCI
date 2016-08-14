@@ -89,19 +89,6 @@ class TargetsFrame(AddingCheckbuttonsFrame.PlusTabNotebookAddingCheckbuttonFrame
     def targetEnabledEvent(self, tabs, current_tab):
         self.enableButton(current_tab)
 
-    def saveBciSettingsEvent(self, file):
-        file.write(str(list(int(value) for value in self.disabled_tabs)).strip("[]") + "\n")
-        Frame.Frame.saveBciSettingsEvent(self, file)
-
-    def loadBciSettingsEvent(self, file):
-        disabled_tabs = file.readline().strip("\n")
-        disabled_tabs_str = disabled_tabs.split(", ") if disabled_tabs != "" else []
-        self.disabled_tabs = list(int(value) for value in disabled_tabs_str)
-        self.deleteAllButtonsGraphics()
-        for i, disabled in enumerate(self.disabled_tabs):
-            self.addButtonGraphics(i+1, disabled, 1)
-        Frame.Frame.loadBciSettingsEvent(self, file)
-
 
 class ExtractionTabButtonFrame(OptionsFrame.OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):

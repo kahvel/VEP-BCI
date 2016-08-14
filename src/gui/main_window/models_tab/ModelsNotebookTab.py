@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 import numpy as np
+import Tkinter
 
 
 class ModelsNotebookTab(DisableDeleteNotebookTab.Delete):
@@ -43,9 +44,18 @@ class ModelsNotebookTab(DisableDeleteNotebookTab.Delete):
         self.widgets_dict[c.TIMESTAMP_TEXTBOX].setTimestamp()
 
 
-class CheckbuttonFrame(AddingCheckbuttonsFrame.LabelledEventNotebookAddingCheckbuttonFrame):
+class LabelledCheckbuttonFrame(Frame.Frame):
     def __init__(self, parent, name, row, column, **kwargs):
-        AddingCheckbuttonsFrame.LabelledEventNotebookAddingCheckbuttonFrame.__init__(self, parent, name, row, column, columnspan=6, **kwargs)
+        Frame.Frame.__init__(self, parent, name, row, column, columnspan=6, **kwargs)
+        Tkinter.Label(self.widget, text=name).grid(row=row, column=column, padx=self.padx, pady=self.pady, columnspan=1)
+        self.addChildWidgets((
+            CheckbuttonFrame(self, name, row, column+1, **kwargs),
+        ))
+
+
+class CheckbuttonFrame(AddingCheckbuttonsFrame.EventNotebookAddingCheckbuttonFrame):
+    def __init__(self, parent, name, row, column, **kwargs):
+        AddingCheckbuttonsFrame.EventNotebookAddingCheckbuttonFrame.__init__(self, parent, name, row, column+1, **kwargs)
 
     def addNewRecordingTabEvent(self):
         self.addButton()
@@ -56,11 +66,11 @@ class CheckbuttonFrame(AddingCheckbuttonsFrame.LabelledEventNotebookAddingCheckb
     def loadEegEvent(self, directory):
         self.addButton()
 
-    def saveBciSettingsEvent(self, file):
-        return c.STOP_EVENT_SENDING
-
-    def loadBciSettingsEvent(self, file):
-        return c.STOP_EVENT_SENDING
+    # def saveBciSettingsEvent(self, file):
+    #     return c.STOP_EVENT_SENDING
+    #
+    # def loadBciSettingsEvent(self, file):
+    #     return c.STOP_EVENT_SENDING
 
     def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets):
         self.setWidgetsNotebook(recording_notebook_widgets)
@@ -73,8 +83,8 @@ class OptionsFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.MODELS_TAB_OPTIONS_FRAME, row, column, **kwargs)
         self.addChildWidgets((
-            CheckbuttonFrame(self, c.MODELS_TAB_RECORDING_FOR_TRAINING, 0, 0),
-            CheckbuttonFrame(self, c.MODELS_TAB_RECORDING_FOR_VALIDATION, 1, 0),
+            LabelledCheckbuttonFrame(self, c.MODELS_TAB_RECORDING_FOR_TRAINING, 0, 0),
+            LabelledCheckbuttonFrame(self, c.MODELS_TAB_RECORDING_FOR_VALIDATION, 1, 0),
             Textboxes.LabelTextbox(self, c.MODELS_TAB_LOOK_BACK_LENGTH, 2, 0, command=int, default_value=1),
             Textboxes.LabelTextbox(self, c.MODELS_TAB_CV_FOLDS, 2, 2, command=int, default_value=5),
             Textboxes.LabelTextboxNoValidation(self, c.MODELS_TAB_FEATURES_TO_USE, 3, 0, default_value="", width=20, columnspan=3),
