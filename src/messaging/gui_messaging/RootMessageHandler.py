@@ -70,10 +70,13 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
         self.features = []
 
     def sendFeatureRecrding(self):
-        self.resetFeatures()
-        self.sendEventToChildren(lambda x: x.getFeaturesEvent())
         self.connection.sendMessage(c.SEND_RECORDED_FEATURES_MESSAGE)
         self.connection.sendMessage(self.features)
+
+    def getFeatures(self):
+        self.resetFeatures()
+        self.sendEventToChildren(lambda x: x.getFeaturesEvent())
+        return len(self.features) != 0
 
     def sendClassificationOptions(self):
         self.sendEventToChildren(lambda x: x.getModelOptionsEvent())
@@ -87,10 +90,13 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
         self.sendEventToChildren(lambda x: x.disableModelOptionsEvent())
 
     def trainButtonClickedEvent(self):
-        self.sendDisableModelOptions()
-        self.sendFeatureRecrding()  # Has to be before sendClassificationOptions!
-        self.sendClassificationOptions()
-        self.sendStartTraining()
+        if self.getFeatures():
+            self.sendDisableModelOptions()
+            self.sendFeatureRecrding()  # Has to be before sendClassificationOptions!
+            self.sendClassificationOptions()
+            self.sendStartTraining()
+        else:
+            print "Training Failed! No recordings selected!"
 
 
 class GetDataHandler(AbstractMessageSenders.NonLeaf):

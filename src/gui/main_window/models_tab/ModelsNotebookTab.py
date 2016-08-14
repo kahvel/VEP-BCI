@@ -66,12 +66,6 @@ class CheckbuttonFrame(AddingCheckbuttonsFrame.EventNotebookAddingCheckbuttonFra
     def loadEegEvent(self, directory):
         self.addButton()
 
-    # def saveBciSettingsEvent(self, file):
-    #     return c.STOP_EVENT_SENDING
-    #
-    # def loadBciSettingsEvent(self, file):
-    #     return c.STOP_EVENT_SENDING
-
     def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets):
         self.setWidgetsNotebook(recording_notebook_widgets)
 
@@ -171,11 +165,23 @@ class ModelFrame(Frame.Frame):
         plt.legend(loc="lower right")
         plt.show()
 
+    def checkDataAndPlotRoc(self, data):
+        if self.training_roc is not None:
+            self.plotRoc(data)
+        else:
+            print "Model is not trained!"
+
+    def checkDataAndPlotLda(self, data, labels):
+        if self.training_roc is not None:
+            self.plotLda(data, labels)
+        else:
+            print "Model is not trained!"
+
     def showTrainingRoc(self):
-        self.plotRoc(self.training_roc)
+        self.checkDataAndPlotRoc(self.training_roc)
 
     def showValidationRoc(self):
-        self.plotRoc(self.validation_roc)
+        self.checkDataAndPlotRoc(self.validation_roc)
 
     def plotLda(self, data, labels):
         if len(self.model.classes_) == 3:
@@ -234,10 +240,10 @@ class ModelFrame(Frame.Frame):
             print "Model has", len(self.model.classes_), "classes. Cannot plot."
 
     def showTrainingDataProjection(self):
-        self.plotLda(self.training_data, self.training_labels)
+        self.checkDataAndPlotLda(self.training_data, self.training_labels)
 
     def showValidationDataProjection(self):
-        self.plotLda(self.validation_data, self.validation_labels)
+        self.checkDataAndPlotLda(self.validation_data, self.validation_labels)
 
     def loadModelEvent(self, directory):
         file_handle = file(os.path.join(directory, "model.pkl"))
