@@ -89,9 +89,9 @@ class ModelTrainer(object):
         :return:
         """
         if use_proba:
-            return model.decisionFunction(data)
-        else:
             return model.predictProba(data)
+        else:
+            return model.decisionFunction(data)
 
     def getBinaryLabels(self, labels, label_order):
         binary_labels = []

@@ -1,6 +1,7 @@
 from target_identification import DataCollectors, MatrixBuilder, ScalingFunction, ColumnsIterator, FeaturesHandler
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.svm import SVC
 import numpy as np
 
 
@@ -58,6 +59,7 @@ class TrainingLdaModel(LdaModel):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
         self.model = LinearDiscriminantAnalysis()
+        # self.model = SVC()
         self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names)
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
