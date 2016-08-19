@@ -124,8 +124,9 @@ class BCI(object):
                 self.connections.sendRobotMessage(predicted_target)
                 # self.printResult(predicted_frequency, current_frequency)
                 self.results.add(current_frequency, predicted_frequency)
-                self.buffer_clearer.clearAfterDetection()
-                self.target_switcher.targetDetected()
+                if current_frequency == predicted_frequency or current_frequency is None:
+                    self.buffer_clearer.clearAfterDetection()
+                    self.target_switcher.targetDetected()
                 # if self.clear_buffers and self.source_option == c.EEG_SOURCE_DEVICE:
                 #     self.target_identification.resetPrevResults(self.target_freqs.values())  # TODO add separate checkbuttons for this
 
