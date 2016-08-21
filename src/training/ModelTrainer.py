@@ -2,7 +2,7 @@ import numpy as np
 import sklearn.metrics
 import scipy
 
-from target_identification.models import LdaModel, SvmModel
+from target_identification.models import LdaModel, SvmModel, QdaModel
 import constants as c
 
 
@@ -35,6 +35,7 @@ class ModelTrainer(object):
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
         self.model = LdaModel.TrainingLdaModel()
         # self.model = SvmModel.TrainingSvmModel()
+        # self.model = QdaModel.TrainingQdaModel()
         self.model.setup(features_to_use, self.look_back_length, self.recordings)
 
     def getConfusionMatrix(self, model, data, labels, label_order):

@@ -1,5 +1,5 @@
 from parsers import FeaturesParser
-from target_identification.models import LdaModel, SvmModel
+from target_identification.models import LdaModel, SvmModel, QdaModel
 import constants as c
 
 
@@ -89,7 +89,7 @@ class TargetIdentification(object):
         self.weight_finder.setup(options[c.DATA_EXTRACTION_WEIGHTS])
         self.prev_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_PREV_RESULTS])
         self.actual_results.setup(options[c.DATA_CLASSIFICATION][c.CLASSIFICATION_PARSE_ACTUAL_RESULTS])
-        self.prev_result_weight_threshold = self.getPrevResultWeightThreshold(options)
+        self.prev_result_weight_threshold = 1  # self.getPrevResultWeightThreshold(options)
         # self.ratio_finder.setup(self.scaling_functions)
         if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW and model_number != c.CLASSIFICATION_MODEL_NONE:
             self.setupModel(options[c.DATA_MODEL][c.MODELS_TAB_MODEL_DATA], options[c.DATA_MODEL][c.MODELS_PARSE_OPTIONS])
@@ -109,6 +109,7 @@ class TargetIdentification(object):
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
         # self.model = SvmModel.OnlineSvmModel()
+        # self.model = QdaModel.OnlineQdaModel()
         self.model.setup(minimum, maximum, features_to_use, sample_count, model)
 
     def resetPrevResults(self, freqs):
@@ -155,7 +156,8 @@ class TargetIdentification(object):
                     freq_weights = {predicted_frequency: self.prev_result_weight_threshold}
                     predicted_frequency = self.filterResults(freq_weights, [True], False)
                     # print predicted_frequency, current_frequency, self.model.decisionFunction(combined_ratios)
-                    self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
+                    if predicted_frequency is not None:
+                        self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
                     return predicted_frequency
 
     def handleFreqMessages(self, features, old_features, target_freqs, filter_by_comparison=True):
