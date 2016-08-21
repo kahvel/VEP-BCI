@@ -127,8 +127,8 @@ class BCI(object):
                 self.buffer_clearer.clearAfterDetection()
                 if current_frequency == predicted_frequency or current_frequency is None:
                     self.target_switcher.targetDetected()
-                # if self.clear_buffers and self.source_option == c.EEG_SOURCE_DEVICE:
-                #     self.target_identification.resetPrevResults(self.target_freqs.values())  # TODO add separate checkbuttons for this
+                if self.buffer_clearer.clear_buffers:  # and self.source_option == c.EEG_SOURCE_DEVICE:
+                    self.target_identification.resetPrevResults(self.target_freqs.values())  # TODO add separate checkbuttons for this
 
     def getNextPacket(self):
         return self.data_iterator.getNextPacket()

@@ -145,11 +145,21 @@ class TargetIdentification(object):
             combined_ratios = self.model.collectSamples(ratios[0])
             if combined_ratios is not None:
                 scores = list(self.model.decisionFunction([combined_ratios])[0])
+            #     weights = list(score - threshold for score, threshold in zip(scores, self.thresholds))
+            #     weigths_dict = {freq: weights[key-1] for key, freq in target_freqs.items()}
+            #     predicted_frequency = self.filterResults(weigths_dict, [True], False)
+            #     if predicted_frequency is not None:
+            #         self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
+            #     return predicted_frequency
+            # # else:
+            # #     self.filterResults({}, [False], True)
+
                 predicted = None
                 for i in range(len(scores)):
                     if scores[i] > self.thresholds[i] and all(map(lambda (j, (s, t)): s < t or j == i, enumerate(zip(scores, self.thresholds)))):
                         predicted = i
                         break
+                # predicted = self.model.predict([combined_ratios])[0]
                 if predicted is not None:
                     predicted_target = self.model.getOrderedLabels()[predicted]
                     predicted_frequency = target_freqs[predicted_target]
@@ -159,6 +169,10 @@ class TargetIdentification(object):
                     if predicted_frequency is not None:
                         self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
                     return predicted_frequency
+                # else:  # This else branch instead of always_delete options
+                #     freq_weights = {freq: 0 for freq in target_freqs.values()}
+                #     self.filterResults(freq_weights, [True], False)
+                #     return None
 
     def handleFreqMessages(self, features, old_features, target_freqs, filter_by_comparison=True):
         if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW:
