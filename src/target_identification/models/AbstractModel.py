@@ -1,11 +1,9 @@
 from target_identification import DataCollectors, MatrixBuilder, ScalingFunction, ColumnsIterator, FeaturesHandler
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.svm import SVC
 import numpy as np
 
 
-class LdaModel(ColumnsIterator.ColumnsIterator):
+class Model(ColumnsIterator.ColumnsIterator):
     def __init__(self):
         ColumnsIterator.ColumnsIterator.__init__(self)
         self.model = None
@@ -41,7 +39,7 @@ class LdaModel(ColumnsIterator.ColumnsIterator):
         self.model.fit(data, labels)
 
     def decisionFunction(self, data):
-        return self.model.decision_function(data)  # value depends on the number of classes!
+        raise NotImplementedError("decisionFunction not implemented")
 
     def predictProba(self, data):
         return self.model.predict_proba(data)
@@ -49,17 +47,22 @@ class LdaModel(ColumnsIterator.ColumnsIterator):
     def getMinMax(self):
         return self.scaling_functions.minima, self.scaling_functions.maxima
 
+    def predict(self, data):
+        return self.model.predict(data)
 
-class TrainingLdaModel(LdaModel):
+
+class TrainingModel(Model):
     def __init__(self):
-        LdaModel.__init__(self)
+        Model.__init__(self)
         self.features_to_use = None
+
+    def getModel(self):
+        raise NotImplementedError("getModel not implemented!")
 
     def setup(self, features_to_use, sample_count, recordings):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
-        self.model = LinearDiscriminantAnalysis()
-        # self.model = SVC()
+        self.model = self.getModel()
         self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names)
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
@@ -101,9 +104,9 @@ class TrainingLdaModel(LdaModel):
         return self.features_to_use
 
 
-class OnlineLdaModel(LdaModel):
+class OnlineModel(Model):
     def __init__(self):
-        LdaModel.__init__(self)
+        Model.__init__(self)
 
     def setup(self, minimum, maximum, features_to_use, sample_count, model):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use)

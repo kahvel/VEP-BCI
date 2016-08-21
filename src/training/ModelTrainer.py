@@ -2,7 +2,7 @@ import numpy as np
 import sklearn.metrics
 import scipy
 
-from target_identification import LdaModel
+from target_identification.models import LdaModel, SvmModel
 import constants as c
 
 
@@ -34,6 +34,7 @@ class ModelTrainer(object):
         self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
         self.model = LdaModel.TrainingLdaModel()
+        # self.model = SvmModel.TrainingSvmModel()
         self.model.setup(features_to_use, self.look_back_length, self.recordings)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
@@ -72,7 +73,11 @@ class ModelTrainer(object):
         fpr, tpr, thresholds, _ = roc
         cut_off_threshold = []
         for i in range(len(labels_order)):
-            for false_positive_rate, true_positive_rate, threshold in zip(fpr[i], tpr[i], thresholds[i]):
+            for j, (false_positive_rate, true_positive_rate, threshold) in enumerate(zip(fpr[i], tpr[i], thresholds[i])):
+                if true_positive_rate == 1:
+                    assert j-1 > 0
+                    cut_off_threshold.append(thresholds[i][j-1])
+                    break
                 if false_positive_rate > fpr_threshold:
                     cut_off_threshold.append(threshold)
                     break

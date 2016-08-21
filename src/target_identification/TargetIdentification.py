@@ -1,5 +1,5 @@
 from parsers import FeaturesParser
-from target_identification import LdaModel
+from target_identification.models import LdaModel, SvmModel
 import constants as c
 
 
@@ -108,6 +108,7 @@ class TargetIdentification(object):
         features_to_use = model_options[c.MODELS_PARSE_FEATURES_TO_USE]
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
+        # self.model = SvmModel.OnlineSvmModel()
         self.model.setup(minimum, maximum, features_to_use, sample_count, model)
 
     def resetPrevResults(self, freqs):
