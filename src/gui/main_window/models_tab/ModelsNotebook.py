@@ -25,6 +25,15 @@ class ModelsNotebook(EventNotebook.EventNotebook):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.modelReceivedEvent(model))
         return c.STOP_EVENT_SENDING
 
+    def secondModelReceivedEvent(self, model):
+        """
+        Since currently tab frames do not know their number we have to send the event to only the correct tab.
+        :param results:
+        :return:
+        """
+        self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.secondModelReceivedEvent(model))
+        return c.STOP_EVENT_SENDING
+
     def newTab(self, deleteTab):
         return ModelsNotebookTab.ModelsNotebookTab(self, deleteTab)
 

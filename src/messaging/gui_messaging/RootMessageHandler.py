@@ -148,6 +148,7 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
 
     def trainingEndedEvent(self):
         self.evokeModelReceivedEvent()
+        self.evokeSecondModelReceivedEvent()
         self.evokeTrainingDataReceivedEvent()
         self.evokeTrainingLabelsReceivedEvent()
         self.evokeValidationDataReceivedEvent()
@@ -169,6 +170,10 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
     def evokeModelReceivedEvent(self):
         model = self.getData(c.GET_MODEL_MESSAGE)
         self.sendEventToChildren(lambda x: x.modelReceivedEvent(model))
+
+    def evokeSecondModelReceivedEvent(self):
+        model = self.getData(c.GET_SECOND_MODEL_MESSAGE)
+        self.sendEventToChildren(lambda x: x.secondModelReceivedEvent(model))
 
     def evokeValidationDataReceivedEvent(self):
         data = self.getData(c.GET_VALIDATION_DATA_MESSAGE)

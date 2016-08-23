@@ -73,6 +73,7 @@ class TargetIdentification(object):
         self.ratio_finder = FeaturesParser.RatioFinder()
         self.results = None
         self.model = None
+        self.second_model = None
         self.thresholds = None
         self.classification_type_options = None
         self.setup_succeeded = True
@@ -104,6 +105,7 @@ class TargetIdentification(object):
     def setupModel(self, model_data, model_options):
         minimum, maximum = model_data[c.MODELS_TAB_MIN_MAX]
         model = model_data[c.MODELS_TAB_MODEL]
+        self.second_model = model_data[c.MODELS_TAB_SECOND_MODEL]
         self.thresholds = model_data[c.MODELS_TAB_THRESHOLDS]
         features_to_use = model_options[c.MODELS_PARSE_FEATURES_TO_USE]
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
@@ -145,6 +147,7 @@ class TargetIdentification(object):
             combined_ratios = self.model.collectSamples(ratios[0])
             if combined_ratios is not None:
                 scores = list(self.model.decisionFunction([combined_ratios])[0])
+                # print self.second_model.predict(self.model.decisionFunction([combined_ratios]))
             #     weights = list(score - threshold for score, threshold in zip(scores, self.thresholds))
             #     weigths_dict = {freq: weights[key-1] for key, freq in target_freqs.items()}
             #     predicted_frequency = self.filterResults(weigths_dict, [True], False)

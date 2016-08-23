@@ -124,6 +124,7 @@ class ModelFrame(Frame.Frame):
             Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_LDA, 1, 1, command=self.showValidationDataProjection),
         ))
         self.model = None
+        self.second_model = None
         self.training_data = None
         self.validation_data = None
         self.training_labels = None
@@ -137,6 +138,7 @@ class ModelFrame(Frame.Frame):
         frame_value = Frame.Frame.getValue(self)
         frame_value.update({c.MODELS_TAB_MODEL_DATA: {
             c.MODELS_TAB_MODEL: self.model,
+            c.MODELS_TAB_SECOND_MODEL: self.second_model,
             c.MODELS_TAB_MIN_MAX: self.min_max,
             c.MODELS_TAB_THRESHOLDS: self.thresholds,
         }})
@@ -248,6 +250,7 @@ class ModelFrame(Frame.Frame):
     def loadModelEvent(self, directory):
         file_handle = file(os.path.join(directory, "model.pkl"))
         self.model = pickle.load(file_handle)
+        self.second_model = pickle.load(file_handle)
         self.training_data = pickle.load(file_handle)
         self.training_labels = pickle.load(file_handle)
         self.training_roc = pickle.load(file_handle)
@@ -260,6 +263,7 @@ class ModelFrame(Frame.Frame):
     def saveModelEvent(self, directory):
         file_handle = file(os.path.join(directory, "model.pkl"), "w")
         pickle.dump(self.model, file_handle)
+        pickle.dump(self.second_model, file_handle)
         pickle.dump(self.training_data, file_handle)
         pickle.dump(self.training_labels, file_handle)
         pickle.dump(self.training_roc, file_handle)
@@ -271,6 +275,9 @@ class ModelFrame(Frame.Frame):
 
     def modelReceivedEvent(self, model):
         self.model = model
+
+    def secondModelReceivedEvent(self, model):
+        self.second_model = model
 
     def trainingDataReceivedEvent(self, training_data):
         self.training_data = training_data

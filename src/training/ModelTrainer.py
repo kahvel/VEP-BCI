@@ -1,6 +1,9 @@
 import numpy as np
 import sklearn.metrics
 import scipy
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression
 
 from target_identification.models import LdaModel, SvmModel, QdaModel
 import constants as c
@@ -20,9 +23,10 @@ class ModelTrainer(object):
         self.validation_roc = None
         self.training_roc = None
         self.model = None
-        self.sklearn_model = None
+        self.lda_model = None
         self.thresholds = None
         self.min_max = None
+        self.random_forest_model = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
@@ -111,20 +115,32 @@ class ModelTrainer(object):
         self.addMacroRoc(roc, binary_labels)
         return roc
 
-    def calculateRoc(self, model, data, labels, label_order):
+    def calculateRoc(self, model, data, labels, label_order, use_proba=False):
         binary_labels = self.getBinaryLabels(labels, label_order)
-        decision_function_values = self.getDecisionFunctionValues(model, data)
+        decision_function_values = self.getDecisionFunctionValues(model, data, use_proba)
         return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
 
     def start(self):
+        random_forest = []
         training_data, training_labels = self.model.getConcatenatedMatrix(self.training_recordings)
         self.model.fit(training_data, training_labels)
         label_order = self.model.getOrderedLabels()
+        training_decision_function_values = self.model.decisionFunction(training_data)
+        for i, values in enumerate(np.transpose(training_decision_function_values)):
+            model = LinearDiscriminantAnalysis()
+            model.fit(np.transpose([values]), map(lambda x: x == i+1, training_labels))
+            random_forest.append(model)
+            print self.getConfusionMatrix(model, np.transpose([values]), map(lambda x: x == i+1, training_labels), (False, True))
+        # random_forest.fit(training_decision_function_values, training_labels)
         # training_confusion_matrix = self.getConfusionMatrix(model, training_data, training_labels, label_order)
         # cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
         # cross_validation_confusion_matrix = sklearn.metrics.confusion_matrix(training_labels, cross_validation_prediction, labels=label_order)
         validation_data, validation_labels = self.model.getConcatenatedMatrix(self.validation_recordings)
         # validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels, label_order)
+        validation_decision_function_values = self.model.decisionFunction(validation_data)
+        for i, (values, model) in enumerate(zip(np.transpose(validation_decision_function_values), random_forest)):
+            print self.getConfusionMatrix(model, np.transpose([values]), map(lambda x: x == i+1, validation_labels), (False, True))
+            # self.calculateRoc(model, np.transpose([values]), training_labels)
         validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
         thresholds = self.calculateThresholds(validation_roc, label_order)
         training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
@@ -134,12 +150,16 @@ class ModelTrainer(object):
         self.validation_labels = validation_labels
         self.thresholds = thresholds
         self.min_max = self.model.getMinMax()
-        self.sklearn_model = self.model.model
+        self.lda_model = self.model.model
         self.training_roc = training_roc
         self.validation_roc = validation_roc
+        self.random_forest_model = random_forest
+
+    def getSecondModel(self):
+        return self.random_forest_model
 
     def getModel(self):
-        return self.sklearn_model
+        return self.lda_model
 
     def getTrainingData(self):
         return self.training_data

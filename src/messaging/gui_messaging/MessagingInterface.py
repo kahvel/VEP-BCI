@@ -94,6 +94,8 @@ class Models(object):
 
     def modelReceivedEvent(self, model): pass
 
+    def secondModelReceivedEvent(self, model): pass
+
     def validationDataReceivedEvent(self, validation_data): pass
 
     def validationLabelsReceivedEvent(self, validation_labels): pass

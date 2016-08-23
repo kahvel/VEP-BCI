@@ -20,6 +20,8 @@ class TrainingGetDataHandler(AbstractMessageHandler.MessageHandler):
             self.main_connection.sendMessage(self.trainer.getValidationLabels())
         elif message == c.GET_MODEL_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getModel())
+        elif message == c.GET_SECOND_MODEL_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getSecondModel())
         elif message == c.GET_MIN_MAX_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getMinMax())
         elif message == c.GET_THRESHOLDS_MESSAGE:
