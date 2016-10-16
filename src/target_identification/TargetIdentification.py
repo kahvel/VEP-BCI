@@ -159,7 +159,7 @@ class TargetIdentification(object):
 
                 predicted = None
                 for i in range(len(scores)):
-                    if scores[i] > self.thresholds[i] and all(map(lambda (j, (s, t)): s < t or j == i, enumerate(zip(scores, self.thresholds)))):
+                    if scores[i] > self.thresholds[i]+0.3 and all(map(lambda (j, (s, t)): s < t-0.3 or j == i, enumerate(zip(scores, self.thresholds)))):
                         predicted = i
                         break
                 # predicted = self.model.predict([combined_ratios])[0]
