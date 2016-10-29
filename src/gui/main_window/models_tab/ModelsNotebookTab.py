@@ -3,6 +3,10 @@ from gui_elements.widgets.frames import Frame, AddingCheckbuttonsFrame
 from gui_elements.widgets.frames.tabs import DisableDeleteNotebookTab
 import constants as c
 
+from sklearn.neighbors import KNeighborsClassifier
+from matplotlib.colors import ListedColormap
+
+import matplotlib2tikz
 import matplotlib.pyplot as plt
 import os
 import pickle
@@ -165,6 +169,8 @@ class ModelFrame(Frame.Frame):
         plt.ylabel('True Positive Rate')
         plt.title('Some extension of Receiver operating characteristic to multi-class')
         plt.legend(loc="lower right")
+        import time
+        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
         plt.show()
 
     def checkDataAndPlotRoc(self, data):
@@ -185,58 +191,53 @@ class ModelFrame(Frame.Frame):
     def showValidationRoc(self):
         self.checkDataAndPlotRoc(self.validation_roc)
 
+    def myPredict(self, xx):
+        d = np.dot(xx, np.dot(self.model.means_, self.model.scalings_).T)
+        y_pred = self.model.classes_.take(d.argmax(1))
+        return y_pred
+
     def plotLda(self, data, labels):
         if len(self.model.classes_) == 3:
             x = self.model.transform(data)
-            step_size = 0.2
-            # x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
-            # y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
-            # xx, yy = np.meshgrid(np.arange(x_min, x_max, step_size), np.arange(y_min, y_max, step_size))
-            # print xx.shape
-            # print yy.shape
-            # print np.c_[xx.ravel(), yy.ravel()]
-            # print np.c_[xx.ravel(), yy.ravel()].shape
-            # print
-            # Z = self.model.predict(np.c_[xx.ravel(), yy.ravel()])
-            # Z = Z.reshape(xx.shape)
-            # plt.contourf(xx, yy, Z, cmap=plt.cm.Paired, alpha=0.8)
 
-            # mins = [data[:, i].min() for i in range(data.shape[1])]
-            # maxs = [data[:, i].max() for i in range(data.shape[1])]
-            # decision_function_values = []
-            # for feature in range(x.shape[1]):
-            #     for value in np.linspace(mins[feature], maxs[feature]):
-            #         decision_function_values.append(self.model.decision_function([features])[0])
+            plt.figure()
+            transformed_means = np.dot(self.model.means_-self.model.xbar_, self.model.scalings_)
+            y = [0,1,2]
+            n_neighbors = 1
+            h = .02  # step size in the mesh
+            # Create color maps
+            cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
+            cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+            # we create an instance of Neighbours Classifier and fit the data.
+            clf = KNeighborsClassifier(n_neighbors, weights="uniform")
+            clf.fit(transformed_means, y)
 
-            # grid = np.array(np.meshgrid(*[np.linspace(mins[i], maxs[i], num=5) for i in range(data.shape[1])]))
-            # print grid
-            # print grid.shape
-            # print np.c_[grid[0].ravel(), grid[1].ravel()]
-            # print np.c_[grid[0].ravel(), grid[1].ravel()].shape
-            # prediction = self.model.predict(np.c_[grid[0].ravel(), grid[1].ravel()])
-            # w, v = np.linalg.eig(self.model.covariance_)
+            # Plot the decision boundary. For that, we will assign a color to each
+            # point in the mesh [x_min, x_max]x[y_min, y_max].
+            x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+            y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+            xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                                 np.arange(y_min, y_max, h))
+            Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+            # Z = self.myPredict(np.c_[xx.ravel(), yy.ravel()])
 
-            # print map(lambda x: np.sqrt(sum(x[i]**2 for i in range(self.model.coef_.shape[1]))), self.model.coef_)
-            # coef_in_new_space = self.model.transform(self.model.coef_)
-            # row_lengths = map(lambda x: np.sqrt(x[0]**2+x[1]**2), coef_in_new_space)
-            # print row_lengths
-            # new_matrix = np.array(map(lambda r: [r[0][0]/r[1], r[0][1]/r[1]], zip(coef_in_new_space, row_lengths)))
-            # print self.model.coef_.shape
-            # print coef_in_new_space
-            # print new_matrix.shape
-            # print new_matrix
-            # decision_values = np.dot(x, new_matrix.T)# + self.model.intercept_
-            # print decision_values
-            # print self.model.decision_function(data)
-            # print decision_values - self.model.decision_function(data)
+            # Put the result into a color plot
+            Z = Z.reshape(xx.shape)
+            plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+
+            # Plot also the training points
+            plt.scatter(transformed_means[:, 0], transformed_means[:, 1], marker="s", c=y, cmap=cmap_bold)
 
             labels = np.array(labels)
-            plt.figure()
-            # plt.plot(coef_in_new_space[0])
             for c, i, target_name in zip("rgb", [1, 2, 3], [1, 2, 3]):
                 plt.scatter(x[labels == i, 0], x[labels == i, 1], c=c, label=target_name, marker="o")
             plt.legend()
             plt.title('LDA')
+
+            plt.xlim(xx.min(), xx.max())
+            plt.ylim(yy.min(), yy.max())
+            # import time
+            # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
             plt.show()
         else:
             print "Model has", len(self.model.classes_), "classes. Cannot plot."
@@ -258,7 +259,7 @@ class ModelFrame(Frame.Frame):
         self.validation_labels = pickle.load(file_handle)
         self.validation_roc = pickle.load(file_handle)
         self.thresholds = pickle.load(file_handle)
-        self.min_max = pickle.load(file_handle)
+        self.min_max = pickle.load(file_handle)  # If there is EOF exception here, it probably means that this file does not have second model saved.
 
     def saveModelEvent(self, directory):
         file_handle = file(os.path.join(directory, "model.pkl"), "w")
