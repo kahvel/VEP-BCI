@@ -1,14 +1,11 @@
 import numpy as np
 import sklearn.metrics
 import scipy
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import LogisticRegression
 
 import matplotlib.pyplot as plt
 import matplotlib2tikz
 
-from target_identification.models import LdaModel, SvmModel, QdaModel
+from target_identification.models import LdaModel, TransitionModel
 import constants as c
 
 
@@ -27,6 +24,7 @@ class ModelTrainer(object):
         self.training_roc = None
         self.model = None
         self.lda_model = None
+        self.transition_model = None
         self.thresholds = None
         self.min_max = None
         self.random_forest_model = None
@@ -41,9 +39,9 @@ class ModelTrainer(object):
         self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
         self.model = LdaModel.TrainingLdaModel()
-        # self.model = SvmModel.TrainingSvmModel()
-        # self.model = QdaModel.TrainingQdaModel()
         self.model.setup(features_to_use, self.look_back_length, self.recordings)
+        self.transition_model = TransitionModel.TrainingModel()
+        self.transition_model.setup(None, 10)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -139,11 +137,16 @@ class ModelTrainer(object):
         plt.show()
 
     def start(self):
-        # random_forest = []
         training_data, training_labels = self.model.getConcatenatedMatrix(self.training_recordings)
         self.model.fit(training_data, training_labels)
-        label_order = self.model.getOrderedLabels()
-        # training_decision_function_values = self.model.decisionFunction(training_data)
+
+        training_data_per_recording, training_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.training_recordings)
+        training_lda_values = map(lambda x: self.model.decisionFunction(x), training_data_per_recording)
+        reduced_data, reduced_labels = self.transition_model.getConcatenatedMatrix(training_lda_values, training_labels_per_recording)
+        self.transition_model.fit(reduced_data, reduced_labels)
+        # training_roc = self.calculateRoc(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
+        print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
+        # random_forest = []
         # for i, values in enumerate(np.transpose(training_decision_function_values)):
         #     model = LinearDiscriminantAnalysis()
         #     model.fit(np.transpose([values]), map(lambda x: x == i+1, training_labels))
@@ -154,14 +157,22 @@ class ModelTrainer(object):
         # cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
         # cross_validation_confusion_matrix = sklearn.metrics.confusion_matrix(training_labels, cross_validation_prediction, labels=label_order)
         validation_data, validation_labels = self.model.getConcatenatedMatrix(self.validation_recordings)
+        validation_data_per_recording, validation_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.validation_recordings)
+        validation_lda_values = map(lambda x: self.model.decisionFunction(x), validation_data_per_recording)
+        reduced_validation_data, reduced_validation_labels = self.transition_model.getConcatenatedMatrix(validation_lda_values, validation_labels_per_recording)
+        print self.transition_model.getOrderedLabels()
+        print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
         # validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels, label_order)
         # validation_decision_function_values = self.model.decisionFunction(validation_data)
         # for i, (values, model) in enumerate(zip(np.transpose(validation_decision_function_values), random_forest)):
         #     print self.getConfusionMatrix(model, np.transpose([values]), map(lambda x: x == i+1, validation_labels), (False, True))
         #     # self.calculateRoc(model, np.transpose([values]), training_labels)
-        validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
-        thresholds = self.calculateThresholds(validation_roc, label_order)
-        training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
+
+        # label_order = self.model.getOrderedLabels()
+        # training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
+        # validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
+        # thresholds = self.calculateThresholds(validation_roc, label_order)
+        # validation_roc = self.calculateRoc(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
 
         # self.plotAllChanges(training_data, training_labels)
         # self.plotAllChanges(validation_data, validation_labels)
@@ -170,11 +181,11 @@ class ModelTrainer(object):
         self.training_labels = training_labels
         self.validation_data = validation_data
         self.validation_labels = validation_labels
-        self.thresholds = thresholds
+        # self.thresholds = thresholds
         self.min_max = self.model.getMinMax()
         self.lda_model = self.model.model
-        self.training_roc = training_roc
-        self.validation_roc = validation_roc
+        # self.training_roc = training_roc
+        # self.validation_roc = validation_roc
         # self.random_forest_model = random_forest
 
     def getSecondModel(self):

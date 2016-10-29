@@ -169,8 +169,8 @@ class ModelFrame(Frame.Frame):
         plt.ylabel('True Positive Rate')
         plt.title('Some extension of Receiver operating characteristic to multi-class')
         plt.legend(loc="lower right")
-        import time
-        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
+        # import time
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
         plt.show()
 
     def checkDataAndPlotRoc(self, data):

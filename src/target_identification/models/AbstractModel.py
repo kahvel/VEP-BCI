@@ -84,6 +84,7 @@ class TrainingModel(Model):
         return self.collector.combineSamples(features, labels)
 
     def getAllLookBackRatioMatrices(self, recordings):
+        self.collector.reset()
         all_matrices = []
         all_labels = []
         for recording in recordings:
@@ -94,7 +95,6 @@ class TrainingModel(Model):
         return all_matrices, all_labels
 
     def getConcatenatedMatrix(self, recordings):
-        self.collector.reset()
         matrices, labels = self.getAllLookBackRatioMatrices(recordings)
         data_matrix = np.concatenate(matrices, axis=0)
         data_labels = np.concatenate(labels, axis=0)
