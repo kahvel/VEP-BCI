@@ -144,7 +144,7 @@ class ModelTrainer(object):
         training_lda_values = map(lambda x: self.model.decisionFunction(x), training_data_per_recording)
         reduced_data, reduced_labels = self.transition_model.getConcatenatedMatrix(training_lda_values, training_labels_per_recording)
         self.transition_model.fit(reduced_data, reduced_labels)
-        # training_roc = self.calculateRoc(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
+        training_roc = self.calculateRoc(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels(), True)
         print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
         # random_forest = []
         # for i, values in enumerate(np.transpose(training_decision_function_values)):
@@ -168,11 +168,11 @@ class ModelTrainer(object):
         #     print self.getConfusionMatrix(model, np.transpose([values]), map(lambda x: x == i+1, validation_labels), (False, True))
         #     # self.calculateRoc(model, np.transpose([values]), training_labels)
 
-        # label_order = self.model.getOrderedLabels()
+        label_order = self.model.getOrderedLabels()
         # training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
         # validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
-        # thresholds = self.calculateThresholds(validation_roc, label_order)
-        # validation_roc = self.calculateRoc(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
+        validation_roc = self.calculateRoc(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels(), True)
+        thresholds = self.calculateThresholds(validation_roc, label_order)
 
         # self.plotAllChanges(training_data, training_labels)
         # self.plotAllChanges(validation_data, validation_labels)
@@ -181,15 +181,14 @@ class ModelTrainer(object):
         self.training_labels = training_labels
         self.validation_data = validation_data
         self.validation_labels = validation_labels
-        # self.thresholds = thresholds
+        self.thresholds = thresholds
         self.min_max = self.model.getMinMax()
         self.lda_model = self.model.model
-        # self.training_roc = training_roc
-        # self.validation_roc = validation_roc
-        # self.random_forest_model = random_forest
+        self.training_roc = training_roc
+        self.validation_roc = validation_roc
 
     def getSecondModel(self):
-        return self.random_forest_model
+        return self.transition_model.model
 
     def getModel(self):
         return self.lda_model

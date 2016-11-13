@@ -38,7 +38,7 @@ class TrainingModel(Model):
         self.self_transition_collector = None
 
     def getModel(self):
-        return RandomForestClassifier(min_samples_leaf=3, max_depth=5)
+        return RandomForestClassifier(n_estimators=100, min_samples_leaf=10, max_depth=5)
 
     def setup(self, features_to_use, sample_count):
         self.model = self.getModel()
@@ -57,7 +57,7 @@ class TrainingModel(Model):
         self_transition_labels = map(str, self_transition_labels)
         combined_data = np.concatenate((transitions, self_transitions), axis=0)
         combined_labels = np.concatenate((transition_labels, self_transition_labels), axis=0)
-        return combined_data, combined_labels
+        return transitions, transition_labels
 
     def getAllLookBackRatioMatrices(self, data, labels):
         self.transition_collector.reset()
