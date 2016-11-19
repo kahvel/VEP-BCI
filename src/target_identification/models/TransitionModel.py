@@ -1,5 +1,6 @@
 from target_identification import DataCollectors
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 import numpy as np
 
@@ -38,7 +39,8 @@ class TrainingModel(Model):
         self.self_transition_collector = None
 
     def getModel(self):
-        return RandomForestClassifier(n_estimators=100, min_samples_leaf=10, max_depth=5)
+        # return AdaBoostClassifier(n_estimators=1000, learning_rate=0.5)
+        return GradientBoostingClassifier()
 
     def setup(self, features_to_use, sample_count):
         self.model = self.getModel()

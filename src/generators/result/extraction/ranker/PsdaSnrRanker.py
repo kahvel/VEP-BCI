@@ -61,10 +61,28 @@ class SNR(Logic.TargetFrequencies, Logic.Harmonics):
         for signal, noise in zip(projected_signal, projected_noise):
             signal_results = self.signal_psda_ranker.getResults(signal)
             noise_results = self.autoregressive_psd_handler.getResults(noise)
-            # print signal_results
-            # print noise_results
             self.updateSNRs(self.result, signal_results, noise_results)
         return self.result
+
+
+class Power(Logic.ReferenceSignals):
+    def __init__(self):
+        Logic.ReferenceSignals.__init__(self)
+
+    def setup(self, options):
+        Logic.ReferenceSignals.setup(self, options)
+
+    def calculatePower(self, Y, W):
+        result = {harmonic: {freq: 0 for freq in self.frequencies} for harmonic in self.harmonics}
+        S = np.dot(Y, W).T
+        N_s = S.shape[0]
+        N_h = len(self.harmonics)
+        for frequency, reference_signals in zip(self.frequencies, self.reference_signals):
+            for i in range(N_s):
+                for j in range(N_h):
+                    X_dot_S = np.dot(reference_signals[j], S[i])
+                    result[j+1][frequency] += np.dot(X_dot_S.T, X_dot_S)/(N_s*N_h)
+        return result
 
 
 class PsdaSnrRanker(Logic.Ranker):
@@ -74,6 +92,7 @@ class PsdaSnrRanker(Logic.Ranker):
         self.projection_onto_principal_components = Logic.ProjectionOntoLastPrincipalComponents()
         self.sum_result_adder = Logic.SumResultAdder()
         self.snr_handler = SNR()
+        self.power_handler = Power()
 
     def setup(self, options):
         Logic.Ranker.setup(self, options)
@@ -81,13 +100,18 @@ class PsdaSnrRanker(Logic.Ranker):
         self.projection_onto_principal_components.setup(options)
         self.sum_result_adder.setup(options)
         self.snr_handler.setup(options)
+        self.power_handler.setup(options)
 
-    def projectOntoPrincipalComponents(self, signal_coordinates, noise_components):
+    def autoregressiveSNR(self, signal_coordinates, noise_components):
         self.projection_onto_principal_components.initialiseProjectionMatrix(noise_components)
         projected_signal = self.projection_onto_principal_components.project(np.transpose(signal_coordinates))
-        # print projected_signal.shape
         projected_noise = self.projection_onto_principal_components.project(np.transpose(noise_components))
-        return projected_signal, projected_noise
+        return self.snr_handler.calculateSNR(projected_signal, projected_noise)
+
+    def calculatePower(self, Y, Y_tilde):
+        self.projection_onto_principal_components.initialiseProjectionMatrix(Y_tilde)
+        W = np.array(self.projection_onto_principal_components.projection_matrix).T
+        return self.power_handler.calculatePower(Y, W)
 
     def calculateNoise(self, signal_coordinates):
         return signal_coordinates - self.projection_onto_reference_signals.project(signal_coordinates)
@@ -100,9 +124,7 @@ class PsdaSnrRanker(Logic.Ranker):
         """
         signal_coordinates = np.transpose(signal_coordinates)
         noise_components = self.calculateNoise(signal_coordinates)
-        projected_signal, projected_noise = self.projectOntoPrincipalComponents(signal_coordinates, noise_components)
-        snr = self.snr_handler.calculateSNR(projected_signal, projected_noise)
-        final = self.sum_result_adder.addSumAndOrderResult(snr)
-        # print final
-        # print
+        # result = self.autoregressiveSNR(signal_coordinates, noise_components)
+        result = self.calculatePower(signal_coordinates, noise_components)
+        final = self.sum_result_adder.addSumAndOrderResult(result)
         return final

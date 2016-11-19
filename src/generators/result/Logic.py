@@ -200,16 +200,31 @@ class ProjectionOntoLastPrincipalComponents(Projection):
     def getLastPrincipalComponents(self, model, threshold):
         new_axis = []
         variance_explained = 0
-        for i, variance_ratio in enumerate(reversed(model.explained_variance_ratio_)):
+        for i, (variance_ratio, variance) in enumerate(zip(reversed(model.explained_variance_ratio_), reversed(model.explained_variance_))):
             variance_explained += variance_ratio
             if variance_explained < threshold:
-                new_axis.append(model.components_[-(i+1)])
+                new_axis.append(self.eigenvectorOverVarianceAsAxis(model.components_[-(i+1)], variance))
             else:
                 break
         return new_axis
 
+    def eigenvectorAsAxis(self, component, variance):
+        """
+        This was used in the article with autoregression.
+        """
+        return component
+
+    def eigenvectorOverVarianceAsAxis(self, component, variance):
+        """
+        This was used in Bremen BCI article
+        http://iat.uni-bremen.de/fastmedia/98/Paper_P2.pdf
+        """
+        return component/np.sqrt(variance)
+
+
     def addComponentIfEmpty(self, new_axis, model):
         if len(new_axis) == 0:
+            print "Added only one component that explains " + str(model.explained_variance_ratio_[-1]) + "% of variance."
             return [model.components_[-1]]
         else:
             return new_axis
