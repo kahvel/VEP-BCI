@@ -110,11 +110,9 @@ class TargetIdentification(object):
         features_to_use = model_options[c.MODELS_PARSE_FEATURES_TO_USE]
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
-        # self.model = SvmModel.OnlineSvmModel()
-        # self.model = QdaModel.OnlineQdaModel()
         self.model.setup(minimum, maximum, features_to_use, sample_count, model)
-        self.second_model = TransitionModel.OnlineModel()
-        self.second_model.setup(features_to_use, 10, second_model)
+        self.second_model = TransitionModel.OnlineModel(False)
+        self.second_model.setup(features_to_use, 1, second_model)
 
     def resetPrevResults(self, freqs):
         self.prev_results.reset(freqs)

@@ -106,7 +106,7 @@ class TrainingCollector(object):
 class AbstractTransitionCollector(DataCollector):
     def __init__(self, sample_count):
         DataCollector.__init__(self, sample_count)
-        self.cut_offs = [4, 5, 6]
+        self.cut_offs = [1,2]
         self.result = []
 
     def addingCondition(self, labels):

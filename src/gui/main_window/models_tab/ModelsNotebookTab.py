@@ -159,7 +159,7 @@ class ModelFrame(Frame.Frame):
                  label='macro-average ROC curve (area = {0:0.2f})'
                        ''.format(roc_auc["macro"]),
                  linewidth=2)
-        for i in range(len(self.model.classes_)):
+        for i in range(len(self.second_model.classes_)):
             plt.plot(fpr[i], tpr[i], label='ROC curve of class {0} (area = {1:0.2f})'
                                            ''.format(i, roc_auc[i]))
         plt.plot([0, 1], [0, 1], 'k--')

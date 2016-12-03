@@ -40,12 +40,16 @@ class ModelTrainer(object):
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
         self.model = LdaModel.TrainingLdaModel()
         self.model.setup(features_to_use, self.look_back_length, self.recordings)
-        self.transition_model = TransitionModel.TrainingModel()
-        self.transition_model.setup(None, 10)
+        self.transition_model = TransitionModel.TrainingModel(False)
+        self.transition_model.setup(None, 1)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
         return sklearn.metrics.confusion_matrix(labels, prediction, labels=label_order)
+
+    def getThresholdConfusionMatrix(self, model, data, labels, label_order, thresholds):
+        prediction = model.thresholdPredict(data, thresholds)
+        return sklearn.metrics.confusion_matrix(labels, prediction, labels=list(label_order)+["None"])
 
     def calculateBinaryRoc(self, predictions, binary_labels, labels_order):
         predictions = np.transpose(predictions)
@@ -91,19 +95,6 @@ class ModelTrainer(object):
                 print "Warning: no cutoff obtained!"
         return cut_off_threshold
 
-    def getDecisionFunctionValues(self, model, data, use_proba=False):
-        """
-        If use_proba=False then the function does not work with less than 3 classes.
-        :param model:
-        :param data:
-        :param use_proba:
-        :return:
-        """
-        if use_proba:
-            return model.predictProba(data)
-        else:
-            return model.decisionFunction(data)
-
     def getBinaryLabels(self, labels, label_order):
         binary_labels = []
         for label in label_order:
@@ -116,9 +107,9 @@ class ModelTrainer(object):
         self.addMacroRoc(roc, binary_labels)
         return roc
 
-    def calculateRoc(self, model, data, labels, label_order, use_proba=False):
+    def calculateRoc(self, model, data, labels, label_order):
         binary_labels = self.getBinaryLabels(labels, label_order)
-        decision_function_values = self.getDecisionFunctionValues(model, data, use_proba)
+        decision_function_values = model.getDecisionFunctionValues(data)
         return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
 
     def plotChange(self, data, labels, index, color):
@@ -143,8 +134,9 @@ class ModelTrainer(object):
         training_data_per_recording, training_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.training_recordings)
         training_lda_values = map(lambda x: self.model.decisionFunction(x), training_data_per_recording)
         reduced_data, reduced_labels = self.transition_model.getConcatenatedMatrix(training_lda_values, training_labels_per_recording)
+        reduced_labels = map(str, reduced_labels)
         self.transition_model.fit(reduced_data, reduced_labels)
-        training_roc = self.calculateRoc(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels(), True)
+        training_roc = self.calculateRoc(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
         print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
         # random_forest = []
         # for i, values in enumerate(np.transpose(training_decision_function_values)):
@@ -160,6 +152,7 @@ class ModelTrainer(object):
         validation_data_per_recording, validation_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.validation_recordings)
         validation_lda_values = map(lambda x: self.model.decisionFunction(x), validation_data_per_recording)
         reduced_validation_data, reduced_validation_labels = self.transition_model.getConcatenatedMatrix(validation_lda_values, validation_labels_per_recording)
+        reduced_validation_labels = map(str, reduced_validation_labels)
         print self.transition_model.getOrderedLabels()
         print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
         # validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels, label_order)
@@ -171,8 +164,10 @@ class ModelTrainer(object):
         label_order = self.model.getOrderedLabels()
         # training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
         # validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
-        validation_roc = self.calculateRoc(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels(), True)
-        thresholds = self.calculateThresholds(validation_roc, label_order)
+        validation_roc = self.calculateRoc(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
+        thresholds = self.calculateThresholds(validation_roc, self.transition_model.getOrderedLabels())
+        print self.getThresholdConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels(), thresholds)
+        print self.getThresholdConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels(), thresholds)
 
         # self.plotAllChanges(training_data, training_labels)
         # self.plotAllChanges(validation_data, validation_labels)
