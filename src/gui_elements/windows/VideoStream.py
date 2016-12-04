@@ -1,6 +1,6 @@
-import cv2
 from PIL import Image, ImageTk
 import Tkinter
+import io
 
 import MyWindows
 
@@ -18,7 +18,8 @@ class StreamWindow(MyWindows.TkWindow):
         if self.exitFlag:
             self.destroy()
 
-    def updateStream(self, image):
-        tki = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB)))
+    def updateStream(self, bytes):
+        image = Image.open(io.BytesIO(bytes))
+        tki = ImageTk.PhotoImage(image)
         self.image_label.configure(image=tki)
         self.image_label._backbuffer_ = tki  # avoid flicker caused by premature gc

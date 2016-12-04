@@ -1,10 +1,8 @@
 from psychopy import visual, core, logging
 
 from PIL import Image
+import io
 
-import cv2
-
-import numpy as np
 import constants as c
 
 # To get rid of psychopy avbin.dll error, copy avbin.dll to C:\Windows\SysWOW64
@@ -296,9 +294,9 @@ class TargetsWindow(object):
         target.setDetected(True)
         self.prev_detected = target
 
-    def updateStream(self, message):
+    def updateStream(self, bytes):
         if self.video_stream is not None:
-            image = Image.fromarray(cv2.cvtColor(message, cv2.COLOR_BGR2RGB))
+            image = Image.open(io.BytesIO(bytes))
             self.video_stream.setImage(image)
 
     def start(self, standby=False):
@@ -310,9 +308,10 @@ class TargetsWindow(object):
                     standby = message
                     continue
                 elif isinstance(message, basestring):
-                    return message
-                elif isinstance(message, np.ndarray):
-                    self.updateStream(message)
+                    if len(message) < 10:
+                        return message
+                    else:
+                        self.updateStream(message)
                 else:
                     for target in self.targets:
                         if message == target.freq and isinstance(message, float):
