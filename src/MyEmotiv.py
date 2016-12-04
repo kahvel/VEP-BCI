@@ -123,11 +123,12 @@ class MyEmotiv(object):
         self.cipher = AES.new(key, AES.MODE_ECB, iv)
 
     def connectionSetup(self):
+        options = self.connection.receiveMessageBlock()
         self.device, self.serialNum = self.setupWin()
         if self.serialNum is None:
             print("Emotiv USB receiver not found")
             self.closeDevice()
-            return c.FAIL_MESSAGE
+            return c.SETUP_FAILED_MESSAGE
         self.setupCrypto(self.serialNum)
         self.startDataHandling()
         try:
@@ -135,7 +136,7 @@ class MyEmotiv(object):
         except:
             self.closeDevice()
             print("No packets. Is headset turned on and connected to receiver?")
-            return c.FAIL_MESSAGE
+            return c.SETUP_FAILED_MESSAGE
         self.closeDevice()
         # Clean up previous packets from the queue
         while True:
@@ -143,7 +144,7 @@ class MyEmotiv(object):
                 self.packets.get(False)
             except:
                 break
-        return c.SUCCESS_MESSAGE
+        return c.SETUP_SUCCEEDED_MESSAGE
 
     def start(self):
         self.startDataHandling()

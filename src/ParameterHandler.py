@@ -1,0 +1,309 @@
+import constants as c
+
+
+class BruteForce(object):
+    def __init__(self):
+        self.break_range = tuple(i for i in range(0, 9, 2))
+        self.windows = [c.WINDOW_NONE, c.WINDOW_HANNING, c.WINDOW_HAMMING, c.WINDOW_BLACKMAN, c.WINDOW_BARTLETT]
+        self.interpolation = [c.INTERPOLATE_LINEAR, c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC]
+        self.length_range = tuple(128*2**i for i in range(2))
+        self.step_range = tuple(32*2**i for i in range(3))
+
+    def optionsGenerator(self):
+        for window in self.windows:
+            for interpolation in self.interpolation:
+                # for detrend in self.detrend:
+                    for length in self.length_range:
+                        for step in self.step_range:
+                            if step <= length:
+                                for b in self.break_range:
+                                    if b == 0 or length/b >= 16:
+                                        yield {
+                                            c.OPTIONS_WINDOW: window,
+                                            c.OPTIONS_INTERPOLATE: interpolation,
+                                            c.OPTIONS_DETREND: c.LINEAR_DETREND,
+                                            c.OPTIONS_LENGTH: length,
+                                            c.OPTIONS_STEP: step,
+                                            c.OPTIONS_BREAK: b,
+                                            c.OPTIONS_FILTER: c.NONE_FILTER,
+                                            c.OPTIONS_NORMALISE: 0,
+                                            c.OPTIONS_ARG: 0,
+                                        }
+                                    else:
+                                        break
+                            else:
+                                break
+
+
+class DifferentialEvolution(object):
+    def __init__(self):
+        self.interpolation = [c.INTERPOLATE_NEAREST, c.INTERPOLATE_ZERO, c.INTERPOLATE_LINEAR, c.INTERPOLATE_SLINEAR, c.INTERPOLATE_QUADRATIC, c.INTERPOLATE_CUBIC, c.INTERPOLATE_BARYCENTRIC]
+        self.length_range = tuple(128*2**i for i in range(2))
+        self.step_range = tuple(32*2**i for i in range(3))
+        self.break_range = tuple(i for i in range(0, 9, 2))
+        self.bounds = (
+            (0, 6.99),
+            (0, 1.99),
+            (0, 2.99),
+            (0, 4.99),
+            (0, 14),
+        )
+
+    def getBounds(self):
+        return self.bounds
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.OPTIONS_WINDOW: c.WINDOW_KAISER,
+            c.OPTIONS_INTERPOLATE: self.interpolation[int(numbers[0])],
+            c.OPTIONS_DETREND: c.LINEAR_DETREND,
+            c.OPTIONS_LENGTH: self.length_range[int(numbers[1])],
+            c.OPTIONS_STEP: self.step_range[int(numbers[2])],
+            c.OPTIONS_BREAK: self.break_range[int(numbers[3])],
+            c.OPTIONS_FILTER: c.NONE_FILTER,
+            c.OPTIONS_NORMALISE: 0,
+            c.OPTIONS_ARG: numbers[4],
+        }
+
+
+class DifferentialEvolutionIdentification(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 4),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            # (0, 5),
+            # (0, 5),
+            (0, 20),
+            (0, 5),
+        )
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_WEIGHTS: {
+                1: {
+                    1: numbers[0],
+                    2: numbers[1],
+                    3: numbers[2],
+                    c.RESULT_SUM: numbers[3],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[4],
+                }
+            },
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[5],
+                    2: numbers[6],
+                    3: numbers[7],
+                    c.RESULT_SUM: numbers[8],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[9],
+                }
+            },
+            c.DATA_CLASSIFICATION: {
+                # c.DATA_ACTUAL_RESULTS: {
+                #     c.DATA_TARGET_THRESHOLD: numbers[10],
+                #     c.DATA_WEIGHT_THRESHOLD: numbers[11],
+                # },
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: numbers[10],
+                    c.DATA_WEIGHT_THRESHOLD: numbers[11],
+                },
+            }
+        }
+
+    def getBounds(self):
+        return self.bounds
+
+
+class DifferentialEvolution4Params(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 0.2),
+            (0, 0.2),
+            (0, 0.2),
+            (0, 2),
+        )
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[0],
+                    2: 0,
+                    3: 0,
+                    c.RESULT_SUM: numbers[1],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[2],
+                }
+            },
+            c.DATA_CLASSIFICATION: {
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,
+                    c.DATA_WEIGHT_THRESHOLD: numbers[3],
+                },
+            },
+            # c.DATA_EXTRACTION_WEIGHTS: {
+            #     1: {
+            #         1: numbers[5],
+            #         2: 0,
+            #         3: 0,
+            #         c.RESULT_SUM: numbers[6],
+            #     },
+            #     2: {
+            #         c.RESULT_SUM: numbers[7],
+            #     }
+            # },
+        }
+
+    def getBounds(self):
+        return self.bounds
+
+
+class NewTrainingParameterHandler(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 3),
+            (0, 3),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
+            (0, 0.2),
+            (0, 0.02),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
+            (0, 1000),
+        )
+        self.steps = (0.25, 0.25, 0.25, 0.25, 0.25, 0.025, 0.025, 0.025, 0.025, 0.025, 1, 0.25, 1, 0.25)
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_WEIGHTS: {
+                1: {
+                    1: numbers[0],
+                    2: numbers[1],
+                    3: numbers[2],
+                    c.RESULT_SUM: numbers[3],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[4],
+                },
+                3: {
+                    c.RESULT_SUM: numbers[5],
+                },
+                4: {
+                    1: numbers[6],
+                    2: numbers[7],
+                    3: numbers[8],
+                    c.RESULT_SUM: numbers[9],
+                },
+            },
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[10],
+                    2: numbers[11],
+                    3: numbers[12],
+                    c.RESULT_SUM: numbers[13],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[14],
+                },
+                3: {
+                    c.RESULT_SUM: numbers[15],
+                },
+                4: {
+                    1: numbers[16],
+                    2: numbers[17],
+                    3: numbers[18],
+                    c.RESULT_SUM: numbers[19],
+                },
+            },
+            c.DATA_CLASSIFICATION: {
+                c.CLASSIFICATION_PARSE_ACTUAL_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
+                    c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
+                    c.DATA_WEIGHT_THRESHOLD: 0,#numbers[13],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
+            },
+            c.DATA_CLEAR_BUFFERS: True,
+        }
+
+    def getBounds(self):
+        return self.bounds
+
+
+class BruteForceHandler(object):
+    def __init__(self):
+        self.bounds = (
+            (0, 0.18),
+            (0, 0.18),
+            (0, 0.18),
+            (0, 0.18),
+        )
+
+    def numbersToOptions(self, numbers):
+        return {
+            c.DATA_EXTRACTION_WEIGHTS: {
+                1: {
+                    1: 0.5,
+                    2: 0.5,
+                    # 3: 1,
+                    c.RESULT_SUM: 0.5,
+                },
+                2: {
+                    c.RESULT_SUM: 1,
+                },
+            },
+            c.DATA_EXTRACTION_DIFFERENCES: {
+                1: {
+                    1: numbers[0],
+                    2: numbers[1],
+                    # 3: numbers[2],
+                    c.RESULT_SUM: numbers[2],
+                },
+                2: {
+                    c.RESULT_SUM: numbers[3],
+                },
+            },
+            c.DATA_CLASSIFICATION: {
+                c.CLASSIFICATION_PARSE_ACTUAL_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[10],
+                    c.DATA_WEIGHT_THRESHOLD: 0,#numbers[11],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
+                c.CLASSIFICATION_PARSE_PREV_RESULTS: {
+                    c.DATA_TARGET_THRESHOLD: 1,#numbers[12],
+                    c.DATA_WEIGHT_THRESHOLD: 1.5,#numbers[13],
+                    c.DATA_ALWAYS_DELETE: False,
+                },
+            },
+            c.DATA_CLEAR_BUFFERS: False,
+        }
+
+    def getBounds(self):
+        return self.bounds

@@ -1,0 +1,358 @@
+MainFrame;0;
+MainNotebook;0;
+3
+Extraction;0;
+ExtractionTab;0;
+ExtractionTabNotebook;0;
+Active;0;
+Methods;0;
+PSDA;0;0;
+Sum PSDA;1;0;
+CCA;0;0;
+LRT;0;0;
+SNR PSDA;0;0;
+Sensors;0;
+AF3;0;0;
+F7;0;0;
+F3;0;0;
+FC5;0;0;
+T7;0;0;
+P7;1;0;
+O1;1;0;
+O2;1;0;
+P8;1;0;
+T8;0;0;
+FC6;0;0;
+F4;0;0;
+F8;0;0;
+AF4;0;0;
+0, 0, 0
+TargetsFrame;0;
+1;1;0;
+2;1;0;
+3;1;0;
+Options;0;
+Options;0;
+Detrend;Linear;0;
+Window;Kaiser;0;
+Interp;Quadratic;0;
+Filter;None;0;
+Step;32;0;
+Length;256;0;
+Normalise;0;0;
+Break;16;0;
+Arg;14;0;
+Log10;0;0;
+From;0;1;Filter
+To;0;1;Filter
+Taps;0;1;Filter
+Harmonics;0;
+1      ;0;
+1      ;1;0;
+Weight;0.5;0;
+Difference;0.1;0;
+2      ;0;
+2      ;1;0;
+Weight;0;0;
+Difference;0;0;
+3      ;0;
+3      ;1;0;
+Weight;0;1;3
+Difference;1;1;3
+4      ;0;
+4      ;0;0;
+Weight;0;1;4, 4      
+Difference;0;1;4, 4      
+5      ;0;
+5      ;0;0;
+Weight;0;1;5, 5      
+Difference;0;1;5, 5      
+6      ;0;
+6      ;0;0;
+Weight;0;1;6, 6      
+Difference;0;1;6, 6      
+7      ;0;
+7      ;0;0;
+Weight;0;1;7, 7      
+Difference;0;1;7, 7      
+Sum;0;
+Sum;1;0;
+Weight;0.5;0;
+Difference;0.1;0;
+DisableDeleteFrame;0;
+Disable;0;0;
+Delete;None;0;
+ExtractionTab;0;
+ExtractionTabNotebook;0;
+Active;0;
+Methods;0;
+PSDA;0;0;
+Sum PSDA;0;0;
+CCA;1;0;
+LRT;0;0;
+SNR PSDA;0;0;
+Sensors;0;
+AF3;0;0;
+F7;0;0;
+F3;0;0;
+FC5;0;0;
+T7;0;0;
+P7;1;0;
+O1;1;0;
+O2;1;0;
+P8;1;0;
+T8;0;0;
+FC6;0;0;
+F4;0;0;
+F8;0;0;
+AF4;0;0;
+0, 0, 0
+TargetsFrame;0;
+1;1;0;
+2;1;0;
+3;1;0;
+Options;0;
+Options;0;
+Detrend;Linear;0;
+Window;None;0;
+Interp;Slinear;0;
+Filter;None;0;
+Step;32;0;
+Length;256;0;
+Normalise;0;0;
+Break;16;0;
+Arg;0;1;Window
+Log10;0;0;
+From;0;1;Filter
+To;0;1;Filter
+Taps;0;1;Filter
+Harmonics;0;
+1      ;0;
+1      ;1;0;
+Weight;0;0;
+Difference;0;0;
+2      ;0;
+2      ;1;0;
+Weight;0;0;
+Difference;0;0;
+3      ;0;
+3      ;1;0;
+Weight;0;0;
+Difference;0;0;
+4      ;0;
+4      ;0;0;
+Weight;0;1;4      
+Difference;0;1;4      
+5      ;0;
+5      ;0;0;
+Weight;0;1;
+Difference;0;1;
+6      ;0;
+6      ;0;0;
+Weight;0;1;
+Difference;0;1;
+7      ;0;
+7      ;0;0;
+Weight;0;1;
+Difference;0;1;
+Sum;0;
+Sum;1;0;
+Weight;1;0;
+Difference;0.1;0;
+DisableDeleteFrame;0;
+Disable;0;0;
+Delete;None;0;
+ExtractionTab;0;
+ExtractionTabNotebook;0;
+Active;0;
+Methods;0;
+PSDA;0;0;
+Sum PSDA;0;0;
+CCA;0;0;
+LRT;1;0;
+SNR PSDA;0;0;
+Sensors;0;
+AF3;0;0;
+F7;0;0;
+F3;0;0;
+FC5;0;0;
+T7;0;0;
+P7;1;0;
+O1;1;0;
+O2;1;0;
+P8;1;0;
+T8;0;0;
+FC6;0;0;
+F4;0;0;
+F8;0;0;
+AF4;0;0;
+0, 0, 0
+TargetsFrame;0;
+1;1;0;
+2;1;0;
+3;1;0;
+Options;0;
+Options;0;
+Detrend;Linear;0;
+Window;None;0;
+Interp;Linear;0;
+Filter;None;0;
+Step;32;0;
+Length;256;0;
+Normalise;0;0;
+Break;16;0;
+Arg;0;1;Window
+Log10;0;0;
+From;0;1;Filter
+To;0;1;Filter
+Taps;0;1;Filter
+Harmonics;0;
+1      ;0;
+1      ;1;0;
+Weight;0;0;
+Difference;0;0;
+2      ;0;
+2      ;1;0;
+Weight;0;0;
+Difference;0;0;
+3      ;0;
+3      ;1;0;
+Weight;0;0;
+Difference;0;0;
+4      ;0;
+4      ;0;0;
+Weight;0;1;4      
+Difference;0;1;4      
+5      ;0;
+5      ;0;0;
+Weight;0;1;5      
+Difference;0;1;5      
+6      ;0;
+6      ;0;0;
+Weight;0;1;6      
+Difference;0;1;6      
+7      ;0;
+7      ;0;0;
+Weight;0;1;7      
+Difference;0;1;7      
+Sum;0;
+Sum;1;0;
+Weight;0;0;
+Difference;0;0;
+DisableDeleteFrame;0;
+Disable;0;0;
+Delete;None;0;
+ExtractionTab;0;
+ExtractionTabNotebook;0;
+Active;0;
+Methods;0;
+PSDA;0;0;
+Sum PSDA;0;0;
+CCA;0;0;
+LRT;0;0;
+SNR PSDA;1;0;
+Sensors;0;
+AF3;0;0;
+F7;0;0;
+F3;0;0;
+FC5;0;0;
+T7;0;0;
+P7;1;0;
+O1;1;0;
+O2;1;0;
+P8;1;0;
+T8;0;0;
+FC6;0;0;
+F4;0;0;
+F8;0;0;
+AF4;0;0;
+
+TargetsFrame;0;
+Options;0;
+Options;0;
+Detrend;Linear;0;
+Window;Kaiser;0;
+Interp;Linear;0;
+Filter;None;0;
+Step;32;0;
+Length;256;0;
+Normalise;0;0;
+Break;16;0;
+Arg;14;0;
+Log10;0;0;
+From;0;1;Filter
+To;0;1;Filter
+Taps;0;1;Filter
+Harmonics;0;
+1      ;0;
+1      ;1;0;
+Weight;0;0;
+Difference;0;0;
+2      ;0;
+2      ;1;0;
+Weight;0;0;
+Difference;0;0;
+3      ;0;
+3      ;1;0;
+Weight;0;0;
+Difference;0;0;
+4      ;0;
+4      ;0;0;
+Weight;0;1;4      
+Difference;0;1;4      
+5      ;0;
+5      ;0;0;
+Weight;0;1;5      
+Difference;0;1;5      
+6      ;0;
+6      ;0;0;
+Weight;0;1;6      
+Difference;0;1;6      
+7      ;0;
+7      ;0;0;
+Weight;0;1;7      
+Difference;0;1;7      
+Sum;0;
+Sum;1;0;
+Weight;0;0;
+Difference;0;0;
+DisableDeleteFrame;0;
+Disable;0;0;
+Delete;None;0;
+Test;0;
+Test target;None;0;0, 0, 0, 0, 0;
+Color;0;
+Color;None;0;
+Textbox;#ffffb3;0;
+Standby;None;0;0, 0, 0, 0, 0;
+Time;1;1;Unlimited
+Unlimited;1;0;
+ResultFrame;0;
+Show;None;0;
+Reset;None;0;
+Save;None;0;
+IdentificationOptionsFrame;0;
+Clear buffers;1;0;
+Process short signals;0;0;
+Results;0;
+Always delete;0;0;
+No of results;1;0;
+Threshold;0;0;
+Prev results;0;
+Always delete;0;0;
+No of results;1;0;
+Threshold;1.5;0;
+Record;0;
+Record;Disabled;0;
+Save EEG;None;0;
+Load EEG;None;0;
+Reset EEG;None;0;
+Train;0;
+Method;Save;0;
+BottomFrame;0;
+Start;None;1;PostOffice
+Stop;None;1;PostOffice
+Setup;None;0;
+Save;None;0;
+Load;None;0;
+Exit;None;0;
