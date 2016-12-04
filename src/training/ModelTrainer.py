@@ -5,7 +5,7 @@ import scipy
 import matplotlib.pyplot as plt
 import matplotlib2tikz
 
-from target_identification.models import LdaModel, TransitionModel
+from target_identification.models import LdaModel, TransitionModel, CalibrationModel, CvCalibrationModel
 import constants as c
 
 
@@ -28,6 +28,7 @@ class ModelTrainer(object):
         self.thresholds = None
         self.min_max = None
         self.random_forest_model = None
+        self.cv_model = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
@@ -42,13 +43,14 @@ class ModelTrainer(object):
         self.model.setup(features_to_use, self.look_back_length, self.recordings)
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
+        self.cv_model = CvCalibrationModel.TrainingModel()
+        self.cv_model.setup(None, self.look_back_length)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
         return sklearn.metrics.confusion_matrix(labels, prediction, labels=label_order)
 
-    def getThresholdConfusionMatrix(self, model, data, labels, label_order, thresholds):
-        prediction = model.thresholdPredict(data, thresholds)
+    def getThresholdConfusionMatrix(self, prediction, labels, label_order):
         return sklearn.metrics.confusion_matrix(labels, prediction, labels=list(label_order)+["None"])
 
     def calculateBinaryRoc(self, predictions, binary_labels, labels_order):
@@ -107,15 +109,14 @@ class ModelTrainer(object):
         self.addMacroRoc(roc, binary_labels)
         return roc
 
-    def calculateRoc(self, model, data, labels, label_order):
+    def calculateRoc(self, decision_function_values, labels, label_order):
         binary_labels = self.getBinaryLabels(labels, label_order)
-        decision_function_values = model.getDecisionFunctionValues(data)
         return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
 
     def plotChange(self, data, labels, index, color):
         x = np.arange(0, len(data))
         plt.subplot(3,1,index+1)
-        decision = self.model.decisionFunction(data).T[index]
+        decision = data.T[index]
         plt.plot(x, decision, color=color)
         plt.plot(x, (labels == index+1)*decision.max() + (1-(labels == index+1))*decision.min(), "r--", color=color)
 
@@ -123,54 +124,54 @@ class ModelTrainer(object):
         self.plotChange(data, labels, 0, "red")
         self.plotChange(data, labels, 1, "green")
         self.plotChange(data, labels, 2, "blue")
-        import time
-        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
+        # import time
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
         plt.show()
 
     def start(self):
         training_data, training_labels = self.model.getConcatenatedMatrix(self.training_recordings)
         self.model.fit(training_data, training_labels)
+        self.cv_model.fit(training_data, training_labels)
 
         training_data_per_recording, training_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.training_recordings)
         training_lda_values = map(lambda x: self.model.decisionFunction(x), training_data_per_recording)
         reduced_data, reduced_labels = self.transition_model.getConcatenatedMatrix(training_lda_values, training_labels_per_recording)
         reduced_labels = map(str, reduced_labels)
         self.transition_model.fit(reduced_data, reduced_labels)
-        training_roc = self.calculateRoc(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
-        print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
-        # random_forest = []
-        # for i, values in enumerate(np.transpose(training_decision_function_values)):
-        #     model = LinearDiscriminantAnalysis()
-        #     model.fit(np.transpose([values]), map(lambda x: x == i+1, training_labels))
-        #     random_forest.append(model)
-        #     print self.getConfusionMatrix(model, np.transpose([values]), map(lambda x: x == i+1, training_labels), (False, True))
-        # random_forest.fit(training_decision_function_values, training_labels)
-        # training_confusion_matrix = self.getConfusionMatrix(model, training_data, training_labels, label_order)
-        # cross_validation_prediction = cross_val_predict(model, training_data, training_labels, cv=self.cross_validation_folds)
-        # cross_validation_confusion_matrix = sklearn.metrics.confusion_matrix(training_labels, cross_validation_prediction, labels=label_order)
+        training_roc = self.calculateRoc(self.transition_model.getDecisionFunctionValues(reduced_data), reduced_labels, self.transition_model.getOrderedLabels())
+
         validation_data, validation_labels = self.model.getConcatenatedMatrix(self.validation_recordings)
+
         validation_data_per_recording, validation_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.validation_recordings)
         validation_lda_values = map(lambda x: self.model.decisionFunction(x), validation_data_per_recording)
         reduced_validation_data, reduced_validation_labels = self.transition_model.getConcatenatedMatrix(validation_lda_values, validation_labels_per_recording)
         reduced_validation_labels = map(str, reduced_validation_labels)
-        print self.transition_model.getOrderedLabels()
-        print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
-        # validation_confusion_matrix = self.getConfusionMatrix(model, validation_data, validation_labels, label_order)
-        # validation_decision_function_values = self.model.decisionFunction(validation_data)
-        # for i, (values, model) in enumerate(zip(np.transpose(validation_decision_function_values), random_forest)):
-        #     print self.getConfusionMatrix(model, np.transpose([values]), map(lambda x: x == i+1, validation_labels), (False, True))
-        #     # self.calculateRoc(model, np.transpose([values]), training_labels)
 
         label_order = self.model.getOrderedLabels()
-        # training_roc = self.calculateRoc(self.model, training_data, training_labels, label_order)
-        # validation_roc = self.calculateRoc(self.model, validation_data, validation_labels, label_order)
-        validation_roc = self.calculateRoc(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
+        # training_roc = self.calculateRoc(self.model.getDecisionFunctionValues(training_data), training_labels, label_order)
+        # validation_roc = self.calculateRoc(self.model.getDecisionFunctionValues(validation_data), validation_labels, label_order)
+        validation_roc = self.calculateRoc(self.transition_model.getDecisionFunctionValues(reduced_validation_data), reduced_validation_labels, self.transition_model.getOrderedLabels())
         thresholds = self.calculateThresholds(validation_roc, self.transition_model.getOrderedLabels())
-        print self.getThresholdConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels(), thresholds)
-        print self.getThresholdConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels(), thresholds)
+        roc = self.calculateRoc(self.cv_model.predictProba(training_data), training_labels, label_order)
+        roc2 = self.calculateRoc(self.cv_model.predictProba(validation_data), validation_labels, label_order)
+        thresholds2 = self.calculateThresholds(roc2, self.cv_model.getOrderedLabels())
 
-        # self.plotAllChanges(training_data, training_labels)
-        # self.plotAllChanges(validation_data, validation_labels)
+        print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
+        print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
+        print self.transition_model.getOrderedLabels()
+        print sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=self.cv_model.getOrderedLabels())
+        print sklearn.metrics.confusion_matrix(validation_labels, self.cv_model.predict(validation_data), labels=self.cv_model.getOrderedLabels())
+        for i in range(11):
+            print i
+            print self.getThresholdConfusionMatrix(self.transition_model.thresholdPredict(reduced_data, thresholds, i/10.0), reduced_labels, self.transition_model.getOrderedLabels())
+            print self.getThresholdConfusionMatrix(self.transition_model.thresholdPredict(reduced_validation_data, thresholds, i/10.0), reduced_validation_labels, self.transition_model.getOrderedLabels())
+            print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, thresholds2, i/10.0), map(str, training_labels), self.cv_model.getOrderedLabels())
+            print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(validation_data, thresholds2, i/10.0), map(str, validation_labels), self.cv_model.getOrderedLabels())
+
+        # self.plotAllChanges(self.model.decisionFunction(training_data), training_labels)
+        # self.plotAllChanges(self.model.decisionFunction(validation_data), validation_labels)
+        # self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
+        # self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
 
         self.training_data = training_data
         self.training_labels = training_labels
@@ -179,8 +180,8 @@ class ModelTrainer(object):
         self.thresholds = thresholds
         self.min_max = self.model.getMinMax()
         self.lda_model = self.model.model
-        self.training_roc = training_roc
-        self.validation_roc = validation_roc
+        self.training_roc = roc
+        self.validation_roc = roc2
 
     def getSecondModel(self):
         return self.transition_model.model
