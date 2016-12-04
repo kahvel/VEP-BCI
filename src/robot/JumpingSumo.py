@@ -4,9 +4,9 @@ import AbstractRobot
 
 
 class JumpingSumo(AbstractRobot.AbstractRobot):
-    def __init__(self, connection):
+    def __init__(self):
         self.controller = None
-        AbstractRobot.AbstractRobot.__init__(self, connection)
+        AbstractRobot.AbstractRobot.__init__(self)
 
     def getVideoStreamBytes(self):
         if self.controller is not None:
@@ -30,8 +30,7 @@ class JumpingSumo(AbstractRobot.AbstractRobot):
     def setupVideoStream(self):
         try:
             self.controller = stream.SumoController()
-            self.bytes = ""
-            return c.SUCCESS_MESSAGE
+            return c.SETUP_SUCCEEDED_MESSAGE
         except stream.InitTimeoutException, e:
             print("Could not connect to Jumping Sumo. Is it switched on and computer connected to it?: " + str(e))
-            return c.FAIL_MESSAGE
+            return c.SETUP_FAILED_MESSAGE

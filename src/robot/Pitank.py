@@ -6,8 +6,8 @@ import urllib
 
 
 class Pitank(AbstractRobot.AbstractRobot):
-    def __init__(self, connection):
-        AbstractRobot.AbstractRobot.__init__(self, connection)
+    def __init__(self):
+        AbstractRobot.AbstractRobot.__init__(self)
 
     def getVideoStreamBytes(self):
         if self.stream is not None:
@@ -16,7 +16,7 @@ class Pitank(AbstractRobot.AbstractRobot):
             return None
 
     def handleMessage(self, message):
-        if message in c.ROBOT_COMMANDS:
+        if message in c.ROBOT_MESSAGES:
             self.sendRobotMessage(message)
         else:
             print("Unknown message in Robot: " + str(message))
@@ -32,8 +32,7 @@ class Pitank(AbstractRobot.AbstractRobot):
     def setupVideoStream(self):
         try:
             self.stream = urllib.urlopen("http://192.168.42.1:8080/?action=stream")
-            self.bytes = ""
-            return c.SUCCESS_MESSAGE
+            return c.SETUP_SUCCEEDED_MESSAGE
         except Exception, e:
             print("Error: " + str(e))
-            return c.FAIL_MESSAGE
+            return c.SETUP_FAILED_MESSAGE
