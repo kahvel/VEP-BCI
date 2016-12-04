@@ -2,6 +2,7 @@ from psychopy import visual, core, logging
 
 from PIL import Image
 import io
+import time
 
 import constants as c
 
@@ -215,6 +216,7 @@ class TargetsWindow(object):
         self.prev_current = None
         self.prev_detected = None
         self.video_stream = None
+        self.flip_time = None
         # clock = core.Clock()
         #self.window._refreshThreshold = 1/60
         #self.window.setRecordFrameIntervals(True)
@@ -245,9 +247,13 @@ class TargetsWindow(object):
         if self.window is not None:
             self.window.close()
 
-    def updateWindow(self):
+    def updateWindow(self, standby=False):
         if self.window is not None:
-            self.window.flip()
+            if self.flip_time is None or time.time() - self.flip_time > 0.01:
+                self.window.flip()
+                for i in range(len(self.targets)):
+                    self.generators[i].send(standby)
+                self.flip_time = time.time()
 
     def getMonitorFreq(self, background_data):
         return background_data[c.WINDOW_FREQ]
@@ -301,8 +307,8 @@ class TargetsWindow(object):
 
     def start(self, standby=False):
         while True:
-            self.updateWindow()
-            message = self.connection.receiveMessageInstant()
+            self.updateWindow(standby)
+            message = self.connection.receiveMessagePoll(0.001)
             if message is not None:
                 if isinstance(message, bool):
                     standby = message
@@ -320,5 +326,3 @@ class TargetsWindow(object):
                         elif message == target.id and isinstance(message, int):
                             self.setCurrentTarget(target)
                             break
-            for i in range(len(self.targets)):
-                self.generators[i].send(standby)

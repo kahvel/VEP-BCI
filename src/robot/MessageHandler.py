@@ -2,6 +2,8 @@ import constants as c
 from gui_elements.windows import VideoStream
 from robot import JumpingSumo, Pitank
 
+import time
+
 
 class MessageHandler(object):
     def __init__(self, connection):
@@ -12,6 +14,7 @@ class MessageHandler(object):
         self.stream_enabled = None
         self.psychopy_disabled = None
         self.target_to_command_dictionary = None
+        self.update_time = None
         self.connection.waitMessages(self.start, self.exit, self.update, self.setup, self.handleMessage, poll=0.1)
 
     def handleMessage(self, message):
@@ -19,8 +22,9 @@ class MessageHandler(object):
             self.robot.handleMessage(message)
 
     def update(self):
-        self.updateVideo()
-        self.updateWindow()
+        if self.update_time is None or time.time() - self.update_time > 0.01:
+            self.updateVideo()
+            self.updateWindow()
 
     def exit(self):
         self.exitWindow()
@@ -75,10 +79,10 @@ class MessageHandler(object):
             return None
 
     def start(self):
-        self.bytes = ""
+        # self.bytes = ""
         while True:
             self.update()
-            message = self.connection.receiveMessageInstant()
+            message = self.connection.receiveMessagePoll(0.001)
             if message is not None:
                 if isinstance(message, int):
                     self.handleMessage(self.target_to_command_dictionary[message])
@@ -96,7 +100,7 @@ class MessageHandler(object):
                 self.bytes += new_bytes
                 start = self.bytes.find('\xff\xd8')
                 end = self.bytes.find('\xff\xd9')
-                print len(self.bytes), start, end
+                # print len(self.bytes), start, end
                 if start == -1 and end != -1:
                     self.bytes = self.bytes[end+2:]
                     return
