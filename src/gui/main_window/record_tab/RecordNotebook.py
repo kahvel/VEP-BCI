@@ -2,6 +2,8 @@ from gui_elements.widgets.frames.notebooks import EventNotebook
 import RecordNotebookTab
 import constants as c
 
+import os
+
 
 class RecordNotebook(EventNotebook.EventNotebook):
     def __init__(self, parent, row, column, **kwargs):
@@ -53,7 +55,21 @@ class RecordNotebook(EventNotebook.EventNotebook):
             self.loadDefaultValue()
         return c.STOP_EVENT_SENDING
 
-    def loadEegEvent(self, directory):
+    def fillTabAndAddNew(self, directory):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.loadEegEvent(directory))
         self.addNewTabToFill()
+
+    def loadEegEvent(self, directory):
+        try:
+            self.fillTabAndAddNew(directory)
+        except IOError:
+            i = 1
+            while True:
+                name = "rec" + str(i)
+                path = os.path.join(directory, name)
+                if os.path.exists(path):
+                    self.fillTabAndAddNew(path)
+                else:
+                    break
+                i += 1
         return c.STOP_EVENT_SENDING
