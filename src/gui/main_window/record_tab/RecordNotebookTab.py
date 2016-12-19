@@ -1,5 +1,7 @@
 import os
 
+import matplotlib.pyplot as plt
+
 from gui_elements.widgets import Buttons, Textboxes
 from gui_elements.widgets.frames import Frame
 from gui_elements.widgets.frames.tabs import DisableDeleteNotebookTab
@@ -49,16 +51,36 @@ class SaveButton(Buttons.EventNotebookSaveButton):
         return lambda x: x.saveEegEvent(file)
 
 
+class PlotButton(Buttons.Button):
+    """
+    Class just to avoid loading value for this button.
+    """
+    def __init__(self, parent, row, column, **kwargs):
+        Buttons.Button.__init__(self, parent, c.PLOT_BUTTON_NAME, row, column, **kwargs)
+
+    def loadBciSettingsEvent(self, file):
+        pass
+
+
 class EegFrame(Frame.Frame):
     def __init__(self, parent, row, column, **kwargs):
         Frame.Frame.__init__(self, parent, c.EEG_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Textboxes.DisabledTextLabelTextbox(self, c.PACKET_COUNT, 0, 0),
             Textboxes.DisabledTextLabelTextbox(self, c.SAMPLE_COUNT, 0, 2),
+            PlotButton(self, 0, 4, command=self.plotEeg)
         ))
         self.eeg = Recording.Eeg()
         self.features = Recording.Features()
         self.has_features = False
+
+    def plotEeg(self, sensors=("O1", "O2", "P7", "P8")):
+        x = list(range(0, len(self.eeg.data)))
+        plt.figure()
+        for i, sensor in enumerate(sensors):
+            plt.subplot(len(sensors), 1, i+1)
+            plt.plot(x, map(lambda x: x[sensor], self.eeg.data))
+        plt.show()
 
     def getValue(self):
         frame_value = Frame.Frame.getValue(self)

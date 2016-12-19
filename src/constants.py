@@ -478,6 +478,8 @@ EEG_FRAME = "EegFrame"
 PACKET_COUNT = "Packets"
 SAMPLE_COUNT = "Samples"
 
+PLOT_BUTTON_NAME = "Plot"
+
 RECORDING_TAB_EEG = "EEG"
 RECORDING_TAB_FEATURES = "Features"
 RECORDING_TAB_RECORDING_DATA = "RecordingTabRecordingData"
