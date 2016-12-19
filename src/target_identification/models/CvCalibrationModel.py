@@ -43,7 +43,8 @@ class TrainingModel(Model):
         self.transition_collector = None
 
     def setup(self, features_to_use, sample_count):
-        self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=3), cv=5)
+        self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=2, n_estimators=50), cv=5)
+        # self.model = CalibratedClassifierCV(LinearDiscriminantAnalysis(), cv=5)
         self.transition_collector = DataCollectors.TrainingCollector(sample_count)
 
     def collectTransitions(self, features, labels):

@@ -3,6 +3,8 @@ import AbstractRobot
 
 import socket
 import urllib
+import threading
+import time
 
 
 class Pitank(AbstractRobot.AbstractRobot):
@@ -15,9 +17,18 @@ class Pitank(AbstractRobot.AbstractRobot):
         else:
             return None
 
+    def stopTimer(self):
+        time.sleep(1)
+        self.sendRobotMessage(c.MOVE_STOP)
+
+    def sendTimedCommand(self, message):
+        if message != c.MOVE_STOP:
+            threading.Thread(target=self.stopTimer).start()
+            self.sendRobotMessage(message)
+
     def handleMessage(self, message):
         if message in c.ROBOT_MESSAGES:
-            self.sendRobotMessage(message)
+            self.sendTimedCommand(message)
         else:
             print("Unknown message in Robot: " + str(message))
 

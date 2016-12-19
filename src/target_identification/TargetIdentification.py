@@ -1,5 +1,5 @@
 from parsers import FeaturesParser
-from target_identification.models import LdaModel, SvmModel, QdaModel, TransitionModel
+from target_identification.models import LdaModel, SvmModel, QdaModel, TransitionModel, CvCalibrationModel
 import constants as c
 
 
@@ -111,8 +111,10 @@ class TargetIdentification(object):
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
         self.model.setup(minimum, maximum, features_to_use, sample_count, model)
-        self.second_model = TransitionModel.OnlineModel(False)
-        self.second_model.setup(features_to_use, 1, second_model)
+        # self.second_model = TransitionModel.OnlineModel(False)
+        # self.second_model.setup(features_to_use, 1, second_model)
+        self.second_model = CvCalibrationModel.OnlineModel()
+        self.second_model.setup(features_to_use, sample_count, second_model)
 
     def resetPrevResults(self, freqs):
         self.prev_results.reset(freqs)
@@ -140,6 +142,29 @@ class TargetIdentification(object):
             difference_comparisons = self.difference_finder.comparison
             predicted_frequency = self.filterResults(freq_weights, difference_comparisons, filter_by_comparison)
             return predicted_frequency
+
+    def handleFreqMessagesCv(self, features, target_freqs, filter_by_comparison=True):
+        if features is not None:
+            ratios = self.model.buildRatioMatrix(features)
+            combined_ratios = self.model.collectSamples(ratios[0])
+            if combined_ratios is not None:
+                predicted = self.second_model.thresholdPredict([combined_ratios], self.thresholds, 0)[0]
+                predicted = eval(predicted)
+                if predicted is not None and predicted != "None":
+                    predicted -= 1
+                    predicted_target = self.second_model.getOrderedLabels()[predicted]
+                    predicted_frequency = target_freqs[predicted_target]
+                    freq_weights = {predicted_frequency: self.prev_result_weight_threshold}
+                    predicted_frequency = self.filterResults(freq_weights, [True], False)
+                    # print predicted_frequency, current_frequency, self.model.decisionFunction(combined_ratios)
+                    if predicted_frequency is not None:
+                        self.model.resetCollectedSamples()  # TODO to clear the array or not to clear?
+                        self.second_model.resetCollectedSamples()
+                    return predicted_frequency
+                # else:  # This else branch instead of always_delete options
+                #     freq_weights = {freq: 0 for freq in target_freqs.values()}
+                #     self.filterResults(freq_weights, [True], False)
+                #     return None
 
     def handleFreqMessagesNew(self, features, target_freqs, filter_by_comparison=True):
         if features is not None:
@@ -186,7 +211,7 @@ class TargetIdentification(object):
 
     def handleFreqMessages(self, features, old_features, target_freqs, filter_by_comparison=True):
         if self.classification_type_options == c.CLASSIFICATION_TYPE_NEW:
-            return self.handleFreqMessagesNew(features, target_freqs, filter_by_comparison)
+            return self.handleFreqMessagesCv(features, target_freqs, filter_by_comparison)
         elif self.classification_type_options == c.CLASSIFICATION_TYPE_OLD:
             return self.handleFreqMessagesOld(old_features, target_freqs, filter_by_comparison)
         elif self.classification_type_options == c.CLASSIFICATION_TYPE_NONE:

@@ -161,7 +161,7 @@ class ModelTrainer(object):
         print self.transition_model.getOrderedLabels()
         print sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=self.cv_model.getOrderedLabels())
         print sklearn.metrics.confusion_matrix(validation_labels, self.cv_model.predict(validation_data), labels=self.cv_model.getOrderedLabels())
-        for i in range(11):
+        for i in range(21):
             print i
             print self.getThresholdConfusionMatrix(self.transition_model.thresholdPredict(reduced_data, thresholds, i/10.0), reduced_labels, self.transition_model.getOrderedLabels())
             print self.getThresholdConfusionMatrix(self.transition_model.thresholdPredict(reduced_validation_data, thresholds, i/10.0), reduced_validation_labels, self.transition_model.getOrderedLabels())
@@ -170,21 +170,21 @@ class ModelTrainer(object):
 
         # self.plotAllChanges(self.model.decisionFunction(training_data), training_labels)
         # self.plotAllChanges(self.model.decisionFunction(validation_data), validation_labels)
-        # self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
-        # self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
+        self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
+        self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
 
         self.training_data = training_data
         self.training_labels = training_labels
         self.validation_data = validation_data
         self.validation_labels = validation_labels
-        self.thresholds = thresholds
+        self.thresholds = thresholds2
         self.min_max = self.model.getMinMax()
         self.lda_model = self.model.model
         self.training_roc = roc
         self.validation_roc = roc2
 
     def getSecondModel(self):
-        return self.transition_model.model
+        return self.cv_model.model
 
     def getModel(self):
         return self.lda_model
