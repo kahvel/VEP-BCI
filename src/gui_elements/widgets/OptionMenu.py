@@ -136,14 +136,14 @@ class RecordingChoosingMenu(EventOptionMenu):
     def __init__(self, parent, name, row, column, values, **kwargs):
         EventOptionMenu.__init__(self, parent, name, row, column, values, **kwargs)
 
-    def addNewRecordingTabEvent(self):
+    def addNewRecordingOptionEvent(self):
         self.eventAdded()
 
     def recordTabRemovedEvent(self, deleted_tab):
         self.eventRemoved(deleted_tab)
 
-    def loadEegEvent(self, directory):
-        self.eventAdded()
+    # def loadEegEvent(self, directory):
+    #     self.eventAdded()
 
 
 class TargetChoosingMenu(EventOptionMenu):

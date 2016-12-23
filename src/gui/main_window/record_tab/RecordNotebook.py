@@ -59,6 +59,7 @@ class RecordNotebook(EventNotebook.EventNotebook):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.loadEegEvent(directory))
         self.addNewTabToFill()
         self.sendEventToRoot(lambda x: x.newRecordingCheckbuttonEvent())
+        self.sendEventToRoot(lambda x: x.newRecordingOptionEvent())
 
     def loadEegEvent(self, directory):
         try:

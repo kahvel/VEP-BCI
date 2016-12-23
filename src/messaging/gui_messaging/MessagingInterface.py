@@ -42,6 +42,8 @@ class Recording(object):
 
     def addNewRecordingCheckbuttonEvent(self): pass
 
+    def addNewRecordingOptionEvent(self): pass
+
     def getRecordingNotebookWidgetsEvent(self): pass
 
     def sendRecordingNotebookWidgetsEvent(self, recording_notebook_widgets): pass
@@ -149,6 +151,8 @@ class TrainingEndedHandler(object):
     def trainingEndedEvent(self): pass
 
     def newRecordingCheckbuttonEvent(self): pass
+
+    def newRecordingOptionEvent(self): pass
 
 
 class MessagingInterface(Bci, Recording, Robot, Targets, Classification, Models, TrialEndedHandler, TrainingEndedHandler):
