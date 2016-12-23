@@ -12,6 +12,7 @@ import constants as c
 class ModelTrainer(object):
     def __init__(self):
         self.recordings = []
+        self.eeg = []
         self.look_back_length = None
         self.cross_validation_folds = None
         self.training_recordings = []
@@ -32,6 +33,9 @@ class ModelTrainer(object):
 
     def setRecordings(self, recordings):
         self.recordings = recordings
+
+    def setEeg(self, eeg):
+        self.eeg = eeg
 
     def setup(self, options):
         features_to_use = options[c.MODELS_PARSE_FEATURES_TO_USE]

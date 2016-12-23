@@ -56,6 +56,7 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
         MessagingInterface.Models.__init__(self)
         AbstractMessageSenders.NonLeaf.__init__(self, widgets_list)
         self.features = []
+        self.eeg = []
         self.model_options = []
         self.model_tab_parser = ModelsParser.ModelsOptionsParser()
         self.connection = connection
@@ -63,20 +64,35 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
     def sendFeaturesToRootEvent(self, results):
         self.features.append(results)
 
+    def sendEegToRootEvent(self, results):
+        self.eeg.append(results)
+
     def sendModelOptionsToRootEvent(self, classification_options):
         self.model_options = self.model_tab_parser.parseData(classification_options)
 
     def resetFeatures(self):
         self.features = []
 
+    def resetEeg(self):
+        self.eeg = []
+
     def sendFeatureRecrding(self):
         self.connection.sendMessage(c.SEND_RECORDED_FEATURES_MESSAGE)
         self.connection.sendMessage(self.features)
+
+    def sendEegRecording(self):
+        self.connection.sendMessage(c.SEND_RECORDED_EEG_MESSAGE)
+        self.connection.sendMessage(self.eeg)
 
     def getFeatures(self):
         self.resetFeatures()
         self.sendEventToChildren(lambda x: x.getFeaturesEvent())
         return len(self.features) != 0
+
+    def getEeg(self):
+        self.resetEeg()
+        self.sendEventToChildren(lambda x: x.getEegEvent())
+        return len(self.eeg) != 0
 
     def sendClassificationOptions(self):
         self.sendEventToChildren(lambda x: x.getModelOptionsEvent())
@@ -90,8 +106,9 @@ class Models(MessagingInterface.Models, AbstractMessageSenders.NonLeaf):
         self.sendEventToChildren(lambda x: x.disableModelOptionsEvent())
 
     def trainButtonClickedEvent(self):
-        if self.getFeatures():
+        if self.getFeatures() and self.getEeg():
             self.sendDisableModelOptions()
+            self.sendEegRecording()
             self.sendFeatureRecrding()  # Has to be before sendClassificationOptions!
             self.sendClassificationOptions()
             self.sendStartTraining()

@@ -73,6 +73,7 @@ class EegFrame(Frame.Frame):
         self.eeg = Recording.Eeg()
         self.features = Recording.Features()
         self.has_features = False
+        self.has_eeg = False
 
     def plotEeg(self, sensors=("O1", "O2", "P7", "P8")):
         x = list(range(0, len(self.eeg.data)))
@@ -100,6 +101,7 @@ class EegFrame(Frame.Frame):
     def recordedEegReceivedEvent(self, eeg):
         self.eeg = eeg
         self.widgets_dict[c.PACKET_COUNT].setValue(eeg.getLength())
+        self.has_eeg = True
 
     def recordedFeaturesReceivedEvent(self, features):
         self.features = features
@@ -110,6 +112,7 @@ class EegFrame(Frame.Frame):
         self.eeg.load(directory)
         self.features.load(directory)
         self.has_features = True
+        self.has_eeg = True
 
     def saveEegEvent(self, directory):
         self.eeg.save(directory)
@@ -118,6 +121,10 @@ class EegFrame(Frame.Frame):
     def getFeaturesEvent(self):
         if self.has_features:  # Last tab has no features
             self.sendEventToRoot(lambda x: x.sendFeaturesToRootEvent(self.features))
+
+    def getEegEvent(self):
+        if self.has_eeg:
+            self.sendEventToRoot(lambda x: x.sendEegToRootEvent(self.eeg))
 
 
 class ResultsFrame(Frame.Frame):

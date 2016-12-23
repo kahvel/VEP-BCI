@@ -120,7 +120,11 @@ class Models(object):
 
     def sendFeaturesToRootEvent(self, results): pass
 
+    def sendEegToRootEvent(self, results): pass
+
     def getFeaturesEvent(self): pass
+
+    def getEegEvent(self): pass
 
     def sendModelOptionsToRootEvent(self, options): pass
 

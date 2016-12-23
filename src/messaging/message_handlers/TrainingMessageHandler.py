@@ -43,6 +43,8 @@ class TrainingSendDataHandler(AbstractMessageHandler.MessageHandler):
     def handle(self, message):
         if message == c.SEND_RECORDED_FEATURES_MESSAGE:
             self.trainer.setRecordings(self.main_connection.receiveMessageBlock())
+        if message == c.SEND_RECORDED_EEG_MESSAGE:
+            self.trainer.setEeg(self.main_connection.receiveMessageBlock())
         elif message == c.SEND_CLASSIFICATION_OPTIONS:
             self.trainer.setup(self.main_connection.receiveMessageBlock())
 
