@@ -163,6 +163,9 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
         MessagingInterface.TrainingEndedHandler.__init__(self)
         GetDataHandler.__init__(self, widgets_list, connection)
 
+    def newRecordingCheckbuttonEvent(self):
+        self.sendEventToChildren(lambda x: x.addNewRecordingCheckbuttonEvent())
+
     def trainingEndedEvent(self):
         self.evokeModelReceivedEvent()
         self.evokeSecondModelReceivedEvent()
