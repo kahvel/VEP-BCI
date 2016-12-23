@@ -80,6 +80,13 @@ class EegFrame(Frame.Frame):
         for i, sensor in enumerate(sensors):
             plt.subplot(len(sensors), 1, i+1)
             plt.plot(x, map(lambda x: x[sensor], self.eeg.data))
+        previous_target = None
+        for i, target in enumerate(self.eeg.expected_targets):
+            if previous_target != target:
+                for j, sensor in enumerate(sensors):
+                    plt.subplot(len(sensors), 1, j+1)
+                    plt.plot(i, self.eeg.data[i][sensor], "o", c="red")
+                previous_target = target
         plt.show()
 
     def getValue(self):
