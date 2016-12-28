@@ -53,12 +53,15 @@ class SaveButton(Buttons.EventNotebookSaveButton):
 
 class PlotButton(Buttons.Button):
     """
-    Class just to avoid loading value for this button.
+    Class just to avoid loading and saving value for this button.
     """
     def __init__(self, parent, row, column, **kwargs):
         Buttons.Button.__init__(self, parent, c.PLOT_BUTTON_NAME, row, column, **kwargs)
 
     def loadBciSettingsEvent(self, file):
+        pass
+
+    def saveBciSettingsEvent(self, file):
         pass
 
 

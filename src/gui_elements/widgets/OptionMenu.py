@@ -128,6 +128,9 @@ class ModelChoosingMenu(EventOptionMenu):
     def loadModelEvent(self, directory):
         self.eventAdded()
 
+    def loadBciSettingsEvent(self, file):
+        file.readline()
+
     def getChosenModelNumber(self):  # Currently not used
         self.sendEventToRoot(lambda x: x.sendChosenModelNumber(self.getValue()))
 
@@ -141,6 +144,9 @@ class RecordingChoosingMenu(EventOptionMenu):
 
     def recordTabRemovedEvent(self, deleted_tab):
         self.eventRemoved(deleted_tab)
+
+    def loadBciSettingsEvent(self, file):
+        file.readline()
 
     # def loadEegEvent(self, directory):
     #     self.eventAdded()

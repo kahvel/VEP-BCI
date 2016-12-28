@@ -115,26 +115,26 @@ class Flattener(object):
     def getFeaturesByFrequencies(self, getKey, frequency_results):
         return {getKey(frequency): frequency_results[frequency] for frequency in frequency_results}
 
-    def combineKeys(self, tab, method, sensors, harmonic, frequency):
-        return str(tab) + "_" + str(method) + "_" + str(sensors) + "_" + str(harmonic) + "_" + str(frequency)
+    def combineKeys(self, tab, method, sensors, harmonic, frequency, sensor):
+        return str(tab) + "_" + str(sensor) + "_" + str(method) + "_" + str(sensors) + "_" + str(harmonic) + "_" + str(frequency)
 
-    def combineKeysLambda(self, tab, method, sensors, harmonic):
-        return lambda frequency: self.combineKeys(tab, method, sensors, harmonic, frequency)
+    def combineKeysLambda(self, tab, method, sensors, harmonic, sensor):
+        return lambda frequency: self.combineKeys(tab, method, sensors, harmonic, frequency, sensor)
 
-    def parseFrequencyResults(self, tab, method, sensors, harmonic, frequency_results):
-        getKey = self.combineKeysLambda(tab, method, sensors, harmonic)
+    def parseFrequencyResults(self, tab, method, sensors, harmonic, frequency_results, sensor):
+        getKey = self.combineKeysLambda(tab, method, sensors, harmonic, sensor)
         return self.getFeaturesByFrequencies(getKey, dict(frequency_results))
 
-    def parseHarmonicResults(self, tab, method, sensors, harmonic_results):
+    def parseHarmonicResults(self, tab, method, sensors, harmonic_results, sensor):
         flattened = {}
         for harmonic in harmonic_results:
-            flattened.update(self.parseFrequencyResults(tab, method, sensors, harmonic, harmonic_results[harmonic]))
+            flattened.update(self.parseFrequencyResults(tab, method, sensors, harmonic, harmonic_results[harmonic], sensor))
         return flattened
 
     def parseSensorResults(self, tab, method, sensors, sensor_results):
         flattened = {}
         for sensor in sensor_results:
-            flattened.update(self.parseHarmonicResults(tab, method, sensors, sensor_results[sensor]))
+            flattened.update(self.parseHarmonicResults(tab, method, sensors, sensor_results[sensor], sensor))
         return flattened
 
     def parseFeatures(self, features):
@@ -142,9 +142,9 @@ class Flattener(object):
         for tab in sorted(features):
             for method, sensors in features[tab]:
                 if method == c.CCA or method == c.LRT:
-                    parse_result.update(self.parseFrequencyResults(tab, method, sensors, c.RESULT_SUM, features[tab][method, sensors]))
+                    parse_result.update(self.parseFrequencyResults(tab, method, sensors, c.RESULT_SUM, features[tab][method, sensors], str(sensors)))
                 elif method == c.SUM_PSDA or method == c.SNR_PSDA:
-                    parse_result.update(self.parseHarmonicResults(tab, method, sensors, features[tab][method, sensors]))
+                    parse_result.update(self.parseHarmonicResults(tab, method, sensors, features[tab][method, sensors], str(sensors)))
                 elif method == c.PSDA:
                     parse_result.update(self.parseSensorResults(tab, method, sensors, features[tab][method, sensors]))
         return parse_result
