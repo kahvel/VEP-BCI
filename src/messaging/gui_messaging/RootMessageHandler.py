@@ -131,11 +131,19 @@ class TrialEndedHandler(MessagingInterface.TrialEndedHandler, GetDataHandler):
         MessagingInterface.TrialEndedHandler.__init__(self)
         GetDataHandler.__init__(self, widgets_list, connection)
 
+    def newRecordingCheckbuttonEvent(self):
+        self.sendEventToChildren(lambda x: x.addNewRecordingCheckbuttonEvent())
+
+    def newRecordingOptionEvent(self):
+        self.sendEventToChildren(lambda x: x.addNewRecordingOptionEvent())
+
     def trialEndedEvent(self):
         self.evokeResultsReceivedEvent()
         self.evokeRecordedEegReceivedEvent()
         self.evokeRecordedFeaturesReceivedEvent()
         self.evokeRecordedFrequenciesReceivedEvent()
+        self.newRecordingCheckbuttonEvent()
+        self.newRecordingOptionEvent()
         self.evokeAddNewRecordingTabEvent()  # Has to be last
 
     def evokeResultsReceivedEvent(self):
@@ -162,12 +170,6 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
     def __init__(self, widgets_list, connection):
         MessagingInterface.TrainingEndedHandler.__init__(self)
         GetDataHandler.__init__(self, widgets_list, connection)
-
-    def newRecordingCheckbuttonEvent(self):
-        self.sendEventToChildren(lambda x: x.addNewRecordingCheckbuttonEvent())
-
-    def newRecordingOptionEvent(self):
-        self.sendEventToChildren(lambda x: x.addNewRecordingOptionEvent())
 
     def trainingEndedEvent(self):
         self.evokeModelReceivedEvent()

@@ -144,15 +144,15 @@ class TrialEndedHandler(object):
 
     def trialEndedEvent(self): pass
 
+    def newRecordingCheckbuttonEvent(self): pass
+
+    def newRecordingOptionEvent(self): pass
+
 
 class TrainingEndedHandler(object):
     def __init__(self): pass
 
     def trainingEndedEvent(self): pass
-
-    def newRecordingCheckbuttonEvent(self): pass
-
-    def newRecordingOptionEvent(self): pass
 
 
 class MessagingInterface(Bci, Recording, Robot, Targets, Classification, Models, TrialEndedHandler, TrainingEndedHandler):
