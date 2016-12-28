@@ -97,7 +97,7 @@ class OptionsFrame(Frame.Frame):
     def usedFeaturesReceivedEvent(self, used_features):
         self.widgets_dict[c.MODELS_TAB_FEATURES_TO_USE].setValue('"'+'","'.join(used_features)+'"')
 
-    def addNewRecordingTabEvent(self):
+    def addNewRecordingCheckbuttonEvent(self):
         if self.disabled:
             return c.STOP_EVENT_SENDING
 
@@ -105,9 +105,9 @@ class OptionsFrame(Frame.Frame):
         if self.disabled:
             return c.STOP_EVENT_SENDING
 
-    def loadEegEvent(self, directory):
-        if self.disabled:
-            return c.STOP_EVENT_SENDING
+    # def loadEegEvent(self, directory):
+    #     if self.disabled:
+    #         return c.STOP_EVENT_SENDING
 
 
 class SaveButton(Buttons.EventNotebookSaveButton):
@@ -197,7 +197,11 @@ class ModelFrame(Frame.Frame):
         return y_pred
 
     def plotLda(self, data, labels):
-        if len(self.model.classes_) == 3:
+        if self.model is None:
+            print "LDA model is not trained!"
+        elif len(self.model.classes_) != 3:
+            print "Model has", len(self.model.classes_), "classes. Cannot plot in 2D."
+        else:
             x = self.model.transform(data)
 
             plt.figure()
@@ -239,8 +243,6 @@ class ModelFrame(Frame.Frame):
             # import time
             # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
             plt.show()
-        else:
-            print "Model has", len(self.model.classes_), "classes. Cannot plot."
 
     def showTrainingDataProjection(self):
         self.checkDataAndPlotLda(self.training_data, self.training_labels)
