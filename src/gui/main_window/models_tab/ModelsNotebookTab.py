@@ -95,7 +95,8 @@ class OptionsFrame(Frame.Frame):
         self.sendEventToRoot(lambda x: x.sendModelOptionsToRootEvent(self.getValue()), True)
 
     def usedFeaturesReceivedEvent(self, used_features):
-        self.widgets_dict[c.MODELS_TAB_FEATURES_TO_USE].setValue('"'+'","'.join(used_features)+'"')
+        if not self.disabled:
+            self.widgets_dict[c.MODELS_TAB_FEATURES_TO_USE].setValue('"'+'","'.join(used_features)+'"')
 
     def addNewRecordingCheckbuttonEvent(self):
         if self.disabled:
@@ -277,31 +278,41 @@ class ModelFrame(Frame.Frame):
         pickle.dump(self.min_max, file_handle)
 
     def modelReceivedEvent(self, model):
-        self.model = model
+        if self.model is None:
+            self.model = model
 
     def secondModelReceivedEvent(self, model):
-        self.second_model = model
+        if self.second_model is None:
+            self.second_model = model
 
     def trainingDataReceivedEvent(self, training_data):
-        self.training_data = training_data
+        if self.training_data is None:
+            self.training_data = training_data
 
     def trainingLabelsReceivedEvent(self, training_labels):
-        self.training_labels = training_labels
+        if self.training_labels is None:
+            self.training_labels = training_labels
 
     def validationDataReceivedEvent(self, validation_data):
-        self.validation_data = validation_data
+        if self.validation_data is None:
+            self.validation_data = validation_data
 
     def validationLabelsReceivedEvent(self, validation_labels):
-        self.validation_labels = validation_labels
+        if self.validation_labels is None:
+            self.validation_labels = validation_labels
 
     def minMaxReceivedEvent(self, min_max):
-        self.min_max = min_max
+        if self.min_max is None:
+            self.min_max = min_max
 
     def thresholdsReceivedEvent(self, thresholds):
-        self.thresholds = thresholds
+        if self.thresholds is None:
+            self.thresholds = thresholds
 
     def trainingRocReceivedEvent(self, training_roc):
-        self.training_roc = training_roc
+        if self.training_roc is None:
+            self.training_roc = training_roc
 
     def validationRocReceivedEvent(self, validation_roc):
-        self.validation_roc = validation_roc
+        if self.validation_roc is None:
+            self.validation_roc = validation_roc
