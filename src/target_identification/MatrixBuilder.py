@@ -5,10 +5,12 @@ class MatrixBuilder(object):
     def __init__(self):
         self.scaling_functions = None
         self.extraction_method_names = None
+        self.calculate_ratios = None
 
-    def setup(self, scaling_functions, extraction_method_names):
+    def setup(self, scaling_functions, extraction_method_names, calculate_ratios):
         self.scaling_functions = scaling_functions
         self.extraction_method_names = extraction_method_names
+        self.calculate_ratios = calculate_ratios
 
     def buildRatioMatrix(self, columns):
         grouped_columns = self.getScaledColumnsGroupedByMethod(columns)
@@ -43,10 +45,16 @@ class MatrixBuilder(object):
     def getGroupRatioRows(self, group):
         rows = []
         for grouped_features in self.iterateGroupedColumns(group):
-            rows.append([grouped_features[j] for j in range(len(grouped_features))])
+            rows.append([self.calculateRatios(grouped_features, j) for j in range(len(grouped_features))])
             # print grouped_features
             # print [grouped_features[j]/sum(grouped_features) for j in range(len(grouped_features))]
         return rows
+
+    def calculateRatios(self, grouped_features, j):
+        if self.calculate_ratios:
+            return grouped_features[j]/sum(grouped_features)
+        else:
+            return grouped_features[j]
 
 
 class TrainingMatrixBuilder(MatrixBuilder):

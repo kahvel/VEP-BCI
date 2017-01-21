@@ -110,11 +110,11 @@ class TargetIdentification(object):
         features_to_use = model_options[c.MODELS_PARSE_FEATURES_TO_USE]
         sample_count = model_options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.model = LdaModel.OnlineLdaModel()
-        self.model.setup(minimum, maximum, features_to_use, sample_count, model)
+        self.model.setup(minimum, maximum, features_to_use, sample_count, model, True)
         # self.second_model = TransitionModel.OnlineModel(False)
         # self.second_model.setup(features_to_use, 1, second_model)
         self.second_model = CvCalibrationModel.OnlineModel()
-        self.second_model.setup(features_to_use, sample_count, second_model)
+        self.second_model.setup(minimum, maximum, features_to_use, sample_count, second_model, True)
 
     def resetPrevResults(self, freqs):
         self.prev_results.reset(freqs)
@@ -147,7 +147,7 @@ class TargetIdentification(object):
         if features is not None:
             ratios = self.model.buildRatioMatrix(features)
             combined_ratios = self.model.collectSamples(ratios[0])
-            if combined_ratios is not None:
+            if combined_ratios != []:
                 predicted = self.second_model.thresholdPredict([combined_ratios], self.thresholds, 0)[0]
                 predicted = eval(predicted)
                 if predicted is not None and predicted != "None":

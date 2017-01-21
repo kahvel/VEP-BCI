@@ -53,22 +53,22 @@ class TrainingModel(Model):
         self.collector = None
         self.features_handler = None
 
-    def setup(self, features_to_use, sample_count, recordings):
+    def setup(self, features_to_use, sample_count, recordings, calculate_ratios):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
         self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=2, n_estimators=50), cv=5)
         # self.model = CalibratedClassifierCV(LinearDiscriminantAnalysis(), cv=5)
         self.collector = DataCollectors.TrainingCollector(sample_count)
-        self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names)
+        self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names, calculate_ratios)
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
         self.scaling_functions = ScalingFunction.TrainingScalingFunctions()
         self.scaling_functions.setup(extraction_method_names, recordings)
 
-    def setupCollectorAndBuilder(self, sample_count, scaling_functions, extraction_method_names):
+    def setupCollectorAndBuilder(self, sample_count, scaling_functions, extraction_method_names, calculate_ratios):
         self.collector = DataCollectors.TrainingCollector(sample_count)
         self.matrix_builder = MatrixBuilder.TrainingMatrixBuilder()
-        self.matrix_builder.setup(scaling_functions, extraction_method_names)
+        self.matrix_builder.setup(scaling_functions, extraction_method_names, calculate_ratios)
 
     def setupFeaturesHandler(self, features_to_use, recordings):
         self.features_handler = FeaturesHandler.TrainingFeaturesHandler(recordings)
@@ -105,10 +105,27 @@ class OnlineModel(Model):
     def __init__(self):
         Model.__init__(self)
         self.collector = None
+        self.features_handler = None
 
-    def setup(self, features_to_use, sample_count, model):
+    def setupFeaturesHandler(self, features_to_use):
+        self.features_handler = FeaturesHandler.OnlineFeaturesHandler()
+        self.features_handler.setup(features_to_use)
+        return self.features_handler.getExtractionMethodNames()
+
+    def setup(self, minimum, maximum, features_to_use, sample_count, model, calculate_ratios):
+        self.extraction_method_names = self.setupFeaturesHandler(features_to_use)
+        self.setupScalingFunctions(minimum, maximum, self.extraction_method_names)
         self.model = model
+        self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names, calculate_ratios)
+
+    def setupScalingFunctions(self, minimum, maximum, extraction_method_names):
+        self.scaling_functions = ScalingFunction.OnlineScalingFunctions()
+        self.scaling_functions.setup(minimum, maximum, extraction_method_names)
+
+    def setupCollectorAndBuilder(self, sample_count, scaling_functions, extraction_method_names, calculate_ratios):
         self.collector = DataCollectors.OnlineCollector(sample_count)
+        self.matrix_builder = MatrixBuilder.OnlineMatrixBuilder()
+        self.matrix_builder.setup(scaling_functions, extraction_method_names, calculate_ratios)
 
     def collectSamples(self, features):
         return self.collector.handleSample(features)

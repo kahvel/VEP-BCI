@@ -45,11 +45,11 @@ class ModelTrainer(object):
         self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
         self.model = LdaModel.TrainingLdaModel()
-        self.model.setup(self.features_to_use, self.look_back_length, self.recordings)
+        self.model.setup(self.features_to_use, self.look_back_length, self.recordings, True)
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings)
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, True)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)

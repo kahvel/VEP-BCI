@@ -100,11 +100,11 @@ class DataAndExpectedTargets(Switchable.Switchable):
         self.writeCsv(self.getLabelsFilePath(directory), c.CSV_LABEL_FILE_HEADER, self.getLabelsForSaving())
 
     def loadData(self, directory):
-        with open(self.getDataFilePath(directory), "r") as csv_file:
+        with open(self.getDataFilePath(directory), "rU") as csv_file:
             self.data = self.defaultGetRows(csv.DictReader(csv_file))
 
     def loadLabels(self, directory):
-        with open(self.getLabelsFilePath(directory), "r") as csv_file:
+        with open(self.getLabelsFilePath(directory), "rU") as csv_file:
             columns = self.getColumnsAsIntegers(csv.DictReader(csv_file))
             self.expected_targets = columns[c.CSV_TRUE_LABEL]
             self.predicted_targets = columns[c.CSV_PREDICTED_LABEL]
