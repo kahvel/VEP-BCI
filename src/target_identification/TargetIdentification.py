@@ -114,7 +114,7 @@ class TargetIdentification(object):
         # self.second_model = TransitionModel.OnlineModel(False)
         # self.second_model.setup(features_to_use, 1, second_model)
         self.second_model = CvCalibrationModel.OnlineModel()
-        self.second_model.setup(minimum, maximum, features_to_use, sample_count, second_model, True)
+        self.second_model.setup(minimum, maximum, features_to_use, sample_count, second_model, [True])
 
     def resetPrevResults(self, freqs):
         self.prev_results.reset(freqs)

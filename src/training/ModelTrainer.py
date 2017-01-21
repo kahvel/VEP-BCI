@@ -49,7 +49,7 @@ class ModelTrainer(object):
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, True)
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True])
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
