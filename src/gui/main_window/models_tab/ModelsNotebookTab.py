@@ -95,8 +95,7 @@ class OptionsFrame(Frame.Frame):
         self.sendEventToRoot(lambda x: x.sendModelOptionsToRootEvent(self.getValue()), True)
 
     def usedFeaturesReceivedEvent(self, used_features):
-        if not self.disabled:
-            self.widgets_dict[c.MODELS_TAB_FEATURES_TO_USE].setValue('"'+'","'.join(used_features)+'"')
+        self.widgets_dict[c.MODELS_TAB_FEATURES_TO_USE].setValue('"'+'","'.join(used_features)+'"')
 
     def addNewRecordingCheckbuttonEvent(self):
         if self.disabled:

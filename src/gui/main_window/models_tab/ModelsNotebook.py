@@ -48,3 +48,4 @@ class ModelsNotebook(EventNotebook.EventNotebook):
 
     def usedFeaturesReceivedEvent(self, used_features):
         self.widgets_list[self.tab_to_fill].sendEventToChildren(lambda x: x.usedFeaturesReceivedEvent(used_features))
+        return c.STOP_EVENT_SENDING
