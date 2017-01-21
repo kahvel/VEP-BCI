@@ -30,6 +30,7 @@ class ModelTrainer(object):
         self.min_max = None
         self.random_forest_model = None
         self.cv_model = None
+        self.features_to_use = None
 
     def setRecordings(self, recordings):
         self.recordings = recordings
@@ -38,17 +39,17 @@ class ModelTrainer(object):
         self.eeg = eeg
 
     def setup(self, options):
-        features_to_use = options[c.MODELS_PARSE_FEATURES_TO_USE]
+        self.features_to_use = options[c.MODELS_PARSE_FEATURES_TO_USE]
         self.look_back_length = options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.cross_validation_folds = options[c.MODELS_PARSE_CV_FOLDS]
         self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
         self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
         self.model = LdaModel.TrainingLdaModel()
-        self.model.setup(features_to_use, self.look_back_length, self.recordings)
+        self.model.setup(self.features_to_use, self.look_back_length, self.recordings)
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(features_to_use, self.look_back_length, self.recordings)
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -125,12 +126,12 @@ class ModelTrainer(object):
         plt.plot(x, (labels == index+1)*decision.max() + (1-(labels == index+1))*decision.min(), "r--", color=color)
 
     def plotAllChanges(self, data, labels):
+        plt.figure()
         self.plotChange(data, labels, 0, "red")
         self.plotChange(data, labels, 1, "green")
         self.plotChange(data, labels, 2, "blue")
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
-        plt.show()
 
     def start(self):
         training_data, training_labels = self.cv_model.getConcatenatedMatrix(self.training_recordings)
@@ -172,10 +173,14 @@ class ModelTrainer(object):
             print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, thresholds2, i/10.0), map(str, training_labels), self.cv_model.getOrderedLabels())
             print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(validation_data, thresholds2, i/10.0), map(str, validation_labels), self.cv_model.getOrderedLabels())
 
-        # self.plotAllChanges(self.model.decisionFunction(training_data), training_labels)
-        # self.plotAllChanges(self.model.decisionFunction(validation_data), validation_labels)
-        self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
-        self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
+        # self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
+        # self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
+        # plt.show()
+        # dummy_model = CvCalibrationModel.TrainingModel()
+        # dummy_model.setup(self.features_to_use, 1, self.recordings)
+        # features, labels = dummy_model.getConcatenatedMatrix(self.validation_recordings)
+        # self.plotAllChanges(features, labels)
+        # plt.show()
 
         self.training_data = training_data
         self.training_labels = training_labels

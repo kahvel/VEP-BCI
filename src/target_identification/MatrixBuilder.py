@@ -22,8 +22,10 @@ class MatrixBuilder(object):
         grouped_columns = {method: [] for method in self.extraction_method_names}
         for method, column in columns:
             grouped_columns[method].append(self.scaleColumn(method, column))
+            # print method
             # print "Features", column
             # print "Scaled  ", self.scaleColumn(method, column)
+            # print self.scaling_functions.minima[method], self.scaling_functions.maxima[method]
         return grouped_columns
 
     def getRatioRowsGroupedByMethod(self, grouped_columns):
@@ -41,7 +43,7 @@ class MatrixBuilder(object):
     def getGroupRatioRows(self, group):
         rows = []
         for grouped_features in self.iterateGroupedColumns(group):
-            rows.append([grouped_features[j]/sum(grouped_features) for j in range(len(grouped_features))])
+            rows.append([grouped_features[j] for j in range(len(grouped_features))])
             # print grouped_features
             # print [grouped_features[j]/sum(grouped_features) for j in range(len(grouped_features))]
         return rows

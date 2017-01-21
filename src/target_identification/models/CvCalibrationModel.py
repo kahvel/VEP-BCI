@@ -77,6 +77,7 @@ class TrainingModel(Model):
         return self.features_handler.getExtractionMethodNames()
 
     def collectSamples(self, features, labels):
+        self.collector.reset()
         return self.collector.combineSamples(features, labels)
 
     def getAllLookBackRatioMatrices(self, recordings):

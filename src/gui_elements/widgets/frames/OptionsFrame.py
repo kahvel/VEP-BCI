@@ -53,7 +53,7 @@ class OptionsFrame(Frame.Frame):
             Textboxes.LabelTextbox (self, c.OPTIONS_TAPS,        4, 4, command=int,   allow_zero=True, default_disability=True, default_disablers=[c.OPTIONS_FILTER])
         ))
 
-    def enableFilter(self):
+    def enableFilter(self, dummy_arg_for_option_menu):
         self.enableFrom()
         self.enableTo()
         self.enableTaps()
