@@ -118,18 +118,20 @@ class ModelTrainer(object):
         binary_labels = self.getBinaryLabels(labels, label_order)
         return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
 
-    def plotChange(self, data, labels, index, color):
+    def plotChange(self, data, labels, index, color, plot_count, target_count):
         x = np.arange(0, len(data))
-        plt.subplot(3,1,index+1)
+        plt.subplot(plot_count, 1, index+1)
         decision = data.T[index]
         plt.plot(x, decision, color=color)
-        plt.plot(x, (labels == index+1)*decision.max() + (1-(labels == index+1))*decision.min(), "r--", color=color)
+        plt.plot(x, (labels == index % target_count + 1)*decision.max() + (1-(labels == index % target_count + 1))*decision.min(), "r--", color=color)
 
     def plotAllChanges(self, data, labels):
         plt.figure()
-        self.plotChange(data, labels, 0, "red")
-        self.plotChange(data, labels, 1, "green")
-        self.plotChange(data, labels, 2, "blue")
+        colors = ["red", "green", "blue"]
+        plot_count = data.shape[1]
+        target_count = len(colors)
+        for i in range(plot_count):
+            self.plotChange(data, labels, i, colors[i%target_count], plot_count, target_count)
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
 
@@ -177,7 +179,7 @@ class ModelTrainer(object):
         # self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
         # plt.show()
         # dummy_model = CvCalibrationModel.TrainingModel()
-        # dummy_model.setup(self.features_to_use, 1, self.recordings)
+        # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])
         # features, labels = dummy_model.getConcatenatedMatrix(self.validation_recordings)
         # self.plotAllChanges(features, labels)
         # plt.show()
