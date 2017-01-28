@@ -58,7 +58,7 @@ class OptionsFrame(Frame.Frame):
         self.enableTo()
         self.enableTaps()
 
-    def enableBreak(self):
+    def enableBreak(self, dummy_arg_for_option_menu):
         self.conditionalEnabling(
             self.widgets_dict[c.OPTIONS_DETREND],
             (c.CONSTANT_DETREND, c.LINEAR_DETREND),

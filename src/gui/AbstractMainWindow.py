@@ -43,11 +43,12 @@ class AbstractMainWindow(MyWindows.TkWindow, Savable.Savable, Savable.Loadable):
         return open(os.path.join(os.path.dirname(os.path.abspath(__main__.__file__)), self.default_settings_file_name))
 
     def loadValuesAtStartup(self):
+        self.main_frame.loadDefaultValue()
         try:
             file = self.getDefaultSettingsFile()
             self.sendEventToAll(lambda x: x.loadBciSettingsEvent(file))
         except IOError:
-            self.main_frame.loadDefaultValue()
+            print "No settings file. Loading default settings."
 
     def exit(self):
         self.exitFlag = True
