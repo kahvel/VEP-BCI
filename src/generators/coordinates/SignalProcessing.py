@@ -4,6 +4,11 @@ import numpy as np
 import constants as c
 from generators import AbstractGenerator
 
+try:
+    from rpy2.robjects.packages import importr
+except ImportError:
+    print "rpy2 library not found. Breakpoint detrend cannot be used."
+
 
 class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
     def __init__(self):
@@ -14,6 +19,8 @@ class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
         self.filter_coefficients = None
         self.breakpoints = None
         self.filter_prev_state = None
+        self.base_r_library = None
+        self.changepoint_r_library = None
 
     def setup(self, options):
         AbstractGenerator.AbstractMyGenerator.setup(self, options)
@@ -21,6 +28,8 @@ class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
         self.filter_coefficients = self.getFilter(self.options)
         self.breakpoints = self.getBreakpoints(self.options)
         self.filter_prev_state = self.getFilterPrevState([0])
+        self.changepoint_r_library = importr("changepoint")
+        self.base_r_library = importr("base")
 
     def getFilter(self, options):
         if options[c.OPTIONS_FILTER] == c.NONE_FILTER:
@@ -68,6 +77,10 @@ class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
             return scipy.signal.detrend(signal, type="constant", bp=self.getShortBreakpoints(signal))
         elif self.options[c.OPTIONS_DETREND] == c.NONE_DETREND:
             return signal
+        elif self.options[c.OPTIONS_DETREND] == c.BREAKPOINT_DETREND:
+            cpts = self.changepoint_r_library.cpt_meanvar(self.base_r_library.unlist(list(signal)), method="PELT")
+            break_points = self.changepoint_r_library.cpts(cpts)
+            return scipy.signal.detrend(signal, type="linear", bp=break_points)
         else:
             raise ValueError("Illegal detrend value in detrendSignal: " + self.options[c.OPTIONS_DETREND])
 
