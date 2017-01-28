@@ -21,6 +21,16 @@ class SignalLength(Logic):
         self.max_signal_length = self.getMaxSignalLength(options)
 
 
+class Sensors(Logic):
+    def __init__(self):
+        self.sensors = None
+        self.sensor_count = None
+
+    def setup(self, options):
+        self.sensors = options[c.DATA_SENSORS]
+        self.sensor_count = len(self.sensors)
+
+
 class FftBins(SignalLength):
     def __init__(self):
         SignalLength.__init__(self)
@@ -113,6 +123,7 @@ class ReferenceSignals(Harmonics, TargetFrequencies, SignalLength):
         TargetFrequencies.__init__(self)
         SignalLength.__init__(self)
         self.reference_signals = None
+        self.reference_signal_count = None
 
     def setup(self, options):
         Harmonics.setup(self, options)
@@ -123,6 +134,7 @@ class ReferenceSignals(Harmonics, TargetFrequencies, SignalLength):
             self.frequencies,
             self.getHarmonicsForReferenceSignals()
         )
+        self.reference_signal_count = len(self.harmonics)
 
     def getHarmonicsForReferenceSignals(self):
         return [self.harmonics]*self.frequency_count

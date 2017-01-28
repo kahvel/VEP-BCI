@@ -116,6 +116,16 @@ class EegFrame(Frame.Frame):
         self.features.load(directory)
         self.has_features = True
         self.has_eeg = True
+        # import matplotlib.pyplot as plt  # For plotting certain EEG segments
+        # import numpy as np
+        # window = 256
+        # index = 201
+        # time = np.arange(0, window, 1)
+        # plt.subplot(2, 1, 1)
+        # plt.plot(time, self.eeg.getColumnsAsIntegers(self.eeg.data)["O1"][(index-1)*32:(index-1)*32+window])
+        # plt.subplot(2, 1, 2)
+        # plt.plot(time, self.eeg.getColumnsAsIntegers(self.eeg.data)["O2"][(index-1)*32:(index-1)*32+window])
+        # plt.show()
 
     def saveEegEvent(self, directory):
         self.eeg.save(directory)

@@ -62,13 +62,43 @@ class CcaRanker(CorrelationRanker):
     def __init__(self):
         CorrelationRanker.__init__(self)
         self.model = None
+        self.sensors_handler = Logic.Sensors()
+        self.number_of_components = None
+
+    def calculateNumberOfComponents(self):
+        return min(self.sensors_handler.sensor_count, self.reference_signal_handler.reference_signal_count)
 
     def setup(self, options):
         CorrelationRanker.setup(self, options)
-        self.model = sklearn.cross_decomposition.CCA(n_components=1)
+        self.sensors_handler.setup(options)
+        self.number_of_components = 1  # self.calculateNumberOfComponents()
+        self.model = sklearn.cross_decomposition.CCA(n_components=self.number_of_components)
 
     def getCorr(self, signal, reference):
         self.model.fit(signal, reference)
         res_x, res_y = self.model.transform(signal, reference)
         corr = np.corrcoef(res_x.T, res_y.T)[0][1]
         return corr
+
+    # def getResults(self, coordinates):  # needs change in FeaturesParser
+    #     x_weight_result = {"X"+name: {} for name in self.sensors_handler.sensors}
+    #     y_weight_result = {"Y"+str(name): {} for name in self.reference_signal_handler.harmonics}
+    #     correlation_result = {"C"+str(name): {} for name in range(self.number_of_components)}
+    #     for freq, reference in self.reference_signal_handler.iteraterateSignals(len(coordinates[0])):
+    #         self.model.fit(np.transpose(coordinates), np.transpose(reference))
+    #         for name, weight in zip(x_weight_result, self.model.x_weights_):
+    #             x_weight_result[name][freq] = weight[0]
+    #         for name, weight in zip(y_weight_result, self.model.y_weights_):
+    #             y_weight_result[name][freq] = weight[0]
+    #         res_x, res_y = self.model.transform(np.transpose(coordinates), np.transpose(reference))
+    #         correlation = np.corrcoef(res_x.T, res_y.T)
+    #         for i, name in enumerate(correlation_result):
+    #             correlation_result[name][freq] = correlation[i][(i+1)*2-1]  # TODO is this correct?
+    #     x_weight_result = {name: self.getRanking(results.items()) for name, results in x_weight_result.items()}
+    #     y_weight_result = {name: self.getRanking(results.items()) for name, results in y_weight_result.items()}
+    #     correlation_result = {name: self.getRanking(results.items()) for name, results in correlation_result.items()}
+    #     result = {}
+    #     result.update(x_weight_result)
+    #     result.update(y_weight_result)
+    #     result.update(correlation_result)
+    #     return result
