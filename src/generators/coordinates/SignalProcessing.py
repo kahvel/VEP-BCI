@@ -56,6 +56,8 @@ class SignalProcessing(AbstractGenerator.AbstractMyGenerator):
             return breakpoints_list
         elif options[c.OPTIONS_DETREND] == c.NONE_DETREND:
             return 0
+        elif options[c.OPTIONS_DETREND] == c.BREAKPOINT_DETREND:
+            pass
         else:
             raise ValueError("Illegal detrend value in getBreakpoints: " + options[c.OPTIONS_DETREND])
 
