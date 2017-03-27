@@ -18,6 +18,12 @@ The BCI was further improved as a part of Algorithmics course in University of T
 
 For an overview of the project see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster_algorithmics.pdf).
 
+## Combining feature extraction methods
+
+The original classification method of the BCI was replaced as a part of Research Seminar in Data Mining course in University of Tartu. Many parameters that previously required optimisation were removed and the classification method was replaced with machine learning. The report of the project can be found [here](https://github.com/kahvel/VEP-BCI/blob/improved_master/docs/images/report_dm_seminar.pdf).
+
+For an overview of the project see this [poster](https://github.com/kahvel/VEP-BCI/blob/improved_master/docs/images/poster_dm_seminar.pdf).
+
 ## Getting started
 
 The application is written in Python 2.7 and can be started by running Main.py in src folder. Currently there is no executable file and to use the application the source code has to be downloaded. For required libraries see [Required additional libraries](https://github.com/kahvel/VEP-BCI#required-additional-libraries). To actually use the application, brain activity has to be [recorded](https://github.com/kahvel/VEP-BCI#recording-brain-activity). The application is designed to control [PiTank](https://github.com/kahvel/VEP-BCI#the-robot).
