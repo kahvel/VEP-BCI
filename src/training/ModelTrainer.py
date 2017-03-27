@@ -69,8 +69,27 @@ class ModelTrainer(object):
             roc_auc[i] = sklearn.metrics.auc(fpr[i], tpr[i])
         return fpr, tpr, thresholds, roc_auc
 
+    def calculateBinaryPrecisionRecallCurve(self, predictions, binary_labels, labels_order):
+        predictions = np.transpose(predictions)
+        precision = dict()
+        recall = dict()
+        thresholds = dict()
+        average_precision = dict()
+        for i in range(len(labels_order)):
+            precision[i], recall[i], thresholds[i] = sklearn.metrics.precision_recall_curve(binary_labels[i], predictions[i])
+            average_precision[i] = sklearn.metrics.average_precision_score(binary_labels[i], predictions[i])
+        return recall, precision, thresholds, average_precision
+
+    def addMicroPrecisionRecallCurve(self, curve, predictions, binary_labels):
+        predictions = np.array(predictions).T
+        binary_labels = np.array(binary_labels)
+        recall, precision, thresholds, average_precision = curve
+        # Compute micro-average ROC curve and ROC area
+        precision["micro"], recall["micro"], _ = sklearn.metrics.precision_recall_curve(binary_labels.ravel(), predictions.ravel())
+        average_precision["micro"] = sklearn.metrics.average_precision_score(binary_labels, predictions, average="micro")
+
     def addMicroRoc(self, roc, predictions, binary_labels):
-        predictions = np.array(predictions)
+        predictions = np.transpose(predictions)
         fpr, tpr, _, roc_auc = roc
         fpr["micro"], tpr["micro"], _ = sklearn.metrics.roc_curve(np.array(binary_labels).ravel(), predictions.ravel())
         roc_auc["micro"] = sklearn.metrics.auc(fpr["micro"], tpr["micro"])
@@ -90,23 +109,31 @@ class ModelTrainer(object):
         fpr, tpr, thresholds, _ = roc
         cut_off_threshold = []
         for i in range(len(labels_order)):
-            for j, (false_positive_rate, true_positive_rate, threshold) in enumerate(zip(fpr[i], tpr[i], thresholds[i])):
-                if true_positive_rate == 1:
-                    assert j-1 > 0
-                    cut_off_threshold.append(thresholds[i][j-1])
-                    break
-                if false_positive_rate > fpr_threshold:
-                    cut_off_threshold.append(threshold)
-                    break
-            else:
-                print "Warning: no cutoff obtained!"
+            cut_off_threshold.append(thresholds[i][np.argmax(tpr[i][:-1])])
         return cut_off_threshold
+        # for i in range(len(labels_order)):
+        #     for j, (false_positive_rate, true_positive_rate, threshold) in enumerate(zip(fpr[i], tpr[i], thresholds[i])):
+        #         if true_positive_rate == 1:
+        #             # assert j-1 > 0
+        #             cut_off_threshold.append(thresholds[i][j-1])
+        #             break
+        #         if false_positive_rate > fpr_threshold:
+        #             cut_off_threshold.append(threshold)
+        #             break
+        #     else:
+        #         print "Warning: no cutoff obtained!"
+        # return cut_off_threshold
 
     def getBinaryLabels(self, labels, label_order):
         binary_labels = []
         for label in label_order:
             binary_labels.append(list(map(lambda x: x == label, labels)))
         return binary_labels
+
+    def calculateMulticlassPrecisionRecallCurve(self, decision_function_values, binary_labels, label_order):
+        curve = self.calculateBinaryPrecisionRecallCurve(decision_function_values, binary_labels, label_order)
+        self.addMicroPrecisionRecallCurve(curve, decision_function_values, binary_labels)
+        return curve
 
     def calculateMulticlassRoc(self, decision_function_values, binary_labels, label_order):
         roc = self.calculateBinaryRoc(decision_function_values, binary_labels, label_order)
@@ -117,6 +144,10 @@ class ModelTrainer(object):
     def calculateRoc(self, decision_function_values, labels, label_order):
         binary_labels = self.getBinaryLabels(labels, label_order)
         return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
+
+    def calculatePrecisionRecallCurve(self, decision_function_values, labels, label_order):
+        binary_labels = self.getBinaryLabels(labels, label_order)
+        return self.calculateMulticlassPrecisionRecallCurve(decision_function_values, binary_labels, label_order)
 
     def plotChange(self, data, labels, index, color, plot_count, target_count):
         x = np.arange(0, len(data))

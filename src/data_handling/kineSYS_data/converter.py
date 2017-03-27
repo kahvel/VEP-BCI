@@ -23,7 +23,7 @@ def getRowsAsFloats(list_of_dicts, header):
 
 read_header = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4", "CLASS")
 header = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
-file_name = "2016-08-04--00-03_mike_ssvep_second.csv"
+file_name = "2017-03-21--23-09_anti_ssvep_class3.csv"
 data = loadData(file_name, read_header)
 
 
@@ -33,15 +33,15 @@ def writeCsv(file_name, header, data):
         writer.writeheader()
         writer.writerows(data)
 
-expected_targets = map(lambda x: int(x["CLASS"]), data)
+expected_targets = map(lambda x: int(x["CLASS"])+1, data)
 new_data = []
 for row in data:
     row.pop("CLASS")
-writeCsv("test1.csv", header, data)
+writeCsv("eeg.csv", header, data)
 packet_count = len(data)
 label_file_header = ("Packet", "True", "Predicted")
 predicted_targets = [None]*packet_count
 packet_numbers = list(range(1, packet_count+1))
 
 label_file_content = map(lambda x: {"Packet": x[0], "True": x[1], "Predicted": x[2]}, zip(packet_numbers, expected_targets, predicted_targets))
-writeCsv("test1_labels.csv", label_file_header, label_file_content)
+writeCsv("eeg_labels.csv", label_file_header, label_file_content)

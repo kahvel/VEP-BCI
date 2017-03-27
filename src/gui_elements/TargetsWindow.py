@@ -308,7 +308,7 @@ class TargetsWindow(object):
             if message is not None:
                 if isinstance(message, bool):
                     standby = message
-                    continue
+                    # continue
                 elif isinstance(message, basestring):
                     if len(message) < 10:
                         return message
