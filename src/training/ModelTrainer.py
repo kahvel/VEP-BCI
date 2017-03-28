@@ -1,12 +1,10 @@
 import numpy as np
 import sklearn.metrics
-import scipy
-
 import matplotlib.pyplot as plt
-import matplotlib2tikz
+from scipy import interp
 
-from target_identification.models import LdaModel, TransitionModel, CalibrationModel, CvCalibrationModel
-import Curve
+from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
+from curves import Curve, AverageCurve
 import constants as c
 
 
@@ -61,92 +59,6 @@ class ModelTrainer(object):
     def getThresholdConfusionMatrix(self, prediction, labels, label_order):
         return sklearn.metrics.confusion_matrix(labels, prediction, labels=list(label_order)+["None"])
 
-    def calculateBinaryRoc(self, predictions, binary_labels, labels_order):
-        fpr = dict()
-        tpr = dict()
-        thresholds = dict()
-        roc_auc = dict()
-        for i in range(len(labels_order)):
-            fpr[i], tpr[i], thresholds[i] = sklearn.metrics.roc_curve(binary_labels[i], predictions[i])
-            roc_auc[i] = sklearn.metrics.auc(fpr[i], tpr[i])
-        return fpr, tpr, thresholds, roc_auc
-
-    def calculateBinaryPrecisionRecallCurve(self, predictions, binary_labels, labels_order):
-        precision = dict()
-        recall = dict()
-        thresholds = dict()
-        average_precision = dict()
-        for i in range(len(labels_order)):
-            precision[i], recall[i], thresholds[i] = sklearn.metrics.precision_recall_curve(binary_labels[i], predictions[i])
-            average_precision[i] = sklearn.metrics.average_precision_score(binary_labels[i], predictions[i])
-        return recall, precision, thresholds, average_precision
-
-    def addMicroPrecisionRecallCurve(self, curve, predictions, binary_labels):
-        binary_labels = np.array(binary_labels)
-        recall, precision, thresholds, average_precision = curve
-        precision["micro"], recall["micro"], _ = sklearn.metrics.precision_recall_curve(binary_labels.ravel(), predictions.ravel())
-        average_precision["micro"] = sklearn.metrics.average_precision_score(binary_labels, predictions, average="micro")
-
-    def addMicroRoc(self, roc, predictions, binary_labels):
-        fpr, tpr, _, roc_auc = roc
-        fpr["micro"], tpr["micro"], _ = sklearn.metrics.roc_curve(np.array(binary_labels).ravel(), predictions.ravel())
-        roc_auc["micro"] = sklearn.metrics.auc(fpr["micro"], tpr["micro"])
-
-    def addMacroRoc(self, roc, labels_order):
-        fpr, tpr, _, roc_auc = roc
-        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(len(labels_order))]))
-        mean_tpr = np.zeros_like(all_fpr)
-        for i in range(len(labels_order)):
-            mean_tpr += scipy.interp(all_fpr, fpr[i], tpr[i])
-        mean_tpr /= len(labels_order)
-        fpr["macro"] = all_fpr
-        tpr["macro"] = mean_tpr
-        roc_auc["macro"] = sklearn.metrics.auc(fpr["macro"], tpr["macro"])
-
-    def calculateThresholds(self, roc, labels_order, fpr_threshold=0.05):
-        fpr, tpr, thresholds, _ = roc
-        cut_off_threshold = []
-        for i in range(len(labels_order)):
-            cut_off_threshold.append(thresholds[i][np.argmax(tpr[i][:-1])])
-        return cut_off_threshold
-        # for i in range(len(labels_order)):
-        #     for j, (false_positive_rate, true_positive_rate, threshold) in enumerate(zip(fpr[i], tpr[i], thresholds[i])):
-        #         if true_positive_rate == 1:
-        #             # assert j-1 > 0
-        #             cut_off_threshold.append(thresholds[i][j-1])
-        #             break
-        #         if false_positive_rate > fpr_threshold:
-        #             cut_off_threshold.append(threshold)
-        #             break
-        #     else:
-        #         print "Warning: no cutoff obtained!"
-        # return cut_off_threshold
-
-    def getBinaryLabels(self, labels, label_order):
-        binary_labels = []
-        for label in label_order:
-            binary_labels.append(list(map(lambda x: x == label, labels)))
-        return binary_labels
-
-    def calculateMulticlassPrecisionRecallCurve(self, decision_function_values, binary_labels, label_order):
-        curve = self.calculateBinaryPrecisionRecallCurve(decision_function_values, binary_labels, label_order)
-        self.addMicroPrecisionRecallCurve(curve, decision_function_values, binary_labels)
-        return curve
-
-    def calculateMulticlassRoc(self, decision_function_values, binary_labels, label_order):
-        roc = self.calculateBinaryRoc(decision_function_values, binary_labels, label_order)
-        self.addMicroRoc(roc, decision_function_values, binary_labels)
-        self.addMacroRoc(roc, label_order)
-        return roc
-
-    def calculateRoc(self, decision_function_values, labels, label_order):
-        binary_labels = self.getBinaryLabels(labels, label_order)
-        return self.calculateMulticlassRoc(decision_function_values, binary_labels, label_order)
-
-    def calculatePrecisionRecallCurve(self, decision_function_values, labels, label_order):
-        binary_labels = self.getBinaryLabels(labels, label_order)
-        return self.calculateMulticlassPrecisionRecallCurve(decision_function_values, binary_labels, label_order)
-
     def plotChange(self, data, labels, index, color, plot_count, target_count):
         x = np.arange(0, len(data))
         plt.subplot(plot_count, 1, index+1)
@@ -173,18 +85,7 @@ class ModelTrainer(object):
             labels_split.append(labels)
         return data_split, labels_split
 
-    def crossValidationPrecisionRecallCurve(self, training_data_split, training_labels_split, label_order):
-        all_x = []
-        all_y = []
-        all_thresholds = []
-        all_auc = []
-        for data, labels in zip(training_data_split, training_labels_split):
-            curve = self.calculatePrecisionRecallCurve(self.cv_model.predictProba(data), labels, label_order)
-            chosen_thresholds = self.calculateThresholds(curve, self.cv_model.getOrderedLabels())
-            x, y, thresholds, auc = curve
-
     def start(self):
-        training_data_split, training_labels_split = self.splitTrainingData()
         training_data, training_labels = self.cv_model.getConcatenatedMatrix(self.training_recordings)
 
         self.cv_model.fit(training_data, training_labels)
@@ -208,11 +109,12 @@ class ModelTrainer(object):
         # validation_roc = self.calculateRoc(self.model.getDecisionFunctionValues(testing_data), testing_labels, label_order)
         # validation_roc = self.calculateRoc(self.transition_model.getDecisionFunctionValues(reduced_validation_data), reduced_validation_labels, self.transition_model.getOrderedLabels())
         # thresholds = self.calculateThresholds(validation_roc, self.transition_model.getOrderedLabels())
-        training_roc = Curve.RocCurve().calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels, label_order)
-        testing_roc = Curve.RocCurve().calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels, label_order)
-        training_prc = Curve.PrecisionRecallCurve().calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels, label_order)
-        testing_prc = Curve.PrecisionRecallCurve().calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels, label_order)
-        thresholds = self.calculateThresholds(testing_prc, self.cv_model.getOrderedLabels())
+
+        training_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+        testing_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
+        training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+        testing_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
+        thresholds = testing_prc.calculateThresholds()
 
         # print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
         # print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())

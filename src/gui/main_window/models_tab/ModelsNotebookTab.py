@@ -152,36 +152,9 @@ class ModelFrame(Frame.Frame):
         }})
         return frame_value
 
-    def plotRoc(self, roc):
-        fpr, tpr, _, roc_auc = roc
-        plt.figure()
-        if "micro" in fpr and "micro" in tpr:
-            plt.plot(fpr["micro"], tpr["micro"],
-                     label='micro-average ROC curve (area = {0:0.2f})'
-                           ''.format(roc_auc["micro"]),
-                     linewidth=2)
-        if "macro" in fpr and "macro" in tpr:
-            plt.plot(fpr["macro"], tpr["macro"],
-                     label='macro-average ROC curve (area = {0:0.2f})'
-                           ''.format(roc_auc["macro"]),
-                     linewidth=2)
-        for i in range(len(self.second_model.classes_)):
-            plt.plot(fpr[i], tpr[i], label='ROC curve of class {0} (area = {1:0.2f})'
-                                           ''.format(i, roc_auc[i]))
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Some extension of Receiver operating characteristic to multi-class')
-        plt.legend(loc="lower right")
-        # import time
-        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
-        plt.show()
-
-    def checkDataAndPlotRoc(self, data):
-        if self.training_roc is not None:
-            self.plotRoc(data)
+    def checkDataAndPlotCurve(self, curve):
+        if curve is not None:
+            curve.plot()
         else:
             print "Model is not trained!"
 
@@ -192,16 +165,16 @@ class ModelFrame(Frame.Frame):
             print "Model is not trained!"
 
     def showTrainingRoc(self):
-        self.checkDataAndPlotRoc(self.training_roc)
+        self.checkDataAndPlotCurve(self.training_roc)
 
     def showTestingRoc(self):
-        self.checkDataAndPlotRoc(self.testing_roc)
+        self.checkDataAndPlotCurve(self.testing_roc)
 
     def showTrainingPrc(self):
-        self.checkDataAndPlotRoc(self.training_prc)
+        self.checkDataAndPlotCurve(self.training_prc)
 
     def showTestingPrc(self):
-        self.checkDataAndPlotRoc(self.testing_prc)
+        self.checkDataAndPlotCurve(self.testing_prc)
 
     def myPredict(self, xx):
         d = np.dot(xx, np.dot(self.model.means_, self.model.scalings_).T)
