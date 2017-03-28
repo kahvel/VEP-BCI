@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib2tikz
 
 from target_identification.models import LdaModel, TransitionModel, CalibrationModel, CvCalibrationModel
+import Curve
 import constants as c
 
 
@@ -16,13 +17,15 @@ class ModelTrainer(object):
         self.look_back_length = None
         self.cross_validation_folds = None
         self.training_recordings = []
-        self.validation_recordings = []
+        self.testing_recordings = []
         self.training_data = None
         self.training_labels = None
-        self.validation_data = None
-        self.validation_labels = None
-        self.validation_roc = None
+        self.testing_data = None
+        self.testing_labels = None
+        self.testing_roc = None
         self.training_roc = None
+        self.training_prc = None
+        self.testing_prc = None
         self.model = None
         self.lda_model = None
         self.transition_model = None
@@ -43,7 +46,7 @@ class ModelTrainer(object):
         self.look_back_length = options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.cross_validation_folds = options[c.MODELS_PARSE_CV_FOLDS]
         self.training_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TRAINING]]
-        self.validation_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_VALIDATION]]
+        self.testing_recordings = [self.recordings[i] for i in options[c.MODELS_PARSE_RECORDING_FOR_TESTING]]
         self.model = LdaModel.TrainingLdaModel()
         self.model.setup(self.features_to_use, self.look_back_length, self.recordings, True)
         self.transition_model = TransitionModel.TrainingModel(False)
@@ -59,7 +62,6 @@ class ModelTrainer(object):
         return sklearn.metrics.confusion_matrix(labels, prediction, labels=list(label_order)+["None"])
 
     def calculateBinaryRoc(self, predictions, binary_labels, labels_order):
-        predictions = np.transpose(predictions)
         fpr = dict()
         tpr = dict()
         thresholds = dict()
@@ -70,7 +72,6 @@ class ModelTrainer(object):
         return fpr, tpr, thresholds, roc_auc
 
     def calculateBinaryPrecisionRecallCurve(self, predictions, binary_labels, labels_order):
-        predictions = np.transpose(predictions)
         precision = dict()
         recall = dict()
         thresholds = dict()
@@ -81,15 +82,12 @@ class ModelTrainer(object):
         return recall, precision, thresholds, average_precision
 
     def addMicroPrecisionRecallCurve(self, curve, predictions, binary_labels):
-        predictions = np.array(predictions).T
         binary_labels = np.array(binary_labels)
         recall, precision, thresholds, average_precision = curve
-        # Compute micro-average ROC curve and ROC area
         precision["micro"], recall["micro"], _ = sklearn.metrics.precision_recall_curve(binary_labels.ravel(), predictions.ravel())
         average_precision["micro"] = sklearn.metrics.average_precision_score(binary_labels, predictions, average="micro")
 
     def addMicroRoc(self, roc, predictions, binary_labels):
-        predictions = np.transpose(predictions)
         fpr, tpr, _, roc_auc = roc
         fpr["micro"], tpr["micro"], _ = sklearn.metrics.roc_curve(np.array(binary_labels).ravel(), predictions.ravel())
         roc_auc["micro"] = sklearn.metrics.auc(fpr["micro"], tpr["micro"])
@@ -138,7 +136,7 @@ class ModelTrainer(object):
     def calculateMulticlassRoc(self, decision_function_values, binary_labels, label_order):
         roc = self.calculateBinaryRoc(decision_function_values, binary_labels, label_order)
         self.addMicroRoc(roc, decision_function_values, binary_labels)
-        self.addMacroRoc(roc, binary_labels)
+        self.addMacroRoc(roc, label_order)
         return roc
 
     def calculateRoc(self, decision_function_values, labels, label_order):
@@ -166,9 +164,29 @@ class ModelTrainer(object):
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
 
+    def splitTrainingData(self):
+        data_split = []
+        labels_split = []
+        for recording in self.training_recordings:
+            data, labels = self.cv_model.getConcatenatedMatrix([recording])
+            data_split.append(data)
+            labels_split.append(labels)
+        return data_split, labels_split
+
+    def crossValidationPrecisionRecallCurve(self, training_data_split, training_labels_split, label_order):
+        all_x = []
+        all_y = []
+        all_thresholds = []
+        all_auc = []
+        for data, labels in zip(training_data_split, training_labels_split):
+            curve = self.calculatePrecisionRecallCurve(self.cv_model.predictProba(data), labels, label_order)
+            chosen_thresholds = self.calculateThresholds(curve, self.cv_model.getOrderedLabels())
+            x, y, thresholds, auc = curve
+
     def start(self):
+        training_data_split, training_labels_split = self.splitTrainingData()
         training_data, training_labels = self.cv_model.getConcatenatedMatrix(self.training_recordings)
-        # self.model.fit(training_data, training_labels)
+
         self.cv_model.fit(training_data, training_labels)
 
         # training_data_per_recording, training_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.training_recordings)
@@ -178,7 +196,7 @@ class ModelTrainer(object):
         # self.transition_model.fit(reduced_data, reduced_labels)
         # training_roc = self.calculateRoc(self.transition_model.getDecisionFunctionValues(reduced_data), reduced_labels, self.transition_model.getOrderedLabels())
 
-        validation_data, validation_labels = self.cv_model.getConcatenatedMatrix(self.validation_recordings)
+        testing_data, testing_labels = self.cv_model.getConcatenatedMatrix(self.testing_recordings)
 
         # validation_data_per_recording, validation_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.validation_recordings)
         # validation_lda_values = map(lambda x: self.model.decisionFunction(x), validation_data_per_recording)
@@ -187,27 +205,29 @@ class ModelTrainer(object):
 
         label_order = self.cv_model.getOrderedLabels()
         # training_roc = self.calculateRoc(self.model.getDecisionFunctionValues(training_data), training_labels, label_order)
-        # validation_roc = self.calculateRoc(self.model.getDecisionFunctionValues(validation_data), validation_labels, label_order)
+        # validation_roc = self.calculateRoc(self.model.getDecisionFunctionValues(testing_data), testing_labels, label_order)
         # validation_roc = self.calculateRoc(self.transition_model.getDecisionFunctionValues(reduced_validation_data), reduced_validation_labels, self.transition_model.getOrderedLabels())
         # thresholds = self.calculateThresholds(validation_roc, self.transition_model.getOrderedLabels())
-        roc = self.calculateRoc(self.cv_model.predictProba(training_data), training_labels, label_order)
-        roc2 = self.calculateRoc(self.cv_model.predictProba(validation_data), validation_labels, label_order)
-        thresholds2 = self.calculateThresholds(roc2, self.cv_model.getOrderedLabels())
+        training_roc = Curve.RocCurve().calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels, label_order)
+        testing_roc = Curve.RocCurve().calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels, label_order)
+        training_prc = Curve.PrecisionRecallCurve().calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels, label_order)
+        testing_prc = Curve.PrecisionRecallCurve().calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels, label_order)
+        thresholds = self.calculateThresholds(testing_prc, self.cv_model.getOrderedLabels())
 
         # print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
         # print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
         # print self.transition_model.getOrderedLabels()
         print sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=self.cv_model.getOrderedLabels())
-        print sklearn.metrics.confusion_matrix(validation_labels, self.cv_model.predict(validation_data), labels=self.cv_model.getOrderedLabels())
-        for i in range(21):
+        print sklearn.metrics.confusion_matrix(testing_labels, self.cv_model.predict(testing_data), labels=self.cv_model.getOrderedLabels())
+        for i in range(3):
             print i
             # print self.getThresholdConfusionMatrix(self.transition_model.thresholdPredict(reduced_data, thresholds, i/10.0), reduced_labels, self.transition_model.getOrderedLabels())
             # print self.getThresholdConfusionMatrix(self.transition_model.thresholdPredict(reduced_validation_data, thresholds, i/10.0), reduced_validation_labels, self.transition_model.getOrderedLabels())
-            print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, thresholds2, i/10.0), map(str, training_labels), self.cv_model.getOrderedLabels())
-            print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(validation_data, thresholds2, i/10.0), map(str, validation_labels), self.cv_model.getOrderedLabels())
+            print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, thresholds, i/10.0), map(str, training_labels), self.cv_model.getOrderedLabels())
+            print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, thresholds, i/10.0), map(str, testing_labels), self.cv_model.getOrderedLabels())
 
         # self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
-        # self.plotAllChanges(self.cv_model.predictProba(validation_data), validation_labels)
+        # self.plotAllChanges(self.cv_model.predictProba(testing_data), testing_labels)
         # plt.show()
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])
@@ -217,13 +237,15 @@ class ModelTrainer(object):
 
         self.training_data = training_data
         self.training_labels = training_labels
-        self.validation_data = validation_data
-        self.validation_labels = validation_labels
-        self.thresholds = thresholds2
+        self.testing_data = testing_data
+        self.testing_labels = testing_labels
+        self.thresholds = thresholds
         self.min_max = self.cv_model.getMinMax()
         self.lda_model = None  # self.model.model
-        self.training_roc = roc
-        self.validation_roc = roc2
+        self.training_prc = training_prc
+        self.testing_prc = testing_prc
+        self.training_roc = training_roc
+        self.testing_roc = testing_roc
 
     def getSecondModel(self):
         return self.cv_model.model
@@ -237,11 +259,11 @@ class ModelTrainer(object):
     def getTrainingLabels(self):
         return self.training_labels
 
-    def getValidationData(self):
-        return self.validation_data
+    def getTestingData(self):
+        return self.testing_data
 
-    def getValidationLabels(self):
-        return self.validation_labels
+    def getTestingLabels(self):
+        return self.testing_labels
 
     def getThresholds(self):
         return self.thresholds
@@ -252,8 +274,14 @@ class ModelTrainer(object):
     def getTrainingRoc(self):
         return self.training_roc
 
-    def getValidationRoc(self):
-        return self.validation_roc
+    def getTestingRoc(self):
+        return self.testing_roc
+
+    def getTrainingPrc(self):
+        return self.training_prc
+
+    def getTestingPrc(self):
+        return self.testing_prc
 
     def getUsedFeatures(self):
         return self.model.getUsedFeatures()

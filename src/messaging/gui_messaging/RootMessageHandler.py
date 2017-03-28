@@ -181,7 +181,9 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
         self.evokeThresholdsReceivedEvent()
         self.evokeMinMaxReceivedEvent()
         self.evokeTrainingRocReceivedEvent()
-        self.evokeValidationRocReceivedEvent()
+        self.evokeTestingRocReceivedEvent()
+        self.evokeTrainingPrcReceivedEvent()
+        self.evokeTestingPrcReceivedEvent()
         self.evokeUsedFeaturesReceivedEvent()
         self.evokeAddNewModelTabEvent()
 
@@ -201,12 +203,12 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
         self.sendEventToChildren(lambda x: x.secondModelReceivedEvent(model))
 
     def evokeValidationDataReceivedEvent(self):
-        data = self.getData(c.GET_VALIDATION_DATA_MESSAGE)
-        self.sendEventToChildren(lambda x: x.validationDataReceivedEvent(data))
+        data = self.getData(c.GET_TESTING_DATA_MESSAGE)
+        self.sendEventToChildren(lambda x: x.testingDataReceivedEvent(data))
 
     def evokeValidationLabelsReceivedEvent(self):
-        labels = self.getData(c.GET_VALIDATION_LABELS_MESSAGE)
-        self.sendEventToChildren(lambda x: x.validationLabelsReceivedEvent(labels))
+        labels = self.getData(c.GET_TESTING_LABELS_MESSAGE)
+        self.sendEventToChildren(lambda x: x.testingLabelsReceivedEvent(labels))
 
     def evokeTrainingDataReceivedEvent(self):
         data = self.getData(c.GET_TRAINING_DATA_MESSAGE)
@@ -228,9 +230,17 @@ class TrainingEndedHandler(MessagingInterface.TrainingEndedHandler, GetDataHandl
         training_roc = self.getData(c.GET_TRAINING_ROC_MESSAGE)
         self.sendEventToChildren(lambda x: x.trainingRocReceivedEvent(training_roc))
 
-    def evokeValidationRocReceivedEvent(self):
-        validation_roc = self.getData(c.GET_VALIDATION_ROC_MESSAGE)
-        self.sendEventToChildren(lambda x: x.validationRocReceivedEvent(validation_roc))
+    def evokeTestingRocReceivedEvent(self):
+        validation_roc = self.getData(c.GET_TESTING_ROC_MESSAGE)
+        self.sendEventToChildren(lambda x: x.testingRocReceivedEvent(validation_roc))
+
+    def evokeTrainingPrcReceivedEvent(self):
+        training_roc = self.getData(c.GET_TRAINING_PRC_MESSAGE)
+        self.sendEventToChildren(lambda x: x.trainingPrcReceivedEvent(training_roc))
+
+    def evokeTestingPrcReceivedEvent(self):
+        validation_roc = self.getData(c.GET_TESTING_PRC_MESSAGE)
+        self.sendEventToChildren(lambda x: x.testingPrcReceivedEvent(validation_roc))
 
 
 class MainWindowMessageHandler(Bci, Robot, Models, TrialEndedHandler, TrainingEndedHandler, AbstractMessageSenders.Root, MessagingInterface.MessagingInterface):

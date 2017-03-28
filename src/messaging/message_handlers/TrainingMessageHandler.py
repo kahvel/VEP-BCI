@@ -14,10 +14,10 @@ class TrainingGetDataHandler(AbstractMessageHandler.MessageHandler):
             self.main_connection.sendMessage(self.trainer.getTrainingData())
         elif message == c.GET_TRAINING_LABELS_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getTrainingLabels())
-        elif message == c.GET_VALIDATION_DATA_MESSAGE:
-            self.main_connection.sendMessage(self.trainer.getValidationData())
-        elif message == c.GET_VALIDATION_LABELS_MESSAGE:
-            self.main_connection.sendMessage(self.trainer.getValidationLabels())
+        elif message == c.GET_TESTING_DATA_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getTestingData())
+        elif message == c.GET_TESTING_LABELS_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getTestingLabels())
         elif message == c.GET_MODEL_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getModel())
         elif message == c.GET_SECOND_MODEL_MESSAGE:
@@ -28,8 +28,12 @@ class TrainingGetDataHandler(AbstractMessageHandler.MessageHandler):
             self.main_connection.sendMessage(self.trainer.getThresholds())
         elif message == c.GET_TRAINING_ROC_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getTrainingRoc())
-        elif message == c.GET_VALIDATION_ROC_MESSAGE:
-            self.main_connection.sendMessage(self.trainer.getValidationRoc())
+        elif message == c.GET_TESTING_ROC_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getTestingRoc())
+        elif message == c.GET_TRAINING_PRC_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getTrainingPrc())
+        elif message == c.GET_TESTING_PRC_MESSAGE:
+            self.main_connection.sendMessage(self.trainer.getTestingPrc())
         elif message == c.GET_USED_FEATURES_MESSAGE:
             self.main_connection.sendMessage(self.trainer.getUsedFeatures())
 

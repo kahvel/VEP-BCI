@@ -100,9 +100,9 @@ class Models(object):
 
     def secondModelReceivedEvent(self, model): pass
 
-    def validationDataReceivedEvent(self, validation_data): pass
+    def testingDataReceivedEvent(self, testing_data): pass
 
-    def validationLabelsReceivedEvent(self, validation_labels): pass
+    def testingLabelsReceivedEvent(self, testing_labels): pass
 
     def trainingDataReceivedEvent(self, training_data): pass
 
@@ -114,7 +114,11 @@ class Models(object):
 
     def trainingRocReceivedEvent(self, training_roc): pass
 
-    def validationRocReceivedEvent(self, validation_roc): pass
+    def testingRocReceivedEvent(self, testing_roc): pass
+
+    def trainingPrcReceivedEvent(self, training_prc): pass
+
+    def testingPrcReceivedEvent(self, testing_prc): pass
 
     def saveModelEvent(self, directory): pass
 

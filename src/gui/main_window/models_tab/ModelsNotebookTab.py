@@ -123,20 +123,24 @@ class ModelFrame(Frame.Frame):
         Frame.Frame.__init__(self, parent, c.MODELS_TAB_MODEL_FRAME, row, column, **kwargs)
         self.addChildWidgets((
             Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_ROC, 0, 0, command=self.showTrainingRoc),
-            Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_ROC, 0, 1, command=self.showValidationRoc),
-            Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_LDA, 1, 0, command=self.showTrainingDataProjection),
-            Buttons.Button(self, c.MODELS_TAB_SHOW_VALIDATION_LDA, 1, 1, command=self.showValidationDataProjection),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_TESTING_ROC, 1, 0, command=self.showTestingRoc),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_PRC, 0, 1, command=self.showTrainingPrc),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_TESTING_PRC, 1, 1, command=self.showTestingPrc),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_TRAINING_LDA, 0, 2, command=self.showTrainingDataProjection),
+            Buttons.Button(self, c.MODELS_TAB_SHOW_TESTING_LDA, 1, 2, command=self.showTestingDataProjection),
         ))
         self.model = None
         self.second_model = None
         self.training_data = None
-        self.validation_data = None
+        self.testing_data = None
         self.training_labels = None
-        self.validation_labels = None
+        self.testing_labels = None
         self.min_max = None
         self.thresholds = None
         self.training_roc = None
-        self.validation_roc = None
+        self.testing_roc = None
+        self.training_prc = None
+        self.testing_prc = None
 
     def getValue(self):
         frame_value = Frame.Frame.getValue(self)
@@ -190,8 +194,14 @@ class ModelFrame(Frame.Frame):
     def showTrainingRoc(self):
         self.checkDataAndPlotRoc(self.training_roc)
 
-    def showValidationRoc(self):
-        self.checkDataAndPlotRoc(self.validation_roc)
+    def showTestingRoc(self):
+        self.checkDataAndPlotRoc(self.testing_roc)
+
+    def showTrainingPrc(self):
+        self.checkDataAndPlotRoc(self.training_prc)
+
+    def showTestingPrc(self):
+        self.checkDataAndPlotRoc(self.testing_prc)
 
     def myPredict(self, xx):
         d = np.dot(xx, np.dot(self.model.means_, self.model.scalings_).T)
@@ -249,8 +259,8 @@ class ModelFrame(Frame.Frame):
     def showTrainingDataProjection(self):
         self.checkDataAndPlotLda(self.training_data, self.training_labels)
 
-    def showValidationDataProjection(self):
-        self.checkDataAndPlotLda(self.validation_data, self.validation_labels)
+    def showTestingDataProjection(self):
+        self.checkDataAndPlotLda(self.testing_data, self.testing_labels)
 
     def loadModelEvent(self, directory):
         file_handle = file(os.path.join(directory, "model.pkl"))
@@ -259,9 +269,11 @@ class ModelFrame(Frame.Frame):
         self.training_data = pickle.load(file_handle)
         self.training_labels = pickle.load(file_handle)
         self.training_roc = pickle.load(file_handle)
-        self.validation_data = pickle.load(file_handle)
-        self.validation_labels = pickle.load(file_handle)
-        self.validation_roc = pickle.load(file_handle)
+        self.testing_data = pickle.load(file_handle)
+        self.testing_labels = pickle.load(file_handle)
+        self.testing_roc = pickle.load(file_handle)
+        self.training_prc = pickle.load(file_handle)
+        self.testing_prc = pickle.load(file_handle)
         self.thresholds = pickle.load(file_handle)
         self.min_max = pickle.load(file_handle)  # If there is EOF exception here, it probably means that this file does not have second model saved.
 
@@ -272,9 +284,11 @@ class ModelFrame(Frame.Frame):
         pickle.dump(self.training_data, file_handle)
         pickle.dump(self.training_labels, file_handle)
         pickle.dump(self.training_roc, file_handle)
-        pickle.dump(self.validation_data, file_handle)
-        pickle.dump(self.validation_labels, file_handle)
-        pickle.dump(self.validation_roc, file_handle)
+        pickle.dump(self.testing_data, file_handle)
+        pickle.dump(self.testing_labels, file_handle)
+        pickle.dump(self.testing_roc, file_handle)
+        pickle.dump(self.training_prc, file_handle)
+        pickle.dump(self.testing_prc, file_handle)
         pickle.dump(self.thresholds, file_handle)
         pickle.dump(self.min_max, file_handle)
 
@@ -294,13 +308,13 @@ class ModelFrame(Frame.Frame):
         if self.training_labels is None:
             self.training_labels = training_labels
 
-    def validationDataReceivedEvent(self, validation_data):
-        if self.validation_data is None:
-            self.validation_data = validation_data
+    def testingDataReceivedEvent(self, validation_data):
+        if self.testing_data is None:
+            self.testing_data = validation_data
 
-    def validationLabelsReceivedEvent(self, validation_labels):
-        if self.validation_labels is None:
-            self.validation_labels = validation_labels
+    def testingLabelsReceivedEvent(self, validation_labels):
+        if self.testing_labels is None:
+            self.testing_labels = validation_labels
 
     def minMaxReceivedEvent(self, min_max):
         if self.min_max is None:
@@ -314,6 +328,14 @@ class ModelFrame(Frame.Frame):
         if self.training_roc is None:
             self.training_roc = training_roc
 
-    def validationRocReceivedEvent(self, validation_roc):
-        if self.validation_roc is None:
-            self.validation_roc = validation_roc
+    def testingRocReceivedEvent(self, validation_roc):
+        if self.testing_roc is None:
+            self.testing_roc = validation_roc
+
+    def trainingPrcReceivedEvent(self, training_prc):
+        if self.training_prc is None:
+            self.training_prc = training_prc
+
+    def testingPrcReceivedEvent(self, validation_prc):
+        if self.testing_prc is None:
+            self.testing_prc = validation_prc
