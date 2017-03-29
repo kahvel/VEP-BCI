@@ -130,10 +130,10 @@ class AveragePrecisionRecallCurve(AverageCurve):
             mean_threshold += scipy.interp(all_fpr, neg_x[:-1], neg_thresholds)
         mean_tpr /= -len(self.ordered_labels)
         mean_threshold /= -len(self.ordered_labels)
-        curve = Curve.PrecisionRecallCurve(all_fpr*-1, mean_tpr)
+        curve = Curve.PrecisionRecallCurve(list(reversed(all_fpr*-1)), list(reversed(mean_tpr)))
         # curve.calculateAuc(all_fpr, mean_tpr)
         curve.auc = -1
-        curve.thresholds = mean_threshold
+        curve.thresholds = list(reversed(mean_threshold))
         self.curves["macro"] = curve
 
     def addMicro(self, predictions, binary_labels):

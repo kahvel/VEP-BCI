@@ -7,7 +7,6 @@ from curves import AverageCurve
 class CvCurve(object):
     def __init__(self, ordered_labels):
         self.ordered_labels = ordered_labels
-        self.n_splits = None
         self.curves_by_class = None
 
     def crossValidationCurves(self, predictions, split_labels):
@@ -33,7 +32,6 @@ class CvCurve(object):
             curves_by_class[label].addMacro()
 
     def calculate(self, predictions, split_labels):
-        self.n_splits = len(predictions)
         curves = self.crossValidationCurves(predictions, split_labels)
         self.curves_by_class = self.groupCurvesByClass(curves)
         self.addMeanCurves(self.curves_by_class)
@@ -41,7 +39,7 @@ class CvCurve(object):
 
     def plot(self):
         plt.figure()
-        n_subplots = np.ceil(self.n_splits**0.5)
+        n_subplots = np.ceil(len(self.ordered_labels)**0.5)
         for i, (label, curve) in enumerate(self.curves_by_class.items()):
             plt.subplot(n_subplots, n_subplots, i+1)
             curve.makePlot()
@@ -58,11 +56,18 @@ class CvCurve(object):
         raise NotImplementedError("getCurve not implemented!")
 
     def calculateThresholds(self):
-        cut_off_threshold = []
+        cut_off_threshold1 = []
         for key in self.ordered_labels:
             _, y, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
-            cut_off_threshold.append(thresholds[np.argmax(y[:-1])])
-        return cut_off_threshold
+            cut_off_threshold1.append(thresholds[np.argmax(y[:-1])])
+        return cut_off_threshold1
+        # cut_off_threshold = []
+        # for key in self.ordered_labels:
+        #     thresholds = self.curves_by_class[key].calculateThresholds()
+        #     cut_off_threshold.append(np.mean(thresholds))
+        # # return cut_off_threshold
+        # result = (np.array(cut_off_threshold1) + np.array(cut_off_threshold))/2.0
+        # return result
 
 
 class RocCvCurve(CvCurve):

@@ -65,13 +65,14 @@ class ModelTrainer(object):
         plt.plot(x, decision, color=color)
         plt.plot(x, (labels == index % target_count + 1)*decision.max() + (1-(labels == index % target_count + 1))*decision.min(), "r--", color=color)
 
-    def plotAllChanges(self, data, labels):
+    def plotAllChanges(self, data, labels, thresholds):
         plt.figure()
         colors = ["red", "green", "blue"]
         plot_count = data.shape[1]
         target_count = len(colors)
         for i in range(plot_count):
             self.plotChange(data, labels, i, colors[i%target_count], plot_count, target_count)
+            plt.plot([0, data.shape[0]], [thresholds[i], thresholds[i]], color=colors[i%target_count])
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
 
@@ -149,9 +150,9 @@ class ModelTrainer(object):
             print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, thresholds, i/10.0), map(str, training_labels), self.cv_model.getOrderedLabels())
             print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, thresholds, i/10.0), map(str, testing_labels), self.cv_model.getOrderedLabels())
 
-        # self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels)
-        # self.plotAllChanges(self.cv_model.predictProba(testing_data), testing_labels)
-        # plt.show()
+        self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels, thresholds)
+        self.plotAllChanges(self.cv_model.predictProba(testing_data), testing_labels, thresholds)
+        plt.show()
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])
         # features, labels = dummy_model.getConcatenatedMatrix(self.validation_recordings)
