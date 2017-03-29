@@ -44,14 +44,18 @@ class AverageCurve(object):
 
     def getCurveLegendLabel(self, key):
         if isinstance(key, int):
-            return 'ROC curve of class {0}'.format(key)
+            return 'Class {0}'.format(key)
         elif key in ["micro", "macro"]:
-            return key + '-average ROC curve'
-        elif key == "mean":
-            return "Mean ROC"
+            return key + '-average'
 
     def plot(self):
         plt.figure()
+        self.makePlot()
+        # import time
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
+        plt.show()
+
+    def makePlot(self):
         for key in sorted(self.curves):
             fpr, tpr, _, auc = self.curves[key].getValues()
             plt.plot(fpr, tpr, label=self.getCurveLegendLabel(key) + " (area = {0:0.2f})".format(auc))
@@ -59,27 +63,28 @@ class AverageCurve(object):
         plt.ylim([0.0, 1.05])
         self.setPlotLabels()
         plt.legend(loc="lower right")
-        # import time
-        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
-        plt.show()
 
     def calculateThresholds(self):
         raise NotImplementedError("calculateThresholds not implemented!")
 
-    # def getClasses(self):
-    #     return filter(lambda x: isinstance(x, int), self.x)
+    def getClasses(self):
+        return self.ordered_labels
 
 
 class AverageRocCurve(AverageCurve):
     def addMacro(self):
         all_fpr = np.unique(np.concatenate([self.curves[label].x for label in self.ordered_labels]))
         mean_tpr = np.zeros_like(all_fpr)
+        mean_threshold = np.zeros_like(all_fpr)
         for label in self.ordered_labels:
             x, y, thresholds, auc = self.curves[label].getValues()
             mean_tpr += scipy.interp(all_fpr, x, y)
+            mean_threshold += scipy.interp(all_fpr, x, thresholds)
         mean_tpr /= len(self.ordered_labels)
+        mean_threshold /= len(self.ordered_labels)
         curve = Curve.RocCurve(all_fpr, mean_tpr)
         curve.calculateAuc(all_fpr, mean_tpr)
+        curve.thresholds = mean_threshold
         self.curves["macro"] = curve
 
     def addMicro(self, predictions, binary_labels):
@@ -113,7 +118,23 @@ class AverageRocCurve(AverageCurve):
 
 class AveragePrecisionRecallCurve(AverageCurve):
     def addMacro(self):
-        pass
+        all_fpr = np.unique(np.concatenate([self.curves[label].x for label in self.ordered_labels]))*-1
+        mean_tpr = np.zeros_like(all_fpr)
+        mean_threshold = np.zeros_like(all_fpr)
+        for label in self.ordered_labels:
+            x, y, thresholds, auc = self.curves[label].getValues()
+            neg_x = x*-1
+            neg_y = y*-1
+            neg_thresholds = thresholds*-1
+            mean_tpr += scipy.interp(all_fpr, neg_x, neg_y)
+            mean_threshold += scipy.interp(all_fpr, neg_x[:-1], neg_thresholds)
+        mean_tpr /= -len(self.ordered_labels)
+        mean_threshold /= -len(self.ordered_labels)
+        curve = Curve.PrecisionRecallCurve(all_fpr*-1, mean_tpr)
+        # curve.calculateAuc(all_fpr, mean_tpr)
+        curve.auc = -1
+        curve.thresholds = mean_threshold
+        self.curves["macro"] = curve
 
     def addMicro(self, predictions, binary_labels):
         curve = Curve.PrecisionRecallCurve()

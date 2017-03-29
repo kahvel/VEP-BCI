@@ -1,10 +1,9 @@
 import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
-from scipy import interp
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
-from curves import Curve, AverageCurve
+from curves import AverageCurve, CvCurves
 import constants as c
 
 
@@ -85,10 +84,21 @@ class ModelTrainer(object):
             labels_split.append(labels)
         return data_split, labels_split
 
+    def allExceptOne(self, data, index):
+        return [x for i, x in enumerate(data) if i != index]
+
+    def crossValidation(self, model, split_data, split_labels):
+        folds = len(split_data)
+        predictions = []
+        for i in range(folds):
+            data = np.concatenate(self.allExceptOne(split_data, i), axis=0)
+            labels = np.concatenate(self.allExceptOne(split_labels, i), axis=0)
+            model.fit(data, labels)
+            predictions.append(model.predictProba(split_data[i]))
+        return predictions
+
     def start(self):
         training_data, training_labels = self.cv_model.getConcatenatedMatrix(self.training_recordings)
-
-        self.cv_model.fit(training_data, training_labels)
 
         # training_data_per_recording, training_labels_per_recording = self.model.getAllLookBackRatioMatrices(self.training_recordings)
         # training_lda_values = map(lambda x: self.model.decisionFunction(x), training_data_per_recording)
@@ -104,17 +114,28 @@ class ModelTrainer(object):
         # reduced_validation_data, reduced_validation_labels = self.transition_model.getConcatenatedMatrix(validation_lda_values, validation_labels_per_recording)
         # reduced_validation_labels = map(str, reduced_validation_labels)
 
-        label_order = self.cv_model.getOrderedLabels()
         # training_roc = self.calculateRoc(self.model.getDecisionFunctionValues(training_data), training_labels, label_order)
         # validation_roc = self.calculateRoc(self.model.getDecisionFunctionValues(testing_data), testing_labels, label_order)
         # validation_roc = self.calculateRoc(self.transition_model.getDecisionFunctionValues(reduced_validation_data), reduced_validation_labels, self.transition_model.getOrderedLabels())
         # thresholds = self.calculateThresholds(validation_roc, self.transition_model.getOrderedLabels())
 
-        training_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+        split_data, split_labels = self.splitTrainingData()
+        cv_predictions = self.crossValidation(self.cv_model, split_data, split_labels)
+        self.cv_model.fit(training_data, training_labels)
+        label_order = self.cv_model.getOrderedLabels()
+        if len(split_data) == 1:
+            training_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+            training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+        else:
+            training_roc = CvCurves.RocCvCurve(label_order).calculate(cv_predictions, split_labels)
+            training_prc = CvCurves.PrecisionRecallCvCurve(label_order).calculate(cv_predictions, split_labels)
         testing_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
-        training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
         testing_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
-        thresholds = testing_prc.calculateThresholds()
+        thresholds = training_prc.calculateThresholds()
+
+        # training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+        # testing_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
+        # thresholds = testing_prc.calculateThresholds()
 
         # print self.getConfusionMatrix(self.transition_model, reduced_data, reduced_labels, self.transition_model.getOrderedLabels())
         # print self.getConfusionMatrix(self.transition_model, reduced_validation_data, reduced_validation_labels, self.transition_model.getOrderedLabels())
