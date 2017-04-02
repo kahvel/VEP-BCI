@@ -33,18 +33,21 @@ class CvCurve(object):
 
     def calculate(self, predictions, split_labels):
         curves = self.crossValidationCurves(predictions, split_labels)
+        return self.calculateFromCurves(curves)
+
+    def calculateFromCurves(self, curves):
         self.curves_by_class = self.groupCurvesByClass(curves)
         self.addMeanCurves(self.curves_by_class)
         return self
 
-    def plot(self):
-        plt.figure()
+    def plot(self, num=1):
+        plt.figure(num)
         n_subplots = np.ceil(len(self.ordered_labels)**0.5)
         for i, (label, curve) in enumerate(self.curves_by_class.items()):
             plt.subplot(n_subplots, n_subplots, i+1)
             curve.makePlot()
             self.setPlotTitle(label)
-        plt.show()
+        plt.draw()
 
     def setPlotTitle(self, label):
         raise NotImplementedError("setPlotTitle not implemented!")

@@ -152,9 +152,18 @@ class ModelFrame(Frame.Frame):
         }})
         return frame_value
 
-    def checkDataAndPlotCurve(self, curve):
+    def checkDataAndPlotTestingCurve(self, curve):
         if curve is not None:
             curve.plot()
+            plt.show()
+        else:
+            print "Model is not trained!"
+
+    def checkDataAndPlotTrainingCurve(self, curves):
+        if curves is not None:
+            for i, curve in enumerate(curves):
+                curve.plot(i)
+            plt.show()
         else:
             print "Model is not trained!"
 
@@ -165,16 +174,16 @@ class ModelFrame(Frame.Frame):
             print "Model is not trained!"
 
     def showTrainingRoc(self):
-        self.checkDataAndPlotCurve(self.training_roc)
+        self.checkDataAndPlotTrainingCurve(self.training_roc)
 
     def showTestingRoc(self):
-        self.checkDataAndPlotCurve(self.testing_roc)
+        self.checkDataAndPlotTestingCurve(self.testing_roc)
 
     def showTrainingPrc(self):
-        self.checkDataAndPlotCurve(self.training_prc)
+        self.checkDataAndPlotTrainingCurve(self.training_prc)
 
     def showTestingPrc(self):
-        self.checkDataAndPlotCurve(self.testing_prc)
+        self.checkDataAndPlotTestingCurve(self.testing_prc)
 
     def myPredict(self, xx):
         d = np.dot(xx, np.dot(self.model.means_, self.model.scalings_).T)

@@ -36,7 +36,7 @@ class Model(ColumnsIterator.ColumnsIterator):
 
     def thresholdPredict(self, data, thresholds, margin=0):
         predictions = []
-        scores = self.model.predict_proba(data)
+        scores = self.predictProba(data)
         for sample_scores in scores:
             predicted = None
             for i in range(len(sample_scores)):
@@ -64,7 +64,7 @@ class TrainingModel(Model):
     def setup(self, features_to_use, sample_count, recordings, matrix_builder_types):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
-        self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=1, n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
+        self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=3, n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=AdaBoostClassifier(base_estimator=DecisionTreeClassifier(class_weight={1: 0.8, 0: 0.2}, max_depth=2), n_estimators=50), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearDiscriminantAnalysis(), cv=5))
         # self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=2, n_estimators=50), cv=5)

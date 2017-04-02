@@ -48,12 +48,12 @@ class AverageCurve(object):
         elif key in ["micro", "macro"]:
             return key + '-average'
 
-    def plot(self):
-        plt.figure()
+    def plot(self, num=1):
+        plt.figure(num)
         self.makePlot()
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
-        plt.show()
+        plt.draw()
 
     def makePlot(self):
         for key in sorted(self.curves):
