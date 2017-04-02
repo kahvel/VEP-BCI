@@ -56,16 +56,16 @@ class CvCurve(object):
         raise NotImplementedError("getCurve not implemented!")
 
     def calculateThresholds(self):
-        cut_off_threshold1 = []
-        for key in self.ordered_labels:
-            _, y, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
-            cut_off_threshold1.append(thresholds[np.argmax(y[:-1])])
-        return cut_off_threshold1
-        # cut_off_threshold = []
+        # cut_off_threshold1 = []
         # for key in self.ordered_labels:
-        #     thresholds = self.curves_by_class[key].calculateThresholds()
-        #     cut_off_threshold.append(np.mean(thresholds))
-        # # return cut_off_threshold
+        #     _, y, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
+        #     cut_off_threshold1.append(thresholds[np.argmax(y[:-1])])
+        # return cut_off_threshold1
+        cut_off_threshold = []
+        for key in self.ordered_labels:
+            thresholds = self.curves_by_class[key].calculateThresholds()
+            cut_off_threshold.append(np.mean(thresholds))
+        return cut_off_threshold
         # result = (np.array(cut_off_threshold1) + np.array(cut_off_threshold))/2.0
         # return result
 

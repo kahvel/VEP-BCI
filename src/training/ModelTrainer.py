@@ -98,6 +98,13 @@ class ModelTrainer(object):
             predictions.append(model.predictProba(split_data[i]))
         return predictions
 
+    # def secondModel(self, cv_predictions, split_data):
+    #     data = np.concatenate(cv_predictions, axis=0)
+    #     labels = np.concatenate(split_data, axis=0)
+    #     model = LinearDiscriminantAnalysis()
+    #     model.fit(data, labels)
+    #     return model
+
     def start(self):
         training_data, training_labels = self.cv_model.getConcatenatedMatrix(self.training_recordings)
 
@@ -124,14 +131,17 @@ class ModelTrainer(object):
         cv_predictions = self.crossValidation(self.cv_model, split_data, split_labels)
         self.cv_model.fit(training_data, training_labels)
         label_order = self.cv_model.getOrderedLabels()
+        modified_training_labels = training_labels[1:-1]
+        modified_testing_labels = testing_labels[1:-1]
+        split_labels = map(lambda x: x[1:-1], split_labels)
         if len(split_data) == 1:
-            training_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
-            training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
+            training_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), modified_training_labels)
+            training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), modified_training_labels)
         else:
             training_roc = CvCurves.RocCvCurve(label_order).calculate(cv_predictions, split_labels)
             training_prc = CvCurves.PrecisionRecallCvCurve(label_order).calculate(cv_predictions, split_labels)
-        testing_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
-        testing_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), testing_labels)
+        testing_roc = AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), modified_testing_labels)
+        testing_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), modified_testing_labels)
         thresholds = training_prc.calculateThresholds()
 
         # training_prc = AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), training_labels)
@@ -150,8 +160,8 @@ class ModelTrainer(object):
             print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, thresholds, i/10.0), map(str, training_labels), self.cv_model.getOrderedLabels())
             print self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, thresholds, i/10.0), map(str, testing_labels), self.cv_model.getOrderedLabels())
 
-        self.plotAllChanges(self.cv_model.predictProba(training_data), training_labels, thresholds)
-        self.plotAllChanges(self.cv_model.predictProba(testing_data), testing_labels, thresholds)
+        self.plotAllChanges(self.cv_model.predictProba(training_data), modified_training_labels, thresholds)
+        self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, thresholds)
         plt.show()
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])
