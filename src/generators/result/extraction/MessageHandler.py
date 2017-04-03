@@ -1,7 +1,7 @@
 import constants as c
 from generators import AbstractGenerator, MultipleGenerators
 from generators.result.extraction import CoordinatesHandler
-from generators.coordinates import PSD
+from generators.coordinates import PSD, Signal
 
 
 class MessageHandler(AbstractGenerator.AbstractMyGenerator):
@@ -115,6 +115,17 @@ class Psda(SingleCoordinatesGeneratorHandler):
 
     def getGenerator(self, options):
         return CoordinatesHandler.PsdaExtraction()
+
+
+class Wavelet(SingleCoordinatesGeneratorHandler):
+    def __init__(self, connection):
+        SingleCoordinatesGeneratorHandler.__init__(self, connection, c.WAVELET)
+
+    def getCoordinatesGenerator(self):
+        return Signal.Signal()
+
+    def getGenerator(self, options):
+        return CoordinatesHandler.WaveletExtraction()
 
 
 class MultipleCoordinatesGeneratorHandler(MessageHandler):

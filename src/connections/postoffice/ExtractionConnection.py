@@ -61,7 +61,9 @@ class ExtractionMethodConnection(ExtractionConnection):
             return self.getLrt()
         elif method == c.SNR_PSDA:
             return self.getSnrPsda()
-        elif method in (c.PSDA,):
+        elif method == c.PSDA:
+            return ExtractionSensorConnection()
+        elif method == c.WAVELET:
             return ExtractionSensorConnection()
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
@@ -102,11 +104,16 @@ class ExtractionSensorConnection(ExtractionConnection):
     def getConnection(self, method):
         if method == c.PSDA:
             return self.getPsda()
+        elif method == c.WAVELET:
+            return self.getWavelet()
         else:
             raise ValueError("Illegal argument in getConnection: " + str(method))
 
     def getPsda(self):
         return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.Psda)
+
+    def getWavelet(self):
+        return ConnectionPostOfficeEnd.ExtractionConnection(MessageHandler.Wavelet)
 
     def setup(self, all_options):
         self.close()  # In the first execution of setup, MultipleConnections does not have any connections, thus nothing gets closed

@@ -2,6 +2,8 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import LinearSVC, SVC
+from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from target_identification import DataCollectors, ColumnsIterator, FeaturesHandler, MatrixBuilder, ScalingFunction
 
@@ -64,9 +66,12 @@ class TrainingModel(Model):
     def setup(self, features_to_use, sample_count, recordings, matrix_builder_types):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
-        self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=3, n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
+        self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=AdaBoostClassifier(base_estimator=DecisionTreeClassifier(class_weight={1: 0.8, 0: 0.2}, max_depth=2), n_estimators=50), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearDiscriminantAnalysis(), cv=5))
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearSVC(class_weight={1: 0.8, 0: 0.2}), cv=5))
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=SVC(class_weight={1: 0.8, 0: 0.2}), cv=5))
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=MLPClassifier(hidden_layer_sizes=(10,10), max_iter=2000), cv=5))
         # self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=2, n_estimators=50), cv=5)
         # self.model = CalibratedClassifierCV(LinearDiscriminantAnalysis(), cv=5)
         self.collector = DataCollectors.TrainingCollector(sample_count)

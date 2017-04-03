@@ -149,8 +149,9 @@ class ModelTrainer(object):
                 testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
 
             # self.plotAllChanges(self.cv_model.predictProba(training_data), modified_training_labels, current_thresholds)
-            # self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, current_thresholds)
-            # plt.show()
+        #     self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, current_thresholds)
+        #     plt.draw()
+        # plt.show()
 
         self.cv_model.fit(np.concatenate(split_data, 0), np.concatenate(split_labels, 0))
         threshold = np.mean(thresholds, 0)

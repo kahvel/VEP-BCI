@@ -294,8 +294,9 @@ SUM_PSDA = "Sum PSDA"
 SNR_PSDA = "SNR PSDA"
 CCA = "CCA"
 LRT = "LRT"
+WAVELET = "CWT"
 
-EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, SNR_PSDA, CCA, LRT)  # Fixes the order for CSV files
+EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, SNR_PSDA, CCA, LRT, WAVELET)  # Fixes the order for CSV files
 
 # Plot type buttons
 SIGNAL = "Signal"
@@ -390,7 +391,7 @@ POST_OFFICE_MESSAGES = BCI_MESSAGES + TRAINING_MESSAGES + (EXIT_MESSAGE,) + ROBO
 CLEAR_BUFFER_MESSAGE = "ClearBuffer"
 
 # By default load values from this file
-DEFAULT_SETTINGS_FILE_NAME = "default123.txt"  # TODO change back
+DEFAULT_SETTINGS_FILE_NAME = "default.txt"
 DEFAULT_TRAINING_SETTINGS_FILE_NAME = "traindefault.txt"
 
 DATA_BACKGROUND = "Background"

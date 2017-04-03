@@ -1,8 +1,6 @@
 import constants as c
 from generators import AbstractGenerator
-from generators.result.extraction.ranker import CorrelationRanker, PsdaRanker, PsdaSnrRanker
-
-import numpy as np
+from generators.result.extraction.ranker import CorrelationRanker, PsdaRanker, PsdaSnrRanker, WaveletRanker
 
 
 class MultipleCoordinatesGeneratorHandler(AbstractGenerator.AbstractExtracionGenerator):
@@ -64,6 +62,17 @@ class PsdaExtraction(AbstractGenerator.AbstractExtracionGenerator):
     def __init__(self):
         AbstractGenerator.AbstractExtracionGenerator.__init__(self)
         self.ranker = PsdaRanker.PsdaRanker()
+
+    def getGenerator(self, options):
+        while True:
+            coordinates = yield
+            yield self.ranker.getResults(coordinates)
+
+
+class WaveletExtraction(AbstractGenerator.AbstractExtracionGenerator):
+    def __init__(self):
+        AbstractGenerator.AbstractExtracionGenerator.__init__(self)
+        self.ranker = WaveletRanker.WaveletRanker()
 
     def getGenerator(self, options):
         while True:
