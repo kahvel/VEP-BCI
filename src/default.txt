@@ -288,17 +288,17 @@ DisableDeleteFrame;1;Disable
 Disable;1;0;
 Delete;None;0;
 Test;0;
-Source;Device;0;0, 0, 0;
+Source;Device;0;;
 Allow repeating;1;0;
 Use;EEG;1;Source
 Clear buffers;1;0;
-Test target;Random;0;0, 0, 0;
+Test target;Record;0;0, 0, 0;
 Process short signals;0;0;
 Standby;None;0;0, 0, 0;
-Total Time;7680;1;Unlimited
-Unlimited;1;0;
-Per Target;9;1;Test target
-+/-;2;1;Test target
+Total Time;7680;0;
+Unlimited;0;0;
+Per Target;9;0;
++/-;2;0;
 Color;0;
 Color;None;0;
 Textbox;#ffffb3;0;
@@ -322,7 +322,7 @@ Disable;1;0;
 Class;0;
 ClassificationTabControlFrame;0;
 Type;None;0;
-Model;None;1;;Type
+Model;None;0;;
 ClassificationTabFilterOptionsFrame;0;
 Results;0;
 Always delete;0;0;

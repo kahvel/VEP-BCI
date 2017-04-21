@@ -18,6 +18,6 @@ class BufferClearer(object):
 
     def clearAfterExpectedTargetChange(self, target):
         if target != self.previous_target and self.previous_target != "FirstTarget":
-            if self.clear_buffers and self.source_option != c.EEG_SOURCE_DEVICE:
+            if self.clear_buffers:  # and self.source_option != c.EEG_SOURCE_DEVICE:
                 self.connections.sendClearBuffersMessage()
         self.previous_target = target

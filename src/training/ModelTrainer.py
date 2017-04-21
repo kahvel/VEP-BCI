@@ -125,7 +125,6 @@ class ModelTrainer(object):
             training_labels = np.concatenate(split_training_labels, 0)
             testing_data = split_data[test_data_index]
             testing_labels = split_labels[test_data_index]
-            split_training_predictions = self.crossValidation(self.cv_model, split_training_data, split_training_labels)
             self.cv_model.fit(training_data, training_labels)
             label_order = self.cv_model.getOrderedLabels()
             split_modified_training_labels = map(lambda x: x[1:-1], split_training_labels)
@@ -135,6 +134,7 @@ class ModelTrainer(object):
                 training_rocs.append(AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), modified_training_labels))
                 training_prcs.append(AverageCurve.AveragePrecisionRecallCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(training_data)), modified_training_labels))
             else:
+                split_training_predictions = self.crossValidation(self.cv_model, split_training_data, split_training_labels)
                 training_rocs.append(CvCurves.RocCvCurve(label_order).calculate(split_training_predictions, split_modified_training_labels))
                 training_prcs.append(CvCurves.PrecisionRecallCvCurve(label_order).calculate(split_training_predictions, split_modified_training_labels))
             testing_rocs.append(AverageCurve.AverageRocCurve(label_order).calculate(np.transpose(self.cv_model.predictProba(testing_data)), modified_testing_labels))
@@ -152,8 +152,8 @@ class ModelTrainer(object):
         #     self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, current_thresholds)
         #     plt.draw()
         # plt.show()
-
-        self.cv_model.fit(np.concatenate(split_data, 0), np.concatenate(split_labels, 0))
+        #
+        # self.cv_model.fit(np.concatenate(split_data, 0), np.concatenate(split_labels, 0))
         threshold = np.mean(thresholds, 0)
         testing_prc = CvCurves.PrecisionRecallCvCurve(self.cv_model.getOrderedLabels())
         testing_roc = CvCurves.RocCvCurve(self.cv_model.getOrderedLabels())

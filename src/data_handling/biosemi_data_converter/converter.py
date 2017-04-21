@@ -13,36 +13,19 @@ def toFloat(string):
 def getRows(list_of_dicts, function):
     rows = []
     for dict in list_of_dicts:
-        rows.append({key: function(dict[key]) for key in dict})
+        rows.append({key: function(dict[key]) for key in ["O1", "O2"]})
     return rows
 
-# 1
-# 8 - 6330
-# 14 - 6343
-# 28 - 6370
-# 2
-# 8 - 6361
-# 14 - 6361
-# 28 - 6379
 
-length = 6379
+n_sensors = 128
+fieldnames = list(range(n_sensors))
+fieldnames[14] = "O1"
+fieldnames[27] = "O2"
+
 
 def loadData(file_name):
     with open(file_name, "rU") as csv_file:
-        return getRows(csv.DictReader(csv_file, fieldnames=list(range(length))), toFloat)
-
-
-data = loadData("28sub1trial2.csv")
-
-indices = [14, 27]
-new_data = [{} for _ in range(len(data[0]))]
-for i, dict in enumerate(data):
-    if i in indices:
-        for j in sorted(dict):
-            new_data[j][i] = dict[j]
-
-# print data
-# print new_data
+        return getRows(csv.DictReader(csv_file, fieldnames=fieldnames), toFloat)
 
 
 def writeCsv(file_name, header, data):
@@ -52,13 +35,27 @@ def writeCsv(file_name, header, data):
         writer.writerows(data)
 
 
-header = [14, 27]
+def getFileContents(file_name, target):
+    data = loadData(file_name)[1280:5120]
+    length = len(data)
+    packet_numbers = list(range(1, length+1))
+    expected_targets = [target]*length
+    predicted_targets = [None]*length
+    label_file_content = map(lambda x: {"Packet": x[0], "True": x[1], "Predicted": x[2]}, zip(packet_numbers, expected_targets, predicted_targets))
+    return data, label_file_content
 
-# writeCsv("rec6.csv", header, new_data)
+file_name = "sub4trial5t.csv"
+frequencies = ["8", "14", "28"]
+data = {}
+label_file_content = {}
+all_data = []
+all_label_file_content = []
+for i, frequency in enumerate(frequencies):
+    data[frequency], label_file_content[frequency] = getFileContents("./" + frequency + "/sub4/" + frequency + file_name, i+1)
+    all_data.extend(data[frequency])
+    all_label_file_content.extend(label_file_content[frequency])
 
+header = ["O1", "O2"]
 label_file_header = ("Packet", "True", "Predicted")
-packet_numbers = list(range(1, length+1))
-expected_targets = [3]*length
-predicted_targets = [None]*length
-label_file_content = map(lambda x: {"Packet": x[0], "True": x[1], "Predicted": x[2]}, zip(packet_numbers, expected_targets, predicted_targets))
-writeCsv("eeg_labels.csv", label_file_header, label_file_content)
+writeCsv("eeg.csv", header, all_data)
+writeCsv("eeg_labels.csv", label_file_header, all_label_file_content)
