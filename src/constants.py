@@ -144,8 +144,9 @@ WINDOW_MONITOR = "Monitor"
 
 # Training tab buttons
 TRAINING_RECORD = "Record"
-TRAINING_SAVE_EEG = "Save"
-TRAINING_LOAD_EEG = "Load"
+RECORDING_SAVE_TAB = "Save"
+RECORDING_SAVE_TABS = "Save"
+RECORDING_LOAD_TABS = "Load"
 
 # Training tab options menu
 TRAINING_RECORD_NORMAL = "Normal"

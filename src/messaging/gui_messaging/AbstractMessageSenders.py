@@ -16,6 +16,9 @@ class Leaf(MessageDown):
     def sendEventToChildren(self, function):
         function(self)
 
+    def sendEventToChildrenWithIndex(self, function, j):
+        function(self, j)
+
 
 class NonLeaf(MessageDown):
     def __init__(self, widgets_list):
@@ -27,6 +30,12 @@ class NonLeaf(MessageDown):
         if not message == c.STOP_EVENT_SENDING:
             for widget in self.widgets_list:
                 widget.sendEventToChildren(function)
+
+    def sendEventToChildrenWithIndex(self, function, j):
+        message = function(self, j)
+        if not message == c.STOP_EVENT_SENDING:
+            for i, widget in enumerate(self.widgets_list):
+                widget.sendEventToChildrenWithIndex(function, i)
 
 
 class MessageUp(object):

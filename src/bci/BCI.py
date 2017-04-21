@@ -41,7 +41,7 @@ class BCI(object):
         self.eeg_or_features_option = options[c.DATA_TEST][c.TEST_TAB_RECORDED_TYPE_OPTION_MENU]
         self.setupTargetSwitcher(options, self.source_option)
         self.record_option = options[c.DATA_RECORD][c.TRAINING_RECORD]
-        self.total_time = self.getTotalTime(options[c.DATA_TEST][c.TEST_TAB_UNLIMITED], options[c.DATA_TEST][c.TEST_TAB_TOTAL_TIME])
+        self.total_time = self.getTotalTime(options[c.DATA_TEST][c.TEST_TAB_UNLIMITED], options[c.DATA_TEST][c.TEST_TAB_TOTAL_TIME], self.source_option)
         self.target_freqs = options[c.DATA_FREQS]
         self.setupStandby(options)
         self.target_identification.setup(options)
@@ -72,8 +72,8 @@ class BCI(object):
         self.results.setTime(self.message_counter)
         self.connections.sendMessage(c.STOP_MESSAGE)
 
-    def getTotalTime(self, unlimited, test_time):
-        return float("inf") if unlimited else test_time
+    def getTotalTime(self, unlimited, test_time, source_option):
+        return float("inf") if unlimited or source_option != c.EEG_SOURCE_DEVICE else test_time
 
     def targetChangingLoop(self):
         target = None

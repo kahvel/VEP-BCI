@@ -21,15 +21,25 @@ class RecordNotebookTab(DisableDeleteNotebookTab.Delete):
             self.getDeleteButton(4, 1, deleteTab)
         ))
 
+    def saveResults(self, directory):
+        file = open(os.path.join(directory, "results.txt"), "w")
+        self.sendEventToChildren(lambda x: x.saveBciSettingsEvent(file))
+
+    def saveAllTabsEvent(self, directory, i):
+        directory_name = os.path.join(directory, "rec" + str(i+1))
+        if not os.path.exists(directory_name):
+            os.makedirs(directory_name)
+        self.saveResults(directory_name)
+        self.widgets_dict[c.EEG_FRAME].sendEventToChildren(lambda x: x.saveEegEvent(directory_name))
+
     def saveEegEvent(self, directory):
         if self.saveMe():
-            file = open(os.path.join(directory, "results.txt"), "w")
-            self.sendEventToChildren(lambda x: x.saveBciSettingsEvent(file))
+            self.saveResults(directory)
         else:
             return c.STOP_EVENT_SENDING
 
     def saveMe(self):
-        return self.widgets_dict[c.TRAINING_SAVE_EEG].saveMe()
+        return self.widgets_dict[c.RECORDING_SAVE_TAB].saveMe()
 
     def loadEegEvent(self, directory):
         file_name = os.path.join(directory, "results.txt")
@@ -45,7 +55,7 @@ class RecordNotebookTab(DisableDeleteNotebookTab.Delete):
 
 class SaveButton(Buttons.EventNotebookSaveButton):
     def __init__(self, parent, row, column, **kwargs):
-        Buttons.EventNotebookSaveButton.__init__(self, parent, c.TRAINING_SAVE_EEG, row, column, **kwargs)
+        Buttons.EventNotebookSaveButton.__init__(self, parent, c.RECORDING_SAVE_TAB, row, column, **kwargs)
 
     def sendSaveEvent(self, file):
         return lambda x: x.saveEegEvent(file)
@@ -127,9 +137,12 @@ class EegFrame(Frame.Frame):
         # plt.plot(time, self.eeg.getColumnsAsIntegers(self.eeg.data)["O2"][(index-1)*32:(index-1)*32+window])
         # plt.show()
 
-    def saveEegEvent(self, directory):
+    def saveEegAndFeatures(self, directory):
         self.eeg.save(directory)
         self.features.save(directory)
+
+    def saveEegEvent(self, directory):
+        self.saveEegAndFeatures(directory)
 
     def getFeaturesEvent(self):
         if self.has_features:  # Last tab has no features
