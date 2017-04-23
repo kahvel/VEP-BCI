@@ -37,6 +37,23 @@ class Model(ColumnsIterator.ColumnsIterator):
     def predictProba(self, data):
         return np.transpose(map(self.moving_average, np.transpose(self.model.predict_proba(data))))
 
+    def splitThresholdPredict(self, data, thresholds, margin=0):
+        # thresholds
+        # [[ 0.61298172  0.66761283  0.78342493] <- threshold for class 1, 2 and 3 (has to be larger than that)
+        #  [ 0.38697659  0.06970417  0.22482575] <- class 1 is classified according to score of class 2 (has to be smaller than that) etc. First column is still class 1 threshold.
+        #  [ 0.04919277  0.42939339  0.07072513]] <- class 1 is classified according to score of class 3 (has to be smaller than that) etc.
+        predictions = []
+        scores = self.predictProba(data)
+        thresholds = np.transpose(thresholds)
+        for sample_scores in scores:
+            predicted = None
+            for i, class_thresholds in enumerate(thresholds):
+                if all(map(lambda (j, (s, t)): s > t*(1+margin) if j == 0 else s < t*(1-margin), enumerate(zip(sample_scores, class_thresholds)))):
+                    predicted = i+1
+                    break
+            predictions.append(str(predicted))
+        return predictions
+
     def thresholdPredict(self, data, thresholds, margin=0):
         predictions = []
         scores = self.predictProba(data)
