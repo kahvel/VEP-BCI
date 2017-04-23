@@ -1,10 +1,11 @@
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC, SVC
 from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.feature_selection import SelectFpr
 from target_identification import DataCollectors, ColumnsIterator, FeaturesHandler, MatrixBuilder, ScalingFunction
 
 import numpy as np
@@ -62,20 +63,35 @@ class TrainingModel(Model):
         self.features_to_use = None
         self.collector = None
         self.features_handler = None
+        self.feature_selector = None
 
     def setup(self, features_to_use, sample_count, recordings, matrix_builder_types):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
+        self.feature_selector = SelectFpr(alpha=5e-2)
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=ExtraTreesClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=3))
         self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=AdaBoostClassifier(base_estimator=DecisionTreeClassifier(class_weight={1: 0.8, 0: 0.2}, max_depth=2), n_estimators=50), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearDiscriminantAnalysis(), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearSVC(class_weight={1: 0.8, 0: 0.2}), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=SVC(class_weight={1: 0.8, 0: 0.2}), cv=5))
-        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=MLPClassifier(hidden_layer_sizes=(10,10), max_iter=2000), cv=5))
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=MLPClassifier(hidden_layer_sizes=(30,), max_iter=2000), cv=5))
         # self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(max_depth=2, n_estimators=50), cv=5)
         # self.model = CalibratedClassifierCV(LinearDiscriminantAnalysis(), cv=5)
         self.collector = DataCollectors.TrainingCollector(sample_count)
         self.setupCollectorAndBuilder(sample_count, self.scaling_functions, self.extraction_method_names, matrix_builder_types)
+
+    def fit(self, data, labels):
+        self.feature_selector.fit(data, labels)
+        # print self.feature_selector.get_support(True)
+        print len(self.feature_selector.get_support(True))
+        Model.fit(self, self.feature_selector.transform(data), labels)
+
+    def predict(self, data):
+        return Model.predict(self, self.feature_selector.transform(data))
+
+    def predictProba(self, data):
+        return Model.predictProba(self, self.feature_selector.transform(data))
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
         self.scaling_functions = ScalingFunction.TrainingScalingFunctions()

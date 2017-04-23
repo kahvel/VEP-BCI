@@ -88,7 +88,7 @@ class EegFrame(Frame.Frame):
         self.has_features = False
         self.has_eeg = False
 
-    def plotEeg(self, sensors=("O1", "O2", "P7", "P8")):
+    def plotEeg(self, sensors=("O1", "O2")):
         x = list(range(0, len(self.eeg.data)))
         plt.figure()
         for i, sensor in enumerate(sensors):

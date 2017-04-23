@@ -39,6 +39,12 @@ class RecordTab(Frame.Frame, Savable.LoadableDirectory, Savable.SavableDirectory
         """
         self.sendEventToAll(lambda x: x.loadEegEvent(directory), True)
 
-    def saveEegEvent(self, directory):
+    def saveSettings(self, directory):
         file = open(os.path.join(directory, "settings.txt"), "w")
         self.sendEventToAll(lambda x: x.saveBciSettingsEvent(file))
+
+    def saveEegEvent(self, directory):
+        self.saveSettings(directory)
+
+    def saveAllTabsEvent(self, directory, i):
+        self.saveSettings(directory)

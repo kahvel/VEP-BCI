@@ -49,7 +49,7 @@ class ModelTrainer(object):
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True])
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True, False])
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -104,6 +104,12 @@ class ModelTrainer(object):
     #     model = LinearDiscriminantAnalysis()
     #     model.fit(data, labels)
     #     return model
+
+    def calculateAccuracy(self, confusion_matrix):
+        return np.trace(confusion_matrix)/confusion_matrix.sum()
+
+    def calculateAccuracyIgnoringLastColumn(self, confusion_matrix):
+        return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
 
     def start(self):
         split_data, split_labels = self.splitTrainingData()
@@ -160,11 +166,14 @@ class ModelTrainer(object):
         testing_prc.calculateFromCurves(testing_prcs)
         testing_roc.calculateFromCurves(testing_rocs)
 
+        print self.calculateAccuracy(training_confusion_matrices)
         print training_confusion_matrices
+        print self.calculateAccuracy(testing_confusion_matrices)
         print testing_confusion_matrices
         for i in range(3):
             print i
             print training_threshold_confusion_matrices[i]
+            print self.calculateAccuracyIgnoringLastColumn(testing_threshold_confusion_matrices[i])
             print testing_threshold_confusion_matrices[i]
 
         # dummy_model = CvCalibrationModel.TrainingModel()
