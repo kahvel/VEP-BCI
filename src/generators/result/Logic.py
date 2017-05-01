@@ -229,10 +229,9 @@ class ProjectionOntoLastPrincipalComponents(Projection):
         """
         return component/np.sqrt(variance)
 
-
     def addComponentIfEmpty(self, new_axis, model):
         if len(new_axis) == 0:
-            print "Added only one component that explains " + str(model.explained_variance_ratio_[-1]) + "% of variance."
+            # print "Added only one component that explains " + str(model.explained_variance_ratio_[-1]) + "% of variance."
             return [model.components_[-1]]
         else:
             return new_axis

@@ -59,11 +59,11 @@ class DataAndExpectedTargets(Switchable.Switchable):
             return None
 
     def toFloat(self, string):
-        return float(string)
-        # if string != "":  # For converted data
-        #     return float(string)
-        # else:
-        #     return None
+        # return float(string)
+        if string != "":  # For converted data
+            return float(string)
+        else:
+            return None
 
     def getColumns(self, list_of_dicts, function):
         columns = {}
@@ -142,8 +142,8 @@ class Eeg(DataAndExpectedTargets):
         return self.data
 
     def defaultGetRows(self, list_of_dicts):
-        return self.getRowsAsIntegers(list_of_dicts)
-        # return list(filter(lambda x: x["O1"] is not None, self.getRowsAsFloats(list_of_dicts)))  # For converted data
+        # return self.getRowsAsIntegers(list_of_dicts)
+        return list(filter(lambda x: x["O1"] is not None, self.getRowsAsFloats(list_of_dicts)))  # For converted data
 
 
 class Features(DataAndExpectedTargets):
