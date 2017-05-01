@@ -1,6 +1,6 @@
 import constants as c
 from generators import AbstractGenerator
-from generators.result.extraction.ranker import CorrelationRanker, PsdaRanker, PsdaSnrRanker, WaveletRanker
+from generators.result.extraction.ranker import CorrelationRanker, PsdaRanker, MecRanker, WaveletRanker
 
 
 class MultipleCoordinatesGeneratorHandler(AbstractGenerator.AbstractExtracionGenerator):
@@ -35,10 +35,10 @@ class LrtExtraction(MultipleCoordinatesGeneratorHandler):
         self.ranker = CorrelationRanker.LrtRanker()
 
 
-class PsdaSnrExtraction(MultipleCoordinatesGeneratorHandler):
+class MecExtraction(MultipleCoordinatesGeneratorHandler):
     def __init__(self):
         MultipleCoordinatesGeneratorHandler.__init__(self)
-        self.ranker = PsdaSnrRanker.PsdaSnrRanker()
+        self.ranker = MecRanker.MecRanker()
 
     # def getGenerator(self, options):  # Removed after realising PSDA SNR does not need PSDA coordinates.
     #     max_length = options[c.DATA_OPTIONS][c.OPTIONS_LENGTH]

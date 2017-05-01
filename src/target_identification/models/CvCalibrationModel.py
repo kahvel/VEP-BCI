@@ -35,6 +35,10 @@ class Model(ColumnsIterator.ColumnsIterator):
         return ret[n - 1:] / n
 
     def predictProba(self, data):
+        # For splitThresholdPredict?
+        # old_pred = np.transpose(map(self.moving_average, np.transpose(self.model.predict_proba(data))))
+        # n = old_pred.shape[1]
+        # return map(lambda probas: list(probas[i]-sum(probas[(i+j) % n] for j in range(1, n)) for i in range(n)), old_pred)
         return np.transpose(map(self.moving_average, np.transpose(self.model.predict_proba(data))))
 
     def splitThresholdPredict(self, data, thresholds, margin=0):
@@ -49,6 +53,7 @@ class Model(ColumnsIterator.ColumnsIterator):
             predicted = None
             for i, class_thresholds in enumerate(thresholds):
                 if all(map(lambda (j, (s, t)): s > t*(1+margin) if j == 0 else s < t*(1-margin), enumerate(zip(sample_scores, class_thresholds)))):
+                # if sample_scores[0] > class_thresholds[0] or all(map(lambda (s, t): s < t*(1+margin), zip(sample_scores[1:], class_thresholds[1:]))):
                     predicted = i+1
                     break
             predictions.append(str(predicted))

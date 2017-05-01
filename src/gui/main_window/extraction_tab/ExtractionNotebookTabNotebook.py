@@ -98,6 +98,6 @@ class ExtractionTabButtonFrame(OptionsFrame.OptionsFrameFrame):
             Buttons.SunkenButton(self, c.SUM_PSDA, 0, 1),
             Buttons.SunkenButton(self, c.CCA,      0, 2),
             Buttons.SunkenButton(self, c.LRT,      1, 0),
-            Buttons.SunkenButton(self, c.SNR_PSDA, 1, 1),
+            Buttons.SunkenButton(self, c.MEC, 1, 1),
             Buttons.SunkenButton(self, c.WAVELET,  1, 2),
         ))

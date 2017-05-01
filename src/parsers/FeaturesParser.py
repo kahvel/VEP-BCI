@@ -48,7 +48,7 @@ class ResultsParser(object):
                         self.parseHarmonicResults(parse_result, results[tab][method], data)
                     elif method[0] == c.PSDA:
                         self.parseSensorResults(parse_result, results[tab][method], data)
-                    elif method[0] == c.SNR_PSDA:
+                    elif method[0] == c.MEC:
                         self.parseHarmonicResults(parse_result, results[tab][method], data)
         return self.parse_result
 
@@ -143,7 +143,7 @@ class Flattener(object):
             for method, sensors in features[tab]:
                 if method == c.CCA or method == c.LRT:
                     parse_result.update(self.parseFrequencyResults(tab, method, sensors, c.RESULT_SUM, features[tab][method, sensors], str(sensors)))
-                elif method == c.SUM_PSDA or method == c.SNR_PSDA:
+                elif method == c.SUM_PSDA or method == c.MEC:
                     parse_result.update(self.parseHarmonicResults(tab, method, sensors, features[tab][method, sensors], str(sensors)))
                 elif method == c.PSDA or method == c.WAVELET:
                     parse_result.update(self.parseSensorResults(tab, method, sensors, features[tab][method, sensors]))

@@ -6,6 +6,8 @@ from target_identification.models import LdaModel, TransitionModel, CvCalibratio
 from curves import AverageCurve, CvCurves
 import constants as c
 
+from sklearn.ensemble import AdaBoostClassifier
+
 
 class ModelTrainer(object):
     def __init__(self):
@@ -143,10 +145,15 @@ class ModelTrainer(object):
     def calculateSplitThresholds(self, split_training_prcs):
         split_current_thresholds = map(lambda x: np.array(x.calculateThresholds()), split_training_prcs[-1])
         split_current_thresholds = map(lambda (i, t): t*-1 if i != 0 else t, enumerate(split_current_thresholds))
-        print np.array(split_current_thresholds)
         split_current_thresholds = list(np.roll(t, -i) for i, t in enumerate(split_current_thresholds))
-        print np.array(split_current_thresholds)
         return split_current_thresholds
+
+    # def calculateMultidimensionalPrc(self, label_order, predictions, rolled_labels):
+    #     curves = self.calculateSplitPrcs(label_order, predictions, rolled_labels)
+    #     for curve in curves:
+    #         for class_curve in curve.curves_by_class:
+    #             for split_curve in class_curve.curves:
+
 
     def start(self):
         split_data, split_labels = self.splitTrainingData()
@@ -165,6 +172,7 @@ class ModelTrainer(object):
         n_thresholds = 3
         training_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
+        # split_testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         assert len(split_data) > 1
         for test_data_index in range(len(split_data)):
             split_training_data = self.allExceptOne(split_data, test_data_index)
@@ -189,6 +197,10 @@ class ModelTrainer(object):
                 split_training_predictions = np.array(self.crossValidation(self.cv_model, split_training_data, split_training_labels))
                 training_rocs.append(self.calculateCvRocCurve(label_order, split_training_predictions, split_modified_training_labels))
                 training_prcs.append(self.calculateCvPrcCurve(label_order, split_training_predictions, split_modified_training_labels))
+                # n = len(label_order)
+                # subtracted_predictions = map(lambda split: map(lambda probas: list(probas[i]-sum(probas[(i+j) % n] for j in range(1, n)) for i in range(n)), split), split_training_predictions)
+                # training_rocs.append(self.calculateCvRocCurve(label_order, subtracted_predictions, split_modified_training_labels))
+                # training_prcs.append(self.calculateCvPrcCurve(label_order, subtracted_predictions, split_modified_training_labels))
                 # split_training_rocs.append(self.calculateSplitRocs(label_order, split_training_predictions, rolled_split_modified_training_labels))
                 # split_training_prcs.append(self.calculateSplitPrcs(label_order, split_training_predictions, rolled_split_modified_training_labels))
             testing_prediction = self.cv_model.predictProba(testing_data)
@@ -201,9 +213,14 @@ class ModelTrainer(object):
 
             training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=label_order)
             testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels, self.cv_model.predict(testing_data), labels=label_order)
+            # model = AdaBoostClassifier(n_estimators=50)
+            # model.fit(training_prediction, training_labels[1:-1])
+            # training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels[1:-1], model.predict(training_prediction), labels=label_order)
+            # testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels[1:-1], model.predict(testing_prediction), labels=label_order)
             for i in range(3):
                 # training_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, current_thresholds, i/10.0), map(str, modified_training_labels), label_order)
-                testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
+                testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
+                # split_testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.splitThresholdPredict(testing_data, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
 
             # self.plotAllChanges(self.cv_model.predictProba(training_data), modified_training_labels, current_thresholds)
         #     self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, current_thresholds)
@@ -226,6 +243,8 @@ class ModelTrainer(object):
             print training_threshold_confusion_matrices[i]
             print self.calculateAccuracyIgnoringLastColumn(testing_threshold_confusion_matrices[i])
             print testing_threshold_confusion_matrices[i]
+            # print self.calculateAccuracyIgnoringLastColumn(split_testing_threshold_confusion_matrices[i])
+            # print split_testing_threshold_confusion_matrices[i]
 
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])

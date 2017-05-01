@@ -185,19 +185,15 @@ class Projection(Logic):
         return np.dot(self.projection_matrix, coordinates)
 
 
-class ProjectionOntoReferenceSignals(ReferenceSignals, Projection):
+class ProjectionOntoReferenceSignals(Projection):
     def __init__(self):
-        ReferenceSignals.__init__(self)
         Projection.__init__(self)
 
     def setup(self, options):
-        ReferenceSignals.setup(self, options)
         Projection.setup(self, options)
-        flat_reference_signals = [signal for sublist in self.reference_signals for signal in sublist]
-        self.initialiseProjectionMatrix(flat_reference_signals)
 
-    def calculateProjectionMatrix(self, At):
-        A = np.transpose(At)
+    def calculateProjectionMatrix(self, A):
+        At = np.transpose(A)
         AtA_inverse = np.linalg.inv(np.dot(At, A))
         return np.dot(np.dot(A, AtA_inverse), At)
 

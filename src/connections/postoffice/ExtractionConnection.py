@@ -59,7 +59,7 @@ class ExtractionMethodConnection(ExtractionConnection):
             return self.getCca()
         elif method == c.LRT:
             return self.getLrt()
-        elif method == c.SNR_PSDA:
+        elif method == c.MEC:
             return self.getSnrPsda()
         elif method == c.PSDA:
             return ExtractionSensorConnection()

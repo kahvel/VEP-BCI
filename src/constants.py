@@ -292,12 +292,12 @@ SETUP_BUTTON = "Setup"
 # Extraction method buttons
 PSDA = "PSDA"
 SUM_PSDA = "Sum PSDA"
-SNR_PSDA = "SNR PSDA"
+MEC = "MEC"
 CCA = "CCA"
 LRT = "LRT"
 WAVELET = "CWT"
 
-EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, SNR_PSDA, CCA, LRT, WAVELET)  # Fixes the order for CSV files
+EXTRACTION_METHOD_NAMES = (PSDA, SUM_PSDA, MEC, CCA, LRT, WAVELET)  # Fixes the order for CSV files
 
 # Plot type buttons
 SIGNAL = "Signal"
@@ -326,7 +326,7 @@ OPTIONS_FRAME = "Options"
 # NB order is important, it is used in writing csv files
 SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
 
-HEADSET_FREQ = 128
+HEADSET_FREQ = 256
 
 # Messages to PostOffice
 START_MESSAGE = "Start"

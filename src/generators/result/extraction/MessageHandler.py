@@ -171,10 +171,10 @@ class LRT(MultipleCoordinatesGeneratorHandler):
 
 class SnrPsda(MultipleCoordinatesGeneratorHandler):
     def __init__(self, connection):
-        MultipleCoordinatesGeneratorHandler.__init__(self, connection, c.SNR_PSDA)
+        MultipleCoordinatesGeneratorHandler.__init__(self, connection, c.MEC)
 
     def getGenerator(self, options):
-        return CoordinatesHandler.PsdaSnrExtraction()
+        return CoordinatesHandler.MecExtraction()
 
     def getCoordinatesGenerator(self):
         return MultipleGenerators.MultipleSignalGenerators()
