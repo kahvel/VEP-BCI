@@ -29,25 +29,24 @@ class Model(ColumnsIterator.ColumnsIterator):
     def predict(self, data):
         return self.model.predict(data)
 
-    def moving_average(self, a, n=3) :
+    def moving_average(self, a, n) :
         ret = np.cumsum(a, dtype=float)
         ret[n:] = ret[n:] - ret[:-n]
         return ret[n - 1:] / n
 
-    def predictProba(self, data):
-        # For splitThresholdPredict?
-        # old_pred = np.transpose(map(self.moving_average, np.transpose(self.model.predict_proba(data))))
+    def predictProba(self, data, n):
+        # Normalisation
+        # old_pred = np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
         # n = old_pred.shape[1]
         # return map(lambda probas: list(probas[i]-sum(probas[(i+j) % n] for j in range(1, n)) for i in range(n)), old_pred)
-        return np.transpose(map(self.moving_average, np.transpose(self.model.predict_proba(data))))
+        return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
 
-    def splitThresholdPredict(self, data, thresholds, margin=0):
+    def splitThresholdPredict(self, scores, thresholds, margin):
         # thresholds
         # [[ 0.61298172  0.66761283  0.78342493] <- threshold for class 1, 2 and 3 (has to be larger than that)
         #  [ 0.38697659  0.06970417  0.22482575] <- class 1 is classified according to score of class 2 (has to be smaller than that) etc. First column is still class 1 threshold.
         #  [ 0.04919277  0.42939339  0.07072513]] <- class 1 is classified according to score of class 3 (has to be smaller than that) etc.
         predictions = []
-        scores = self.predictProba(data)
         thresholds = np.transpose(thresholds)
         for sample_scores in scores:
             predicted = None
@@ -59,9 +58,8 @@ class Model(ColumnsIterator.ColumnsIterator):
             predictions.append(str(predicted))
         return predictions
 
-    def thresholdPredict(self, data, thresholds, margin=0):
+    def thresholdPredict(self, scores, thresholds, margin):
         predictions = []
-        scores = self.predictProba(data)
         for sample_scores in scores:
             predicted = None
             for i in range(len(sample_scores)):
@@ -112,8 +110,8 @@ class TrainingModel(Model):
     def predict(self, data):
         return Model.predict(self, self.feature_selector.transform(data))
 
-    def predictProba(self, data):
-        return Model.predictProba(self, self.feature_selector.transform(data))
+    def predictProba(self, data, n):
+        return Model.predictProba(self, self.feature_selector.transform(data), n)
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
         self.scaling_functions = ScalingFunction.TrainingScalingFunctions()

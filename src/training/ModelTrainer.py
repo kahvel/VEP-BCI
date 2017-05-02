@@ -51,7 +51,7 @@ class ModelTrainer(object):
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True, False])
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True])
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -90,14 +90,14 @@ class ModelTrainer(object):
     def allExceptOne(self, data, index):
         return [x for i, x in enumerate(data) if i != index]
 
-    def crossValidation(self, model, split_data, split_labels):
+    def predictProbaCv(self, model, use_maf, split_data, split_labels):
         folds = len(split_data)
         predictions = []
         for i in range(folds):
             data = np.concatenate(self.allExceptOne(split_data, i), axis=0)
             labels = np.concatenate(self.allExceptOne(split_labels, i), axis=0)
             model.fit(data, labels)
-            predictions.append(model.predictProba(split_data[i]))
+            predictions.append(model.predictProba(split_data[i], self.getMafLength(use_maf)))
         return predictions
 
     # def secondModel(self, cv_predictions, split_data):
@@ -108,10 +108,12 @@ class ModelTrainer(object):
     #     return model
 
     def calculateAccuracy(self, confusion_matrix):
-        return np.trace(confusion_matrix)/confusion_matrix.sum()
+        if not isinstance(confusion_matrix, float):
+            return np.trace(confusion_matrix)/confusion_matrix.sum()
 
     def calculateAccuracyIgnoringLastColumn(self, confusion_matrix):
-        return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
+        if not isinstance(confusion_matrix, float):
+            return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
 
     def getLabelConverter(self, label_order):
         n = len(label_order)
@@ -154,6 +156,112 @@ class ModelTrainer(object):
     #         for class_curve in curve.curves_by_class:
     #             for split_curve in class_curve.curves:
 
+    def calculateAverageCurves(self, label_order, prediction, labels):
+        return (
+            self.calculateAverageRocCurve(label_order, np.transpose(prediction), labels),
+            self.calculateAveragePrcCurve(label_order, np.transpose(prediction), labels)
+        )
+
+    def calculateCvCurves(self, label_order, split_predictions, split_labels):
+        return (
+            self.calculateCvRocCurve(label_order, split_predictions, split_labels),
+            self.calculateCvPrcCurve(label_order, split_predictions, split_labels)
+        )
+
+    def chooseTrainingData(self, n_folds, training_data, split_training_data):
+        if n_folds == 1:
+            return training_data
+        else:
+            return split_training_data
+
+    def modifyLabels(self, use_maf, labels):
+        if use_maf:
+            return labels[1:-1]
+        else:
+            return labels
+
+    def modifySplitLabels(self, use_maf, split_labels):
+        if use_maf:
+            return map(lambda x: x[1:-1], split_labels)
+        else:
+            return split_labels
+
+    def chooseTrainingLabels(self, n_folds, use_maf, training_labels, split_training_labels):
+        if n_folds == 1:
+            return training_labels
+        else:
+            return split_training_labels
+
+    def modifyTrainingLabels(self, n_folds, use_maf, training_labels):
+        if n_folds == 1:
+            return self.modifyLabels(use_maf, training_labels)
+        else:
+            return self.modifySplitLabels(use_maf, training_labels)
+
+    def getMafLength(self, use_maf):
+        return 3 if use_maf else 1
+
+    def fitAndPredictProbaSingle(self, model, use_maf, data, labels):
+        model.fit(data, labels)
+        return model.predictProba(data, self.getMafLength(use_maf))
+
+    def fitAndPredictProbaCv(self, model, use_maf, data, labels):
+        cv_predictions = np.array(self.predictProbaCv(model, use_maf, data, labels))
+        model.fit(np.concatenate(data, 0), np.concatenate(labels, 0))
+        return cv_predictions
+
+    def fitAndPredictProba(self, n_folds, use_maf, model, data, labels):
+        if n_folds == 1:
+            return self.fitAndPredictProbaSingle(model, use_maf, data, labels)
+        else:
+            return self.fitAndPredictProbaCv(model, use_maf, data, labels)
+
+    def calculateTrainingFeatures(self, use_ml, n_folds, use_maf, model, data, labels):
+        if use_ml:
+            return self.fitAndPredictProba(n_folds, use_maf, model, data, labels)
+        else:
+            return self.hackyFeatureFix(n_folds, use_maf, data)
+
+    def calculateTestingFeatures(self, use_ml, use_maf, model, data):
+        if use_ml:
+            return model.predictProba(data, self.getMafLength(use_maf))
+        else:
+            return self.applyRollAndMaf(use_maf, data)
+
+    def hackyFeatureFix(self, n_folds, use_maf, data):
+        if n_folds == 1:
+            return self.applyRollAndMaf(use_maf, data)
+        else:
+            return map(lambda x: self.applyRollAndMaf(use_maf, x), data)
+
+    def applyRollAndMaf(self, use_maf, data):
+        return np.roll(self.applyMovingAverage(data, self.getMafLength(use_maf)), 1, axis=1)
+
+    def applyMovingAverage(self, data, n):
+        return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(data)))
+
+    def moving_average(self, a, n) :
+        ret = np.cumsum(a, dtype=float)
+        ret[n:] = ret[n:] - ret[:-n]
+        return ret[n - 1:] / n
+
+    def getLabelOrder(self, use_ml, model):
+        if use_ml:
+            return model.getOrderedLabels()
+        else:
+            return [1,2,3]
+
+    def calculateCurves(self, n_folds, prediction, labels, label_order):
+        if n_folds == 1:
+            return self.calculateAverageCurves(label_order, prediction, labels)
+        else:
+            return self.calculateCvCurves(label_order, prediction, labels)
+            # n = len(label_order)
+            # subtracted_predictions = map(lambda split: map(lambda probas: list(probas[i]-sum(probas[(i+j) % n] for j in range(1, n)) for i in range(n)), split), split_training_predictions)
+            # training_rocs.append(self.calculateCvRocCurve(label_order, subtracted_predictions, split_modified_training_labels))
+            # training_prcs.append(self.calculateCvPrcCurve(label_order, subtracted_predictions, split_modified_training_labels))
+            # split_training_rocs.append(self.calculateSplitRocs(label_order, split_training_predictions, rolled_split_modified_training_labels))
+            # split_training_prcs.append(self.calculateSplitPrcs(label_order, split_training_predictions, rolled_split_modified_training_labels))
 
     def start(self):
         split_data, split_labels = self.splitTrainingData()
@@ -172,7 +280,8 @@ class ModelTrainer(object):
         n_thresholds = 3
         training_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
-        # split_testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
+        use_ml = False
+        use_maf = True
         assert len(split_data) > 1
         for test_data_index in range(len(split_data)):
             split_training_data = self.allExceptOne(split_data, test_data_index)
@@ -181,46 +290,41 @@ class ModelTrainer(object):
             training_labels = np.concatenate(split_training_labels, 0)
             testing_data = split_data[test_data_index]
             testing_labels = split_labels[test_data_index]
-            self.cv_model.fit(training_data, training_labels)
-            label_order = self.cv_model.getOrderedLabels()
-            split_modified_training_labels = map(lambda x: x[1:-1], split_training_labels)
-            modified_training_labels = np.concatenate(split_modified_training_labels, 0)
-            modified_testing_labels = testing_labels[1:-1]
             # label_converter = self.getLabelConverter(label_order)
             # rolled_split_modified_training_labels = self.rollLabels(label_converter, split_modified_training_labels)
-            training_prediction = self.cv_model.predictProba(training_data)
-            if len(split_training_data) == 1:
-                transposed_training_prediction = np.transpose(training_prediction)
-                training_rocs.append(self.calculateAverageRocCurve(label_order, transposed_training_prediction, modified_training_labels))
-                training_prcs.append(self.calculateAveragePrcCurve(label_order, transposed_training_prediction, modified_training_labels))
-            else:
-                split_training_predictions = np.array(self.crossValidation(self.cv_model, split_training_data, split_training_labels))
-                training_rocs.append(self.calculateCvRocCurve(label_order, split_training_predictions, split_modified_training_labels))
-                training_prcs.append(self.calculateCvPrcCurve(label_order, split_training_predictions, split_modified_training_labels))
-                # n = len(label_order)
-                # subtracted_predictions = map(lambda split: map(lambda probas: list(probas[i]-sum(probas[(i+j) % n] for j in range(1, n)) for i in range(n)), split), split_training_predictions)
-                # training_rocs.append(self.calculateCvRocCurve(label_order, subtracted_predictions, split_modified_training_labels))
-                # training_prcs.append(self.calculateCvPrcCurve(label_order, subtracted_predictions, split_modified_training_labels))
-                # split_training_rocs.append(self.calculateSplitRocs(label_order, split_training_predictions, rolled_split_modified_training_labels))
-                # split_training_prcs.append(self.calculateSplitPrcs(label_order, split_training_predictions, rolled_split_modified_training_labels))
-            testing_prediction = self.cv_model.predictProba(testing_data)
-            transposed_testing_prediction = np.transpose(testing_prediction)
-            testing_rocs.append(self.calculateAverageRocCurve(label_order, transposed_testing_prediction, modified_testing_labels))
-            testing_prcs.append(self.calculateAveragePrcCurve(label_order, transposed_testing_prediction, modified_testing_labels))
+            n_folds = len(split_training_data)
+            tr_data = self.chooseTrainingData(n_folds, training_data, split_training_data)
+            tr_labels = self.chooseTrainingLabels(n_folds, use_maf, training_labels, split_training_labels)
+            tr_prediction = self.calculateTrainingFeatures(use_ml, n_folds, use_maf, self.cv_model, tr_data, tr_labels)
+            label_order = self.getLabelOrder(use_ml, self.cv_model)
+            training_roc, training_prc = self.calculateCurves(
+                n_folds,
+                tr_prediction,
+                self.modifyTrainingLabels(n_folds, use_maf, tr_labels),
+                label_order
+            )
+            training_prcs.append(training_prc)
+            training_rocs.append(training_roc)
+            te_labels = self.modifyLabels(use_maf, testing_labels)
+            testing_prediction = self.calculateTestingFeatures(use_ml, use_maf, self.cv_model, testing_data)
+            testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, te_labels)
+            testing_rocs.append(testing_roc)
+            testing_prcs.append(testing_prc)
             current_thresholds = training_prcs[-1].calculateThresholds()
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 
-            training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=label_order)
-            testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels, self.cv_model.predict(testing_data), labels=label_order)
+            if use_ml:
+                training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=label_order)
+                testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels, self.cv_model.predict(testing_data), labels=label_order)
             # model = AdaBoostClassifier(n_estimators=50)
             # model.fit(training_prediction, training_labels[1:-1])
             # training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels[1:-1], model.predict(training_prediction), labels=label_order)
             # testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels[1:-1], model.predict(testing_prediction), labels=label_order)
             for i in range(3):
-                # training_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_data, current_thresholds, i/10.0), map(str, modified_training_labels), label_order)
-                testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_data, current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
-                # split_testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.splitThresholdPredict(testing_data, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
+                # training_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_prediction, current_thresholds, i/10.0), map(str, modified_training_labels), label_order)
+                testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_prediction, current_thresholds, i/10.0), map(str, te_labels), label_order)
+                # split_testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.splitThresholdPredict(testing_prediction, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
 
             # self.plotAllChanges(self.cv_model.predictProba(training_data), modified_training_labels, current_thresholds)
         #     self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, current_thresholds)
@@ -229,8 +333,8 @@ class ModelTrainer(object):
         #
         # self.cv_model.fit(np.concatenate(split_data, 0), np.concatenate(split_labels, 0))
         threshold = np.mean(thresholds, 0)
-        testing_prc = CvCurves.PrecisionRecallCvCurve(self.cv_model.getOrderedLabels())
-        testing_roc = CvCurves.RocCvCurve(self.cv_model.getOrderedLabels())
+        testing_prc = CvCurves.PrecisionRecallCvCurve(label_order)
+        testing_roc = CvCurves.RocCvCurve(label_order)
         testing_prc.calculateFromCurves(testing_prcs)
         testing_roc.calculateFromCurves(testing_rocs)
 
