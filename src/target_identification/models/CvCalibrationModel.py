@@ -36,10 +36,14 @@ class Model(ColumnsIterator.ColumnsIterator):
 
     def predictProba(self, data, n):
         # Normalisation
+        normalised_probas = map(lambda probas: list(probas[i]/sum(probas) for i in range(len(probas))), self.model.predict_proba(data))
+        return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(normalised_probas)))
+
         # old_pred = np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
         # n = old_pred.shape[1]
         # return map(lambda probas: list(probas[i]-sum(probas[(i+j) % n] for j in range(1, n)) for i in range(n)), old_pred)
-        return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
+
+        # return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
 
     def splitThresholdPredict(self, scores, thresholds, margin):
         # thresholds
@@ -84,13 +88,16 @@ class TrainingModel(Model):
         self.collector = None
         self.features_handler = None
         self.feature_selector = None
+        self.do_feature_selection = None
 
     def setup(self, features_to_use, sample_count, recordings, matrix_builder_types):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
         self.feature_selector = SelectFpr(alpha=5e-2)
-        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=ExtraTreesClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=3))
         self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
+        # self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50), cv=5)  # No OneVsOne
+        # self.model = OneVsRestClassifier(estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}))  # No CalibratedClassifierCV
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=ExtraTreesClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=3))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=AdaBoostClassifier(base_estimator=DecisionTreeClassifier(class_weight={1: 0.8, 0: 0.2}, max_depth=2), n_estimators=50), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearDiscriminantAnalysis(), cv=5))
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=LinearSVC(class_weight={1: 0.8, 0: 0.2}), cv=5))
@@ -105,13 +112,23 @@ class TrainingModel(Model):
         self.feature_selector.fit(data, labels)
         # print self.feature_selector.get_support(True)
         print len(self.feature_selector.get_support(True))
-        Model.fit(self, self.feature_selector.transform(data), labels)
+        if len(self.feature_selector.get_support(True)) == 0:
+            self.do_feature_selection = False
+        else:
+            self.do_feature_selection = True
+        Model.fit(self, self.selectFeatures(data), labels)
+
+    def selectFeatures(self, data):
+        if self.do_feature_selection:
+            return self.feature_selector.transform(data)
+        else:
+            return data
 
     def predict(self, data):
-        return Model.predict(self, self.feature_selector.transform(data))
+        return Model.predict(self, self.selectFeatures(data))
 
     def predictProba(self, data, n):
-        return Model.predictProba(self, self.feature_selector.transform(data), n)
+        return Model.predictProba(self, self.selectFeatures(data), n)
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
         self.scaling_functions = ScalingFunction.TrainingScalingFunctions()

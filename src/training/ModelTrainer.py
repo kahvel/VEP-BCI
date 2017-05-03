@@ -51,7 +51,7 @@ class ModelTrainer(object):
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True])
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True, False])
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -168,12 +168,6 @@ class ModelTrainer(object):
             self.calculateCvPrcCurve(label_order, split_predictions, split_labels)
         )
 
-    def chooseTrainingData(self, n_folds, training_data, split_training_data):
-        if n_folds == 1:
-            return training_data
-        else:
-            return split_training_data
-
     def modifyLabels(self, use_maf, labels):
         if use_maf:
             return labels[1:-1]
@@ -186,17 +180,8 @@ class ModelTrainer(object):
         else:
             return split_labels
 
-    def chooseTrainingLabels(self, n_folds, use_maf, training_labels, split_training_labels):
-        if n_folds == 1:
-            return training_labels
-        else:
-            return split_training_labels
-
-    def modifyTrainingLabels(self, n_folds, use_maf, training_labels):
-        if n_folds == 1:
-            return self.modifyLabels(use_maf, training_labels)
-        else:
-            return self.modifySplitLabels(use_maf, training_labels)
+    def modifyTrainingLabels(self, use_maf, training_labels):
+        return self.modifySplitLabels(use_maf, training_labels)
 
     def getMafLength(self, use_maf):
         return 3 if use_maf else 1
@@ -212,7 +197,7 @@ class ModelTrainer(object):
 
     def fitAndPredictProba(self, n_folds, use_maf, model, data, labels):
         if n_folds == 1:
-            return self.fitAndPredictProbaSingle(model, use_maf, data, labels)
+            return [self.fitAndPredictProbaSingle(model, use_maf, data[0], labels[0])]
         else:
             return self.fitAndPredictProbaCv(model, use_maf, data, labels)
 
@@ -220,22 +205,19 @@ class ModelTrainer(object):
         if use_ml:
             return self.fitAndPredictProba(n_folds, use_maf, model, data, labels)
         else:
-            return self.hackyFeatureFix(n_folds, use_maf, data)
+            return self.hackyFeatureFix(data)
 
     def calculateTestingFeatures(self, use_ml, use_maf, model, data):
         if use_ml:
             return model.predictProba(data, self.getMafLength(use_maf))
         else:
-            return self.applyRollAndMaf(use_maf, data)
+            return self.applyRoll(data)
 
-    def hackyFeatureFix(self, n_folds, use_maf, data):
-        if n_folds == 1:
-            return self.applyRollAndMaf(use_maf, data)
-        else:
-            return map(lambda x: self.applyRollAndMaf(use_maf, x), data)
+    def hackyFeatureFix(self, data):
+        return map(lambda x: self.applyRoll(x), data)
 
-    def applyRollAndMaf(self, use_maf, data):
-        return np.roll(self.applyMovingAverage(data, self.getMafLength(use_maf)), 1, axis=1)
+    def applyRoll(self, data):
+        return np.roll(data, 1, axis=1)
 
     def applyMovingAverage(self, data, n):
         return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(data)))
@@ -251,9 +233,21 @@ class ModelTrainer(object):
         else:
             return [1,2,3]
 
+    def removeSamples(self, data, samples_to_remove):
+        return map(lambda (x, s): np.delete(x, s, axis=0), zip(data, samples_to_remove))
+
+    def removeSamplesBeforeAfterClassChange(self, split_data, split_labels):
+        class_change = map(lambda x: np.where(x[:-1] != x[1:])[0], split_labels)
+        samples_to_remove = map(lambda y: np.concatenate(map(lambda x: [x, x+1], y)), class_change)
+        # print map(lambda (x,y): list(x[i] for i in y), zip(split_labels, samples_to_remove))
+        return (
+            np.array(self.removeSamples(split_data, samples_to_remove)),
+            np.array(self.removeSamples(split_labels, samples_to_remove))
+        )
+
     def calculateCurves(self, n_folds, prediction, labels, label_order):
         if n_folds == 1:
-            return self.calculateAverageCurves(label_order, prediction, labels)
+            return self.calculateAverageCurves(label_order, prediction[0], labels)
         else:
             return self.calculateCvCurves(label_order, prediction, labels)
             # n = len(label_order)
@@ -280,34 +274,50 @@ class ModelTrainer(object):
         n_thresholds = 3
         training_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
-        use_ml = False
-        use_maf = True
+        use_ml = True
+        use_maf_on_features = True
+        use_maf_on_probas = True and use_ml
+        remove_samples_features = True and use_maf_on_features
+        remove_samples_probas = True and use_maf_on_probas
+        if use_maf_on_features:
+            split_data = map(lambda x: self.applyMovingAverage(x, self.getMafLength(use_maf_on_features)), split_data)
+            split_labels = np.array(self.modifySplitLabels(use_maf_on_features, split_labels))
+        if remove_samples_features:
+            split_data, split_labels = self.removeSamplesBeforeAfterClassChange(split_data, split_labels)
+        if use_maf_on_probas:
+            split_labels_proba = self.modifySplitLabels(use_maf_on_probas, split_labels)
+        else:
+            split_labels_proba = split_labels
         assert len(split_data) > 1
         for test_data_index in range(len(split_data)):
             split_training_data = self.allExceptOne(split_data, test_data_index)
             split_training_labels = self.allExceptOne(split_labels, test_data_index)
+            split_training_labels_proba = self.allExceptOne(split_labels_proba, test_data_index)
             training_data = np.concatenate(split_training_data, 0)
             training_labels = np.concatenate(split_training_labels, 0)
             testing_data = split_data[test_data_index]
             testing_labels = split_labels[test_data_index]
+            testing_labels_proba = split_labels_proba[test_data_index]
             # label_converter = self.getLabelConverter(label_order)
             # rolled_split_modified_training_labels = self.rollLabels(label_converter, split_modified_training_labels)
             n_folds = len(split_training_data)
-            tr_data = self.chooseTrainingData(n_folds, training_data, split_training_data)
-            tr_labels = self.chooseTrainingLabels(n_folds, use_maf, training_labels, split_training_labels)
-            tr_prediction = self.calculateTrainingFeatures(use_ml, n_folds, use_maf, self.cv_model, tr_data, tr_labels)
+            tr_prediction = self.calculateTrainingFeatures(use_ml, n_folds, use_maf_on_probas, self.cv_model, split_training_data, split_training_labels)
+            if remove_samples_probas:
+                tr_prediction, split_training_labels_proba = self.removeSamplesBeforeAfterClassChange(tr_prediction, split_training_labels_proba)
             label_order = self.getLabelOrder(use_ml, self.cv_model)
             training_roc, training_prc = self.calculateCurves(
                 n_folds,
                 tr_prediction,
-                self.modifyTrainingLabels(n_folds, use_maf, tr_labels),
+                split_training_labels_proba,
                 label_order
             )
             training_prcs.append(training_prc)
             training_rocs.append(training_roc)
-            te_labels = self.modifyLabels(use_maf, testing_labels)
-            testing_prediction = self.calculateTestingFeatures(use_ml, use_maf, self.cv_model, testing_data)
-            testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, te_labels)
+            testing_prediction = self.calculateTestingFeatures(use_ml, use_maf_on_probas, self.cv_model, testing_data)
+            if remove_samples_probas:
+                testing_prediction, testing_labels_proba = self.removeSamplesBeforeAfterClassChange([testing_prediction], [testing_labels_proba])
+                testing_prediction, testing_labels_proba = testing_prediction[0], testing_labels_proba[0]
+            testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, testing_labels_proba)
             testing_rocs.append(testing_roc)
             testing_prcs.append(testing_prc)
             current_thresholds = training_prcs[-1].calculateThresholds()
@@ -323,7 +333,7 @@ class ModelTrainer(object):
             # testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels[1:-1], model.predict(testing_prediction), labels=label_order)
             for i in range(3):
                 # training_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_prediction, current_thresholds, i/10.0), map(str, modified_training_labels), label_order)
-                testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_prediction, current_thresholds, i/10.0), map(str, te_labels), label_order)
+                testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_prediction, current_thresholds, i/10.0), map(str, testing_labels_proba), label_order)
                 # split_testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.splitThresholdPredict(testing_prediction, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
 
             # self.plotAllChanges(self.cv_model.predictProba(training_data), modified_training_labels, current_thresholds)
