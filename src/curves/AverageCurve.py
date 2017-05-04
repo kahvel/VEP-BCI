@@ -17,7 +17,7 @@ class AverageCurve(object):
     def addMicro(self, predictions, binary_labels):
         raise NotImplementedError("addMicro not implemented!")
 
-    def getCurve(self):
+    def getCurve(self, predictions):
         raise NotImplementedError("getCurve not implemented!")
 
     def setPlotLabels(self):
@@ -38,7 +38,7 @@ class AverageCurve(object):
 
     def calculateBinary(self, predictions, binary_labels):
         for i, label in enumerate(self.ordered_labels):
-            curve = self.getCurve()
+            curve = self.getCurve(predictions[i])
             curve.calculate(binary_labels[i], predictions[i])
             self.curves[label] = curve
 
@@ -92,8 +92,8 @@ class AverageRocCurve(AverageCurve):
         curve.calculate(np.array(binary_labels).ravel(), predictions.ravel())
         self.curves["micro"] = curve
 
-    def getCurve(self):
-        return Curve.RocCurve()
+    def getCurve(self, predictions):
+        return Curve.RocCurve(predictions=predictions)
 
     def setPlotLabels(self):
         plt.plot([0, 1], [0, 1], 'k--')
@@ -142,49 +142,39 @@ class AveragePrecisionRecallCurve(AverageCurve):
         curve.calculateAuc(np.array(binary_labels), predictions, average="micro")
         self.curves["micro"] = curve
 
-    def getCurve(self):
-        return Curve.PrecisionRecallCurve()
+    def getCurve(self, predictions):
+        return Curve.PrecisionRecallCurve(predictions=predictions)
 
     def setPlotLabels(self):
         plt.xlabel('Recall')
         plt.ylabel('Precision')
         plt.title('Precision-recall curve')
 
-    def getItrBitPerMin(self, P, r):
-        window_length = 1
-        step = 0.125
-        look_back_length = 1
-        feature_maf = 3
-        proba_maf = 1
-        mean_detection_time = window_length + (look_back_length + feature_maf + proba_maf + 1.0/r - 4)*step
-        # mean_detection_time = (1.0/r-1)
-        return self.getItrBitPerTrial(P)*60.0/mean_detection_time
-
-    def getItrBitPerTrial(self, P):
-        """
-        :param P: Accuracy
-        :param N: Target count
-        :return:
-        """
-        N = 3
-        if N == 1:
-            return np.nan
-        elif P == 1:
-            return np.log10(N)/np.log10(2)
-        elif P == 0:
-            return np.nan
-        else:
-            return (np.log10(N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(N-1)))/np.log10(2)
-
-    def calculateThresholds(self, class_count):
+    def calculateThresholds(self, itr_calculator):
         # cut_off_threshold = []  # Threshold with max precision
         # for key in self.ordered_labels:
         #     _, y, thresholds, _ = self.curves[key].getValues()
         #     cut_off_threshold.append(thresholds[np.argmax(y[:-1])])
         # return cut_off_threshold
-        cut_off_threshold = []  # Threshold with max ITR
+        # cut_off_threshold = []  # Threshold with max ITR
+        # for key in self.ordered_labels:
+        #     x, y, thresholds, _ = self.curves[key].getValues()
+        #     itrs = map(lambda (r, p): optimisation_function(p, r), zip(x, y))
+        #     cut_off_threshold.append(thresholds[np.argmax(itrs[:-1])])
+        # return cut_off_threshold
+        all_precisions = []  # Threshold with derivatives ITR
+        all_supports = []
         for key in self.ordered_labels:
-            x, y, thresholds, _ = self.curves[key].getValues()
-            itrs = map(lambda (r, p): self.getItrBitPerMin(p, r), zip(x, y))
-            cut_off_threshold.append(thresholds[np.argmax(itrs[:-1])])
-        return cut_off_threshold
+            _, precisions, thresholds, _ = self.curves[key].getValues()
+            predictions = self.curves[key].getPredictions()
+            n_predictions = len(predictions)
+            supports = (n_predictions + 1.0 - np.sort(sorted(predictions)).searchsorted(thresholds, side="right"))/n_predictions
+            all_precisions.append(list(precisions[:-1]))
+            all_supports.append(supports)
+        # for precision, support in zip(all_precisions[0], all_supports[0]):
+        for i in range(len(all_precisions[0])):
+            precision = [all_precisions[0][i],all_precisions[1][i],all_precisions[2][i]]
+            support = [all_supports[0][i],all_supports[1][i],all_supports[2][i]]
+            print precision, support, itr_calculator.derivative(precision, support)
+        raw_input()
+        return []

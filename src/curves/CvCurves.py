@@ -72,16 +72,16 @@ class CvCurve(object):
         #     _, y, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
         #     cut_off_threshold1.append(thresholds[np.argmax(y[:-1])])
         # return cut_off_threshold1
-        # cut_off_threshold = []  # Threshold as mean over individual thresholds
-        # for key, n_samples in zip(self.ordered_labels, class_count):
-        #     thresholds = self.curves_by_class[key].calculateThresholds(n_samples)
-        #     cut_off_threshold.append(np.mean(thresholds))
-        # return cut_off_threshold
+        cut_off_threshold = []  # Threshold as mean over individual thresholds
+        for key in self.ordered_labels:
+            thresholds = self.curves_by_class[key].calculateThresholds(optimisation_function)
+            cut_off_threshold.append(np.mean(thresholds))
+        return cut_off_threshold
         # return (np.array(cut_off_threshold1) + np.array(cut_off_threshold))/2.0
-        macro_averages = self.getAllMacroAverageThresholds()
-        ranges = list((0, length, 1) for length in map(len, macro_averages))
-        print ranges
-        scipy.optimize.brute(optimisation_function, ranges, args=(macro_averages,))
+        # macro_averages = self.getAllMacroAverageThresholds()  # Brute force (takes way too long...)
+        # ranges = list((0, length, 1) for length in map(len, macro_averages))
+        # print ranges
+        # scipy.optimize.brute(optimisation_function, ranges, args=(macro_averages,))
 
 
 class RocCvCurve(CvCurve):
@@ -137,10 +137,11 @@ class PrecisionRecallCurve(AverageCurve.AveragePrecisionRecallCurve):
     def getMeanThreshold(self):
         return np.mean(self.getThresholds(), axis=0)
 
-    def calculateThresholds(self, n_samples):
+    def calculateThresholds(self, optimisation_function):
         cut_off_threshold = []  # Threshold with max ITR
         for key in self.ordered_labels:
             x, y, thresholds, _ = self.curves[key].getValues()
-            itrs = map(lambda (r, p): self.getItrBitPerMin(p, r), zip(x, y))
+            itrs = map(lambda (r, p): optimisation_function(p, r), zip(x, y))
             cut_off_threshold.append(thresholds[np.argmax(itrs[:-1])])
         return cut_off_threshold
+

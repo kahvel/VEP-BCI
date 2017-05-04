@@ -2,11 +2,12 @@ import sklearn.metrics
 
 
 class Curve(object):
-    def __init__(self, x=None, y=None, thresholds=None, auc=None):
+    def __init__(self, x=None, y=None, thresholds=None, auc=None, predictions=None):
         self.x = x
         self.y = y
         self.thresholds = thresholds
         self.auc = auc
+        self.predictions = predictions
 
     def calculate(self, binary_labels, predictions):
         raise NotImplementedError("calculate not implemented!")
@@ -19,6 +20,9 @@ class Curve(object):
 
     def getValues(self):
         return self.x, self.y, self.thresholds, self.auc
+
+    def getPredictions(self):
+        return self.predictions
 
 
 class RocCurve(Curve):

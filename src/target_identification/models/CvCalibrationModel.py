@@ -67,6 +67,8 @@ class Model(ColumnsIterator.ColumnsIterator):
         for sample_scores in scores:
             predicted = None
             for i in range(len(sample_scores)):
+                if sample_scores[i] >= thresholds[i] and any(map(lambda (j, (s, t)): False if i == j else s >= t*(1-margin), enumerate(zip(sample_scores, thresholds)))):
+                    print i, sample_scores, thresholds
                 if all(map(lambda (j, (s, t)): s >= t*(1+margin) if i == j else s < t*(1-margin), enumerate(zip(sample_scores, thresholds)))):
                     predicted = i+1
                     break

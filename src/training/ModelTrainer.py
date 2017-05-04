@@ -1,9 +1,11 @@
 import numpy as np
+# import scipy.integrate
 import sklearn.metrics
 import matplotlib.pyplot as plt
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
 from curves import AverageCurve, CvCurves
+from training import ItrCalculator
 import constants as c
 
 from sklearn.ensemble import AdaBoostClassifier
@@ -45,17 +47,20 @@ class ModelTrainer(object):
         self.t_use_ml = False
         self.t_use_maf_on_features = True
         self.t_use_maf_on_probas = True and self.t_use_ml
+        self.t_matrix_builder_types = [True]
+        self.hacky_labels = [1,2,3]
         self.t_remove_samples_features = True and self.t_use_maf_on_features
         self.t_remove_samples_probas = True and self.t_use_maf_on_probas
-
-        self.t_window_length = 1
-        self.t_step = 0.125
         self.t_feature_maf = self.getMafLength(self.t_use_maf_on_features)
         self.t_proba_maf = self.getMafLength(self.t_use_maf_on_probas)
-        self.t_matrix_builder_types = [True]
-        self.t_look_back_length = 1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
-        self.t_N = 3
-        self.hacky_labels = [1,2,3]
+        self.itr_calculator = ItrCalculator.ItrCalculator(
+            window_length=1,
+            step=0.125,
+            feature_maf_length=self.t_feature_maf,
+            proba_maf_length=self.t_proba_maf,
+            look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
+            n_targets=3,
+        )
         # CvCalibrationModel predictProba
         # Normalising = True (before applying MAF)
         # Calibrated cv = 5
@@ -129,39 +134,36 @@ class ModelTrainer(object):
     #     model.fit(data, labels)
     #     return model
 
-    def getItrBitPerMin(self, P, recall):
-        if recall == 0:
-            return 0
-        else:
-            mean_detection_time = self.t_window_length + (self.t_look_back_length + self.t_feature_maf + self.t_proba_maf + 1.0/recall - 4)*self.t_step
-            return self.getItrBitPerTrial(P)*60.0/mean_detection_time
+    # def derivative(self, x, y):
+    #     print x, y
+    #     c1 = self.t_window_length + (self.t_look_back_length + self.t_feature_maf + self.t_proba_maf - 4)*self.t_step
+    #     c2 = float(self.t_step)
+    #     itr = self.getItrBitPerTrial(y)
+    #     numerator = c2/x**2*itr
+    #     denominator = np.log2(y*(self.t_N - 1)/(1-y))*(c1+c2/x)
+    #     return numerator/denominator
+    #
+    # def estimate(self):
+    #     estimator = scipy.integrate.ode(self.derivative)
+    #     estimator.set_integrator("dop853").set_initial_value(0.5, 0.5)
+    #     dt = 0.1
+    #     max_t = 1
+    #     # estimator.integrate(estimator.t, step=dt)
+    #     while estimator.successful() and estimator.t < max_t:
+    #         estimator.integrate(estimator.t+dt)
+    #         print ("asd %g %g" % (estimator.t, estimator.y))
+    #     raw_input()
 
-    def getItrBitPerTrial(self, P):
-        """
-        :param P: Accuracy
-        :param N: Target count
-        :return:
-        """
-        if self.t_N == 1:
-            return np.nan
-        elif P == 1:
-            return np.log10(self.t_N)/np.log10(2)
-        elif P == 0:
-            print "Warning! accuracy 0"
-            return np.nan
-        else:
-            return (np.log10(self.t_N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(self.t_N-1)))/np.log10(2)
+    # def optimisationFunction(self, indices, all_thresholds, prediction, labels, label_order):
+    #     current_thresholds = list(thresholds[index] for thresholds, index in zip(all_thresholds, indices))
+    #     threshold_predictions = self.cv_model.thresholdPredict(prediction, current_thresholds, 0)
+    #     confusion_matrix = self.getThresholdConfusionMatrix(threshold_predictions, labels, label_order)
+    #     accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
+    #     support = self.calculateSupport(confusion_matrix)
+    #     result = -self.itr_calculator.itrBitPerMin(accuracy, support)
+    #     return result
 
-    def optimisationFunction(self, indices, all_thresholds, prediction, labels, label_order):
-        current_thresholds = list(thresholds[index] for thresholds, index in zip(all_thresholds, indices))
-        threshold_predictions = self.cv_model.thresholdPredict(prediction, current_thresholds, 0)
-        confusion_matrix = self.getThresholdConfusionMatrix(threshold_predictions, labels, label_order)
-        accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
-        recall = self.calculateRecall(confusion_matrix)
-        result = -self.getItrBitPerMin(accuracy, recall)
-        return result
-
-    def calculateRecall(self, confusion_matrix):
+    def calculateSupport(self, confusion_matrix):
         if not isinstance(confusion_matrix, float):
             matrix_sum = confusion_matrix.sum()
             return (matrix_sum-confusion_matrix.sum(axis=0)[-1])/matrix_sum
@@ -176,18 +178,18 @@ class ModelTrainer(object):
 
     def printConfusionMatrixData(self, confusion_matrix):
         accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
-        recall = self.calculateRecall(confusion_matrix)
-        print self.getItrBitPerMin(accuracy, recall)
+        support = self.calculateSupport(confusion_matrix)
+        print self.itr_calculator.itrBitPerMin(accuracy, support)
         print accuracy
         print confusion_matrix
 
-    def getLabelConverter(self, label_order):
-        n = len(label_order)
-        return [{label_order[i]: label_order[(i+shift) % n] for i in range(n)} for shift in range(n)]
+    # def getLabelConverter(self, label_order):
+    #     n = len(label_order)
+    #     return [{label_order[i]: label_order[(i+shift) % n] for i in range(n)} for shift in range(n)]
 
-    def rollLabels(self, label_converter, split_labels):
-        n = len(label_converter)
-        return list(map(lambda labels: map(lambda label: label_converter[i][label], labels), split_labels) for i in range(n))
+    # def rollLabels(self, label_converter, split_labels):
+    #     n = len(label_converter)
+    #     return list(map(lambda labels: map(lambda label: label_converter[i][label], labels), split_labels) for i in range(n))
 
     def calculateAverageRocCurve(self, label_order, prediction, labels):
         return AverageCurve.AverageRocCurve(label_order).calculate(prediction, labels)
@@ -201,20 +203,20 @@ class ModelTrainer(object):
     def calculateCvPrcCurve(self, label_order, prediction, labels):
         return CvCurves.PrecisionRecallCvCurve(label_order).calculate(prediction, labels)
 
-    def calculateSplitCurves(self, label_order, prediction, rolled_labels, function):
-        return list(function(label_order, prediction if i == 0 else prediction*-1, split_labels) for i, split_labels in enumerate(rolled_labels))
-
-    def calculateSplitRocs(self, label_order, prediction, rolled_labels):
-        return self.calculateSplitCurves(label_order, prediction, rolled_labels, self.calculateCvRocCurve)
-
-    def calculateSplitPrcs(self, label_order, prediction, rolled_labels):
-        return self.calculateSplitCurves(label_order, prediction, rolled_labels, self.calculateCvPrcCurve)
-
-    def calculateSplitThresholds(self, split_training_prcs):
-        split_current_thresholds = map(lambda x: np.array(x.calculateThresholds()), split_training_prcs[-1])
-        split_current_thresholds = map(lambda (i, t): t*-1 if i != 0 else t, enumerate(split_current_thresholds))
-        split_current_thresholds = list(np.roll(t, -i) for i, t in enumerate(split_current_thresholds))
-        return split_current_thresholds
+    # def calculateSplitCurves(self, label_order, prediction, rolled_labels, function):
+    #     return list(function(label_order, prediction if i == 0 else prediction*-1, split_labels) for i, split_labels in enumerate(rolled_labels))
+    #
+    # def calculateSplitRocs(self, label_order, prediction, rolled_labels):
+    #     return self.calculateSplitCurves(label_order, prediction, rolled_labels, self.calculateCvRocCurve)
+    #
+    # def calculateSplitPrcs(self, label_order, prediction, rolled_labels):
+    #     return self.calculateSplitCurves(label_order, prediction, rolled_labels, self.calculateCvPrcCurve)
+    #
+    # def calculateSplitThresholds(self, split_training_prcs):
+    #     split_current_thresholds = map(lambda x: np.array(x.calculateThresholds()), split_training_prcs[-1])
+    #     split_current_thresholds = map(lambda (i, t): t*-1 if i != 0 else t, enumerate(split_current_thresholds))
+    #     split_current_thresholds = list(np.roll(t, -i) for i, t in enumerate(split_current_thresholds))
+    #     return split_current_thresholds
 
     # def calculateMultidimensionalPrc(self, label_order, predictions, rolled_labels):
     #     curves = self.calculateSplitPrcs(label_order, predictions, rolled_labels)
@@ -222,8 +224,8 @@ class ModelTrainer(object):
     #         for class_curve in curve.curves_by_class:
     #             for split_curve in class_curve.curves:
 
-    def countClasses(self, label_order, labels):
-        return map(lambda label: sum(map(lambda x: x == label, labels)), label_order)
+    # def countClasses(self, label_order, labels):
+    #     return map(lambda label: sum(map(lambda x: x == label, labels)), label_order)
 
     def calculateAverageCurves(self, label_order, prediction, labels):
         return (
@@ -237,11 +239,11 @@ class ModelTrainer(object):
             self.calculateCvPrcCurve(label_order, split_predictions, split_labels)
         )
 
-    def modifyLabels(self, use_maf, labels):
-        if use_maf:
-            return labels[1:-1]
-        else:
-            return labels
+    # def modifyLabels(self, use_maf, labels):
+    #     if use_maf:
+    #         return labels[1:-1]
+    #     else:
+    #         return labels
 
     def modifySplitLabels(self, use_maf, split_labels):
         if use_maf:
@@ -249,8 +251,8 @@ class ModelTrainer(object):
         else:
             return split_labels
 
-    def modifyTrainingLabels(self, use_maf, training_labels):
-        return self.modifySplitLabels(use_maf, training_labels)
+    # def modifyTrainingLabels(self, use_maf, training_labels):
+    #     return self.modifySplitLabels(use_maf, training_labels)
 
     def getMafLength(self, use_maf):
         return 3 if use_maf else 1
@@ -387,9 +389,9 @@ class ModelTrainer(object):
             testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, testing_labels_proba)
             testing_rocs.append(testing_roc)
             testing_prcs.append(testing_prc)
-            string_training_labels = map(str, np.concatenate(split_training_labels_proba, 0))
-            optimisation_function_lambda = lambda x, y: self.optimisationFunction(x, y, np.concatenate(tr_prediction, 0), string_training_labels, label_order)
-            current_thresholds = training_prcs[-1].calculateThresholds(optimisation_function_lambda)
+            # string_training_labels = map(str, np.concatenate(split_training_labels_proba, 0))
+            # optimisation_function_lambda = lambda x, y: self.optimisationFunction(x, y, np.concatenate(tr_prediction, 0), string_training_labels, label_order)
+            current_thresholds = training_prcs[-1].calculateThresholds(self.itr_calculator)
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 
