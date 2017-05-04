@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.optimize
 import matplotlib.pyplot as plt
 
 from curves import AverageCurve
@@ -58,19 +59,29 @@ class CvCurve(object):
     def getCurve(self, n_curves):
         raise NotImplementedError("getCurve not implemented!")
 
-    def calculateThresholds(self, class_count):
-        # cut_off_threshold1 = []
+    def getAllMacroAverageThresholds(self):
+        all_thresholds = []
+        for key in self.ordered_labels:
+            _, _, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
+            all_thresholds.append(thresholds)
+        return all_thresholds
+
+    def calculateThresholds(self, optimisation_function):
+        # cut_off_threshold1 = []  # Threshold from macro-average curve
         # for key in self.ordered_labels:
         #     _, y, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
         #     cut_off_threshold1.append(thresholds[np.argmax(y[:-1])])
         # return cut_off_threshold1
-        cut_off_threshold = []
-        for key, n_samples in zip(self.ordered_labels, class_count):
-            thresholds = self.curves_by_class[key].calculateThresholds(n_samples)
-            cut_off_threshold.append(np.mean(thresholds))
-        return cut_off_threshold
-        # result = (np.array(cut_off_threshold1) + np.array(cut_off_threshold))/2.0
-        # return result
+        # cut_off_threshold = []  # Threshold as mean over individual thresholds
+        # for key, n_samples in zip(self.ordered_labels, class_count):
+        #     thresholds = self.curves_by_class[key].calculateThresholds(n_samples)
+        #     cut_off_threshold.append(np.mean(thresholds))
+        # return cut_off_threshold
+        # return (np.array(cut_off_threshold1) + np.array(cut_off_threshold))/2.0
+        macro_averages = self.getAllMacroAverageThresholds()
+        ranges = list((0, length, 1) for length in map(len, macro_averages))
+        print ranges
+        scipy.optimize.brute(optimisation_function, ranges, args=(macro_averages,))
 
 
 class RocCvCurve(CvCurve):
@@ -115,6 +126,16 @@ class PrecisionRecallCurve(AverageCurve.AveragePrecisionRecallCurve):
 
     def addCurve(self, curve, split):
         self.curves[split] = curve
+
+    def getThresholds(self):
+        all_thresholds = []
+        for key in self.ordered_labels:
+            _, _, thresholds, _ = self.curves[key].getValues()
+            all_thresholds.append(thresholds)
+        return all_thresholds
+
+    def getMeanThreshold(self):
+        return np.mean(self.getThresholds(), axis=0)
 
     def calculateThresholds(self, n_samples):
         cut_off_threshold = []  # Threshold with max ITR

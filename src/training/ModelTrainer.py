@@ -41,6 +41,28 @@ class ModelTrainer(object):
         self.eeg = eeg
 
     def setup(self, options):
+        # Check before testing!!
+        self.t_use_ml = False
+        self.t_use_maf_on_features = True
+        self.t_use_maf_on_probas = True and self.t_use_ml
+        self.t_remove_samples_features = True and self.t_use_maf_on_features
+        self.t_remove_samples_probas = True and self.t_use_maf_on_probas
+
+        self.t_window_length = 1
+        self.t_step = 0.125
+        self.t_feature_maf = self.getMafLength(self.t_use_maf_on_features)
+        self.t_proba_maf = self.getMafLength(self.t_use_maf_on_probas)
+        self.t_matrix_builder_types = [True]
+        self.t_look_back_length = 1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
+        self.t_N = 3
+        self.hacky_labels = [1,2,3]
+        # CvCalibrationModel predictProba
+        # Normalising = True (before applying MAF)
+        # Calibrated cv = 5
+        # OneVsOne = {1: 0.8, 0: 0.2}
+        # FPR test = 5e-2
+        # CvCurves = grid search on ITR
+
         self.features_to_use = options[c.MODELS_PARSE_FEATURES_TO_USE]
         self.look_back_length = options[c.MODELS_PARSE_LOOK_BACK_LENGTH]
         self.cross_validation_folds = options[c.MODELS_PARSE_CV_FOLDS]
@@ -51,7 +73,7 @@ class ModelTrainer(object):
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True])
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, self.t_matrix_builder_types)
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -90,14 +112,14 @@ class ModelTrainer(object):
     def allExceptOne(self, data, index):
         return [x for i, x in enumerate(data) if i != index]
 
-    def predictProbaCv(self, model, use_maf, split_data, split_labels):
+    def predictProbaCv(self, model, split_data, split_labels):
         folds = len(split_data)
         predictions = []
         for i in range(folds):
             data = np.concatenate(self.allExceptOne(split_data, i), axis=0)
             labels = np.concatenate(self.allExceptOne(split_labels, i), axis=0)
             model.fit(data, labels)
-            predictions.append(model.predictProba(split_data[i], self.getMafLength(use_maf)))
+            predictions.append(model.predictProba(split_data[i], self.t_proba_maf))
         return predictions
 
     # def secondModel(self, cv_predictions, split_data):
@@ -108,13 +130,11 @@ class ModelTrainer(object):
     #     return model
 
     def getItrBitPerMin(self, P, recall):
-        window_length = 1
-        step = 0.125
-        look_back_length = 1
-        feature_maf = 3
-        proba_maf = 1
-        mean_detection_time = window_length + (look_back_length + feature_maf + proba_maf + 1.0/recall - 4)*step
-        return self.getItrBitPerTrial(P)*60.0/mean_detection_time
+        if recall == 0:
+            return 0
+        else:
+            mean_detection_time = self.t_window_length + (self.t_look_back_length + self.t_feature_maf + self.t_proba_maf + 1.0/recall - 4)*self.t_step
+            return self.getItrBitPerTrial(P)*60.0/mean_detection_time
 
     def getItrBitPerTrial(self, P):
         """
@@ -122,15 +142,24 @@ class ModelTrainer(object):
         :param N: Target count
         :return:
         """
-        N = 3
-        if N == 1:
+        if self.t_N == 1:
             return np.nan
         elif P == 1:
-            return np.log10(N)/np.log10(2)
+            return np.log10(self.t_N)/np.log10(2)
         elif P == 0:
+            print "Warning! accuracy 0"
             return np.nan
         else:
-            return (np.log10(N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(N-1)))/np.log10(2)
+            return (np.log10(self.t_N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(self.t_N-1)))/np.log10(2)
+
+    def optimisationFunction(self, indices, all_thresholds, prediction, labels, label_order):
+        current_thresholds = list(thresholds[index] for thresholds, index in zip(all_thresholds, indices))
+        threshold_predictions = self.cv_model.thresholdPredict(prediction, current_thresholds, 0)
+        confusion_matrix = self.getThresholdConfusionMatrix(threshold_predictions, labels, label_order)
+        accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
+        recall = self.calculateRecall(confusion_matrix)
+        result = -self.getItrBitPerMin(accuracy, recall)
+        return result
 
     def calculateRecall(self, confusion_matrix):
         if not isinstance(confusion_matrix, float):
@@ -226,30 +255,30 @@ class ModelTrainer(object):
     def getMafLength(self, use_maf):
         return 3 if use_maf else 1
 
-    def fitAndPredictProbaSingle(self, model, use_maf, data, labels):
+    def fitAndPredictProbaSingle(self, model, data, labels):
         model.fit(data, labels)
-        return model.predictProba(data, self.getMafLength(use_maf))
+        return model.predictProba(data, self.t_proba_maf)
 
-    def fitAndPredictProbaCv(self, model, use_maf, data, labels):
-        cv_predictions = np.array(self.predictProbaCv(model, use_maf, data, labels))
+    def fitAndPredictProbaCv(self, model, data, labels):
+        cv_predictions = np.array(self.predictProbaCv(model, data, labels))
         model.fit(np.concatenate(data, 0), np.concatenate(labels, 0))
         return cv_predictions
 
-    def fitAndPredictProba(self, n_folds, use_maf, model, data, labels):
+    def fitAndPredictProba(self, n_folds, model, data, labels):
         if n_folds == 1:
-            return [self.fitAndPredictProbaSingle(model, use_maf, data[0], labels[0])]
+            return [self.fitAndPredictProbaSingle(model, data[0], labels[0])]
         else:
-            return self.fitAndPredictProbaCv(model, use_maf, data, labels)
+            return self.fitAndPredictProbaCv(model, data, labels)
 
-    def calculateTrainingFeatures(self, use_ml, n_folds, use_maf, model, data, labels):
-        if use_ml:
-            return self.fitAndPredictProba(n_folds, use_maf, model, data, labels)
+    def calculateTrainingFeatures(self, n_folds, model, data, labels):
+        if self.t_use_ml:
+            return self.fitAndPredictProba(n_folds, model, data, labels)
         else:
             return self.hackyFeatureFix(data)
 
-    def calculateTestingFeatures(self, use_ml, use_maf, model, data):
-        if use_ml:
-            return model.predictProba(data, self.getMafLength(use_maf))
+    def calculateTestingFeatures(self, model, data):
+        if self.t_use_ml:
+            return model.predictProba(data, self.t_proba_maf)
         else:
             return self.applyRoll(data)
 
@@ -267,11 +296,11 @@ class ModelTrainer(object):
         ret[n:] = ret[n:] - ret[:-n]
         return ret[n - 1:] / n
 
-    def getLabelOrder(self, use_ml, model):
-        if use_ml:
+    def getLabelOrder(self, model):
+        if self.t_use_ml:
             return model.getOrderedLabels()
         else:
-            return [1,2,3]
+            return self.hacky_labels
 
     def removeSamples(self, data, samples_to_remove):
         return map(lambda (x, s): np.delete(x, s, axis=0), zip(data, samples_to_remove))
@@ -314,28 +343,23 @@ class ModelTrainer(object):
         n_thresholds = 1
         training_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
-        use_ml = False
-        use_maf_on_features = True
-        use_maf_on_probas = True and use_ml
-        remove_samples_features = True and use_maf_on_features
-        remove_samples_probas = True and use_maf_on_probas
-        if use_maf_on_features:
-            split_data = map(lambda x: self.applyMovingAverage(x, self.getMafLength(use_maf_on_features)), split_data)
-            split_labels = np.array(self.modifySplitLabels(use_maf_on_features, split_labels))
-        if remove_samples_features:
+        if self.t_use_maf_on_features:
+            split_data = map(lambda x: self.applyMovingAverage(x, self.t_feature_maf), split_data)
+            split_labels = np.array(self.modifySplitLabels(self.t_use_maf_on_features, split_labels))
+        if self.t_remove_samples_features:
             split_data, split_labels = self.removeSamplesBeforeAfterClassChange(split_data, split_labels)
-        if use_maf_on_probas:
-            split_labels_proba = self.modifySplitLabels(use_maf_on_probas, split_labels)
+        if self.t_use_maf_on_probas:
+            split_labels_proba = self.modifySplitLabels(self.t_use_maf_on_probas, split_labels)
         else:
             split_labels_proba = split_labels
         assert len(split_data) > 1
         # label_order1 = sorted(set(split_labels[0]))
-        split_class_count = map(lambda x: self.countClasses([1,2,3], x), split_labels_proba)
+        # split_class_count = map(lambda x: self.countClasses([1,2,3], x), split_labels_proba)
         for test_data_index in range(len(split_data)):
             split_training_data = self.allExceptOne(split_data, test_data_index)
             split_training_labels = self.allExceptOne(split_labels, test_data_index)
             split_training_labels_proba = self.allExceptOne(split_labels_proba, test_data_index)
-            split_training_class_count = self.allExceptOne(split_class_count, test_data_index)
+            # split_training_class_count = self.allExceptOne(split_class_count, test_data_index)
             training_data = np.concatenate(split_training_data, 0)
             training_labels = np.concatenate(split_training_labels, 0)
             testing_data = split_data[test_data_index]
@@ -344,10 +368,10 @@ class ModelTrainer(object):
             # label_converter = self.getLabelConverter(label_order)
             # rolled_split_modified_training_labels = self.rollLabels(label_converter, split_modified_training_labels)
             n_folds = len(split_training_data)
-            tr_prediction = self.calculateTrainingFeatures(use_ml, n_folds, use_maf_on_probas, self.cv_model, split_training_data, split_training_labels)
-            if remove_samples_probas:
+            tr_prediction = self.calculateTrainingFeatures(n_folds, self.cv_model, split_training_data, split_training_labels)
+            if self.t_remove_samples_probas:
                 tr_prediction, split_training_labels_proba = self.removeSamplesBeforeAfterClassChange(tr_prediction, split_training_labels_proba)
-            label_order = self.getLabelOrder(use_ml, self.cv_model)
+            label_order = self.getLabelOrder(self.cv_model)
             training_roc, training_prc = self.calculateCurves(
                 n_folds,
                 tr_prediction,
@@ -356,18 +380,20 @@ class ModelTrainer(object):
             )
             training_prcs.append(training_prc)
             training_rocs.append(training_roc)
-            testing_prediction = self.calculateTestingFeatures(use_ml, use_maf_on_probas, self.cv_model, testing_data)
-            if remove_samples_probas:
+            testing_prediction = self.calculateTestingFeatures(self.cv_model, testing_data)
+            if self.t_remove_samples_probas:
                 testing_prediction, testing_labels_proba = self.removeSamplesBeforeAfterClassChange([testing_prediction], [testing_labels_proba])
                 testing_prediction, testing_labels_proba = testing_prediction[0], testing_labels_proba[0]
             testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, testing_labels_proba)
             testing_rocs.append(testing_roc)
             testing_prcs.append(testing_prc)
-            current_thresholds = training_prcs[-1].calculateThresholds(split_training_class_count[0])
+            string_training_labels = map(str, np.concatenate(split_training_labels_proba, 0))
+            optimisation_function_lambda = lambda x, y: self.optimisationFunction(x, y, np.concatenate(tr_prediction, 0), string_training_labels, label_order)
+            current_thresholds = training_prcs[-1].calculateThresholds(optimisation_function_lambda)
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 
-            if use_ml:
+            if self.t_use_ml:
                 training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=label_order)
                 testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels, self.cv_model.predict(testing_data), labels=label_order)
             # model = AdaBoostClassifier(n_estimators=50)
