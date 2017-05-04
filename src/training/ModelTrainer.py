@@ -51,7 +51,7 @@ class ModelTrainer(object):
         self.transition_model = TransitionModel.TrainingModel(False)
         self.transition_model.setup(None, 1)
         self.cv_model = CvCalibrationModel.TrainingModel()
-        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True, False])
+        self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, [True])
 
     def getConfusionMatrix(self, model, data, labels, label_order):
         prediction = model.predict(data)
@@ -107,6 +107,36 @@ class ModelTrainer(object):
     #     model.fit(data, labels)
     #     return model
 
+    def getItrBitPerMin(self, P, recall):
+        window_length = 1
+        step = 0.125
+        look_back_length = 1
+        feature_maf = 3
+        proba_maf = 1
+        mean_detection_time = window_length + (look_back_length + feature_maf + proba_maf + 1.0/recall - 4)*step
+        return self.getItrBitPerTrial(P)*60.0/mean_detection_time
+
+    def getItrBitPerTrial(self, P):
+        """
+        :param P: Accuracy
+        :param N: Target count
+        :return:
+        """
+        N = 3
+        if N == 1:
+            return np.nan
+        elif P == 1:
+            return np.log10(N)/np.log10(2)
+        elif P == 0:
+            return np.nan
+        else:
+            return (np.log10(N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(N-1)))/np.log10(2)
+
+    def calculateRecall(self, confusion_matrix):
+        if not isinstance(confusion_matrix, float):
+            matrix_sum = confusion_matrix.sum()
+            return (matrix_sum-confusion_matrix.sum(axis=0)[-1])/matrix_sum
+
     def calculateAccuracy(self, confusion_matrix):
         if not isinstance(confusion_matrix, float):
             return np.trace(confusion_matrix)/confusion_matrix.sum()
@@ -114,6 +144,13 @@ class ModelTrainer(object):
     def calculateAccuracyIgnoringLastColumn(self, confusion_matrix):
         if not isinstance(confusion_matrix, float):
             return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
+
+    def printConfusionMatrixData(self, confusion_matrix):
+        accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
+        recall = self.calculateRecall(confusion_matrix)
+        print self.getItrBitPerMin(accuracy, recall)
+        print accuracy
+        print confusion_matrix
 
     def getLabelConverter(self, label_order):
         n = len(label_order)
@@ -155,6 +192,9 @@ class ModelTrainer(object):
     #     for curve in curves:
     #         for class_curve in curve.curves_by_class:
     #             for split_curve in class_curve.curves:
+
+    def countClasses(self, label_order, labels):
+        return map(lambda label: sum(map(lambda x: x == label, labels)), label_order)
 
     def calculateAverageCurves(self, label_order, prediction, labels):
         return (
@@ -247,7 +287,7 @@ class ModelTrainer(object):
 
     def calculateCurves(self, n_folds, prediction, labels, label_order):
         if n_folds == 1:
-            return self.calculateAverageCurves(label_order, prediction[0], labels)
+            return self.calculateAverageCurves(label_order, prediction[0], labels[0])
         else:
             return self.calculateCvCurves(label_order, prediction, labels)
             # n = len(label_order)
@@ -271,10 +311,10 @@ class ModelTrainer(object):
         # split_testing_prcs = []
         training_confusion_matrices = 0.0
         testing_confusion_matrices = 0.0
-        n_thresholds = 3
+        n_thresholds = 1
         training_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
-        use_ml = True
+        use_ml = False
         use_maf_on_features = True
         use_maf_on_probas = True and use_ml
         remove_samples_features = True and use_maf_on_features
@@ -289,10 +329,13 @@ class ModelTrainer(object):
         else:
             split_labels_proba = split_labels
         assert len(split_data) > 1
+        # label_order1 = sorted(set(split_labels[0]))
+        split_class_count = map(lambda x: self.countClasses([1,2,3], x), split_labels_proba)
         for test_data_index in range(len(split_data)):
             split_training_data = self.allExceptOne(split_data, test_data_index)
             split_training_labels = self.allExceptOne(split_labels, test_data_index)
             split_training_labels_proba = self.allExceptOne(split_labels_proba, test_data_index)
+            split_training_class_count = self.allExceptOne(split_class_count, test_data_index)
             training_data = np.concatenate(split_training_data, 0)
             training_labels = np.concatenate(split_training_labels, 0)
             testing_data = split_data[test_data_index]
@@ -320,7 +363,7 @@ class ModelTrainer(object):
             testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, testing_labels_proba)
             testing_rocs.append(testing_roc)
             testing_prcs.append(testing_prc)
-            current_thresholds = training_prcs[-1].calculateThresholds()
+            current_thresholds = training_prcs[-1].calculateThresholds(split_training_class_count[0])
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 
@@ -331,7 +374,7 @@ class ModelTrainer(object):
             # model.fit(training_prediction, training_labels[1:-1])
             # training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels[1:-1], model.predict(training_prediction), labels=label_order)
             # testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels[1:-1], model.predict(testing_prediction), labels=label_order)
-            for i in range(3):
+            for i in range(n_thresholds):
                 # training_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_prediction, current_thresholds, i/10.0), map(str, modified_training_labels), label_order)
                 testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_prediction, current_thresholds, i/10.0), map(str, testing_labels_proba), label_order)
                 # split_testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.splitThresholdPredict(testing_prediction, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
@@ -355,8 +398,7 @@ class ModelTrainer(object):
         for i in range(n_thresholds):
             print i
             print training_threshold_confusion_matrices[i]
-            print self.calculateAccuracyIgnoringLastColumn(testing_threshold_confusion_matrices[i])
-            print testing_threshold_confusion_matrices[i]
+            self.printConfusionMatrixData(testing_threshold_confusion_matrices[i])
             # print self.calculateAccuracyIgnoringLastColumn(split_testing_threshold_confusion_matrices[i])
             # print split_testing_threshold_confusion_matrices[i]
 

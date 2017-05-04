@@ -55,7 +55,7 @@ class Model(ColumnsIterator.ColumnsIterator):
         for sample_scores in scores:
             predicted = None
             for i, class_thresholds in enumerate(thresholds):
-                if all(map(lambda (j, (s, t)): s > t*(1+margin) if j == 0 else s < t*(1-margin), enumerate(zip(sample_scores, class_thresholds)))):
+                if all(map(lambda (j, (s, t)): s >= t*(1+margin) if j == 0 else s < t*(1-margin), enumerate(zip(sample_scores, class_thresholds)))):
                 # if sample_scores[0] > class_thresholds[0] or all(map(lambda (s, t): s < t*(1+margin), zip(sample_scores[1:], class_thresholds[1:]))):
                     predicted = i+1
                     break
@@ -67,7 +67,7 @@ class Model(ColumnsIterator.ColumnsIterator):
         for sample_scores in scores:
             predicted = None
             for i in range(len(sample_scores)):
-                if all(map(lambda (j, (s, t)): s > t*(1+margin) if i == j else s < t*(1-margin), enumerate(zip(sample_scores, thresholds)))):
+                if all(map(lambda (j, (s, t)): s >= t*(1+margin) if i == j else s < t*(1-margin), enumerate(zip(sample_scores, thresholds)))):
                     predicted = i+1
                     break
             predictions.append(str(predicted))

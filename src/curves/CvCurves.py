@@ -58,15 +58,15 @@ class CvCurve(object):
     def getCurve(self, n_curves):
         raise NotImplementedError("getCurve not implemented!")
 
-    def calculateThresholds(self):
+    def calculateThresholds(self, class_count):
         # cut_off_threshold1 = []
         # for key in self.ordered_labels:
         #     _, y, thresholds, _ = self.curves_by_class[key].curves["macro"].getValues()
         #     cut_off_threshold1.append(thresholds[np.argmax(y[:-1])])
         # return cut_off_threshold1
         cut_off_threshold = []
-        for key in self.ordered_labels:
-            thresholds = self.curves_by_class[key].calculateThresholds()
+        for key, n_samples in zip(self.ordered_labels, class_count):
+            thresholds = self.curves_by_class[key].calculateThresholds(n_samples)
             cut_off_threshold.append(np.mean(thresholds))
         return cut_off_threshold
         # result = (np.array(cut_off_threshold1) + np.array(cut_off_threshold))/2.0
@@ -115,3 +115,11 @@ class PrecisionRecallCurve(AverageCurve.AveragePrecisionRecallCurve):
 
     def addCurve(self, curve, split):
         self.curves[split] = curve
+
+    def calculateThresholds(self, n_samples):
+        cut_off_threshold = []  # Threshold with max ITR
+        for key in self.ordered_labels:
+            x, y, thresholds, _ = self.curves[key].getValues()
+            itrs = map(lambda (r, p): self.getItrBitPerMin(p, r), zip(x, y))
+            cut_off_threshold.append(thresholds[np.argmax(itrs[:-1])])
+        return cut_off_threshold

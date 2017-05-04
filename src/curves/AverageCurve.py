@@ -64,7 +64,7 @@ class AverageCurve(object):
         self.setPlotLabels()
         plt.legend(loc="lower right")
 
-    def calculateThresholds(self):
+    def calculateThresholds(self, class_count):
         raise NotImplementedError("calculateThresholds not implemented!")
 
     def getClasses(self):
@@ -101,7 +101,7 @@ class AverageRocCurve(AverageCurve):
         plt.ylabel('True Positive Rate')
         plt.title('ROC curve')
 
-    # def calculateThresholds(self, fpr_threshold=0.05):
+    # def calculateThresholds(self, class_count, fpr_threshold=0.05):
     #     for i in range(len(labels_order)):
     #         for j, (false_positive_rate, true_positive_rate, threshold) in enumerate(zip(fpr[i], tpr[i], thresholds[i])):
     #             if true_positive_rate == 1:
@@ -150,9 +150,41 @@ class AveragePrecisionRecallCurve(AverageCurve):
         plt.ylabel('Precision')
         plt.title('Precision-recall curve')
 
-    def calculateThresholds(self):
-        cut_off_threshold = []
+    def getItrBitPerMin(self, P, r):
+        window_length = 1
+        step = 0.125
+        look_back_length = 1
+        feature_maf = 3
+        proba_maf = 1
+        mean_detection_time = window_length + (look_back_length + feature_maf + proba_maf + 1.0/r - 4)*step
+        # mean_detection_time = (1.0/r-1)
+        return self.getItrBitPerTrial(P)*60.0/mean_detection_time
+
+    def getItrBitPerTrial(self, P):
+        """
+        :param P: Accuracy
+        :param N: Target count
+        :return:
+        """
+        N = 3
+        if N == 1:
+            return np.nan
+        elif P == 1:
+            return np.log10(N)/np.log10(2)
+        elif P == 0:
+            return np.nan
+        else:
+            return (np.log10(N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(N-1)))/np.log10(2)
+
+    def calculateThresholds(self, class_count):
+        # cut_off_threshold = []  # Threshold with max precision
+        # for key in self.ordered_labels:
+        #     _, y, thresholds, _ = self.curves[key].getValues()
+        #     cut_off_threshold.append(thresholds[np.argmax(y[:-1])])
+        # return cut_off_threshold
+        cut_off_threshold = []  # Threshold with max ITR
         for key in self.ordered_labels:
-            _, y, thresholds, _ = self.curves[key].getValues()
-            cut_off_threshold.append(thresholds[np.argmax(y[:-1])])
+            x, y, thresholds, _ = self.curves[key].getValues()
+            itrs = map(lambda (r, p): self.getItrBitPerMin(p, r), zip(x, y))
+            cut_off_threshold.append(thresholds[np.argmax(itrs[:-1])])
         return cut_off_threshold
