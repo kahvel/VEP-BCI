@@ -53,7 +53,15 @@ class ModelTrainer(object):
         self.t_remove_samples_probas = True and self.t_use_maf_on_probas
         self.t_feature_maf = self.getMafLength(self.t_use_maf_on_features)
         self.t_proba_maf = self.getMafLength(self.t_use_maf_on_probas)
-        self.itr_calculator = ItrCalculator.ItrCalculator(
+        self.itr_calculator = ItrCalculator.ItrAccuracySubMatrix(
+            window_length=1,
+            step=0.125,
+            feature_maf_length=self.t_feature_maf,
+            proba_maf_length=self.t_proba_maf,
+            look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
+            n_targets=3,
+        )
+        self.itr_calculator2 = ItrCalculator.ItrCalculator(
             window_length=1,
             step=0.125,
             feature_maf_length=self.t_feature_maf,
@@ -391,7 +399,7 @@ class ModelTrainer(object):
             testing_prcs.append(testing_prc)
             # string_training_labels = map(str, np.concatenate(split_training_labels_proba, 0))
             # optimisation_function_lambda = lambda x, y: self.optimisationFunction(x, y, np.concatenate(tr_prediction, 0), string_training_labels, label_order)
-            current_thresholds = training_prcs[-1].calculateThresholds(self.itr_calculator)
+            current_thresholds = training_prcs[-1].calculateThresholds(self.itr_calculator, self.itr_calculator2)
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 
