@@ -211,23 +211,27 @@ class AveragePrecisionRecallCurve(AverageCurve):
     def makeDerivative(self, coefficient):
         return lambda x: sum(p*x**(len(coefficient[:-1])-1-i)*(len(coefficient)-1-i) for i, p in enumerate(coefficient[:-1]))
 
-    def gradientDescent(self, starting_mu, current_thresholds, precision_functions, prediction_functions, precision_derivative, prediction_derivative, all_thresholds, all_precisions, all_relative_predictions, all_predictions, itr_calculator, min_thresholds, max_thresholds, n_predictions):
+    def gradientDescent(self, current_thresholds, precision_functions, prediction_functions, precision_derivative, prediction_derivative, all_thresholds, all_precisions, all_relative_predictions, all_predictions, itr_calculator, min_thresholds, max_thresholds, n_predictions):
         previous_itr = None
         max_itr = None
         max_itr_indices = None
         # previous_thresholds = []
-        mu = starting_mu*10
-        for i in range(50):
+        mu = 0.0001
+        stop_threshold = 0.000001
+        steps_before_decreasing = 500
+        n_decreases = 50
+        for j in range(n_decreases):
             mu /= 10
-            for i in range(500):
+            # stop_threshold /= 10
+            for i in range(steps_before_decreasing):
                 indices = [thresholds.searchsorted(threshold, side="left") for threshold, thresholds in zip(current_thresholds, all_thresholds)]
 
                 precision = [np.asscalar(func(threshold)) for func, threshold in zip(precision_functions, current_thresholds)]
                 relative_predictions = [np.asscalar(func(threshold)) for func, threshold in zip(prediction_functions, current_thresholds)]
                 current_dp = [np.asscalar(func(threshold)) for func, threshold in zip(precision_derivative, current_thresholds)]
                 current_dr = [np.asscalar(func(threshold)) for func, threshold in zip(prediction_derivative, current_thresholds)]
-                precision = [np.min((p, 1.0)) for p in precision]
-                relative_predictions = [np.max((r, 0)) for r in relative_predictions]
+                precision = [np.max((np.min((p, 1.0)), 0.0)) for p in precision]
+                relative_predictions = [np.min((np.max((r, 0.0)), 1.0)) for r in relative_predictions]
 
                 # actual_precision = [p[i] for p, i in zip(all_precisions, indices)]
                 # actual_predictions = [p[i] for p, i in zip(all_relative_predictions, indices)]
@@ -246,7 +250,7 @@ class AveragePrecisionRecallCurve(AverageCurve):
                 #     if np.isnan(actual_itr):
                 #         actual_itr = current_itr
                 if np.isnan(current_itr):
-                    print "encountered nan!", current_itr
+                    print "encountered nan!", current_itr, precision, relative_predictions
                 if max_itr is None or current_itr > max_itr:
                     max_itr = current_itr
                     max_itr_indices = indices
@@ -255,13 +259,13 @@ class AveragePrecisionRecallCurve(AverageCurve):
                 # print precision, relative_predictions, itr_change
                 current_thresholds = self.calculateNewThresholds(itr_change, current_thresholds, min_thresholds, max_thresholds, mu)
                 # raw_input()
-                if previous_itr is not None and abs(current_itr-previous_itr) < 0.000001:# or current_thresholds in previous_thresholds:
-                    # print "Done"
+                if previous_itr is not None and abs(current_itr-previous_itr) < stop_threshold:# or current_thresholds in previous_thresholds:
+                    print "Converged in", j*steps_before_decreasing+i, "steps. Mu:", mu
                     # print [thresh[index] for thresh, index in zip(all_thresholds, max_itr_indices)]
                     return max_itr, max_itr_indices
                 # previous_thresholds.append(current_thresholds)
                 previous_itr = current_itr
-            print "Decreasing mu!"
+            # print "Decreasing mu!"
         print "Max iter exceeded!"
         # print [thresh[index] for thresh, index in zip(all_thresholds, max_itr_indices)]
         return max_itr, max_itr_indices
@@ -370,19 +374,17 @@ class AveragePrecisionRecallCurve(AverageCurve):
         precision_functions, prediction_functions, precision_derivative, prediction_derivative = self.calculatePrecisionPredictionCurves(all_thresholds, all_precisions, all_relative_predictions)
         max_itrs = []
         max_itrs_indices = []
-        import time
-        start_time = time.time()
-        for k in range(4):
+        for k in range(5):
             if k == 0:
                 current_thresholds = self.calculateThresholdsMaxPrecision()
             elif k == 1:
                 current_thresholds = self.calculateThresholdsMaxItrSingle(itr_calculator.itrBitPerMin)
+            elif k == 2:
+                current_thresholds = map(lambda x: x[-1], all_thresholds)
             else:
                 indices = map(lambda x: np.random.randint(0, x), lengths)
                 current_thresholds = map(lambda (x,y): x[y], zip(all_thresholds, indices))
-            starting_mu = 0.00001
             itr, indices = self.gradientDescent(
-                starting_mu,
                 current_thresholds,
                 precision_functions,
                 prediction_functions,
@@ -399,7 +401,5 @@ class AveragePrecisionRecallCurve(AverageCurve):
             )
             max_itrs.append(itr)
             max_itrs_indices.append(indices)
-        print time.time()- start_time
-        raw_input()
         # print max_itrs
         return [thresh[index] for thresh, index in zip(all_thresholds, max_itrs_indices[np.argmax(max_itrs)])]

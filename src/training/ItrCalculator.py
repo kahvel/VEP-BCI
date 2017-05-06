@@ -62,7 +62,6 @@ class ItrCalculator(object):
 
     def itrBitPerMin(self, accuracy, relative_predictions):
         if relative_predictions == 0:
-            # print "Warning! Relative support 0"
             return 0
         else:
             return self.itrBitPerTrial(accuracy)*60.0/self.mdt(relative_predictions)
@@ -73,10 +72,9 @@ class ItrCalculator(object):
         elif accuracy == 1:
             return np.log2(self.n_targets)
         elif accuracy == 0:
-            print "Warning! accuracy 0"
-            return np.nan
+            return np.log2(self.n_targets)*np.log2(1.0/(self.n_targets-1))
         else:
-            return np.log2(self.n_targets)+accuracy*np.log2(accuracy)+(1-accuracy)*np.log2((1-accuracy)/(self.n_targets-1))
+            return np.log2(self.n_targets)+accuracy*np.log2(accuracy)+(1-accuracy)*np.log2((1.0-accuracy)/(self.n_targets-1))
 
 
 class ItrAccuracySubMatrix(ItrCalculator):
