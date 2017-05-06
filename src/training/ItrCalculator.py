@@ -62,7 +62,7 @@ class ItrCalculator(object):
 
     def itrBitPerMin(self, accuracy, relative_predictions):
         if relative_predictions == 0:
-            print "Warning! Relative support 0"
+            # print "Warning! Relative support 0"
             return 0
         else:
             return self.itrBitPerTrial(accuracy)*60.0/self.mdt(relative_predictions)
