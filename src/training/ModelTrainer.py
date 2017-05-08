@@ -44,9 +44,10 @@ class ModelTrainer(object):
 
     def setup(self, options):
         # Check before testing!!
-        self.t_use_ml = False
+        self.t_use_ml = True
         self.t_use_maf_on_features = True
-        self.t_use_maf_on_probas = True and self.t_use_ml
+        self.t_use_maf_on_probas = False and self.t_use_ml
+        self.t_normalise_probas = False and self.t_use_ml
         self.t_matrix_builder_types = [True]
         self.hacky_labels = [1,2,3]
         self.t_remove_samples_features = True and self.t_use_maf_on_features
@@ -132,7 +133,7 @@ class ModelTrainer(object):
             data = np.concatenate(self.allExceptOne(split_data, i), axis=0)
             labels = np.concatenate(self.allExceptOne(split_labels, i), axis=0)
             model.fit(data, labels)
-            predictions.append(model.predictProba(split_data[i], self.t_proba_maf))
+            predictions.append(model.predictProba(split_data[i], self.t_proba_maf, self.t_normalise_probas))
         return predictions
 
     # def secondModel(self, cv_predictions, split_data):
@@ -267,7 +268,7 @@ class ModelTrainer(object):
 
     def fitAndPredictProbaSingle(self, model, data, labels):
         model.fit(data, labels)
-        return model.predictProba(data, self.t_proba_maf)
+        return model.predictProba(data, self.t_proba_maf, self.t_normalise_probas)
 
     def fitAndPredictProbaCv(self, model, data, labels):
         cv_predictions = np.array(self.predictProbaCv(model, data, labels))
@@ -288,7 +289,7 @@ class ModelTrainer(object):
 
     def calculateTestingFeatures(self, model, data):
         if self.t_use_ml:
-            return model.predictProba(data, self.t_proba_maf)
+            return model.predictProba(data, self.t_proba_maf, self.t_normalise_probas)
         else:
             return self.applyRoll(data)
 

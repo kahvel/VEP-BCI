@@ -215,13 +215,16 @@ class AveragePrecisionRecallCurve(AverageCurve):
         previous_itr = None
         max_itr = None
         max_itr_indices = None
+        max_thresholds = None
         # previous_thresholds = []
         mu = 0.0001
         stop_threshold = 0.000001
         steps_before_decreasing = 500
         n_decreases = 50
+        max_actual = None
+        max_actual_indices = None
         for j in range(n_decreases):
-            mu /= 10
+            mu /= 2
             # stop_threshold /= 10
             for i in range(steps_before_decreasing):
                 indices = [thresholds.searchsorted(threshold, side="left") for threshold, thresholds in zip(current_thresholds, all_thresholds)]
@@ -245,30 +248,32 @@ class AveragePrecisionRecallCurve(AverageCurve):
                 #     accuracy = np.logical_and(self.labels[sum_1, :], over_threshold[sum_1, :]).sum()/prediction_count
                 #     predictions = prediction_count/float(n_predictions)
                 #     actual_itr = itr_calculator.itrBitPerMin(accuracy, predictions)
-                #     if np.isnan(actual_itr) or np.isnan(current_itr):
-                #         print "encountered nan!", actual_itr, current_itr#, precision, relative_predictions, current_dp, current_dr
-                #     if np.isnan(actual_itr):
-                #         actual_itr = current_itr
+                #     # if np.isnan(actual_itr) or np.isnan(current_itr):
+                #     #     print "encountered nan!", actual_itr, current_itr#, precision, relative_predictions, current_dp, current_dr
+                #     # if np.isnan(actual_itr):
+                #     #     actual_itr = current_itr
+                # if max_actual is None or actual_itr > max_actual:
+                #     max_actual = actual_itr
+                #     max_actual_indices = indices
                 if np.isnan(current_itr):
                     print "encountered nan!", current_itr, precision, relative_predictions
                 if max_itr is None or current_itr > max_itr:
                     max_itr = current_itr
                     max_itr_indices = indices
+                    max_thresholds = current_thresholds
                 itr_change = itr_calculator.derivative(precision, relative_predictions, current_dp, current_dr)
-                # print current_itr, itr_closest, actual_itr
-                # print precision, relative_predictions, itr_change
                 current_thresholds = self.calculateNewThresholds(itr_change, current_thresholds, min_thresholds, max_thresholds, mu)
-                # raw_input()
                 if previous_itr is not None and abs(current_itr-previous_itr) < stop_threshold:# or current_thresholds in previous_thresholds:
+                    # print max_actual, max_itr, max_itr_indices, max_actual_indices, "kartul", np.sum(np.array(max_itr_indices) == np.array(max_actual_indices))
                     print "Converged in", j*steps_before_decreasing+i, "steps. Mu:", mu
                     # print [thresh[index] for thresh, index in zip(all_thresholds, max_itr_indices)]
-                    return max_itr, max_itr_indices
+                    return max_itr, max_itr_indices, max_thresholds
                 # previous_thresholds.append(current_thresholds)
                 previous_itr = current_itr
             # print "Decreasing mu!"
         print "Max iter exceeded!"
         # print [thresh[index] for thresh, index in zip(all_thresholds, max_itr_indices)]
-        return max_itr, max_itr_indices
+        return max_itr, max_itr_indices, max_thresholds
 
     def extendThresholdsValues(self, thresholds):
         min = thresholds[0]
@@ -315,14 +320,17 @@ class AveragePrecisionRecallCurve(AverageCurve):
         return precision_functions, prediction_functions, precision_derivative, prediction_derivative
 
     def plotCurves(self, thresholds, precisions, precision_function, predictions, prediction_function, precision_derivative, prediction_derivative):
+        import time
         points = np.linspace(thresholds[0], thresholds[-1], 3000)
         plt.figure()
         plt.ylim(0, 1.1)
         plt.plot(thresholds, precisions)
         plt.plot(points, precision_function(points))
+        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
         plt.figure()
         plt.plot(thresholds, predictions)
         plt.plot(points, prediction_function(points))
+        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + "1.tex")
         plt.figure()
         plt.plot(points, precision_derivative(points))
         plt.plot(points, prediction_derivative(points))
@@ -335,6 +343,7 @@ class AveragePrecisionRecallCurve(AverageCurve):
         # precision_functions1, prediction_functions1, precision_derivative1, prediction_derivative1 = self.fitCurves(all_thresholds, all_precisions, all_relative_predictions)
         # class_index = 0
         # self.plotCurves(all_thresholds[class_index], all_precisions[class_index], precision_functions[class_index], all_relative_predictions[class_index], prediction_functions[class_index], precision_derivative[class_index], prediction_derivative[class_index])
+        # raw_input()
         # self.plotCurves(all_thresholds[class_index], all_precisions[class_index], precision_functions1[class_index], all_relative_predictions[class_index], prediction_functions1[class_index], precision_derivative1[class_index], prediction_derivative1[class_index])
         # plt.show()
         return precision_functions, prediction_functions, precision_derivative, prediction_derivative
@@ -374,6 +383,7 @@ class AveragePrecisionRecallCurve(AverageCurve):
         precision_functions, prediction_functions, precision_derivative, prediction_derivative = self.calculatePrecisionPredictionCurves(all_thresholds, all_precisions, all_relative_predictions)
         max_itrs = []
         max_itrs_indices = []
+        max_itr_thresholds = []
         for k in range(5):
             if k == 0:
                 current_thresholds = self.calculateThresholdsMaxPrecision()
@@ -384,7 +394,7 @@ class AveragePrecisionRecallCurve(AverageCurve):
             else:
                 indices = map(lambda x: np.random.randint(0, x), lengths)
                 current_thresholds = map(lambda (x,y): x[y], zip(all_thresholds, indices))
-            itr, indices = self.gradientDescent(
+            itr, indices, thresholds = self.gradientDescent(
                 current_thresholds,
                 precision_functions,
                 prediction_functions,
@@ -401,5 +411,13 @@ class AveragePrecisionRecallCurve(AverageCurve):
             )
             max_itrs.append(itr)
             max_itrs_indices.append(indices)
+            max_itr_thresholds.append(thresholds)
         # print max_itrs
+        # print max_itrs_indices
+        # print np.argmax(max_itrs)
+        # print max_itrs_indices[np.argmax(max_itrs)]
+        # print max_itr_thresholds
+        # print [[thresh[index] for thresh, index in zip(all_thresholds, indi)] for indi in max_itrs_indices]
+        # print [thresh[index] for thresh, index in zip(all_thresholds, max_itrs_indices[np.argmax(max_itrs)])]
+        # raw_input()
         return [thresh[index] for thresh, index in zip(all_thresholds, max_itrs_indices[np.argmax(max_itrs)])]

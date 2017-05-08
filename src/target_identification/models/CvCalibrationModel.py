@@ -34,10 +34,12 @@ class Model(ColumnsIterator.ColumnsIterator):
         ret[n:] = ret[n:] - ret[:-n]
         return ret[n - 1:] / n
 
-    def predictProba(self, data, n):
-        # Normalisation
-        normalised_probas = map(lambda probas: list(probas[i]/sum(probas) for i in range(len(probas))), self.model.predict_proba(data))
-        return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(normalised_probas)))
+    def predictProba(self, data, n, normalise):
+        if normalise:
+            probas = map(lambda probas: list(probas[i]/sum(probas) for i in range(len(probas))), self.model.predict_proba(data))
+        else:
+            probas = self.model.predict_proba(data)
+        return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(probas)))
 
         # old_pred = np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
         # n = old_pred.shape[1]
@@ -129,8 +131,8 @@ class TrainingModel(Model):
     def predict(self, data):
         return Model.predict(self, self.selectFeatures(data))
 
-    def predictProba(self, data, n):
-        return Model.predictProba(self, self.selectFeatures(data), n)
+    def predictProba(self, data, n, normalise):
+        return Model.predictProba(self, self.selectFeatures(data), n, normalise)
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
         self.scaling_functions = ScalingFunction.TrainingScalingFunctions()
