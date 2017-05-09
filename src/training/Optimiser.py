@@ -89,9 +89,10 @@ class Optimiser(object):
             max_itr_thresholds.append(thresholds)
             # print np.array(thresholds), itr
         result = max_itr_thresholds[np.argmax(max_itrs)]
-        # return result # 2
-        indices = [thresholds.searchsorted(threshold, side="left") for threshold, thresholds in zip(result, all_thresholds)]
-        return [thresh[index] for thresh, index in zip(all_thresholds, indices)]  # 1
+        return result
+        # indices = [thresholds.searchsorted(threshold, side="left") for threshold, thresholds in zip(result, all_thresholds)]
+        # indices = map(lambda (len, i): i if i < len else len-1, zip(lengths, indices))
+        # return [thresh[index] for thresh, index in zip(all_thresholds, indices)]
 
 
 class SequentialLeastSquaresProgrammingActual(Optimiser):
@@ -185,7 +186,7 @@ class GradientDescentOptimiser(Optimiser):
         # previous_thresholds = []
         mu = 0.0001
         stop_threshold = 0.000001
-        steps_before_decreasing = 500
+        steps_before_decreasing = 100
         n_decreases = 50
         current_thresholds = initial_guess
         for j in range(n_decreases):

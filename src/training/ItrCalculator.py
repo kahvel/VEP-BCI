@@ -61,7 +61,7 @@ class ItrCalculator(object):
         return -self.step/r**2
 
     def dITRt_da(self, a):
-        if a == 1:
+        if a == 1.0:
             return 0
         else:
             return np.log2(a * (self.n_targets - 1.0) / (1.0 - a))
@@ -125,21 +125,21 @@ class ItrCalculator(object):
             predictions = prediction_count/float(self.n_samples)
             return self.itrBitPerMin(accuracy, predictions)
 
-    def itrBitPerMin(self, accuracy, relative_predictions):
-        if relative_predictions == 0:
+    def itrBitPerMin(self, a, r):
+        if r == 0:
             return 0
         else:
-            return self.itrBitPerTrial(accuracy)*60.0/self.mdt(relative_predictions)
+            return self.itrBitPerTrial(a)*60.0/self.mdt(r)
 
-    def itrBitPerTrial(self, accuracy):
+    def itrBitPerTrial(self, a):
         if self.n_targets == 1:
             return np.nan
-        elif accuracy == 1:
+        elif a == 1:
             return np.log2(self.n_targets)
-        elif accuracy == 0:
+        elif a == 0:
             return np.log2(self.n_targets)*np.log2(1.0/(self.n_targets-1))
         else:
-            return np.log2(self.n_targets)+accuracy*np.log2(accuracy)+(1-accuracy)*np.log2((1.0-accuracy)/(self.n_targets-1))
+            return np.log2(self.n_targets)+a*np.log2(a)+(1-a)*np.log2((1.0-a)/(self.n_targets-1))
 
     def accuracyUpperBound(self, thresholds):
         p = self.precision_handler.getValueAt(thresholds)
