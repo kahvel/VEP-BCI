@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.optimize
 import matplotlib.pyplot as plt
 
 from curves import AverageCurve
@@ -11,11 +10,11 @@ class CvCurve(object):
         self.curves_by_class = None
         self.curves_by_split = None
 
-    def crossValidationCurves(self, predictions, split_labels):
+    def getCurvesPerSplit(self, predictions, split_labels):
         folds = len(predictions)
         curves = []
         for i in range(folds):
-            curve = self.getAverageCurve(self.ordered_labels)
+            curve = self.getAverageCurvePerSplit(self.ordered_labels)
             curve.calculate(np.transpose(predictions[i]), split_labels[i])
             curves.append(curve)
         return curves
@@ -25,7 +24,7 @@ class CvCurve(object):
         for i, curve in enumerate(curves):
             for label in curve.getClasses():
                 if label not in curves_by_class:
-                    curves_by_class[label] = self.getCurve(len(curves))
+                    curves_by_class[label] = self.getAverageCurvePerClass(len(curves))
                 curves_by_class[label].addCurve(curve.curves[label], i+1)
         return curves_by_class
 
@@ -34,7 +33,7 @@ class CvCurve(object):
             curves_by_class[label].addMacro()
 
     def calculate(self, predictions, split_labels):
-        self.curves_by_split = self.crossValidationCurves(predictions, split_labels)
+        self.curves_by_split = self.getCurvesPerSplit(predictions, split_labels)
         return self.calculateFromCurves(self.curves_by_split)
 
     def calculateFromCurves(self, curves):
@@ -54,10 +53,10 @@ class CvCurve(object):
     def setPlotTitle(self, label):
         raise NotImplementedError("setPlotTitle not implemented!")
 
-    def getAverageCurve(self, ordered_labels):
+    def getAverageCurvePerSplit(self, ordered_labels):
         raise NotImplementedError("getAverageCurve not implemented!")
 
-    def getCurve(self, n_curves):
+    def getAverageCurvePerClass(self, n_curves):
         raise NotImplementedError("getCurve not implemented!")
 
     def getAllMacroAverageThresholds(self):
@@ -67,10 +66,10 @@ class CvCurve(object):
             all_thresholds.append(thresholds)
         return all_thresholds
 
-    def calculateThresholds(self, itr_calculator, itr_calculator2):
+    def calculateThresholds(self, optimiser):
         cut_off_threshold = []  # Threshold as mean over individual thresholds
         for curve in self.curves_by_split:
-            thresholds = curve.calculateThresholds(itr_calculator, itr_calculator2)
+            thresholds = curve.calculateThresholds(optimiser)
             cut_off_threshold.append(thresholds)
         # print cut_off_threshold
         # print np.mean(cut_off_threshold, 0)
@@ -100,10 +99,10 @@ class RocCvCurve(CvCurve):
     def setPlotTitle(self, label):
         plt.title('ROC curve of class ' + str(label))
 
-    def getCurve(self, n_curves):
-        return RocCurve(list(range(1, n_curves+1)))
+    def getAverageCurvePerClass(self, n_curves):
+        return RocCurvePerClass(list(range(1, n_curves+1)))
 
-    def getAverageCurve(self, ordered_labels):
+    def getAverageCurvePerSplit(self, ordered_labels):
         return AverageCurve.AverageRocCurve(ordered_labels)
 
 
@@ -111,14 +110,14 @@ class PrecisionRecallCvCurve(CvCurve):
     def setPlotTitle(self, label):
         plt.title('Precision-recall curve of class ' + str(label))
 
-    def getCurve(self, n_curves):
-        return PrecisionRecallCurve(list(range(1, n_curves+1)))
+    def getAverageCurvePerClass(self, n_curves):
+        return PrecisionRecallCurvePerClass(list(range(1, n_curves+1)))
 
-    def getAverageCurve(self, ordered_labels):
+    def getAverageCurvePerSplit(self, ordered_labels):
         return AverageCurve.AveragePrecisionRecallCurve(ordered_labels)
 
 
-class RocCurve(AverageCurve.AverageRocCurve):
+class RocCurvePerClass(AverageCurve.AverageRocCurve):
     def getCurveLegendLabel(self, key):
         if isinstance(key, int):
             return 'Split {0}'.format(key)
@@ -129,7 +128,7 @@ class RocCurve(AverageCurve.AverageRocCurve):
         self.curves[split] = curve
 
 
-class PrecisionRecallCurve(AverageCurve.AveragePrecisionRecallCurve):
+class PrecisionRecallCurvePerClass(AverageCurve.AveragePrecisionRecallCurve):
     def getCurveLegendLabel(self, key):
         if isinstance(key, int):
             return 'Split {0}'.format(key)

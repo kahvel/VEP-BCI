@@ -61,7 +61,10 @@ class ItrCalculator(object):
         return -self.step/r**2
 
     def dITRt_da(self, a):
-        return np.log2(a * (self.n_targets - 1.0) / (1.0 - a))
+        if a == 1:
+            return 0
+        else:
+            return np.log2(a * (self.n_targets - 1.0) / (1.0 - a))
 
     def dITR_da(self, a, r):
         return self.dITRt_da(a) * 60.0 / self.mdt(r)
@@ -93,7 +96,10 @@ class ItrCalculator(object):
     def itrFromThresholds(self, thresholds):
         p = self.precision_handler.getValueAt(thresholds)
         i = self.predictions_handler.getValueAt(thresholds)
-        return self.itrFromPrecisionPredictions(p, i)
+        result = self.itrFromPrecisionPredictions(p, i)
+        if np.isnan(result):
+            print "encountered nan!", p, i, thresholds
+        return result
 
     def getIndicesClosestToThresholds(self, current_thresholds, indices):
         if indices is None:
@@ -112,9 +118,12 @@ class ItrCalculator(object):
         counts = over_threshold.sum(1)
         sum_1 = np.where(counts == 1)
         prediction_count = float(sum_1[0].shape[0])
-        accuracy = np.logical_and(self.labels[sum_1, :], over_threshold[sum_1, :]).sum()/prediction_count
-        predictions = prediction_count/float(self.n_samples)
-        return self.itrBitPerMin(accuracy, predictions)
+        if prediction_count == 0:
+            return 0
+        else:
+            accuracy = np.logical_and(self.labels[sum_1, :], over_threshold[sum_1, :]).sum()/prediction_count
+            predictions = prediction_count/float(self.n_samples)
+            return self.itrBitPerMin(accuracy, predictions)
 
     def itrBitPerMin(self, accuracy, relative_predictions):
         if relative_predictions == 0:
@@ -131,6 +140,24 @@ class ItrCalculator(object):
             return np.log2(self.n_targets)*np.log2(1.0/(self.n_targets-1))
         else:
             return np.log2(self.n_targets)+accuracy*np.log2(accuracy)+(1-accuracy)*np.log2((1.0-accuracy)/(self.n_targets-1))
+
+    def accuracyUpperBound(self, thresholds):
+        p = self.precision_handler.getValueAt(thresholds)
+        i = self.predictions_handler.getValueAt(thresholds)
+        return self.accuracy(p, i)
+
+    def accuracyLowerBound(self, thresholds):
+        p = self.precision_handler.getValueAt(thresholds)
+        i = self.predictions_handler.getValueAt(thresholds)
+        return 1 - self.accuracy(p, i)
+
+    def predictionsUpperBound(self, thresholds):
+        i = self.predictions_handler.getValueAt(thresholds)
+        return self.relativePredictions(i)
+
+    def predictionsLowerBound(self, thresholds):
+        i = self.predictions_handler.getValueAt(thresholds)
+        return 1 - self.relativePredictions(i)
 
 
 class ItrAccuracySubMatrix(ItrCalculator):

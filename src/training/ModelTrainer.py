@@ -1,14 +1,11 @@
 import numpy as np
-# import scipy.integrate
 import sklearn.metrics
 import matplotlib.pyplot as plt
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
 from curves import AverageCurve, CvCurves
-from training import ItrCalculator
+from training import ItrCalculator, Optimiser
 import constants as c
-
-from sklearn.ensemble import AdaBoostClassifier
 
 
 class ModelTrainer(object):
@@ -44,7 +41,7 @@ class ModelTrainer(object):
 
     def setup(self, options):
         # Check before testing!!
-        self.t_use_ml = True
+        self.t_use_ml = False
         self.t_use_maf_on_features = True
         self.t_use_maf_on_probas = False and self.t_use_ml
         self.t_normalise_probas = False and self.t_use_ml
@@ -54,6 +51,8 @@ class ModelTrainer(object):
         self.t_remove_samples_probas = True and self.t_use_maf_on_probas
         self.t_feature_maf = self.getMafLength(self.t_use_maf_on_features)
         self.t_proba_maf = self.getMafLength(self.t_use_maf_on_probas)
+        self.t_precisions_bounded = True
+        self.t_predictions_bounded = True
         self.itr_calculator = ItrCalculator.ItrAccuracySubMatrix(
             window_length=1,
             step=0.125,
@@ -61,15 +60,12 @@ class ModelTrainer(object):
             proba_maf_length=self.t_proba_maf,
             look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
             n_targets=3,
+            precisions_bounded=self.t_precisions_bounded,
+            predictions_bounded=self.t_predictions_bounded,
         )
-        self.itr_calculator2 = ItrCalculator.ItrCalculator(
-            window_length=1,
-            step=0.125,
-            feature_maf_length=self.t_feature_maf,
-            proba_maf_length=self.t_proba_maf,
-            look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
-            n_targets=3,
-        )
+        self.threshold_optimiser_gd = Optimiser.GradientDescentOptimiser(self.itr_calculator)
+        self.threshold_optimiser_slsqp_actual = Optimiser.SequentialLeastSquaresProgrammingActual(self.itr_calculator)
+        self.threshold_optimiser_slsqp_simplified = Optimiser.SequentialLeastSquaresProgrammingSimplified(self.itr_calculator)
         # CvCalibrationModel predictProba
         # Normalising = True (before applying MAF)
         # Calibrated cv = 5
@@ -400,7 +396,7 @@ class ModelTrainer(object):
             testing_prcs.append(testing_prc)
             # string_training_labels = map(str, np.concatenate(split_training_labels_proba, 0))
             # optimisation_function_lambda = lambda x, y: self.optimisationFunction(x, y, np.concatenate(tr_prediction, 0), string_training_labels, label_order)
-            current_thresholds = training_prcs[-1].calculateThresholds(self.itr_calculator, self.itr_calculator2)
+            current_thresholds = training_prcs[-1].calculateThresholds(self.threshold_optimiser_slsqp_actual)
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 
