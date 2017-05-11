@@ -41,7 +41,7 @@ class CurveFitting(object):
 
     def fitCurves(self, array1, array2):
         self.calculateCurves(array1, array2)
-        # self.plotCurves([1])
+        self.plotCurves([0])
         return (
             self.extractFunctions(),
             self.extractDerivatives(),
@@ -178,14 +178,19 @@ class PredictionsCurve(PrecisionOrPredictionCurve):
 
 
 class PdfCurve(Curve):
-    def __init__(self, all_features, all_labels):
+    def __init__(self, all_features, all_labels, do_fitting=True):
         Curve.__init__(self)
         bar_width = 0.02
         self.all_features = all_features
         self.bins = int((np.max(all_features)-np.min(all_features))/bar_width)
         self.all_labels = all_labels
         self.parameters = None
-        self.fitCurve()
+        hist, bin_edges = np.histogram(self.all_features, bins=self.bins, density=True)
+        bin_edges = self.moving_average(bin_edges, 2)
+        self.x = bin_edges
+        self.y = hist
+        if do_fitting:
+            self.fitCurve()
 
     def moving_average(self, a, n) :
         ret = np.cumsum(a, dtype=float)
@@ -205,11 +210,7 @@ class PdfCurve(Curve):
         return scipy.stats.skewnorm.pdf(x, *self.parameters)
 
     def fitSkew(self, initial_guess):
-        hist, bin_edges = np.histogram(self.all_features, bins=self.bins, density=True)
-        bin_edges = self.moving_average(bin_edges, 2)
-        self.x = bin_edges
-        self.y = hist
-        return scipy.optimize.curve_fit(self.skew, bin_edges, hist, p0=initial_guess)
+        return scipy.optimize.curve_fit(self.skew, self.x, self.y, p0=initial_guess)
 
     def fitCurve(self):
         self.parameters = self.fitSkew([0, np.mean(self.all_features), np.std(self.all_features)])[0]  # , 0, 1])
@@ -233,6 +234,62 @@ class PdfCurve(Curve):
         self.plotFitCurve()
 
 
+class PdfCurveSum(PdfCurve):
+    def __init__(self, all_features, functions, derivatives):
+        PdfCurve.__init__(self, all_features, None, do_fitting=False)
+        self.functions = functions
+        self.derivatives = derivatives
+        self.fit_function = self.makeFunction
+        self.fit_function_derivative = self.makeDerivative
+
+    def makeFunction(self, x):
+        return sum(function(x) for function in self.functions)/float(len(self.functions))
+
+    def makeDerivative(self, x):
+        return sum(function(x) for function in self.derivatives)/float(len(self.derivatives))
+
+
 class DistrubutionCurveFitting(CurveFitting):
-    def getCurve(self, all_features, all_labels):
-        return PdfCurve(all_features, all_labels)
+    def __init__(self):
+        CurveFitting.__init__(self)
+
+    def getCurve(self, features, labels, do_fitting=True):
+        return PdfCurve(features, labels, do_fitting)
+
+    def getSumCurve(self, features, functions, derivatives):
+        return PdfCurveSum(features, functions, derivatives)
+
+    def calculateCurves(self, all_features, all_labels):
+        self.curves = []
+        functions = [[] for _ in range(len(all_labels))]
+        derivatives = [[] for _ in range(len(all_labels))]
+        for i, labels in enumerate(all_labels):
+            for j, features in enumerate(all_features):
+                curve = self.getCurve(features[np.where(labels)], labels)
+                self.curves.append(curve)
+                functions[j].append(curve.fit_function)
+                derivatives[j].append(curve.fit_function_derivative)
+        for i, features in enumerate(all_features):
+            curve = self.getSumCurve(features, functions[i], derivatives[i])
+            self.curves.append(curve)
+
+    def calculateClassCount(self):
+        return int((-1+(1+4*len(self.curves))**0.5)/2.0)
+
+    def plotCurves(self, classes):
+        n_classes = self.calculateClassCount()
+        plt.figure()
+        for i, curve in enumerate(self.curves[:-n_classes]):
+            plt.subplot(n_classes, n_classes, i+1)
+            curve.plotFunction()
+        plt.figure()
+        for i, curve in enumerate(self.curves[:-n_classes]):
+            plt.subplot(n_classes, n_classes, i+1)
+            curve.plotDerivative()
+        plt.figure()
+        for i, curve in enumerate(self.curves[-n_classes:]):
+            plt.subplot(2, n_classes, i+1)
+            curve.plotFunction()
+        for i, curve in enumerate(self.curves[-n_classes:]):
+            plt.subplot(2, n_classes, n_classes+i+1)
+            curve.plotDerivative()

@@ -186,7 +186,7 @@ class ValuesHandler(object):
         self.fit_curve_derivative = fit_curve_derivative
 
     def getValueFromCurve(self, curves, xs):
-        return [np.asscalar(func(x)) for func, x in zip(curves, xs)]
+        return np.array([np.asscalar(func(x)) for func, x in zip(curves, xs)])
 
     def getValueAt(self, xs):
         raise NotImplementedError("getValueAt not implemented!")
@@ -227,10 +227,10 @@ class ValuesHandlerPrecisionOrPrediction(ValuesHandler):
 
 class ProbValuesHandler(ValuesHandler):
     def getValueAt(self, xs):
-        return self.getValueFromCurve(self.fit_curves, xs)
+        return 1-self.getValueFromCurve(self.fit_curves, xs)
 
     def getDerivativeValueAt(self, xs):
-        return self.getValueFromCurve(self.fit_curve_derivative, xs)
+        return -self.getValueFromCurve(self.fit_curve_derivative, xs)
 
 
 class ItrCalculatorProb(ItrAccuracySubMatrix):
