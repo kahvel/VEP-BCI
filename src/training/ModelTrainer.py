@@ -63,9 +63,20 @@ class ModelTrainer(object):
             precisions_bounded=self.t_precisions_bounded,
             predictions_bounded=self.t_predictions_bounded,
         )
+        self.itr_calculator_prob = ItrCalculator.ItrCalculatorProb(
+            window_length=1,
+            step=0.125,
+            feature_maf_length=self.t_feature_maf,
+            proba_maf_length=self.t_proba_maf,
+            look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
+            n_targets=3,
+            precisions_bounded=self.t_precisions_bounded,
+            predictions_bounded=self.t_predictions_bounded,
+        )
         # self.t_threshold_optimiser = Optimiser.GradientDescentOptimiser(self.itr_calculator)
         # self.t_threshold_optimiser = Optimiser.SequentialLeastSquaresProgrammingActual(self.itr_calculator)
         self.t_threshold_optimiser = Optimiser.SequentialLeastSquaresProgrammingSimplified(self.itr_calculator)
+        self.t_threshold_optimiser_prob = Optimiser.SequentialLeastSquaresProgrammingSimplified(self.itr_calculator_prob)
         # CvCalibrationModel predictProba
         # Normalising = True (before applying MAF)
         # Calibrated cv = 5
@@ -403,6 +414,8 @@ class ModelTrainer(object):
             # string_training_labels = map(str, np.concatenate(split_training_labels_proba, 0))
             # optimisation_function_lambda = lambda x, y: self.optimisationFunction(x, y, np.concatenate(tr_prediction, 0), string_training_labels, label_order)
             current_thresholds = training_prcs[-1].calculateThresholds(self.t_threshold_optimiser)
+            training_prcs[-1].calculateThresholds(self.t_threshold_optimiser_prob)
+            plt.show()
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
 

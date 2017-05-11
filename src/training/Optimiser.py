@@ -97,9 +97,7 @@ class Optimiser(object):
 
 class SequentialLeastSquaresProgrammingActual(Optimiser):
     def fitCurves(self, all_thresholds, all_precisions, all_relative_predictions, all_predictions, labels):
-        self.itr_calculator.all_predicted_scores = all_predictions
-        self.itr_calculator.labels = labels
-        self.itr_calculator.n_samples = len(all_predictions[0])
+        self.itr_calculator.setValues(all_thresholds, all_precisions, all_relative_predictions, all_predictions, labels)
 
     def findOptimalThresholds(self, function, initial_guess, bounds, gradient, constraints):
         result = scipy.optimize.minimize(

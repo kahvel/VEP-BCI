@@ -23,6 +23,7 @@ class Plotter(object):
         self.n_classes = len(self.ordered_labels)
         self.bar_width = 0.02
         self.colors = ["blue", "green", "red"]
+        self.parameters = []
 
     def plotJointPdfs(self):
         dataframe = pd.DataFrame(self.data, columns=["F_1", "F_2", "F_3"])
@@ -78,43 +79,49 @@ class Plotter(object):
         t = (x-e) / float(w)
         return 2.0 / w * self.pdf(t) * self.cdf(a*t)
 
-    def func(self, x, sigmag, mu, alpha, c, a):
-        normpdf = (1.0/(sigmag*np.sqrt(2*pi)))*np.exp(-(np.power((x-mu),2)/(2.0*np.power(sigmag,2))))
-        normcdf = (0.5*(1.0+erf((alpha*((x-mu)/sigmag))/(np.sqrt(2.0)))))
-        return 2*a*normpdf*normcdf + c
+    def func(self, x, alpha, mu, sigma):  # , c, a):
+        normpdf = (1.0/(sigma*np.sqrt(2*pi)))*np.exp(-(np.power((x-mu),2)/(2.0*np.power(sigma,2))))
+        normcdf = (0.5*(1.0+erf((alpha*((x-mu)/sigma))/(np.sqrt(2.0)))))
+        return 2.0*normpdf*normcdf
+        # return 2*a*normpdf*normcdf + c
 
     def plotSkew(self, data, current_min, current_max):
         # mean = np.mean(data)
-        parameters = self.fitSkew2(data, current_min, current_max, [np.std(data), np.mean(data), 0, 0, 1])
+        parameters = self.fitSkew2(data, current_min, current_max, [0, np.mean(data), np.std(data)])  # , 0, 1])
         # parameters = self.fitTest(data, current_min, current_max, [np.mean(data), np.std(data)])
         print parameters[0], [np.mean(data), np.std(data)]
         parameters = parameters[0]
+        self.parameters.append(parameters)
         # print self.func(data, *parameters)
         # print self.skew(parameters, data)
         points = np.linspace(current_min, current_max, len(data))
+        # plt.plot(points, self.skewNorm(points, *parameters))
         plt.plot(points, self.func(points, *parameters))
+        # plt.plot(points, scipy.stats.norm.pdf(points, *parameters))
+
+    def plotSkewCdf(self, data, parameters):
+        current_min = np.min(data)
+        current_max = np.max(data)
+        points = np.linspace(current_min, current_max, len(data))
+        plt.plot(points, 1-scipy.stats.skewnorm.cdf(points, *parameters))
 
     def fitTest(self, data, current_min, current_max, initial_guess):
-        points = np.linspace(current_min, current_max, len(data))
-        return scipy.optimize.curve_fit(scipy.stats.norm.pdf, points, scipy.stats.norm.pdf(points, initial_guess[0], initial_guess[1]), p0=initial_guess)
+        hist, bin_edges = np.histogram(data, bins=int((current_max-current_min)/self.bar_width), density=True)
+        bin_edges = self.moving_average(bin_edges, 2)
+        return scipy.optimize.curve_fit(scipy.stats.norm.pdf, bin_edges, hist, p0=initial_guess)
 
     def moving_average(self, a, n) :
         ret = np.cumsum(a, dtype=float)
         ret[n:] = ret[n:] - ret[:-n]
         return ret[n - 1:] / n
 
+    def skewNorm(self, data, alpha, mu, sigma):
+        y = (data - mu) / float(sigma)
+        return scipy.stats.skewnorm.pdf(y, alpha)
+
     def fitSkew2(self, data, current_min, current_max, initial_guess):
-        # print initial_guess
         hist, bin_edges = np.histogram(data, bins=int((current_max-current_min)/self.bar_width), density=True)
         bin_edges = self.moving_average(bin_edges, 2)
-        # plt.figure()
-        # print hist
-        # print hist.shape
-        # print bin_edges
-        # print bin_edges.shape
-        # print np.array(data).shape
-        # plt.plot(bin_edges, hist)
-        # plt.show()
         return scipy.optimize.curve_fit(self.func, bin_edges, hist, p0=initial_guess)
 
     def plotNorm(self, data, current_min, current_max):
@@ -175,6 +182,7 @@ class Plotter(object):
                 cdf = np.insert(cdf, 0, 1)
                 plt.plot(thresholds, cdf)
                 plt.fill_between(thresholds, cdf, alpha=0.1)
+                self.plotSkewCdf(features, self.parameters[i*self.n_classes+j])
         plt.tight_layout()
 
     def plotJointCdf(self):
