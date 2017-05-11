@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
 from curves import AverageCurve, CvCurves
-from training import ItrCalculator, Optimiser
+from training import ItrCalculator, Optimiser, DistributionPlotter
 import constants as c
 
 
@@ -42,10 +42,10 @@ class ModelTrainer(object):
     def setup(self, options):
         # Check before testing!!
         self.t_use_ml = False
-        self.t_use_maf_on_features = True
+        self.t_use_maf_on_features = False
         self.t_use_maf_on_probas = False and self.t_use_ml
         self.t_normalise_probas = False and self.t_use_ml
-        self.t_matrix_builder_types = [True]
+        self.t_matrix_builder_types = [False]
         self.hacky_labels = [1,2,3]
         self.t_remove_samples_features = True and self.t_use_maf_on_features
         self.t_remove_samples_probas = True and self.t_use_maf_on_probas
@@ -63,9 +63,9 @@ class ModelTrainer(object):
             precisions_bounded=self.t_precisions_bounded,
             predictions_bounded=self.t_predictions_bounded,
         )
-        self.t_threshold_optimiser = Optimiser.GradientDescentOptimiser(self.itr_calculator)
+        # self.t_threshold_optimiser = Optimiser.GradientDescentOptimiser(self.itr_calculator)
         # self.t_threshold_optimiser = Optimiser.SequentialLeastSquaresProgrammingActual(self.itr_calculator)
-        # self.t_threshold_optimiser = Optimiser.SequentialLeastSquaresProgrammingSimplified(self.itr_calculator)
+        self.t_threshold_optimiser = Optimiser.SequentialLeastSquaresProgrammingSimplified(self.itr_calculator)
         # CvCalibrationModel predictProba
         # Normalising = True (before applying MAF)
         # Calibrated cv = 5
@@ -116,6 +116,15 @@ class ModelTrainer(object):
         for recording in self.training_recordings:
             data, labels = self.cv_model.getConcatenatedMatrix([recording])
             data_split.append(data)
+            labels_split.append(labels)
+        return data_split, labels_split
+
+    def splitAndRollData(self):
+        data_split = []
+        labels_split = []
+        for recording in self.training_recordings:
+            data, labels = self.cv_model.getConcatenatedMatrix([recording])
+            data_split.append(self.applyRoll(data))
             labels_split.append(labels)
         return data_split, labels_split
 
@@ -281,16 +290,13 @@ class ModelTrainer(object):
         if self.t_use_ml:
             return self.fitAndPredictProba(n_folds, model, data, labels)
         else:
-            return self.hackyFeatureFix(data)
+            return data
 
     def calculateTestingFeatures(self, model, data):
         if self.t_use_ml:
             return model.predictProba(data, self.t_proba_maf, self.t_normalise_probas)
         else:
-            return self.applyRoll(data)
-
-    def hackyFeatureFix(self, data):
-        return map(lambda x: self.applyRoll(x), data)
+            return data
 
     def applyRoll(self, data):
         return np.roll(data, 1, axis=1)
@@ -334,7 +340,7 @@ class ModelTrainer(object):
             # split_training_prcs.append(self.calculateSplitPrcs(label_order, split_training_predictions, rolled_split_modified_training_labels))
 
     def start(self):
-        split_data, split_labels = self.splitTrainingData()
+        split_data, split_labels = self.splitAndRollData()  # Hacky
         training_rocs = []
         training_prcs = []
         thresholds = []
@@ -434,6 +440,15 @@ class ModelTrainer(object):
             self.printConfusionMatrixData(testing_threshold_confusion_matrices[i])
             # print self.calculateAccuracyIgnoringLastColumn(split_testing_threshold_confusion_matrices[i])
             # print split_testing_threshold_confusion_matrices[i]
+
+        all_data = np.concatenate(split_data, 0)
+        all_labels = np.concatenate(split_labels, 0)
+        plotter = DistributionPlotter.Plotter(all_data, all_labels, thresholds, label_order)
+        plotter.plotPdf()
+        plotter.plotCdf()
+        # plotter.plotJointPdfs()
+        # plotter.pair()
+        plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])

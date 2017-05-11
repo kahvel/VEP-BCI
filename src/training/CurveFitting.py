@@ -25,6 +25,7 @@ class CurveFitting(object):
         plt.show()
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
+        # raw_input()
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + "1.tex")
         # plt.figure()
         # plt.plot(points, precision_derivative(points))
@@ -42,7 +43,7 @@ class CurveFitting(object):
 
     def calculatePrecisionPredictionCurves(self, all_thresholds, all_precisions, all_relative_predictions):
         self.fitCurves(all_thresholds, all_precisions, all_relative_predictions)
-        # self.plotCurves(all_thresholds, all_precisions, all_relative_predictions, [0,1,2])
+        # self.plotCurves(all_thresholds, all_precisions, all_relative_predictions, [1])
         return (
             self.extractPrecisionFunctions(),
             self.extractPredictionFunctions(),
@@ -113,6 +114,7 @@ class Curve(object):
         x_values = np.unique(x_values)
         values = np.interp(x_values, self.thresholds, self.values)
         self.coefficients = self.calculateCoefficients(x_values, values)
+        # self.coefficients = self.calculateCoefficients(self.thresholds, self.values)
         # print self.coefficients
         # print [str(p) + " x^" + str(self.degree-i) + " + " for i, p in enumerate(self.coefficients)]
         # print [str(p) + " * " + str(self.degree-i) + " x^" + str(self.degree-1-i) for i, p in enumerate(self.coefficients[:-1])]
