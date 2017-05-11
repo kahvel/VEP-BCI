@@ -13,7 +13,8 @@ class AverageCurve(object):
     def __init__(self, ordered_labels):
         self.curves = dict()
         self.ordered_labels = ordered_labels
-        self.labels = None
+        self.binary_labels = None
+        self.scores = None
 
     def addMacro(self):
         raise NotImplementedError("addMacro not implemented!")
@@ -35,7 +36,8 @@ class AverageCurve(object):
 
     def calculate(self, decision_function_values, labels):
         binary_labels = self.getBinaryLabels(labels)
-        self.labels = np.transpose(binary_labels)
+        self.binary_labels = binary_labels
+        self.scores = decision_function_values
         self.calculateBinary(decision_function_values, binary_labels)
         self.addMicro(decision_function_values, binary_labels)
         self.addMacro()
@@ -156,5 +158,5 @@ class AveragePrecisionRecallCurve(AverageCurve):
         plt.title('Precision-recall curve')
 
     def calculateThresholds(self, optimiser):
-        optimiser.setCurveData(self.ordered_labels, self.curves, self.labels)
+        optimiser.setCurveData(self.ordered_labels, self.scores, self.binary_labels, curves=self.curves)
         return optimiser.optimise()

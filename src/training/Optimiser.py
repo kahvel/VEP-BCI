@@ -1,25 +1,28 @@
 import numpy as np
 import scipy.optimize
+import sklearn.metrics
 
 
 class Optimiser(object):
     def __init__(self, itr_calculator):
         self.ordered_labels = None
         self.curves = None
-        self.labels = None
+        self.binary_labels = None
+        self.scores = None
         self.itr_calculator = itr_calculator
 
-    def setCurveData(self, ordered_labels, curves, labels):
+    def setCurveData(self, ordered_labels, scores, labels, curves=None):
         self.ordered_labels = ordered_labels
         self.curves = curves
-        self.labels = labels
+        self.binary_labels = labels
+        self.scores = scores
 
     def calculateThresholdsMaxPrecision(self):
         # threshold_indices = []
         cut_off_threshold = []
-        for key in self.ordered_labels:
-            _, y, thresholds, _ = self.curves[key].getValues()
-            index = np.argmax(y[:-1])
+        for key, labels, scores in zip(self.ordered_labels, self.binary_labels, self.scores):
+            _, y, thresholds = self.getPrecisionRecallCurve(scores, labels, key)
+            index = np.argmax(y)
             # threshold_indices.append(index)
             cut_off_threshold.append(thresholds[index])
         return cut_off_threshold
@@ -27,10 +30,10 @@ class Optimiser(object):
     def calculateThresholdsMaxItrSingle(self, optimisation_function):
         # threshold_indices = []
         cut_off_threshold = []
-        for key in self.ordered_labels:
-            x, y, thresholds, _ = self.curves[key].getValues()
+        for key, labels, scores in zip(self.ordered_labels, self.binary_labels, self.scores):
+            x, y, thresholds = self.getPrecisionRecallCurve(scores, labels, key)
             itrs = map(lambda (r, p): optimisation_function(p, r), zip(x, y))
-            index = np.argmax(itrs[:-1])
+            index = np.argmax(itrs)
             # threshold_indices.append(index)
             cut_off_threshold.append(thresholds[index])
         return cut_off_threshold
@@ -52,6 +55,26 @@ class Optimiser(object):
     def fitCurves(self, all_thresholds, all_precisions, all_relative_predictions, all_predictions, labels):
         raise NotImplementedError("fitCurves not implemented!")
 
+    def probPi(self, scores, thresholds, n_samples):
+        return (n_samples - scores.searchsorted(thresholds))/n_samples
+
+    def probCiAndPi(self, scores, thresholds, n_samples, labels):
+        return [np.logical_and(scores >= threshold, labels).sum()/n_samples for threshold in thresholds]
+        # return self.probPi(scores[np.where(labels == class_label)], thresholds, n_samples)
+
+    def probCiGivenPi(self, scores, sorted_scores, thresholds, n_samples, labels):
+        return self.probCiAndPi(scores, thresholds, n_samples, labels)/self.probPi(sorted_scores, thresholds, n_samples)
+
+    def getPrecisionRecallCurve(self, scores, labels, key):
+        if self.curves is not None and False:
+            recalls, precisions, thresholds, _ = self.curves[key].getValues()
+        else:
+            precisions, recalls, thresholds = sklearn.metrics.precision_recall_curve(labels, scores)
+        n_unique_scores = len(precisions)
+        precisions = np.delete(precisions, n_unique_scores-1)
+        recalls = np.delete(recalls, n_unique_scores-1)
+        return precisions, recalls, thresholds
+
     def _optimise(self, function, gradient, constraints):
         all_precisions = []
         all_relative_predictions = []
@@ -59,13 +82,23 @@ class Optimiser(object):
         lengths = []
         bounds = []
         all_predictions = []
-        for key in self.ordered_labels:
-            _, precisions, thresholds, _ = self.curves[key].getValues()
-            predictions = self.curves[key].getPredictions()
-            n_prediction = len(predictions)
-            all_predictions.append(predictions)
-            relative_predictions = (n_prediction + 1.0 - np.sort(predictions).searchsorted(thresholds, side="right"))/n_prediction
-            all_precisions.append(precisions[:-1])
+        for key, labels, scores in zip(self.ordered_labels, self.binary_labels, self.scores):
+            precisions, recalls, thresholds = self.getPrecisionRecallCurve(scores, labels, key)
+            n_samples = float(len(scores))
+            sorted_scores = np.sort(scores)
+            my_relative_predictions = self.probPi(sorted_scores, thresholds, n_samples)
+            my_precisions = self.probCiGivenPi(scores, sorted_scores, thresholds, n_samples, labels)
+            all_predictions.append(scores)
+            relative_predictions = (n_samples + 1.0 - np.sort(scores).searchsorted(thresholds, side="right"))/n_samples
+            # if not np.all(my_thresholds == thresholds):
+            #     print "thresholds"
+            if not np.all(my_relative_predictions == relative_predictions):
+                print "predictions"
+            if not np.all(abs(precisions - my_precisions) < 0.000001):
+                print "precisions"
+                # for a, b in zip(my_precisions, precisions):
+                #     print a, b
+            all_precisions.append(precisions)
             all_relative_predictions.append(relative_predictions)
             all_thresholds.append(thresholds)
             lengths.append(len(thresholds))
@@ -78,7 +111,7 @@ class Optimiser(object):
         #             itrs.append(itr_calculator.itrFromPrecisionPredictions([p1,p2,p3], [r1,r2,r3])) # 58.3526461033  15482509
         # print max(itrs)
         # print np.argmax(itrs)
-        self.fitCurves(all_thresholds, all_precisions, all_relative_predictions, all_predictions, self.labels)
+        self.fitCurves(all_thresholds, all_precisions, all_relative_predictions, all_predictions, self.binary_labels)
 
         max_itrs = []
         max_itr_thresholds = []

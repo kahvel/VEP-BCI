@@ -9,6 +9,8 @@ class CvCurve(object):
         self.ordered_labels = ordered_labels
         self.curves_by_class = None
         self.curves_by_split = None
+        self.all_predictions = None
+        self.all_labels = None
 
     def getCurvesPerSplit(self, predictions, split_labels):
         folds = len(predictions)
@@ -33,6 +35,8 @@ class CvCurve(object):
             curves_by_class[label].addMacro()
 
     def calculate(self, predictions, split_labels):
+        self.all_predictions = predictions
+        self.all_labels = split_labels
         self.curves_by_split = self.getCurvesPerSplit(predictions, split_labels)
         return self.calculateFromCurves(self.curves_by_split)
 
@@ -66,14 +70,26 @@ class CvCurve(object):
             all_thresholds.append(thresholds)
         return all_thresholds
 
+    def getBinaryLabels(self, labels):
+        binary_labels = []
+        for label in self.ordered_labels:
+            binary_labels.append(list(map(lambda x: x == label, labels)))
+        return binary_labels
+
     def calculateThresholds(self, optimiser):
-        cut_off_threshold = []  # Threshold as mean over individual thresholds
-        for curve in self.curves_by_split:
-            thresholds = curve.calculateThresholds(optimiser)
-            cut_off_threshold.append(thresholds)
-        # print cut_off_threshold
-        # print np.mean(cut_off_threshold, 0)
-        return np.mean(cut_off_threshold, 0)
+        predictions = np.transpose(np.concatenate(self.all_predictions, 0))  # Threshold from concatenated curve
+        labels = np.concatenate(self.all_labels, 0)
+        binary_labels = self.getBinaryLabels(labels)
+        optimiser.setCurveData(self.ordered_labels, predictions, binary_labels)
+        return optimiser.optimise()
+
+        # cut_off_threshold = []  # Threshold as mean over individual split thresholds
+        # for curve in self.curves_by_split:
+        #     thresholds = curve.calculateThresholds(optimiser)
+        #     cut_off_threshold.append(thresholds)
+        # # print cut_off_threshold
+        # # print np.mean(cut_off_threshold, 0)
+        # return np.mean(cut_off_threshold, 0)
 
         # cut_off_threshold1 = []  # Threshold from macro-average curve
         # for key in self.ordered_labels:
