@@ -1,6 +1,6 @@
 import numpy as np
 
-from training import CurveFitting
+from training.curve_fitting import Polynomial, SumSkewNormal
 
 
 class ItrCalculator(object):
@@ -11,8 +11,8 @@ class ItrCalculator(object):
         self.proba_maf_length = proba_maf_length
         self.look_back_length = look_back_length
         self.n_targets = n_targets
-        self.precision_curve_fitting = CurveFitting.PrecisionCurveFitter()
-        self.prediction_curve_fitting = CurveFitting.PredictionCurveFitter()
+        self.precision_curve_fitting = Polynomial.PrecisionCurveFitter()
+        self.prediction_curve_fitting = Polynomial.PredictionCurveFitter()
         self.precisions_bounded = precisions_bounded
         self.predictions_bounded = predictions_bounded
         self.all_thresholds = None
@@ -236,12 +236,13 @@ class ProbValuesHandler(ValuesHandler):
 class ItrCalculatorProb(ItrAccuracySubMatrix):
     def __init__(self, window_length, step, feature_maf_length, proba_maf_length, look_back_length, n_targets, precisions_bounded, predictions_bounded):
         ItrAccuracySubMatrix.__init__(self, window_length, step, feature_maf_length, proba_maf_length, look_back_length, n_targets, precisions_bounded, predictions_bounded)
-        self.prob_curve_fitting = CurveFitting.DistrubutionCurveFitting()
+        self.prob_curve_fitting = SumSkewNormal.DistrubutionSumCurves()
         self.prob_value_handler = None
 
     def calculateCurves(self, all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels):
-        functions, derivatives = self.prob_curve_fitting.fitCurves(all_predicted_scores, labels)
-        self.prob_value_handler = ProbValuesHandler(None, functions, derivatives)
+        self.prob_curve_fitting.fitCurves(all_predicted_scores, labels)
+        # functions, derivatives = self.prob_curve_fitting.fitCurves(all_predicted_scores, labels)
+        # self.prob_value_handler = ProbValuesHandler(None, functions, derivatives)
 
     def itrFromThresholds(self, thresholds):
         return sum(thresholds)/100000

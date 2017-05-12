@@ -34,6 +34,11 @@ class Plotter(object):
         plt.tight_layout()
 
     def pair(self):
+        only_class = 1
+        if only_class is not None:
+            data = self.data[np.where(self.labels == only_class)]
+        else:
+            data = self.data
         fig = plt.figure()
         y_min = 0
         y_max = 100
@@ -42,20 +47,23 @@ class Plotter(object):
                 nSub = i * self.n_classes + j + 1
                 ax = fig.add_subplot(self.n_classes, self.n_classes, nSub)
                 if i == j:
-                    current_min = np.min(self.data[:,i])
-                    current_max = np.max(self.data[:,i])
+                    current_min = np.min(data[:,i])
+                    current_max = np.max(data[:,i])
                     ax.set_xlim((self.min_feature, self.max_feature))
                     ax.set_ylim((y_min, y_max))
-                    ax.hist(self.data[:,i], bins=int((current_max-current_min)/self.bar_width), normed=False, color=self.colors[i])
+                    ax.hist(data[:,i], bins=int((current_max-current_min)/self.bar_width), normed=False, color=self.colors[i])
                     ax.plot([self.mean_thresholds[i], self.mean_thresholds[i]], [y_min, y_max], color=self.colors[i])
                     ax.set_title(self.labels[i])
                 else:
                     ax.set_xlim((self.min_feature, self.max_feature))
                     ax.set_ylim((self.min_feature, self.max_feature))
-                    # ax.plot(self.data[:,i], self.data[:,j], '.k', alpha=0.2)
-                    for k, class_label in enumerate(self.ordered_labels):
-                        indices = np.where(self.labels == class_label)
-                        ax.plot(self.data[indices,j], self.data[indices,i], ".k", alpha=0.2, color=self.colors[k])
+                    # ax.plot(data[:,i], data[:,j], '.k', alpha=0.2)
+                    if only_class is None:
+                        for k, class_label in enumerate(self.ordered_labels):
+                            indices = np.where(self.labels == class_label)
+                            ax.plot(data[indices,j], data[indices,i], ".k", alpha=0.2, color=self.colors[k])
+                    else:
+                        ax.plot(data[:,j], data[:,i], ".k", alpha=0.2)
                     ax.plot([self.mean_thresholds[j], self.mean_thresholds[j]], [self.min_feature, self.max_feature], color=self.colors[j])
                     ax.plot([self.min_feature, self.max_feature], [self.mean_thresholds[i], self.mean_thresholds[i]], color=self.colors[i])
                     # for threshold in self.thresholds_by_split[i]:
@@ -89,7 +97,6 @@ class Plotter(object):
         # mean = np.mean(data)
         parameters = self.fitSkew2(data, current_min, current_max, [0, np.mean(data), np.std(data)])  # , 0, 1])
         # parameters = self.fitTest(data, current_min, current_max, [np.mean(data), np.std(data)])
-        print parameters[0], [np.mean(data), np.std(data)]
         parameters = parameters[0]
         self.parameters.append(parameters)
         # print self.func(data, *parameters)
