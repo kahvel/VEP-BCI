@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
 from curves import AverageCurve, CvCurves
-from training import ItrCalculator, Optimiser, DistributionPlotter
+from training import Optimiser, DistributionPlotter
+from training.itr_calculators import ItrCalculator
 import constants as c
 
 

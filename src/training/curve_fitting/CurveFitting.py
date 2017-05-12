@@ -4,14 +4,31 @@ import matplotlib.pyplot as plt
 
 
 class AbstractCurveFitting(object):
+    def __init__(self):
+        self.curves = []
+
     def fitCurves(self, *args):
         raise NotImplementedError("fitCurves not implemented!")
+
+    def extract(self, curves, extractor):
+        return [extractor(curve) for curve in curves]
+
+    def functionExtractor(self, curve):
+        return curve.fit_function
+
+    def derivativeExtractor(self, curve):
+        return curve.fit_function_derivative
+
+    def extractFunctions(self, curves=None):
+        return self.extract(self.curves if curves is None else curves, self.functionExtractor)
+
+    def extractDerivatives(self, curves=None):
+        return self.extract(self.curves if curves is None else curves, self.derivativeExtractor)
 
 
 class CurveFitting(AbstractCurveFitting):
     def __init__(self):
         AbstractCurveFitting.__init__(self)
-        self.curves = []
 
     def plotCurves(self, classes):
         for i, curve in enumerate(self.curves):
@@ -55,21 +72,6 @@ class CurveFitting(AbstractCurveFitting):
         self.curves = []
         for arg in zip(*args):
             self.curves.append(self.getCurve(*arg))
-
-    def extract(self, curves, extractor):
-        return [extractor(curve) for curve in curves]
-
-    def functionExtractor(self, curve):
-        return curve.fit_function
-
-    def derivativeExtractor(self, curve):
-        return curve.fit_function_derivative
-
-    def extractFunctions(self):
-        return self.extract(self.curves, self.functionExtractor)
-
-    def extractDerivatives(self):
-        return self.extract(self.curves, self.derivativeExtractor)
 
 
 class Curve(object):

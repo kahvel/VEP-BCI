@@ -1,16 +1,12 @@
 import numpy as np
 
-from training.curve_fitting import Polynomial, SumSkewNormal
+from training.curve_fitting import Polynomial
+from training.itr_calculators import AbstractCalculator
 
 
-class ItrCalculator(object):
+class ItrCalculator(AbstractCalculator.ItrCalculator):
     def __init__(self, window_length, step, feature_maf_length, proba_maf_length, look_back_length, n_targets, precisions_bounded, predictions_bounded):
-        self.window_length = window_length
-        self.step = step
-        self.feature_maf_length = feature_maf_length
-        self.proba_maf_length = proba_maf_length
-        self.look_back_length = look_back_length
-        self.n_targets = n_targets
+        AbstractCalculator.ItrCalculator.__init__(self, window_length, step, feature_maf_length, proba_maf_length, look_back_length, n_targets)
         self.precision_curve_fitting = Polynomial.PrecisionCurveFitter()
         self.prediction_curve_fitting = Polynomial.PredictionCurveFitter()
         self.precisions_bounded = precisions_bounded
@@ -18,9 +14,6 @@ class ItrCalculator(object):
         self.all_thresholds = None
         self.all_precisions = None
         self.all_predictions = None
-        self.all_predicted_scores = None
-        self.labels = None
-        self.n_samples = None
         self.precision_handler = None
         self.predictions_handler = None
 
@@ -34,13 +27,11 @@ class ItrCalculator(object):
         self.precision_handler = ValuesHandlerPrecisionOrPrediction(self.all_precisions, self.precisions_bounded, precision_functions, precision_derivatives)
         self.predictions_handler = ValuesHandlerPrecisionOrPrediction(self.all_predictions, self.predictions_bounded, prediction_functions, prediction_derivatives)
 
-    def setValues(self, all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels):
+    def setValues(self, all_predicted_scores, labels, all_thresholds=None, all_precisions=None, all_relative_predictions=None):
+        ItrCalculator.setValues(self, all_predicted_scores, labels)
         self.all_thresholds = all_thresholds
         self.all_precisions = all_precisions
         self.all_predictions = all_relative_predictions
-        self.all_predicted_scores = all_predicted_scores
-        self.labels = labels
-        self.n_samples = len(self.all_predicted_scores[0])
 
     def gradient(self, thresholds):
         p = self.precision_handler.getValueAt(thresholds)
@@ -52,14 +43,23 @@ class ItrCalculator(object):
     def derivative(self, p, i, dp_dt, di_dt):
         return dp_dt*self.dITR_dp(p, i) + di_dt*self.dITR_di(p, i)
 
-    def accuracy(self, p, i):
+    def accuracyFromWholeMatrix(self, p, i):  # Including the "nothing" class
         return sum(map(lambda (p, i): p*i, zip(p, i)))
 
-    def da_dp(self, i):
+    def da_dp_whole_matrix(self, i):
         return np.array(i)
 
-    def da_di(self, p, i):
+    def da_di_whole_matrix(self,p, i):
         return np.array(p)
+
+    def accuracy(self, p, i):
+        raise NotImplementedError("accuracy is not implemented!")
+
+    def da_dp(self, i):
+        raise NotImplementedError("da_dp not implemented!")
+
+    def da_di(self, p, i):
+        raise NotImplementedError("da_di not implemented!")
 
     def dr_di(self):
         return np.ones(self.n_targets)
@@ -120,24 +120,6 @@ class ItrCalculator(object):
         i = self.predictions_handler.getClosestUnfitValue(indices_in_initial_matrix)
         return self.itrFromPrecisionPredictions(p, i)
 
-    def actualItr(self, current_thresholds):
-        over_threshold = np.transpose([np.array(pred) > thresh for pred, thresh in zip(self.all_predicted_scores, current_thresholds)])
-        counts = over_threshold.sum(1)
-        sum_1 = np.where(counts == 1)
-        prediction_count = float(sum_1[0].shape[0])
-        if prediction_count == 0:
-            return 0
-        else:
-            accuracy = np.logical_and(self.labels[sum_1, :], over_threshold[sum_1, :]).sum()/prediction_count
-            predictions = prediction_count/float(self.n_samples)
-            return self.itrBitPerMin(accuracy, predictions)
-
-    def itrBitPerMin(self, a, r):
-        if r == 0:
-            return 0
-        else:
-            return self.itrBitPerTrial(a)*60.0/self.mdt(r)
-
     def itrBitPerTrial(self, a):
         if self.n_targets == 1:
             return np.nan
@@ -167,37 +149,32 @@ class ItrCalculator(object):
         return 1 - self.relativePredictions(i)
 
 
-class ItrAccuracySubMatrix(ItrCalculator):
+class ItrAccuracyWholeMatrix(ItrCalculator):
     def accuracy(self, p, i):
-        return ItrCalculator.accuracy(self, p, i)/self.relativePredictions(i)
+        return self.accuracyFromWholeMatrix(p, i)
 
     def da_dp(self, i):
-        return ItrCalculator.da_dp(self, i)/self.relativePredictions(i)
+        return self.da_dp_whole_matrix(i)
 
     def da_di(self, p, i):
-        return ItrCalculator.da_di(self, p, i)/self.relativePredictions(i) \
-            + ItrCalculator.accuracy(self, p, i)*(-self.dr_di()/self.relativePredictions(i)**2)
+        return self.da_di_whole_matrix(p, i)
 
 
-class ValuesHandler(object):
-    def __init__(self, values, fit_curves, fit_curve_derivative):
-        self.values = values
-        self.fit_curves = fit_curves
-        self.fit_curve_derivative = fit_curve_derivative
+class ItrAccuracySubMatrix(ItrCalculator):
+    def accuracy(self, p, i):
+        return self.accuracyFromWholeMatrix(p, i)/self.relativePredictions(i)
 
-    def getValueFromCurve(self, curves, xs):
-        return np.array([np.asscalar(func(x)) for func, x in zip(curves, xs)])
+    def da_dp(self, i):
+        return self.da_dp_whole_matrix(i)/self.relativePredictions(i)
 
-    def getValueAt(self, xs):
-        raise NotImplementedError("getValueAt not implemented!")
-
-    def getDerivativeValueAt(self, x):
-        raise NotImplementedError("getDerivativeValueAt not implemented!")
+    def da_di(self, p, i):
+        return self.da_di_whole_matrix(p, i)/self.relativePredictions(i) \
+            + self.accuracyFromWholeMatrix(p, i)*(-self.dr_di()/self.relativePredictions(i)**2)
 
 
-class ValuesHandlerPrecisionOrPrediction(ValuesHandler):
+class ValuesHandlerPrecisionOrPrediction(AbstractCalculator.ValuesHandler):
     def __init__(self, values, use_bounds, fit_curves, fit_curve_derivative):
-        ValuesHandler.__init__(self, values, fit_curves, fit_curve_derivative)
+        AbstractCalculator.ValuesHandler.__init__(self, values, fit_curves, fit_curve_derivative)
         self.use_bounds = use_bounds
 
     def getBoundedBetween(self, values, upper_bound=1.0, lower_bound=0.0):
@@ -223,29 +200,3 @@ class ValuesHandlerPrecisionOrPrediction(ValuesHandler):
 
     def getClosestUnfitValue(self, indices):
         return [v[i] for v, i in zip(self.values, indices)]
-
-
-class ProbValuesHandler(ValuesHandler):
-    def getValueAt(self, xs):
-        return 1-self.getValueFromCurve(self.fit_curves, xs)
-
-    def getDerivativeValueAt(self, xs):
-        return -self.getValueFromCurve(self.fit_curve_derivative, xs)
-
-
-class ItrCalculatorProb(ItrAccuracySubMatrix):
-    def __init__(self, window_length, step, feature_maf_length, proba_maf_length, look_back_length, n_targets, precisions_bounded, predictions_bounded):
-        ItrAccuracySubMatrix.__init__(self, window_length, step, feature_maf_length, proba_maf_length, look_back_length, n_targets, precisions_bounded, predictions_bounded)
-        self.prob_curve_fitting = SumSkewNormal.DistrubutionSumCurves()
-        self.prob_value_handler = None
-
-    def calculateCurves(self, all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels):
-        self.prob_curve_fitting.fitCurves(all_predicted_scores, labels)
-        # functions, derivatives = self.prob_curve_fitting.fitCurves(all_predicted_scores, labels)
-        # self.prob_value_handler = ProbValuesHandler(None, functions, derivatives)
-
-    def itrFromThresholds(self, thresholds):
-        return sum(thresholds)/100000
-
-    def gradient(self, thresholds):
-        return thresholds

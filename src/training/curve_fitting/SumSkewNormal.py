@@ -101,43 +101,63 @@ class DistrubutionSumCurves(CurveFitting.AbstractCurveFitting):
         self.sumCurves = []
         self.curves_pi = []
         self.curves_cj = []
+        self.functions_fi_cj = []
+        self.derivatives_fi_cj = []
         self.curve_fitter = SkewNormal.DistributioCurveFitting()
 
     def fitCurves(self, all_features, all_labels):
         self.sumCurves = []
         self.curves_pi = []
         self.curves_cj = []
-        functions_fi_cj = []
-        derivatives_fi_cj = []
+        self.functions_fi_cj = []
+        self.derivatives_fi_cj = []
         for i, features in enumerate(all_features):
             functions_fi, derivatives_fi = self.curve_fitter.fitCurves([features[np.where(labels)] for labels in all_labels])
-            functions_fi_cj.append(functions_fi)
-            derivatives_fi_cj.append(derivatives_fi)
+            self.functions_fi_cj.append(functions_fi)
+            self.derivatives_fi_cj.append(derivatives_fi)
         for i, (features, labels) in enumerate(zip(all_features, all_labels)):
-            curve = self.getSumCurve(all_labels, functions_fi_cj[i], derivatives_fi_cj[i])
+            curve = self.getSumCurve(all_labels, self.functions_fi_cj[i], self.derivatives_fi_cj[i])
             self.sumCurves.append(curve)
         for i, (features, labels) in enumerate(zip(all_features, all_labels)):
-            prob_pi = self.getProbPi(all_labels, functions_fi_cj, derivatives_fi_cj, i)
+            prob_pi = self.getProbPi(all_labels, self.functions_fi_cj, self.derivatives_fi_cj, i)
             self.curves_pi.append(prob_pi)
         for j, (features, labels) in enumerate(zip(all_features, all_labels)):
-            prob_cj = self.getProbCj(all_labels, np.transpose(functions_fi_cj)[j], np.transpose(derivatives_fi_cj)[j], j)
+            prob_cj = self.getProbCj(all_labels, np.transpose(self.functions_fi_cj)[j], np.transpose(self.derivatives_fi_cj)[j], j)
             self.curves_cj.append(prob_cj)
-        ts = 1.3, 1.3, 1.3
-        for i, (functions, derivatives, t) in enumerate(zip(functions_fi_cj, derivatives_fi_cj, ts)):
-            for j, (function, derivative) in enumerate(zip(functions, derivatives)):
-                print "P (F_" + str(i+1) + " < " + str(t) + " | C=" + str(j+1) + ") = " + str(function(t)), "  ", 1-function(t)
-                print "p (F_" + str(i+1) + " = " + str(t) + " | C=" + str(j+1) + ") = " + str(derivative(t))
-                print
-        for i, curve in enumerate(self.curves_pi):
-            function = curve.fit_function
-            derivatives = curve.fit_function_derivative
-            print "P (P = " + str(i+1) + ") = " + str(function(ts))
-            print "\t", derivatives(ts)
-        for i, curve in enumerate(self.curves_cj):
-            function = curve.fit_function
-            derivatives = curve.fit_function_derivative
-            print "P (C_s = " + str(i+1) + ") = " + str(function(ts))
-            print "\t", derivatives(ts)
+        # ts = 1.3, 1.3, 1.3
+        # for i, (functions, derivatives, t) in enumerate(zip(self.functions_fi_cj, self.derivatives_fi_cj, ts)):
+        #     for j, (function, derivative) in enumerate(zip(functions, derivatives)):
+        #         print "P (F_" + str(i+1) + " < " + str(t) + " | C=" + str(j+1) + ") = " + str(function(t)), "  ", 1-function(t)
+        #         print "p (F_" + str(i+1) + " = " + str(t) + " | C=" + str(j+1) + ") = " + str(derivative(t))
+        #         print
+        # for i, curve in enumerate(self.curves_pi):
+        #     function = curve.fit_function
+        #     derivatives = curve.fit_function_derivative
+        #     print "P (P = " + str(i+1) + ") = " + str(function(ts))
+        #     print "\t", derivatives(ts)
+        # for i, curve in enumerate(self.curves_cj):
+        #     function = curve.fit_function
+        #     derivatives = curve.fit_function_derivative
+        #     print "P (C_s = " + str(i+1) + ") = " + str(function(ts))
+        #     print "\t", derivatives(ts)
+
+    def getFitPi(self):
+        return (
+            self.extractFunctions(self.curves_pi),
+            self.extractDerivatives(self.curves_pi)
+        )
+
+    def getFitCj(self):
+        return (
+            self.extractFunctions(self.curves_cj),
+            self.extractDerivatives(self.curves_cj)
+        )
+
+    def getFitPiGivenCj(self):
+        return (
+            self.functions_fi_cj,
+            self.derivatives_fi_cj
+        )
 
     def getSumCurve(self, all_labels, functions, derivatives):
         return PdfCurveSum(all_labels, functions, derivatives)
