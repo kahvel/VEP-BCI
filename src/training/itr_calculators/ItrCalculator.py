@@ -17,11 +17,11 @@ class ItrCalculator(AbstractCalculator.ItrCalculator):
         self.precision_handler = None
         self.predictions_handler = None
 
-    def fitCurves(self, all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels):
-        self.setValues(all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels)
-        self.calculateCurves(all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels)
+    def fitCurves(self, all_predicted_scores, labels, all_thresholds, all_precisions, all_relative_predictions):
+        self.setValues(all_predicted_scores, labels, all_thresholds, all_precisions, all_relative_predictions)
+        self.calculateCurves(all_thresholds, all_precisions, all_relative_predictions)
 
-    def calculateCurves(self, all_thresholds, all_precisions, all_relative_predictions, all_predicted_scores, labels):
+    def calculateCurves(self, all_thresholds, all_precisions, all_relative_predictions):
         precision_functions, precision_derivatives = self.precision_curve_fitting.fitCurves(all_thresholds, all_precisions)
         prediction_functions, prediction_derivatives = self.prediction_curve_fitting.fitCurves(all_thresholds, all_relative_predictions)
         self.precision_handler = ValuesHandlerPrecisionOrPrediction(self.all_precisions, self.precisions_bounded, precision_functions, precision_derivatives)
@@ -119,16 +119,6 @@ class ItrCalculator(AbstractCalculator.ItrCalculator):
         p = self.precision_handler.getClosestUnfitValue(indices_in_initial_matrix)
         i = self.predictions_handler.getClosestUnfitValue(indices_in_initial_matrix)
         return self.itrFromPrecisionPredictions(p, i)
-
-    def itrBitPerTrial(self, a):
-        if self.n_targets == 1:
-            return np.nan
-        elif a == 1:
-            return np.log2(self.n_targets)
-        elif a == 0:
-            return np.log2(self.n_targets)*np.log2(1.0/(self.n_targets-1))
-        else:
-            return np.log2(self.n_targets)+a*np.log2(a)+(1-a)*np.log2((1.0-a)/(self.n_targets-1))
 
     def accuracyUpperBound(self, thresholds):
         p = self.precision_handler.getValueAt(thresholds)

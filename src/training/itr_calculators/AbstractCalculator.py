@@ -68,7 +68,14 @@ class ItrCalculator(object):
             return self.itrBitPerTrial(a)*60.0/self.mdt(r)
 
     def itrBitPerTrial(self, a):
-        raise NotImplementedError("itrBitPerTrial not implemented!")
+        if self.n_targets == 1:
+            return np.nan
+        elif a == 1:
+            return np.log2(self.n_targets)
+        elif a == 0:
+            return np.log2(self.n_targets)*np.log2(1.0/(self.n_targets-1))
+        else:
+            return np.log2(self.n_targets)+a*np.log2(a)+(1-a)*np.log2((1.0-a)/(self.n_targets-1))
 
     def itrFromThresholds(self, thresholds):
         raise NotImplementedError("itrFromThresholds not implemented!")
