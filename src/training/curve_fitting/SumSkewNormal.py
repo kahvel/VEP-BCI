@@ -103,7 +103,7 @@ class DistrubutionSumCurves(CurveFitting.AbstractCurveFitting):
         self.curves_cj = []
         self.functions_fi_cj = []
         self.derivatives_fi_cj = []
-        self.curve_fitter = SkewNormal.DistributioCurveFitting()
+        self.curve_fitters = []
 
     def fitCurves(self, all_features, all_labels):
         self.sumCurves = []
@@ -112,7 +112,9 @@ class DistrubutionSumCurves(CurveFitting.AbstractCurveFitting):
         self.functions_fi_cj = []
         self.derivatives_fi_cj = []
         for i, features in enumerate(all_features):
-            functions_fi, derivatives_fi = self.curve_fitter.fitCurves([features[np.where(labels)] for labels in all_labels])
+            curve = SkewNormal.DistributioCurveFitting()
+            functions_fi, derivatives_fi = curve.fitCurves([features[np.where(labels)] for labels in all_labels])
+            self.curve_fitters.append(curve)
             self.functions_fi_cj.append(functions_fi)
             self.derivatives_fi_cj.append(derivatives_fi)
         for i, (features, labels) in enumerate(zip(all_features, all_labels)):
@@ -157,6 +159,11 @@ class DistrubutionSumCurves(CurveFitting.AbstractCurveFitting):
         return (
             self.functions_fi_cj,
             self.derivatives_fi_cj
+        )
+
+    def getParameters(self):
+        return tuple(
+            tuple(curve.parameters for curve in curves.curves) for curves in self.curve_fitters
         )
 
     def getSumCurve(self, all_labels, functions, derivatives):

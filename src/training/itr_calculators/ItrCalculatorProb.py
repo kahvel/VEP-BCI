@@ -1,7 +1,10 @@
 import numpy as np
+import scipy.stats
 
 from training.curve_fitting import SumSkewNormal
 from training.itr_calculators import AbstractCalculator
+
+import operator
 
 
 class ProbValuesHandler(AbstractCalculator.ValuesHandler):
@@ -39,10 +42,19 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         # self.prob_value_handler = ProbValuesHandler(None, functions, derivatives)
         # self.prob_pi, self.prob_pi_derivative = self.prob_curve_fitting.getFitPi()
         # self.prob_cj, self.prob_cj_derivative = self.prob_curve_fitting.getFitCj()
+        self.parameters_pi_cj = self.prob_curve_fitting.getParameters()
+        self.parameters_cj_pi = self.transposeParameterMatrix(self.parameters_pi_cj)
         self.function_pi_cj, self.derivative_pi_cj = self.prob_curve_fitting.getFitPiGivenCj()
         self.function_cj_pi = np.transpose(self.function_pi_cj)
         self.derivative_cj_pi = np.transpose(self.derivative_pi_cj)
         self.n_classes = len(self.function_pi_cj)
+
+    def transposeParameterMatrix(self, matrix):
+        result = [[None for _ in range(len(matrix))] for _ in range(len(matrix))]
+        for i, row in enumerate(matrix):
+            for j, element in enumerate(row):
+                result[j][i] = element
+        return result
 
     def itrFromThresholds(self, thresholds):
         return self.mutualInformation(thresholds)
@@ -51,69 +63,123 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         return [self.mutualInformation(thresholds, d) for d in range(self.n_classes)]
 
     def mutualInformation(self, ts, derivative_index=-1):
-        return self.entropyP(ts, derivative_index) - self.entropyPgivenC(ts, derivative_index)
-
-    def entropy(self, ts, func, derivative_index):
-        sum = 0
-        for i in range(self.n_classes):
-            prob = func(ts, i, derivative_index)
-            sum += -prob*np.log2(prob)
-        return sum
-
-    def entropyOrDerivative(self, ts, func, derivative_index):
         if derivative_index == -1:
-            return self.entropy(ts, func, derivative_index)
+            return self.entropyP(ts, -1) - self.entropyPgivenC(ts, -1)
         else:
-            return self.entropyDerivative(ts, func, derivative_index)
+            return self.entropyPderivative(ts, derivative_index) - self.entropyPgivenCderivative(ts, derivative_index)
 
     def entropyP(self, ts, derivative_index):
-        return self.entropyOrDerivative(ts, self.probPi, derivative_index)
+        return -sum(prob*np.log2(prob) for prob in (self.probPi(ts, i, -1) for i in range(self.n_classes)))
+        # sum = 0
+        # for i in range(self.n_classes):
+        #     prob = self.probPi(ts, i, derivative_index)
+        #     sum += -prob*np.log2(prob)
+        # # print "entropy", sum
+        # return sum
 
-    def entropyDerivative(self, ts, func, derivative_index):
-        sum = 0
-        for i in range(self.n_classes):
-            prob = func(ts, i, -1)
-            prob_derivative = func(ts, i, derivative_index)
-            sum += -prob_derivative*((np.log(prob) + 1)/np.log(2))
-        return sum
+    # def entropyOrDerivative(self, ts, func, derivative_index):
+    #     if derivative_index == -1:
+    #         return self.entropy(ts, func, derivative_index)
+    #     else:
+    #         return self.entropyDerivative(ts, func, derivative_index)
+
+    # def entropyP(self, ts, derivative_index):
+    #     return self.entropyOrDerivative(ts, self.probPi, derivative_index)
+
+    def entropyPderivative(self, ts, derivative_index):
+        return -sum(prob_derivative*((np.log(prob)+1)/np.log(2)) for prob, prob_derivative in ((self.probPi(ts, i, -1), self.probPi(ts, i, derivative_index)) for i in range(self.n_classes)))
+        # sum = 0
+        # for i in range(self.n_classes):
+        #     prob = self.probPi(ts, i, -1)
+        #     prob_derivative = self.probPi(ts, i, derivative_index)
+        #     sum += -prob_derivative*((np.log(prob) + 1)/np.log(2))
+        # # print "entropyDerivative", sum
+        # return sum
+
+    def entropyOfPgivenC(self, ts, parameters, derivative_index):
+        return -sum(prob*np.log2(prob) for prob in (self.probPiGivenCj(ts, i, parameters, -1) for i in range(self.n_classes)))
+        # sum = 0
+        # for i in range(self.n_classes):
+        #     prob = self.probPiGivenCj(ts, i, parameters, derivative_index)
+        #     sum += -prob*np.log2(prob)
+        # # print "entropyDerivative", sum
+        # return sum
+
+    def entropyOfPgivenCderivative(self, ts, parameters, derivative_index):
+        return -sum(prob_derivative*((np.log(prob)+1)/np.log(2)) for prob, prob_derivative in ((self.probPiGivenCj(ts, i, parameters, -1), self.probPiGivenCj(ts, i, parameters, derivative_index)) for i in range(self.n_classes)))
+        # sum = 0
+        # for i in range(self.n_classes):
+        #     prob = self.probPiGivenCj(ts, i, parameters, -1)
+        #     prob_derivative = self.probPiGivenCj(ts, i, parameters, derivative_index)
+        #     sum += -prob_derivative*((np.log(prob) + 1)/np.log(2))
+        # # print "entropyDerivative", sum
+        # return sum
+
+    def entropyPgivenCderivative(self, ts, derivative_index):  # TODO: Check minus
+        return sum(
+            prob_ck_derivative*inner_sum + prob_ck*inner_sum_derivative
+            for inner_sum, inner_sum_derivative, prob_ck, prob_ck_derivative in ((
+                self.entropyOfPgivenC(ts, self.parameters_cj_pi[j], -1),
+                self.entropyOfPgivenCderivative(ts, self.parameters_cj_pi[j], derivative_index),
+                self.probCk(ts, j, -1),
+                self.probCk(ts, j, derivative_index)
+            ) for j in range(self.n_classes))
+        )
+        # sum = 0
+        # for j in range(self.n_classes):
+        #     inner_sum = self.entropyOfPgivenC(ts, self.parameters_cj_pi[j], -1)
+        #     inner_sum_derivative = self.entropyOfPgivenCderivative(ts, self.parameters_cj_pi[j], derivative_index)
+        #     prob_ck = self.probCk(ts, j, -1)
+        #     prob_ck_derivative = self.probCk(ts, j, derivative_index)
+        #     sum += prob_ck_derivative*inner_sum + prob_ck*inner_sum_derivative
+        #     # print "entropyPgivenC", sum
+        # return sum
 
     def entropyPgivenC(self, ts, derivative_index):
-        if derivative_index == -1:
-            sum = 0
-            for j in range(self.n_classes):
-                func = lambda ts, i, d: self.probPiGivenCj(ts, i, self.function_cj_pi[j], self.derivative_cj_pi[j], d)
-                inner_sum = self.entropyOrDerivative(ts, func, derivative_index)
-                sum += inner_sum*self.probCk(ts, j, derivative_index)
-            return sum
-        else:
-            sum = 0
-            for j in range(self.n_classes):
-                func = lambda ts, i, d: self.probPiGivenCj(ts, i, self.function_cj_pi[j], self.derivative_cj_pi[j], d)
-                inner_sum = self.entropyOrDerivative(ts, func, -1)
-                inner_sum_derivative = self.entropyOrDerivative(ts, func, derivative_index)
-                prob_ck = self.probCk(ts, j, -1)
-                prob_ck_derivative = self.probCk(ts, j, derivative_index)
-                sum += prob_ck_derivative*inner_sum + prob_ck*inner_sum_derivative
-            return sum
+        return sum(inner_sum*prob for inner_sum, prob in ((self.entropyOfPgivenC(ts, self.parameters_cj_pi[j], -1), self.probCk(ts, j, -1)) for j in range(self.n_classes)))
+        # sum = 0
+        # for j in range(self.n_classes):
+        #     inner_sum = self.entropyOfPgivenC(ts, self.parameters_cj_pi[j], -1)
+        #     sum += inner_sum*self.probCk(ts, j, -1)
+        # # print "entropyPgivenC", sum
+        # return -sum
 
-    def probPiGivenCj(self, xs, p, functions, derivatives, derivative_index=-1):
-        product = 1.0
-        for i, (function, derivative, x) in enumerate(zip(functions, derivatives, xs)):
-            if i == p:
-                product *= ((1-function(x)) if derivative_index != i else -derivative(x))
-            else:
-                product *= (function(x) if derivative_index != i else derivative(x))
-        return product
+    def pdf(self, t, parameters):
+        return scipy.stats.skewnorm.pdf(t, *parameters)
+
+    def cdf(self, t, parameters):
+        return scipy.stats.skewnorm.cdf(t, *parameters)
+
+    def product(self, iterable):
+        return reduce(operator.mul, iterable, 1)
+
+    def probPiGivenCj(self, xs, p, parameters, derivative_index):
+        return self.product(
+            ((1-self.cdf(x, param) if derivative_index != i else -self.pdf(x, param)) if i == p else
+             (self.cdf(x, param) if derivative_index != i else self.pdf(x, param)))
+            for i, (param, x) in enumerate(zip(parameters, xs))
+        )
+        # product = 1.0
+        # for i, (param, x) in enumerate(zip(parameters, xs)):
+        #     if i == p:
+        #         product *= ((1-self.cdf(x, param)) if derivative_index != i else -self.pdf(x, param))
+        #     else:
+        #         product *= (self.cdf(x, param) if derivative_index != i else self.pdf(x, param))
+        #     # print "probPiGivenCj", product
+        # return product
 
     def probPi(self, xs, p, derivative_index):
-        sum = 0.0
-        for j, (functions_cj_fi, derivatives, class_proba) in enumerate(zip(self.function_cj_pi, self.derivative_cj_pi, self.class_probas)):
-            sum += self.probPiGivenCj(xs, p, functions_cj_fi, derivatives, derivative_index)*class_proba
-        return sum
+        return sum(self.probPiGivenCj(xs, p, parameters_cj_pi, derivative_index)*class_proba for j, (parameters_cj_pi, class_proba) in enumerate(zip(self.parameters_cj_pi, self.class_probas)))
+        # sum = 0.0
+        # for j, (parameters_cj_pi, class_proba) in enumerate(zip(self.parameters_cj_pi, self.class_probas)):
+        #     sum += self.probPiGivenCj(xs, p, parameters_cj_pi, derivative_index)*class_proba
+        # # print "probPi", sum
+        # return sum
 
     def probCk(self, xs, k, derivative_index):
-        sum = 0.0
-        for i in range(self.n_classes):
-            sum += self.probPiGivenCj(xs, i, self.function_cj_pi[k], self.derivative_cj_pi[k], derivative_index)*self.class_probas[k]
-        return sum
-
+        return sum(self.probPiGivenCj(xs, i, self.parameters_cj_pi[k], derivative_index)*self.class_probas[k] for i in range(self.n_classes))
+        # sum = 0.0
+        # for i in range(self.n_classes):
+        #     sum += self.probPiGivenCj(xs, i, self.parameters_cj_pi[k], derivative_index)*self.class_probas[k]
+        # # print "probCk", sum
+        # return sum

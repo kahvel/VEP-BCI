@@ -28,7 +28,7 @@ class ItrCalculator(AbstractCalculator.ItrCalculator):
         self.predictions_handler = ValuesHandlerPrecisionOrPrediction(self.all_predictions, self.predictions_bounded, prediction_functions, prediction_derivatives)
 
     def setValues(self, all_predicted_scores, labels, all_thresholds=None, all_precisions=None, all_relative_predictions=None):
-        ItrCalculator.setValues(self, all_predicted_scores, labels)
+        AbstractCalculator.ItrCalculator.setValues(self, all_predicted_scores, labels)
         self.all_thresholds = all_thresholds
         self.all_precisions = all_precisions
         self.all_predictions = all_relative_predictions
