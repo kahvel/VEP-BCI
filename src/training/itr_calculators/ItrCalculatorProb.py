@@ -60,7 +60,75 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         return self.mutualInformation(thresholds)
 
     def gradient(self, thresholds):
-        return [self.mutualInformation(thresholds, d) for d in range(self.n_classes)]
+        pdfs_pi_cj = [[self.pdf(t, param) for param in parameters] for (t, parameters) in zip(thresholds, self.parameters_pi_cj)]
+        cdfs_pi_cj = [[self.cdf(t, param) for param in parameters] for (t, parameters) in zip(thresholds, self.parameters_pi_cj)]
+        pdfs_cj_pi = np.transpose(pdfs_pi_cj)
+        cdfs_cj_pi = np.transpose(cdfs_pi_cj)
+        prob_pi_given_cj = [
+            [
+                self.product(
+                    ((1-cdf) if helper == i else (cdf))
+                    for helper, cdf in enumerate(cdfs)
+                ) for j, cdfs in enumerate(cdfs_cj_pi)
+            ] for i in range(self.n_classes)
+        ]
+        prob_pi_given_cj_derivative = [
+            [
+                [
+                    self.product(
+                        (((-pdf) if h == d_i else (1-cdf)) if h == i else (pdf if h == d_i else cdf))
+                        for h, (pdf, cdf) in enumerate(zip(pdfs, cdfs))
+                    ) for pdfs, cdfs in zip(pdfs_cj_pi, cdfs_cj_pi)
+                ] for i in range(self.n_classes)
+            ] for d_i in range(self.n_classes)
+        ]
+        prob_pi = [
+            sum(pi_given_cj*class_proba for j, (pi_given_cj, class_proba) in enumerate(zip(prob_pi_given_cj[i], self.class_probas)))
+            for i in range(self.n_classes)
+        ]
+        prob_pi_derivative = [
+            [
+                sum(pi_given_cj*class_proba for j, (pi_given_cj, class_proba) in enumerate(zip(prob_pi_given_cj_derivative[d_i][i], self.class_probas)))
+                for i in range(self.n_classes)
+            ] for d_i in range(self.n_classes)
+        ]
+        prob_ck = [
+            (self.class_probas[k]*sum(prob_pi_given_cj[i][k] for i in range(self.n_classes)))
+            for k in range(self.n_classes)
+        ]
+        prob_ck_derivative = [
+            [
+                self.class_probas[k]*sum(prob_pi_given_cj_derivative[d_i][i][k] for i in range(self.n_classes))
+                for k in range(self.n_classes)
+            ] for d_i in range(self.n_classes)
+        ]
+        entropy_p = -sum(prob*np.log2(prob) for prob in prob_pi)
+        entropy_p_derivative = [
+            -sum(prob_derivative*((np.log(prob)+1)/np.log(2))
+                 for prob, prob_derivative in zip(prob_pi, prob_pi_derivative[d_i]))
+            for d_i in range(self.n_classes)
+        ]
+        entropy_of_p_given_c = [
+            -sum(prob_pi_given_cj[i][k]*np.log2(prob_pi_given_cj[i][k]) for k in range(self.n_classes))
+            for i in range(self.n_classes)
+        ]
+        entropy_of_p_given_c_derivative = [
+            [
+                -sum(prob_pi_given_cj_derivative[d_i][i][k]*np.log2(prob_pi_given_cj_derivative[d_i][i][k]) for k in range(self.n_classes))
+                for i in range(self.n_classes)
+            ] for d_i in range(self.n_classes)
+        ]
+        entropy_p_given_c = [
+            sum(entropy_of_p_given_c[j]*prob_ck[j] for j in range(self.n_classes))
+        ]
+        entropy_p_given_c_derivative = [
+            sum(
+                prob_ck_derivative[d_i][j]*entropy_of_p_given_c[j] + prob_ck[j]*entropy_of_p_given_c_derivative[d_i][j]
+                for j in range(self.n_classes)
+            ) for d_i in range(self.n_classes)
+        ]
+        return [entropy_p_derivative[d_i] - entropy_p_given_c_derivative[d_i] for d_i in range(self.n_classes)]
+        # return [self.mutualInformation(thresholds, d) for d in range(self.n_classes)]
 
     def mutualInformation(self, ts, derivative_index=-1):
         if derivative_index == -1:
