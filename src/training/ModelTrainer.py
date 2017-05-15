@@ -1,6 +1,7 @@
 import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
+import matplotlib2tikz
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
 from curves import AverageCurve, CvCurves
@@ -455,10 +456,12 @@ class ModelTrainer(object):
         all_data = np.concatenate(split_data, 0)
         all_labels = np.concatenate(split_labels, 0)
         plotter = DistributionPlotter.Plotter(all_data, all_labels, thresholds, label_order)
-        plotter.plotPdf()
-        plotter.plotCdf()
+        # plotter.plotPdf()
+        # plotter.plotCdf()
         # plotter.plotJointPdfs()
-        # plotter.pair()
+        plotter.pair()
+        import time
+        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex", draw_rectangles=True)
         plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()

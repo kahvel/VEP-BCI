@@ -230,7 +230,7 @@ class GradientDescentOptimiser(Optimiser):
                     max_thresholds1 = current_thresholds
                 itr_change = gradient(current_thresholds)
                 current_thresholds = self.calculateNewThresholds(itr_change, current_thresholds, bounds, mu)
-                print current_itr, current_thresholds, itr_change
+                # print current_itr, current_thresholds, itr_change
                 if previous_itr is not None and abs(current_itr-previous_itr) < stop_threshold:# or current_thresholds in previous_thresholds:
                     # print max_actual, max_itr, max_itr_indices, max_actual_indices, "kartul", np.sum(np.array(max_itr_indices) == np.array(max_actual_indices))
                     print "Converged in", j*steps_before_decreasing+i, "steps. Mu:", mu

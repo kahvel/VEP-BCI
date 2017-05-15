@@ -250,7 +250,7 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
 
     def itrDerivative(self, mutual_information, mutual_information_derivative, mdt, mdt_derivative):
         return [
-            (mutual_information_derivative[d_i]*mdt-mdt_derivative[d_i]*mutual_information)/mdt**2 for d_i in range(self.n_classes)
+            (mutual_information_derivative[d_i]*mdt-mdt_derivative[d_i]*mutual_information)*60.0/mdt**2 for d_i in range(self.n_classes)
         ]
 
     def mdtDerivative(self, R, R_derivatve):
