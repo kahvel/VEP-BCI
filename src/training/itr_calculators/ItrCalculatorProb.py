@@ -67,13 +67,13 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         # prob_pi_given_cj_derivative = self.probPiGivenCjDerivative(pdfs_cj_pi, cdfs_cj_pi)
         prob_pi_large = self.probPiLarge(prob_pi_given_cj)
         # prob_pi_large_derivative = self.probPiLargeDerivative(prob_pi_given_cj_derivative)
-        R = sum(prob_pi_large)
+        R = self.calculateR(prob_pi_large)
         # R_derivative = self.rDerivative(prob_pi_large_derivative)
-        prob_pi = [p/R for p in prob_pi_large]
+        prob_pi = self.probPi(prob_pi_large, R)
         # prob_pi_derivative = self.probPiDerivative(prob_pi_large, prob_pi_large_derivative, R, R_derivative)
         prob_ck_large = self.probCkLarge(prob_pi_given_cj)
         # prob_ck_large_derivative = self.probCkLargeDerivative(prob_pi_given_cj_derivative)
-        prob_ck = [p/R for p in prob_ck_large]
+        prob_ck = self.probCk(prob_ck_large, R)
         # prob_ck_derivative = self.probCkDerivative(prob_ck_large, prob_ck_large_derivative, R, R_derivative)
         entropy_p = self.entropyP(prob_pi)
         # entropy_p_derivative = self.entropyPderivative(prob_pi, prob_pi_derivative)
@@ -83,6 +83,27 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         # entropy_p_given_c_derivative = self.entropyPgivenCderivative(prob_ck_derivative, entropy_of_p_given_c, prob_ck, entropy_of_p_given_c_derivative)
         mutual_information = self.mutualInformation(entropy_p, entropy_p_given_c)
         return self.itr(mutual_information, R)
+
+    def accuracyFromThresholds(self, thresholds):
+        cdfs_pi_cj = self.allCdfs(thresholds)
+        cdfs_cj_pi = np.transpose(cdfs_pi_cj)
+        prob_pi_given_cj = self.probPiGivenCj(cdfs_cj_pi)
+        prob_pi_large = self.probPiLarge(prob_pi_given_cj)
+        R = self.calculateR(prob_pi_large)
+        accuracy_large = self.accuracyLarge(prob_pi_given_cj)
+        return self.accuracy(accuracy_large, R)
+
+    def accuracyLarge(self, prob_pi_given_cj):
+        return sum(prob_pi_given_cj[i][i]*class_proba for i, class_proba in enumerate(self.class_probas))
+
+    def accuracy(self, accuracy_large, R):
+        return accuracy_large/R
+
+    def accuracyDerivative(self, prob_pi_given_cj, prob_pi_given_cj_derivative, R, R_derivative):
+        return [
+            (R*sum(d_prob[i][i]*class_proba for i, class_proba in enumerate(self.class_probas))-dr*sum(prob_pi_given_cj[i][i]*class_proba for i, class_proba in enumerate(self.class_probas)))/R**2
+            for d_prob, dr in zip(prob_pi_given_cj_derivative, R_derivative)
+        ]
 
     def itr(self, mutual_information, r):
         return mutual_information*60.0/self.mdt(r)
@@ -255,11 +276,34 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         # print np.array(entropy_of_p_given_c_derivative)
         # # print np.array(entropy_p_given_c)
         # print np.array(entropy_p_given_c_derivative)
-        return self.itrDerivative(mutual_information, mutual_information_derivative, mdt, mdt_derivative)
+        return self.itrMiDerivative(mutual_information, mutual_information_derivative, mdt, mdt_derivative)
 
-    def itrDerivative(self, mutual_information, mutual_information_derivative, mdt, mdt_derivative):
+    def gradientAccuracy(self, thresholds):
+        pdfs_pi_cj = self.allPdfs(thresholds)
+        cdfs_pi_cj = self.allCdfs(thresholds)
+        pdfs_cj_pi = np.transpose(pdfs_pi_cj)
+        cdfs_cj_pi = np.transpose(cdfs_pi_cj)
+        prob_pi_given_cj = self.probPiGivenCj(cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.probPiGivenCjDerivative(pdfs_cj_pi, cdfs_cj_pi)
+        prob_pi_large = self.probPiLarge(prob_pi_given_cj)
+        prob_pi_large_derivative = self.probPiLargeDerivative(prob_pi_given_cj_derivative)
+        R = self.calculateR(prob_pi_large)
+        R_derivative = self.rDerivative(prob_pi_large_derivative)
+        accuracy_large = self.accuracyLarge(prob_pi_given_cj)
+        accuracy = self.accuracy(accuracy_large, R)
+        accuracy_derivative = self.accuracyDerivative(prob_pi_given_cj, prob_pi_given_cj_derivative, R, R_derivative)
+        mdt = self.mdt(R)
+        mdt_derivative = self.mdtDerivative(R, R_derivative)
+        return self.itrAccDerivative(accuracy, accuracy_derivative, mdt, mdt_derivative)
+
+    def itrMiDerivative(self, mutual_information, mutual_information_derivative, mdt, mdt_derivative):
         return [
             (mutual_information_derivative[d_i]*mdt-mdt_derivative[d_i]*mutual_information)*60.0/mdt**2 for d_i in range(self.n_classes)
+        ]
+
+    def itrAccDerivative(self, accuracy, accuracy_derivative, mdt, mdt_derivative):
+        return [
+            (accuracy_derivative[d_i]*mdt-mdt_derivative[d_i]*accuracy)*60.0/mdt**2 for d_i in range(self.n_classes)
         ]
 
     def mdtDerivative(self, R, R_derivatve):
