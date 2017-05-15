@@ -194,14 +194,23 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
     def mutualInformationDerivative(self, entropy_p_derivative, entropy_p_given_c_derivative):
         return [entropy_p_derivative[d_i] - entropy_p_given_c_derivative[d_i] for d_i in range(self.n_classes)]
 
-    def rDerivative(self, prob_pi_derivative):
-        return [sum(p) for d_i, p in enumerate(prob_pi_derivative)]
+    def rDerivative(self, prob_pi_large_derivative):
+        return [sum(p) for d_i, p in enumerate(prob_pi_large_derivative)]
 
     def allPdfs(self, thresholds):
         return [[self.pdf(t, param) for param in parameters] for (t, parameters) in zip(thresholds, self.parameters_pi_cj)]
 
     def allCdfs(self, thresholds):
         return [[self.cdf(t, param) for param in parameters] for (t, parameters) in zip(thresholds, self.parameters_pi_cj)]
+
+    def probPi(self, prob_pi_large, R):
+        return [p/R for p in prob_pi_large]
+
+    def probCk(self, prob_ck_large, R):
+        return [p/R for p in prob_ck_large]
+
+    def calculateR(self, prob_pi_large):
+        return sum(prob_pi_large)
 
     def gradient(self, thresholds):
         pdfs_pi_cj = self.allPdfs(thresholds)
@@ -212,13 +221,13 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         prob_pi_given_cj_derivative = self.probPiGivenCjDerivative(pdfs_cj_pi, cdfs_cj_pi)
         prob_pi_large = self.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.probPiLargeDerivative(prob_pi_given_cj_derivative)
-        R = sum(prob_pi_large)
+        R = self.calculateR(prob_pi_large)
         R_derivative = self.rDerivative(prob_pi_large_derivative)
-        prob_pi = [p/R for p in prob_pi_large]
+        prob_pi = self.probPi(prob_pi_large, R)
         prob_pi_derivative = self.probPiDerivative(prob_pi_large, prob_pi_large_derivative, R, R_derivative)
         prob_ck_large = self.probCkLarge(prob_pi_given_cj)
         prob_ck_large_derivative = self.probCkLargeDerivative(prob_pi_given_cj_derivative)
-        prob_ck = [p/R for p in prob_ck_large]
+        prob_ck = self.probCk(prob_ck_large, R)
         prob_ck_derivative = self.probCkDerivative(prob_ck_large, prob_ck_large_derivative, R, R_derivative)
         entropy_p = self.entropyP(prob_pi)
         entropy_p_derivative = self.entropyPderivative(prob_pi, prob_pi_derivative)
@@ -254,7 +263,7 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         ]
 
     def mdtDerivative(self, R, R_derivatve):
-        return [self.mdt(R)*R_derivatve[d_i] for d_i in range(self.n_classes)]
+        return [self.dMDT_dr(R)*R_derivatve[d_i] for d_i in range(self.n_classes)]
 
     def product(self, iterable):
         return reduce(operator.mul, iterable, 1)
