@@ -55,16 +55,16 @@ class ModelTrainer(object):
         self.t_proba_maf = self.getMafLength(self.t_use_maf_on_probas)
         self.t_precisions_bounded = True
         self.t_predictions_bounded = True
-        self.itr_calculator = ItrCalculator.ItrAccuracySubMatrix(
-            window_length=1,
-            step=0.125,
-            feature_maf_length=self.t_feature_maf,
-            proba_maf_length=self.t_proba_maf,
-            look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
-            n_targets=3,
-            precisions_bounded=self.t_precisions_bounded,
-            predictions_bounded=self.t_predictions_bounded,
-        )
+        # self.itr_calculator = ItrCalculator.ItrAccuracySubMatrix(
+        #     window_length=1,
+        #     step=0.125,
+        #     feature_maf_length=self.t_feature_maf,
+        #     proba_maf_length=self.t_proba_maf,
+        #     look_back_length=1 if self.t_use_ml is False else options[c.MODELS_PARSE_LOOK_BACK_LENGTH],
+        #     n_targets=3,
+        #     precisions_bounded=self.t_precisions_bounded,
+        #     predictions_bounded=self.t_predictions_bounded,
+        # )
         self.itr_calculator_prob = ItrCalculatorProb.ItrCalculatorProb(
             window_length=1,
             step=0.125,
@@ -188,7 +188,7 @@ class ModelTrainer(object):
     #     result = -self.itr_calculator.itrBitPerMin(accuracy, support)
     #     return result
 
-    def calculateSupport(self, confusion_matrix):
+    def calculatePredictionProbability(self, confusion_matrix):
         if not isinstance(confusion_matrix, float):
             matrix_sum = confusion_matrix.sum()
             return (matrix_sum-confusion_matrix.sum(axis=0)[-1])/matrix_sum
@@ -203,9 +203,11 @@ class ModelTrainer(object):
 
     def printConfusionMatrixData(self, confusion_matrix):
         accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
-        support = self.calculateSupport(confusion_matrix)
-        print self.itr_calculator.itrBitPerMin(accuracy, support)
+        prediction_probability = self.calculatePredictionProbability(confusion_matrix)
+        print self.itr_calculator_prob.itrBitPerMin(accuracy, prediction_probability)
+        print self.itr_calculator_prob.itrMiFromMatrix(confusion_matrix)
         print accuracy
+        print self.itr_calculator_prob.mdt(prediction_probability)
         print confusion_matrix
 
     # def getLabelConverter(self, label_order):
@@ -460,8 +462,8 @@ class ModelTrainer(object):
         # plotter.plotCdf()
         # plotter.plotJointPdfs()
         plotter.pair()
-        import time
-        matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex", draw_rectangles=True)
+        # import time
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex", draw_rectangles=True)
         plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()

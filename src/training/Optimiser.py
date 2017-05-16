@@ -121,6 +121,7 @@ class Optimiser(object):
             max_itrs.append(itr)
             max_itr_thresholds.append(thresholds)
             # print np.array(thresholds), itr
+        print max_itrs
         result = max_itr_thresholds[np.argmax(max_itrs)]
         return result
         # indices = [thresholds.searchsorted(threshold, side="left") for threshold, thresholds in zip(result, all_thresholds)]
@@ -193,7 +194,7 @@ class GradientDescentOptimiser(Optimiser):
     def optimise(self):
         return self._optimise(
             self.itr_calculator.itrFromThresholds,
-            self.itr_calculator.gradient,
+            self.itr_calculator.gradientMi,
             None,
         )
 
@@ -224,11 +225,10 @@ class GradientDescentOptimiser(Optimiser):
             mu /= 2
             # stop_threshold /= 10
             for i in range(steps_before_decreasing):
-                current_itr = function(current_thresholds)
+                itr_change, current_itr = gradient(current_thresholds)
                 if max_itr is None or current_itr > max_itr:
                     max_itr = current_itr
                     max_thresholds1 = current_thresholds
-                itr_change = gradient(current_thresholds)
                 current_thresholds = self.calculateNewThresholds(itr_change, current_thresholds, bounds, mu)
                 # print current_itr, current_thresholds, itr_change
                 if previous_itr is not None and abs(current_itr-previous_itr) < stop_threshold:# or current_thresholds in previous_thresholds:

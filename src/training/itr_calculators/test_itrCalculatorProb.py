@@ -573,23 +573,23 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(matrix, self.calculator.transposeParameterMatrix(transposed))
 
     def test_probPiGivenCj(self):
-        actual = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        actual = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         expected = self.calculateProbPiGivenCj()
         self.assertEqual(actual, expected)
 
     def test_probPiGivenCjDerivative(self):
-        actual = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        actual = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         expected = self.calculatePiGivenCjDerivative()
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_probPiLarge(self):
-        actual = self.calculator.probPiLarge(self.calculator.probPiGivenCj(self.cdfs_cj_pi))
+        actual = self.calculator.probPiLarge(self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi))
         expected = self.calculateLargePi()
         self.assertEqual(actual, expected)
 
     def test_probPiLargeDerivative(self):
         actual = self.calculator.probPiLargeDerivative(
-            self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi))
+            self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi))
         expected = [
             [
                 sum([
@@ -639,7 +639,7 @@ class TestItrCalculatorProb(TestCase):
         # self.assertEqual(actual, expected)
 
     def test_probPi(self):
-        pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         actual = self.calculator.probPi(self.calculator.probPiLarge(pi_given_cj),
                                         self.calculator.calculateR(self.calculator.probPiLarge(pi_given_cj)))
         R = self.calculateR()
@@ -647,7 +647,7 @@ class TestItrCalculatorProb(TestCase):
         self.assertEqual(actual, expected)
 
     def test_probCk(self):
-        pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         actual = self.calculator.probCk(self.calculator.probCkLarge(pi_given_cj),
                                         self.calculator.calculateR(self.calculator.probPiLarge(pi_given_cj)))
         R = self.calculateR()
@@ -655,14 +655,14 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_calculateR(self):
-        actual = self.calculator.calculateR(self.calculator.probPiLarge(self.calculator.probPiGivenCj(self.cdfs_cj_pi)))
+        actual = self.calculator.calculateR(self.calculator.probPiLarge(self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)))
         expected = sum(self.calculateLargePi())
         self.assertEqual(actual, expected)
 
     def test_probPiDerivative(self):
-        prob_pi_large = self.calculator.probPiLarge(self.calculator.probPiGivenCj(self.cdfs_cj_pi))
+        prob_pi_large = self.calculator.probPiLarge(self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi))
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(
-            self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi))
+            self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi))
         R = self.calculator.calculateR(prob_pi_large)
         R_derivative = self.calculator.rDerivative(prob_pi_large_derivative)
         actual = self.calculator.probPiDerivative(prob_pi_large, prob_pi_large_derivative, R, R_derivative)
@@ -674,8 +674,8 @@ class TestItrCalculatorProb(TestCase):
         self.assertEqual(actual, expected)
 
     def test_probCkDerivative(self):
-        prob_ck_large = self.calculator.probCkLarge(self.calculator.probPiGivenCj(self.cdfs_cj_pi))
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_ck_large = self.calculator.probCkLarge(self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi))
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_ck_large_derivative = self.calculator.probCkLargeDerivative(prob_pi_given_cj_derivative)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_ck_large)
@@ -687,7 +687,7 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_probCkLarge(self):
-        pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         actual = self.calculator.probCkLarge(pi_given_cj)
         expected = [
             sum([
@@ -707,7 +707,7 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_probCkLargeDerivative(self):
-        pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         actual = self.calculator.probCkLargeDerivative(pi_given_cj_derivative)
         expected = [
             ([
@@ -757,7 +757,7 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_entropyP(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         R = self.calculator.calculateR(prob_pi_large)
         prob_pi = self.calculator.probPi(prob_pi_large, R)
@@ -770,8 +770,8 @@ class TestItrCalculatorProb(TestCase):
         self.assertEqual(actual, expected)
 
     def test_entropyPderivative(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_pi_large)
@@ -787,7 +787,7 @@ class TestItrCalculatorProb(TestCase):
         self.assertEqual(actual, expected)
 
     def test_entropyOfPgivenC(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         actual = self.calculator.entropyOfPgivenC(prob_pi_given_cj)
 
         pi_given_cj = self.calculateProbPiGivenCj()
@@ -795,8 +795,8 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_entropyOfPgivenCderivative(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         actual = self.calculator.entropyOfPgivenCderivative(prob_pi_given_cj, prob_pi_given_cj_derivative)
         pi_given_cj = self.calculateProbPiGivenCj()
         pi_given_cj_derivative = self.calculatePiGivenCjDerivative()
@@ -805,7 +805,7 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_entropyPgivenC(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         R = self.calculator.calculateR(prob_pi_large)
         prob_ck_large = self.calculator.probCkLarge(prob_pi_given_cj)
@@ -820,8 +820,8 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_entropyPgivenCderivative(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_pi_large)
@@ -851,8 +851,8 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 15)
 
     def test_mutualInformationDerivative(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_pi_large)
@@ -881,8 +881,8 @@ class TestItrCalculatorProb(TestCase):
             sum(dc * entropy + de * ck for ck, entropy, de, dc in zip(prob_ck, entropy_of_p_given_c, d_entropy, d_ck))
             for d_entropy, d_ck in zip(entropy_of_p_given_c_derivative, prob_ck_derivative)]
 
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_pi_large)
@@ -904,7 +904,7 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_mutualInformation(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         R = self.calculator.calculateR(prob_pi_large)
         prob_pi = self.calculator.probPi(prob_pi_large, R)
@@ -926,8 +926,8 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 16)
 
     def test_rDerivative(self):
-        pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         # R = self.calculator.calculateR(self.calculator.probPiLarge(pi_given_cj))
         # R_derivative = self.calculator
         actual = self.calculator.rDerivative(self.calculator.probPiLargeDerivative(pi_given_cj_derivative))
@@ -979,8 +979,8 @@ class TestItrCalculatorProb(TestCase):
         self.assertEqual(actual, expected)
 
     def test_itrDerivative(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_pi_large)
@@ -1048,8 +1048,8 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, expected, 14)
 
     def test_mdtDerivative(self):
-        prob_pi_given_cj = self.calculator.probPiGivenCj(self.cdfs_cj_pi)
-        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
+        prob_pi_given_cj = self.calculator.probPiGivenCjLarge(self.cdfs_cj_pi)
+        prob_pi_given_cj_derivative = self.calculator.probPiGivenCjLargeDerivative(self.pdfs_cj_pi, self.cdfs_cj_pi)
         prob_pi_large = self.calculator.probPiLarge(prob_pi_given_cj)
         prob_pi_large_derivative = self.calculator.probPiLargeDerivative(prob_pi_given_cj_derivative)
         R = self.calculator.calculateR(prob_pi_large)
@@ -1061,6 +1061,62 @@ class TestItrCalculatorProb(TestCase):
         expected = [-self.step / R ** 2 * dr for dr in R_derivative]
         np.testing.assert_almost_equal(actual, expected, 16)
 
+    def test_itrFromMatrix(self):
+        a = np.array([[371,4,1],[7,340,1],[14,10,17]]).astype("float")
+        b = np.array([[371,4,1,189],[7,340,1,217],[14,10,17,524],[0,0,0,0]]).astype("float")
+        # a = np.array([[100,5,5],   [5,100,5],   [600,400,100]]).astype("float")
+        # b = np.array([[100,5,5,90],[5,100,5,90],[600,400,100,90],[0,0,0,0]]).astype("float")
+        # a = np.array([[371,4,1],[4,340,10],[1,10,17]]).astype("float")
+        # b = np.array([[371,4,1,189],[4,340,10,211],[1,10,17,537],[0,0,0,0]]).astype("float")
+        self.class_probas = (b.sum(1)/b.sum())[:-1]
+        self.calculator.class_probas = self.class_probas
+        result = 0.0
+        prob_pi_and_cj = a/a.sum()
+        prob_pi = (a.sum(0)/a.sum())
+        prob_ck = (a.sum(1)/a.sum())
+        prob_pi_given_cj = (np.transpose(prob_pi_and_cj)/prob_ck)
+        for i in range(3):
+            for j in range(3):
+                result += (prob_pi_and_cj[i][j])*np.log2((prob_pi_and_cj[i][j])/((prob_pi[j])*(prob_ck[i])))
+                # print prob_pi_and_cj[i][j], prob_pi[i], prob_ck[j]
+        result_entropy = 0.0
+        result_conditional_entropy = 0.0
+        result_entropy_of_p_given_c = []
+        for i in range(3):
+            result_entropy += -prob_pi[i]*np.log2(prob_pi[i])
+        for i in range(3):
+            entropy_of_conditional = 0.0
+            for j in range(3):
+                entropy_of_conditional += -prob_pi_given_cj[j][i]*np.log2(prob_pi_given_cj[j][i])
+            result_entropy_of_p_given_c.append(entropy_of_conditional)
+            result_conditional_entropy += prob_ck[i]*entropy_of_conditional
+        actual = self.calculator.itrMiFromMatrix(b)
+        R = a.sum()/b.sum()
+        entropyP = -sum(p*np.log2(p) for p in prob_pi)
+        R_given_class = a.sum(1)/b.sum(1)[:-1]
+        entropyOfPgivenC = [-sum(p*np.log2(p) for p in probs) for probs in np.transpose(prob_pi_given_cj)]
+        entropy_p_given_c = sum(a*b for a,b in zip(prob_ck, entropyOfPgivenC))
+        mutual_information = entropyP - entropy_p_given_c
+        # print self.class_probas
+        # print a.sum(1)
+        # print a.sum()
+        # print a
+        # print b
+        # print "calc ITR", actual
+        # print "actual prob_pi_given_cj", prob_pi_given_cj
+        # print "actual prob_pi_and_cj", prob_pi_and_cj
+        # print "actual R", R
+        # print "actual R_given_class", R_given_class
+        # print "actual prob_pi", prob_pi
+        # print "actual pcob_ck", prob_ck
+        # print "actual entropy", entropyP, result_entropy
+        # print "actual entropy_of_p_given_c", entropyOfPgivenC, result_entropy_of_p_given_c
+        # print "actual entropy_p_given_c", entropy_p_given_c, result_conditional_entropy
+        # print "actual mutual information", result, mutual_information, result_entropy-result_conditional_entropy
+        # print "actual MDT", self.calculator.mdt(R)
+        # print "actual ITR", self.calculator.itr(result, R), self.calculator.itr(mutual_information, R), self.calculator.itr(result_entropy-result_conditional_entropy, R)
+        np.testing.assert_almost_equal(self.calculator.itr(result, R), self.calculator.itr(mutual_information, R))
+        np.testing.assert_almost_equal(self.calculator.itr(mutual_information, R),self.calculator.itr(result_entropy-result_conditional_entropy, R))
         # def test_product(self):
         #     self.fail()
         #
