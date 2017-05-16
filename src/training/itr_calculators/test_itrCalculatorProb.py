@@ -1068,6 +1068,8 @@ class TestItrCalculatorProb(TestCase):
         b = np.array([[100,5,5,90],[5,100,5,90],[600,400,100,90],[0,0,0,0]]).astype("float")
         # a = np.array([[371,4,1],[4,340,10],[1,10,17]]).astype("float")
         # b = np.array([[371,4,1,189],[4,340,10,211],[1,10,17,537],[0,0,0,0]]).astype("float")
+        a = np.array([[384,12,0],[7,408,3],[31,94,3]]).astype("float")
+        b = np.array([[384,12,0,169],[7,408,3,147],[31,94,3,437],[0,0,0,0]]).astype("float")
         self.class_probas = (b.sum(1)/b.sum())[:-1]
         self.calculator.class_probas = self.class_probas
         result = 0.0
@@ -1077,8 +1079,8 @@ class TestItrCalculatorProb(TestCase):
         prob_pi_given_cj = (np.transpose(prob_pi_and_cj)/prob_ck)
         for i in range(3):
             for j in range(3):
-                result += (prob_pi_and_cj[i][j])*np.log2((prob_pi_and_cj[i][j])/((prob_pi[j])*(prob_ck[i])))
-                # print prob_pi_and_cj[i][j], prob_pi[i], prob_ck[j]
+                result += (((prob_pi_and_cj[i][j])*np.log2((prob_pi_and_cj[i][j])/((prob_pi[j])*(prob_ck[i])))) if (prob_pi_and_cj[i][j] > 0 and prob_pi[j] > 0 and prob_ck[i] > 0) else 0)
+                # print result, prob_pi_and_cj[i][j], prob_pi[i], prob_ck[j]
         result_entropy = 0.0
         result_conditional_entropy = 0.0
         result_entropy_of_p_given_c = []
@@ -1087,35 +1089,35 @@ class TestItrCalculatorProb(TestCase):
         for i in range(3):
             entropy_of_conditional = 0.0
             for j in range(3):
-                entropy_of_conditional += -prob_pi_given_cj[j][i]*np.log2(prob_pi_given_cj[j][i])
+                entropy_of_conditional += -prob_pi_given_cj[j][i]*np.log2(prob_pi_given_cj[j][i]) if prob_pi_given_cj[j][i] > 0 else 0
             result_entropy_of_p_given_c.append(entropy_of_conditional)
             result_conditional_entropy += prob_ck[i]*entropy_of_conditional
         actual = self.calculator.itrMiFromMatrix(b)
         R = a.sum()/b.sum()
-        entropyP = -sum(p*np.log2(p) for p in prob_pi)
+        entropyP = -sum(p*np.log2(p) if p > 0 else 0 for p in prob_pi)
         R_given_class = a.sum(1)/b.sum(1)[:-1]
-        entropyOfPgivenC = [-sum(p*np.log2(p) for p in probs) for probs in np.transpose(prob_pi_given_cj)]
+        entropyOfPgivenC = [-sum(p*np.log2(p) if p > 0 else 0 for p in probs) for probs in np.transpose(prob_pi_given_cj)]
         entropy_p_given_c = sum(a*b for a,b in zip(prob_ck, entropyOfPgivenC))
         mutual_information = entropyP - entropy_p_given_c
         from_gradient = self.calculator.gradientMiFromConfusionMatrix(b)[1]
-        # print self.class_probas
-        # print a.sum(1)
-        # print a.sum()
-        # print a
-        # print b
-        # print "calc ITR", actual
-        # print "actual prob_pi_given_cj", prob_pi_given_cj
-        # print "actual prob_pi_and_cj", prob_pi_and_cj
-        # print "actual R", R
-        # print "actual R_given_class", R_given_class
-        # print "actual prob_pi", prob_pi
-        # print "actual pcob_ck", prob_ck
-        # print "actual entropy", entropyP, result_entropy
-        # print "actual entropy_of_p_given_c", entropyOfPgivenC, result_entropy_of_p_given_c
-        # print "actual entropy_p_given_c", entropy_p_given_c, result_conditional_entropy
-        # print "actual mutual information", result, mutual_information, result_entropy-result_conditional_entropy
-        # print "actual MDT", self.calculator.mdt(R)
-        # print "actual ITR", self.calculator.itr(result, R), self.calculator.itr(mutual_information, R), self.calculator.itr(result_entropy-result_conditional_entropy, R)
+        print self.class_probas
+        print a.sum(1)
+        print a.sum()
+        print a
+        print b
+        print "calc ITR", actual
+        print "actual prob_pi_given_cj", prob_pi_given_cj
+        print "actual prob_pi_and_cj", prob_pi_and_cj
+        print "actual R", R
+        print "actual R_given_class", R_given_class
+        print "actual prob_pi", prob_pi
+        print "actual pcob_ck", prob_ck
+        print "actual entropy", entropyP, result_entropy
+        print "actual entropy_of_p_given_c", entropyOfPgivenC, result_entropy_of_p_given_c
+        print "actual entropy_p_given_c", entropy_p_given_c, result_conditional_entropy
+        print "actual mutual information", result, mutual_information, result_entropy-result_conditional_entropy
+        print "actual MDT", self.calculator.mdt(R)
+        print "actual ITR", self.calculator.itr(result, R), self.calculator.itr(mutual_information, R), self.calculator.itr(result_entropy-result_conditional_entropy, R)
         np.testing.assert_almost_equal(self.calculator.itr(result, R), self.calculator.itr(mutual_information, R))
         np.testing.assert_almost_equal(self.calculator.itr(mutual_information, R),self.calculator.itr(result_entropy-result_conditional_entropy, R))
         np.testing.assert_almost_equal(actual, self.calculator.itr(result, R))
@@ -1136,7 +1138,7 @@ class TestItrCalculatorProb(TestCase):
                 if previous_itr is not None and abs(itr-previous_itr) < 10**-10 or np.any(np.array(gradient) < 10**-10):
                     break
                 if itr < previous_itr:
-                    print thresholds, gradient, j*1000+i, itr-previous_itr
+                    print "fail", thresholds, gradient, j*1000+i, itr-previous_itr
                 # self.assertGreaterEqual(itr, previous_itr)
                 thresholds = map(lambda (t,g): t+g*mu, zip(thresholds, gradient))
                 previous_itr = itr
@@ -1156,7 +1158,7 @@ class TestItrCalculatorProb(TestCase):
                 if previous_itr is not None and abs(itr-previous_itr) < 10**-10 or np.any(np.array(gradient) < 10**-10):
                     break
                 if itr < previous_itr:
-                    print thresholds, gradient, j*1000+i, itr-previous_itr
+                    print "fail", thresholds, gradient, j*1000+i, itr-previous_itr
                 # self.assertGreaterEqual(itr, previous_itr)
                 thresholds = map(lambda (t,g): t+g*mu, zip(thresholds, gradient))
                 previous_itr = itr

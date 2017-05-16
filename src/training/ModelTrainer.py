@@ -204,9 +204,15 @@ class ModelTrainer(object):
     def printConfusionMatrixData(self, confusion_matrix):
         accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
         prediction_probability = self.calculatePredictionProbability(confusion_matrix)
+        print "Predictions:"
+        print str((confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])) + "/" + str(confusion_matrix.sum())
+        print "Standard ITR:"
         print self.itr_calculator_prob.itrBitPerMin(accuracy, prediction_probability)
+        print "Mutual information ITR:"
         print self.itr_calculator_prob.itrMiFromMatrix(confusion_matrix)
+        print "Accuracy:"
         print accuracy
+        print "MDT:"
         print self.itr_calculator_prob.mdt(prediction_probability)
         print confusion_matrix
 
@@ -461,10 +467,10 @@ class ModelTrainer(object):
         # plotter.plotPdf()
         # plotter.plotCdf()
         # plotter.plotJointPdfs()
-        plotter.pair()
+        # plotter.pair()
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex", draw_rectangles=True)
-        plt.show()
+        # plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])

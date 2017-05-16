@@ -207,25 +207,25 @@ class ItrCalculatorProb(AbstractCalculator.ItrCalculator):
         ]
 
     def entropyP(self, prob_pi):
-        return -sum(prob*np.log2(prob) for prob in prob_pi)
+        return -sum(prob*np.log2(prob) if prob > 0 else 0 for prob in prob_pi)
 
     def entropyPderivative(self, prob_pi, prob_pi_derivative):
         return [
-            -sum(prob_derivative*((np.log(prob)+1)/np.log(2))
+            -sum(prob_derivative*((np.log(prob)+1)/np.log(2)) if prob > 0 else 0
                  for prob, prob_derivative in zip(prob_pi, prob_pi_derivative[d_i]))
             for d_i in range(self.n_classes)
         ]
 
     def entropyOfPgivenC(self, prob_pi_given_cj):
         return [
-            -sum(prob_pi_given_cj[i][k]*np.log2(prob_pi_given_cj[i][k]) for i in range(self.n_classes))
+            -sum(prob_pi_given_cj[i][k]*np.log2(prob_pi_given_cj[i][k]) if prob_pi_given_cj[i][k] > 0 else 0 for i in range(self.n_classes))
             for k in range(self.n_classes)
         ]
 
     def entropyOfPgivenCderivative(self, prob_pi_given_cj, prob_pi_given_cj_derivative):
         return [
             [
-                -sum(prob_pi_given_cj_derivative[d_i][i][k]*((np.log(prob_pi_given_cj[i][k])+1)/np.log(2)) for i in range(self.n_classes))
+                -sum(prob_pi_given_cj_derivative[d_i][i][k]*((np.log(prob_pi_given_cj[i][k])+1)/np.log(2)) if prob_pi_given_cj[i][k] > 0 else 0 for i in range(self.n_classes))
                 for k in range(self.n_classes)
             ] for d_i in range(self.n_classes)
         ]

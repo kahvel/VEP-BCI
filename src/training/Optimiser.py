@@ -39,11 +39,12 @@ class Optimiser(object):
         return cut_off_threshold
 
     def makeInitialGuess(self, k, all_thresholds, lengths):
+        # if k == 0:
+        #     return self.calculateThresholdsMaxPrecision()
+        # elif k == 1:
+        #     return self.calculateThresholdsMaxItrSingle(self.itr_calculator.itrBitPerMin)
+        # elif k == 2:
         if k == 0:
-            return self.calculateThresholdsMaxPrecision()
-        elif k == 1:
-            return self.calculateThresholdsMaxItrSingle(self.itr_calculator.itrBitPerMin)
-        elif k == 2:
             return map(lambda x: x[-1], all_thresholds)
         else:
             indices = map(lambda x: np.random.randint(0, x), lengths)
@@ -115,7 +116,7 @@ class Optimiser(object):
 
         max_itrs = []
         max_itr_thresholds = []
-        for k in range(5):
+        for k in range(100):
             initial_guess = self.makeInitialGuess(k, all_thresholds, lengths)
             thresholds, itr = self.findOptimalThresholds(function, initial_guess, bounds, gradient, constraints)
             max_itrs.append(itr)
@@ -202,13 +203,13 @@ class GradientDescentOptimiser(Optimiser):
         new_thresholds = []
         for threshold, change, bound in zip(current_thresholds, itr_change, bounds):
             new_threshold = threshold+change*mu
-            # new_threshold = threshold+int(np.sign(change*step)*np.ceil(np.abs(change*step)))
-            if bound[0] <= new_threshold <= bound[1]:
-                new_thresholds.append(new_threshold)
-            elif new_threshold > bound[1]:
-                new_thresholds.append(bound[1])
-            else:
-                new_thresholds.append(bound[0])
+            new_thresholds.append(new_threshold)
+            # if bound[0] <= new_threshold <= bound[1]:
+            #     new_thresholds.append(new_threshold)
+            # elif new_threshold > bound[1]:
+            #     new_thresholds.append(bound[1])
+            # else:
+            #     new_thresholds.append(bound[0])
         return new_thresholds
 
     def findOptimalThresholds(self, function, initial_guess, bounds, gradient, constraints):
@@ -216,21 +217,25 @@ class GradientDescentOptimiser(Optimiser):
         max_itr = None
         max_thresholds1 = None
         # previous_thresholds = []
-        mu = 0.0001
+        mu = 0.0001  # MI: 0.0001, Accuracy: 0.005
         stop_threshold = 0.000001
         steps_before_decreasing = 100
         n_decreases = 50
+        bounds = np.array(bounds)
         current_thresholds = initial_guess
         for j in range(n_decreases):
-            mu /= 2
+            # mu /= 2
             # stop_threshold /= 10
             for i in range(steps_before_decreasing):
-                itr_change, current_itr = gradient(current_thresholds)
+                itr_gradient, current_itr = gradient(current_thresholds)
                 if max_itr is None or current_itr > max_itr:
                     max_itr = current_itr
                     max_thresholds1 = current_thresholds
-                current_thresholds = self.calculateNewThresholds(itr_change, current_thresholds, bounds, mu)
-                # print current_itr, current_thresholds, itr_change
+                current_thresholds = self.calculateNewThresholds(itr_gradient, current_thresholds, bounds, mu)
+                # print current_itr, current_thresholds, itr_gradient
+                if not np.all(np.logical_and(np.all(bounds[:, 0] <= current_thresholds), np.all(current_thresholds <= bounds[:, 1]))):
+                    print "Out of bounds", j*steps_before_decreasing+i, current_thresholds
+                    return max_thresholds1, max_itr
                 if previous_itr is not None and abs(current_itr-previous_itr) < stop_threshold:# or current_thresholds in previous_thresholds:
                     # print max_actual, max_itr, max_itr_indices, max_actual_indices, "kartul", np.sum(np.array(max_itr_indices) == np.array(max_actual_indices))
                     print "Converged in", j*steps_before_decreasing+i, "steps. Mu:", mu
