@@ -1064,8 +1064,8 @@ class TestItrCalculatorProb(TestCase):
     def test_itrFromMatrix(self):
         a = np.array([[371,4,1],[7,340,1],[14,10,17]]).astype("float")
         b = np.array([[371,4,1,189],[7,340,1,217],[14,10,17,524],[0,0,0,0]]).astype("float")
-        # a = np.array([[100,5,5],   [5,100,5],   [600,400,100]]).astype("float")
-        # b = np.array([[100,5,5,90],[5,100,5,90],[600,400,100,90],[0,0,0,0]]).astype("float")
+        a = np.array([[100,5,5],   [5,100,5],   [600,400,100]]).astype("float")
+        b = np.array([[100,5,5,90],[5,100,5,90],[600,400,100,90],[0,0,0,0]]).astype("float")
         # a = np.array([[371,4,1],[4,340,10],[1,10,17]]).astype("float")
         # b = np.array([[371,4,1,189],[4,340,10,211],[1,10,17,537],[0,0,0,0]]).astype("float")
         self.class_probas = (b.sum(1)/b.sum())[:-1]
@@ -1097,6 +1097,7 @@ class TestItrCalculatorProb(TestCase):
         entropyOfPgivenC = [-sum(p*np.log2(p) for p in probs) for probs in np.transpose(prob_pi_given_cj)]
         entropy_p_given_c = sum(a*b for a,b in zip(prob_ck, entropyOfPgivenC))
         mutual_information = entropyP - entropy_p_given_c
+        from_gradient = self.calculator.gradientMiFromConfusionMatrix(b)[1]
         # print self.class_probas
         # print a.sum(1)
         # print a.sum()
@@ -1117,6 +1118,9 @@ class TestItrCalculatorProb(TestCase):
         # print "actual ITR", self.calculator.itr(result, R), self.calculator.itr(mutual_information, R), self.calculator.itr(result_entropy-result_conditional_entropy, R)
         np.testing.assert_almost_equal(self.calculator.itr(result, R), self.calculator.itr(mutual_information, R))
         np.testing.assert_almost_equal(self.calculator.itr(mutual_information, R),self.calculator.itr(result_entropy-result_conditional_entropy, R))
+        np.testing.assert_almost_equal(actual, self.calculator.itr(result, R))
+        np.testing.assert_almost_equal(actual, from_gradient)
+
         # def test_product(self):
         #     self.fail()
         #
