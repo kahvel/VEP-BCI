@@ -49,7 +49,7 @@ class TestItrCalculatorProb(TestCase):
         self.feature_maf_length = 3
         self.proba_maf_length = 3
         self.look_back_length = 1
-        self.n_targets = 3,
+        self.n_targets = 3
         self.cdfs_cj_pi = np.transpose(self.cdfs_pi_cj)
         self.pdfs_cj_pi = np.transpose(self.pdfs_pi_cj)
         self.calculator = ItrCalculatorProb.ItrCalculatorProb(
@@ -1121,41 +1121,82 @@ class TestItrCalculatorProb(TestCase):
         np.testing.assert_almost_equal(actual, self.calculator.itr(result, R))
         np.testing.assert_almost_equal(actual, from_gradient)
 
-        # def test_product(self):
-        #     self.fail()
-        #
-        # def test_pdf(self):
-        #     self.fail()
-        #
-        # def test_cdf(self):
-        #     self.fail()
-        #
-        # def test_fitCurves(self):
-        #     self.fail()
-        #
-        # def test_calculateCurves(self):
-        #     self.fail()
-        #
-        # def test_itrFromThresholds(self):
-        #     self.fail()
-        #
-        # def test_itr(self):
-        #     self.fail()
+    def test_gradientMi(self):
+        self.calculator.parameters_pi_cj = [
+            [[-5.01894977,  1.90630447,  0.30126005], [ 1.09720932,  1.3190092 ,  0.13901008], [ 2.02218699,  1.29296982,  0.15502935]],
+            [[ 1.47681854,  1.14438859,  0.098874  ], [-1.00744136,  1.57362856,  0.19913304], [ 2.56292915,  1.15824731,  0.1416484 ]],
+            [[ 3.7272681 ,  1.05472333,  0.09117186], [ 3.8123051 ,  1.06646656,  0.1126043 ], [ 3.27270099,  1.06927744,  0.11162675]],
+        ]
+        mu = 0.001
+        for j in range(100):
+            previous_itr = None
+            thresholds = np.random.uniform(1, 2, 3)
+            for i in range(10000):
+                gradient, itr = self.calculator.gradientAccuracy(thresholds)
+                if previous_itr is not None and abs(itr-previous_itr) < 10**-10 or np.any(np.array(gradient) < 10**-10):
+                    break
+                if itr < previous_itr:
+                    print thresholds, gradient, j*1000+i, itr-previous_itr
+                # self.assertGreaterEqual(itr, previous_itr)
+                thresholds = map(lambda (t,g): t+g*mu, zip(thresholds, gradient))
+                previous_itr = itr
 
-        # def test_allPdfs(self):
-        #     self.fail()
-        #
-        # def test_allCdfs(self):
-        #     self.fail()
-        #
-        # def test_gradient(self):
-        #     self.fail()
+    def test_gradient(self):
+        self.calculator.parameters_pi_cj = [
+            [[-5.01894977,  1.90630447,  0.30126005], [ 1.09720932,  1.3190092 ,  0.13901008], [ 2.02218699,  1.29296982,  0.15502935]],
+            [[ 1.47681854,  1.14438859,  0.098874  ], [-1.00744136,  1.57362856,  0.19913304], [ 2.56292915,  1.15824731,  0.1416484 ]],
+            [[ 3.7272681 ,  1.05472333,  0.09117186], [ 3.8123051 ,  1.06646656,  0.1126043 ], [ 3.27270099,  1.06927744,  0.11162675]],
+        ]
+        mu = 0.001
+        for j in range(100):
+            previous_itr = None
+            thresholds = np.random.uniform(1, 2, 3)
+            for i in range(10000):
+                gradient, itr = self.calculator.gradientAccuracy(thresholds)
+                if previous_itr is not None and abs(itr-previous_itr) < 10**-10 or np.any(np.array(gradient) < 10**-10):
+                    break
+                if itr < previous_itr:
+                    print thresholds, gradient, j*1000+i, itr-previous_itr
+                # self.assertGreaterEqual(itr, previous_itr)
+                thresholds = map(lambda (t,g): t+g*mu, zip(thresholds, gradient))
+                previous_itr = itr
 
-        # def test_accuracyLarge(self):
-        #     self.fail()
-        #
-        # def test_accuracy(self):
-        #     self.fail()
-        #
-        # def test_accuracyDerivative(self):
-        #     self.fail()
+
+    # def test_product(self):
+    #     self.fail()
+    #
+    # def test_pdf(self):
+    #     self.fail()
+    #
+    # def test_cdf(self):
+    #     self.fail()
+    #
+    # def test_fitCurves(self):
+    #     self.fail()
+    #
+    # def test_calculateCurves(self):
+    #     self.fail()
+    #
+    # def test_itrFromThresholds(self):
+    #     self.fail()
+    #
+    # def test_itr(self):
+    #     self.fail()
+
+    # def test_allPdfs(self):
+    #     self.fail()
+    #
+    # def test_allCdfs(self):
+    #     self.fail()
+    #
+    # def test_gradient(self):
+    #     self.fail()
+
+    # def test_accuracyLarge(self):
+    #     self.fail()
+    #
+    # def test_accuracy(self):
+    #     self.fail()
+    #
+    # def test_accuracyDerivative(self):
+    #     self.fail()
