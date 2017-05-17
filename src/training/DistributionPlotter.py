@@ -22,6 +22,8 @@ class Plotter(object):
         self.n_features = len(self.data)
         self.n_classes = len(self.ordered_labels)
         self.bar_width = 0.02
+        # self.bins = int((current_max-current_min)/self.bar_width)
+        self.bins = 50
         self.colors = ["blue", "green", "red"]
         self.parameters = []
 
@@ -51,7 +53,7 @@ class Plotter(object):
                     current_max = np.max(data[:,i])
                     ax.set_xlim((self.min_feature, self.max_feature))
                     ax.set_ylim((y_min, y_max))
-                    ax.hist(data[:,i], bins=int((current_max-current_min)/self.bar_width), normed=False, color=self.colors[i])
+                    ax.hist(data[:,i], bins=self.bins, normed=False, color=self.colors[i])
                     ax.plot([self.mean_thresholds[i], self.mean_thresholds[i]], [y_min, y_max], color=self.colors[i])
                     ax.set_title(self.labels[i])
                 else:
@@ -113,7 +115,7 @@ class Plotter(object):
         plt.plot(points, 1-scipy.stats.skewnorm.cdf(points, *parameters))
 
     def fitTest(self, data, current_min, current_max, initial_guess):
-        hist, bin_edges = np.histogram(data, bins=int((current_max-current_min)/self.bar_width), density=True)
+        hist, bin_edges = np.histogram(data, bins=self.bins, density=True)
         bin_edges = self.moving_average(bin_edges, 2)
         return scipy.optimize.curve_fit(scipy.stats.norm.pdf, bin_edges, hist, p0=initial_guess)
 
@@ -127,7 +129,7 @@ class Plotter(object):
         return scipy.stats.skewnorm.pdf(y, alpha)
 
     def fitSkew2(self, data, current_min, current_max, initial_guess):
-        hist, bin_edges = np.histogram(data, bins=int((current_max-current_min)/self.bar_width), density=True)
+        hist, bin_edges = np.histogram(data, bins=self.bins, density=True)
         bin_edges = self.moving_average(bin_edges, 2)
         return scipy.optimize.curve_fit(self.func, bin_edges, hist, p0=initial_guess)
 
@@ -156,7 +158,7 @@ class Plotter(object):
                 current_min = np.min(features)
                 current_max = np.max(features)
                 # print current_max, current_min, (current_max-current_min), (current_max-current_min)/0.005
-                plt.hist(features, bins=int((current_max-current_min)/self.bar_width), normed=True)
+                plt.hist(features, bins=self.bins, normed=True)
                 self.plotSkew(features, current_min, current_max)
         plt.tight_layout()
 

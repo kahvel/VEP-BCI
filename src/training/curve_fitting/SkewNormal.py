@@ -18,7 +18,8 @@ class PdfCurve(CurveFitting.Curve):
         CurveFitting.Curve.__init__(self)
         bar_width = 0.02
         self.all_features = all_features
-        self.bins = int((np.max(all_features)-np.min(all_features))/bar_width)
+        # self.bins = int((np.max(all_features)-np.min(all_features))/bar_width)
+        self.bins = 50
         self.parameters = None
         hist, bin_edges = np.histogram(self.all_features, bins=self.bins, density=True)
         bin_edges = self.moving_average(bin_edges, 2)
@@ -44,7 +45,7 @@ class PdfCurve(CurveFitting.Curve):
         return scipy.stats.skewnorm.pdf(x, *self.parameters)
 
     def fitSkew(self, initial_guess):
-        return scipy.optimize.curve_fit(self.skew, self.x, self.y, p0=initial_guess)
+        return scipy.optimize.curve_fit(self.skew, self.x, self.y, p0=initial_guess, maxfev=5000)
 
     def fitCurve(self):
         self.parameters = self.fitSkew([0, np.mean(self.all_features), np.std(self.all_features)])[0]  # , 0, 1])

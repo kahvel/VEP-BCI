@@ -1,4 +1,5 @@
 import numpy as np
+from training.itr_calculators import ItrCalculatorProb
 
 
 table = """[[ 51.    0.    18.  496.]
@@ -8,7 +9,10 @@ table = """[[ 51.    0.    18.  496.]
 """.strip()
 
 
-parsed_table = np.array(map(lambda x: map(lambda y: int(y.strip()), x.strip().split(".")), table.replace("[", "").replace("]","").strip(".").split(".\n")), dtype=np.float)
+# parsed_table = np.array(map(lambda x: map(lambda y: int(y.strip()), x.strip().split(".")), table.replace("[", "").replace("]","").strip(".").split(".\n")), dtype=np.float)
+
+parsed_table = np.array([[51,0,0,49],[0,48,0,52],[0,0,1,99],[0,0,0,0]], dtype=np.float)
+# parsed_table = np.array([[21,0,1,78],[0,22,2,76],[0,0,10,90],[0,0,0,0]], dtype=np.float)
 
 def getItrBitPerMin(P, recall):
     window_length = 1
@@ -41,15 +45,10 @@ def getItrBitPerTrial(P, N):
     else:
         return (np.log10(N)+P*np.log10(P)+(1-P)*np.log10((1-P)/(N-1)))/np.log10(2)
 
-def calculateRecall(confusion_matrix):
+def calculatePredictionProbability(confusion_matrix):
     if not isinstance(confusion_matrix, float):
         matrix_sum = confusion_matrix.sum()
-        return (sumWithoutLastColumn(confusion_matrix))/matrix_sum
-
-def sumWithoutLastColumn(confusion_matrix):
-    if not isinstance(confusion_matrix, float):
-        matrix_sum = confusion_matrix.sum()
-        return matrix_sum-confusion_matrix.sum(axis=0)[-1]
+        return (matrix_sum-confusion_matrix.sum(axis=0)[-1])/matrix_sum
 
 def calculateAccuracy(confusion_matrix):
     if not isinstance(confusion_matrix, float):
@@ -57,14 +56,28 @@ def calculateAccuracy(confusion_matrix):
 
 def calculateAccuracyIgnoringLastColumn(confusion_matrix):
     if not isinstance(confusion_matrix, float):
-        return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
+            return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
+
+
+calculator = ItrCalculatorProb.ItrCalculatorProb(
+    window_length = 1,
+    step = 0.125,
+    look_back_length = 1,
+    feature_maf_length = 1,
+    proba_maf_length = 1,
+    n_targets = 3
+)
+calculator.n_classes = 3
+
 
 def printConfusionMatrixData(confusion_matrix):
+    calculator.class_probas = (confusion_matrix.sum(1)/confusion_matrix.sum())[:-1]
     accuracy = calculateAccuracyIgnoringLastColumn(confusion_matrix)
-    recall = calculateRecall(confusion_matrix)
-    print getItrBitPerMin(accuracy, recall)
+    R = calculatePredictionProbability(confusion_matrix)
+    print getItrBitPerTrial(accuracy, 2), calculator.itrMiFromMatrix(confusion_matrix)/60*calculator.mdt(R)
+    print getItrBitPerMin(accuracy, R)
     print accuracy
     print confusion_matrix
-    print getItrOffline(accuracy, 225.0/sumWithoutLastColumn(confusion_matrix), 3)
+    print getItrOffline(accuracy, 225.0/confusion_matrix.sum(axis=0)[-1], 3)
 
 printConfusionMatrixData(parsed_table)

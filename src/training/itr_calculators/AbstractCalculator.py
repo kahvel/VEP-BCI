@@ -73,7 +73,7 @@ class ItrCalculator(object):
         elif a == 1:
             return np.log2(self.n_targets)
         elif a == 0:
-            return np.log2(self.n_targets)*np.log2(1.0/(self.n_targets-1))
+            return np.log2(self.n_targets)+np.log2(1.0/(self.n_targets-1))
         else:
             return np.log2(self.n_targets)+a*np.log2(a)+(1-a)*np.log2((1.0-a)/(self.n_targets-1))
 

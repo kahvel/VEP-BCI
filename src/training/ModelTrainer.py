@@ -199,20 +199,20 @@ class ModelTrainer(object):
 
     def calculateAccuracyIgnoringLastColumn(self, confusion_matrix):
         if not isinstance(confusion_matrix, float):
-            return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
+                return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
 
     def printConfusionMatrixData(self, confusion_matrix):
         accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
         prediction_probability = self.calculatePredictionProbability(confusion_matrix)
-        print "Predictions:"
+        # print "Predictions:"
         print str((confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])) + "/" + str(confusion_matrix.sum())
-        print "Standard ITR:"
+        # print "Standard ITR:"
         print self.itr_calculator_prob.itrBitPerMin(accuracy, prediction_probability)
-        print "Mutual information ITR:"
+        # print "Mutual information ITR:"
         print self.itr_calculator_prob.itrMiFromMatrix(confusion_matrix)
-        print "Accuracy:"
+        # print "Accuracy:"
         print accuracy
-        print "MDT:"
+        # print "MDT:"
         print self.itr_calculator_prob.mdt(prediction_probability)
         print confusion_matrix
 
@@ -464,13 +464,13 @@ class ModelTrainer(object):
         all_data = np.concatenate(split_data, 0)
         all_labels = np.concatenate(split_labels, 0)
         plotter = DistributionPlotter.Plotter(all_data, all_labels, thresholds, label_order)
-        # plotter.plotPdf()
+        plotter.plotPdf()
         # plotter.plotCdf()
         # plotter.plotJointPdfs()
         # plotter.pair()
         # import time
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex", draw_rectangles=True)
-        # plt.show()
+        plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()
         # dummy_model.setup(self.features_to_use, 1, self.recordings, [False])

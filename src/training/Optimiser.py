@@ -217,7 +217,7 @@ class GradientDescentOptimiser(Optimiser):
         max_itr = None
         max_thresholds1 = None
         # previous_thresholds = []
-        mu = 0.0001  # MI: 0.0001, Accuracy: 0.005
+        mu = 0.0001  # MI: CCA 0.0001, PSDA 0.00001, Accuracy: CCA 0.005, PSDA: 0.0001-0.0005
         stop_threshold = 0.000001
         steps_before_decreasing = 100
         n_decreases = 50
