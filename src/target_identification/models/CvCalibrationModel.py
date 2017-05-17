@@ -4,6 +4,8 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTr
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import LinearSVC, SVC
 from sklearn.neural_network import MLPClassifier
+from sklearn.dummy import DummyClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.feature_selection import SelectFpr
 from target_identification import DataCollectors, ColumnsIterator, FeaturesHandler, MatrixBuilder, ScalingFunction
@@ -36,9 +38,9 @@ class Model(ColumnsIterator.ColumnsIterator):
 
     def predictProba(self, data, n, normalise):
         if normalise:
-            probas = map(lambda probas: list(probas[i]/sum(probas) for i in range(len(probas))), self.model.predict_proba(data))
+            probas = map(lambda probas: list(probas[i]/sum(probas) for i in range(len(probas))), self.model.decision_function(data))
         else:
-            probas = self.model.predict_proba(data)
+            probas = self.model.decision_function(data)
         return np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(probas)))
 
         # old_pred = np.transpose(map(lambda x: self.moving_average(x, n), np.transpose(self.model.predict_proba(data))))
@@ -98,7 +100,11 @@ class TrainingModel(Model):
         self.extraction_method_names = self.setupFeaturesHandler(features_to_use, recordings)
         self.setupScalingFunctions(self.extraction_method_names, recordings)
         self.feature_selector = SelectFpr(alpha=5e-2)
-        self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
+        # self.model = LogisticRegression()
+        # self.model = DummyClassifier()
+        self.model = LinearDiscriminantAnalysis()
+        # self.model = RandomForestClassifier(n_estimators=50)
+        # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))
         # self.model = CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50), cv=5)  # No OneVsOne
         # self.model = OneVsRestClassifier(estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}))  # No CalibratedClassifierCV
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=ExtraTreesClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=3))
@@ -131,8 +137,12 @@ class TrainingModel(Model):
     def predict(self, data):
         return Model.predict(self, self.selectFeatures(data))
 
+    def softmax(sellf, x):
+        a = 0.25
+        return np.exp(x*a) / np.sum(np.exp(x*a), axis=0)
+
     def predictProba(self, data, n, normalise):
-        return Model.predictProba(self, self.selectFeatures(data), n, normalise)
+        return (Model.predictProba(self, self.selectFeatures(data), n, normalise))
 
     def setupScalingFunctions(self, extraction_method_names, recordings):
         self.scaling_functions = ScalingFunction.TrainingScalingFunctions()

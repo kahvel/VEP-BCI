@@ -95,6 +95,10 @@ class Optimiser(object):
             #     print "thresholds"
             if not np.all(my_relative_predictions == relative_predictions):
                 print "predictions"
+                # print np.array(my_relative_predictions).shape, np.array(relative_predictions).shape
+                # for a, b in zip(my_relative_predictions, relative_predictions):
+                #     print a, b
+                # raw_input()
             if not np.all(abs(precisions - my_precisions) < 0.000001):
                 print "precisions"
                 # for a, b in zip(my_precisions, precisions):
@@ -217,7 +221,14 @@ class GradientDescentOptimiser(Optimiser):
         max_itr = None
         max_thresholds1 = None
         # previous_thresholds = []
-        mu = 0.0001  # MI: CCA 0.0001, PSDA 0.00001, Accuracy: CCA 0.005, PSDA: 0.0001-0.0005
+        mu = 0.01
+        # No ML
+        # Not normalised features: MI: CCA 0.0001, PSDA 0.00001, Accuracy: CCA 0.005, PSDA: 0.0001-0.0005
+        # normalised features:     MI: CCA 0.00001, PSDA 0.000005 (sub3-4 0.000002)
+        # normalised + MAF:        MI: CCA 0.00001, PSDA 0.000003-0.000004 (sub3-4 0.000002)
+        # MAF:                     MI: CCA 0.00001, PSDA 0.000003-0.000004 (sub3-4 0.000002)
+        # ML (normalised features + MAF, probas not normalised and no MAF)
+        # Just LDA                 MI: CCA 0.01
         stop_threshold = 0.000001
         steps_before_decreasing = 100
         n_decreases = 50

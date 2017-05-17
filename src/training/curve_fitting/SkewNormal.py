@@ -4,6 +4,7 @@ from scipy.special import erf
 import scipy.optimize
 import scipy.stats
 import matplotlib.pyplot as plt
+from rpy2.robjects.packages import importr
 
 from training.curve_fitting import CurveFitting
 
@@ -25,6 +26,7 @@ class PdfCurve(CurveFitting.Curve):
         bin_edges = self.moving_average(bin_edges, 2)
         self.x = bin_edges
         self.y = hist
+        self.sn_r_library = importr("sn")
         self.fitCurve()
 
     def moving_average(self, a, n) :
@@ -39,16 +41,37 @@ class PdfCurve(CurveFitting.Curve):
         # return 2*a*normpdf*normcdf + c
 
     def makeFunction(self, x):
-        return scipy.stats.skewnorm.cdf(x, *self.parameters)
+        # return scipy.stats.skewnorm.cdf(x, *self.parameters)
+        alpha, mean, sigma = self.parameters
+        return [np.asscalar(np.array(self.sn_r_library.psn(t, xi=mean, alpha=alpha, omega=sigma))) for t in x]
 
     def makeDerivative(self, x):
         return scipy.stats.skewnorm.pdf(x, *self.parameters)
+    #
+    # def makeFunction(self, x):
+    #     return scipy.stats.laplace.cdf(x, *self.parameters)
+    #
+    # def makeDerivative(self, x):
+    #     return scipy.stats.laplace.pdf(x, *self.parameters)
 
     def fitSkew(self, initial_guess):
-        return scipy.optimize.curve_fit(self.skew, self.x, self.y, p0=initial_guess, maxfev=5000)
+        return scipy.optimize.curve_fit(self.skew, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def laplace(self, x, loc, scale):
+        return scipy.stats.expon.pdf(x, loc=loc, scale=scale)
+
+    def chi2(self, x, df, loc, scale):
+        return scipy.stats.chi2.pdf(x, df, loc=loc, scale=scale)
+
+    def fitLaplace(self, initial_guess):
+        return scipy.optimize.curve_fit(self.laplace, self.x, self.y, p0=initial_guess, maxfev=500000)
 
     def fitCurve(self):
         self.parameters = self.fitSkew([0, np.mean(self.all_features), np.std(self.all_features)])[0]  # , 0, 1])
+        # self.parameters = self.fitLaplace([np.mean(self.all_features), np.std(self.all_features)])[0]
+        # self.parameters = self.fitLaplace([1, np.mean(self.all_features), np.std(self.all_features)])[0]
+        # median = np.median(self.all_features)
+        # self.parameters = [median, np.abs(self.all_features-median).sum()/len(self.all_features)]
         self.fit_function = self.makeFunction
         self.fit_function_derivative = self.makeDerivative
         return self.fit_function, self.fit_function_derivative

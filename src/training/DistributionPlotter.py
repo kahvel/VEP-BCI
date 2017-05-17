@@ -131,7 +131,7 @@ class Plotter(object):
     def fitSkew2(self, data, current_min, current_max, initial_guess):
         hist, bin_edges = np.histogram(data, bins=self.bins, density=True)
         bin_edges = self.moving_average(bin_edges, 2)
-        return scipy.optimize.curve_fit(self.func, bin_edges, hist, p0=initial_guess)
+        return scipy.optimize.curve_fit(self.func, bin_edges, hist, p0=initial_guess, maxfev=500000)
 
     def plotNorm(self, data, current_min, current_max):
         mean = np.mean(data)

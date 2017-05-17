@@ -43,11 +43,11 @@ class ModelTrainer(object):
 
     def setup(self, options):
         # Check before testing!!
-        self.t_use_ml = False
-        self.t_use_maf_on_features = False
+        self.t_use_ml = True#ROLL
+        self.t_use_maf_on_features = True
         self.t_use_maf_on_probas = False and self.t_use_ml
         self.t_normalise_probas = False and self.t_use_ml
-        self.t_matrix_builder_types = [False]
+        self.t_matrix_builder_types = [True, False]
         self.hacky_labels = [1,2,3]
         self.t_remove_samples_features = True and self.t_use_maf_on_features
         self.t_remove_samples_probas = True and self.t_use_maf_on_probas
@@ -359,7 +359,8 @@ class ModelTrainer(object):
             # split_training_prcs.append(self.calculateSplitPrcs(label_order, split_training_predictions, rolled_split_modified_training_labels))
 
     def start(self):
-        split_data, split_labels = self.splitAndRollData()  # Hacky
+        # split_data, split_labels = self.splitAndRollData()  # Hacky
+        split_data, split_labels = self.splitTrainingData()  # Hacky
         training_rocs = []
         training_prcs = []
         thresholds = []
@@ -385,6 +386,7 @@ class ModelTrainer(object):
         else:
             split_labels_proba = split_labels
         assert len(split_data) > 1
+        testing_predictions = []
         # label_order1 = sorted(set(split_labels[0]))
         # split_class_count = map(lambda x: self.countClasses([1,2,3], x), split_labels_proba)
         for test_data_index in range(len(split_data)):
@@ -416,6 +418,7 @@ class ModelTrainer(object):
             if self.t_remove_samples_probas:
                 testing_prediction, testing_labels_proba = self.removeSamplesBeforeAfterClassChange([testing_prediction], [testing_labels_proba])
                 testing_prediction, testing_labels_proba = testing_prediction[0], testing_labels_proba[0]
+            testing_predictions.append(testing_prediction)
             testing_roc, testing_prc = self.calculateAverageCurves(label_order, testing_prediction, testing_labels_proba)
             testing_rocs.append(testing_roc)
             testing_prcs.append(testing_prc)
@@ -461,15 +464,17 @@ class ModelTrainer(object):
             # print self.calculateAccuracyIgnoringLastColumn(split_testing_threshold_confusion_matrices[i])
             # print split_testing_threshold_confusion_matrices[i]
 
-        all_data = np.concatenate(split_data, 0)
-        all_labels = np.concatenate(split_labels, 0)
+        all_data = np.concatenate(testing_predictions, 0)
+        all_labels = np.concatenate(split_labels_proba, 0)
         plotter = DistributionPlotter.Plotter(all_data, all_labels, thresholds, label_order)
+        import time
         plotter.plotPdf()
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file1" + str(round(time.time())) + ".tex", draw_rectangles=True)
         # plotter.plotCdf()
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file2" + str(round(time.time())) + ".tex", draw_rectangles=True)
         # plotter.plotJointPdfs()
         # plotter.pair()
-        # import time
-        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex", draw_rectangles=True)
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file3" + str(round(time.time())) + ".tex", draw_rectangles=True)
         plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()
