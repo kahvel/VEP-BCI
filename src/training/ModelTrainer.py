@@ -2,12 +2,15 @@ import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
 import matplotlib2tikz
+from sklearn.ensemble import RandomForestClassifier
 
 from target_identification.models import LdaModel, TransitionModel, CvCalibrationModel
 from curves import AverageCurve, CvCurves
 from training import Optimiser, DistributionPlotter
 from training.itr_calculators import ItrCalculator, ItrCalculatorProb
 import constants as c
+
+import time
 
 
 class ModelTrainer(object):
@@ -44,7 +47,7 @@ class ModelTrainer(object):
     def setup(self, options):
         # Check before testing!!
         self.t_use_ml = True#ROLL
-        self.t_use_maf_on_features = True
+        self.t_use_maf_on_features = False
         self.t_use_maf_on_probas = False and self.t_use_ml
         self.t_normalise_probas = False and self.t_use_ml
         self.t_matrix_builder_types = [True, False]
@@ -66,7 +69,7 @@ class ModelTrainer(object):
         #     predictions_bounded=self.t_predictions_bounded,
         # )
         self.itr_calculator_prob = ItrCalculatorProb.ItrCalculatorProb(
-            window_length=1,
+            window_length=4,
             step=0.125,
             feature_maf_length=self.t_feature_maf,
             proba_maf_length=self.t_proba_maf,
@@ -96,8 +99,7 @@ class ModelTrainer(object):
         self.cv_model = CvCalibrationModel.TrainingModel()
         self.cv_model.setup(self.features_to_use, self.look_back_length, self.recordings, self.t_matrix_builder_types)
 
-    def getConfusionMatrix(self, model, data, labels, label_order):
-        prediction = model.predict(data)
+    def getConfusionMatrix(self, prediction, labels, label_order):
         return sklearn.metrics.confusion_matrix(labels, prediction, labels=label_order)
 
     def getThresholdConfusionMatrix(self, prediction, labels, label_order):
@@ -201,19 +203,24 @@ class ModelTrainer(object):
         if not isinstance(confusion_matrix, float):
                 return np.trace(confusion_matrix)/(confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])
 
+    def addLastRowColumn(self, confusion_matrix):
+        confusion_matrix = list(map(list, confusion_matrix)) + [[0.0 for _ in range(len(confusion_matrix))]]
+        map(lambda x: x.append(0.0), confusion_matrix)
+        return np.array(confusion_matrix)
+
     def printConfusionMatrixData(self, confusion_matrix):
         accuracy = self.calculateAccuracyIgnoringLastColumn(confusion_matrix)
         prediction_probability = self.calculatePredictionProbability(confusion_matrix)
-        # print "Predictions:"
-        print str((confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])) + "/" + str(confusion_matrix.sum())
-        # print "Standard ITR:"
-        print self.itr_calculator_prob.itrBitPerMin(accuracy, prediction_probability)
         # print "Mutual information ITR:"
         print self.itr_calculator_prob.itrMiFromMatrix(confusion_matrix)
+        # print "Standard ITR:"
+        print self.itr_calculator_prob.itrBitPerMin(accuracy, prediction_probability)
         # print "Accuracy:"
         print accuracy
         # print "MDT:"
         print self.itr_calculator_prob.mdt(prediction_probability)
+        # print "Predictions:"
+        print "$\\frac{" + str((confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])) + "}{" + str(confusion_matrix.sum()) + "}$"
         print confusion_matrix
 
     # def getLabelConverter(self, label_order):
@@ -358,9 +365,19 @@ class ModelTrainer(object):
             # split_training_rocs.append(self.calculateSplitRocs(label_order, split_training_predictions, rolled_split_modified_training_labels))
             # split_training_prcs.append(self.calculateSplitPrcs(label_order, split_training_predictions, rolled_split_modified_training_labels))
 
+    def removeClass(self, split_data, split_labels, c):
+        new_data = []
+        new_labels = []
+        for data, labels in zip(split_data, split_labels):
+            class_indices = np.where(labels != c)
+            new_data.append(data[class_indices])
+            new_labels.append(labels[class_indices])
+        return new_data, new_labels
+
     def start(self):
         # split_data, split_labels = self.splitAndRollData()  # Hacky
         split_data, split_labels = self.splitTrainingData()  # Hacky
+        # split_data, split_labels = self.removeClass(split_data, split_labels, 3)
         training_rocs = []
         training_prcs = []
         thresholds = []
@@ -373,9 +390,12 @@ class ModelTrainer(object):
         # split_testing_prcs = []
         training_confusion_matrices = 0.0
         testing_confusion_matrices = 0.0
+        random_forest_matrices = 0.0
+        random_forest = RandomForestClassifier(n_estimators=50)
         n_thresholds = 1
         training_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
         testing_threshold_confusion_matrices = [0.0 for _ in range(n_thresholds)]
+        testing_threshold_confusion_matrices1 = [0.0 for _ in range(n_thresholds)]
         if self.t_use_maf_on_features:
             split_data = map(lambda x: self.applyMovingAverage(x, self.t_feature_maf), split_data)
             split_labels = np.array(self.modifySplitLabels(self.t_use_maf_on_features, split_labels))
@@ -428,7 +448,9 @@ class ModelTrainer(object):
             # training_prcs[-1].calculateThresholds(self.t_threshold_optimiser_prob)
             thresholds.append(current_thresholds)
             # split_current_thresholds = self.calculateSplitThresholds(split_training_prcs)
-
+            random_forest.fit(training_data, training_labels)
+            random_forest_prediction = random_forest.predict(testing_data)
+            random_forest_matrices += sklearn.metrics.confusion_matrix(testing_labels, random_forest_prediction, labels=label_order)
             if self.t_use_ml:
                 training_confusion_matrices += sklearn.metrics.confusion_matrix(training_labels, self.cv_model.predict(training_data), labels=label_order)
                 testing_confusion_matrices += sklearn.metrics.confusion_matrix(testing_labels, self.cv_model.predict(testing_data), labels=label_order)
@@ -439,12 +461,15 @@ class ModelTrainer(object):
             for i in range(n_thresholds):
                 # training_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(training_prediction, current_thresholds, i/10.0), map(str, modified_training_labels), label_order)
                 testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.thresholdPredict(testing_prediction, current_thresholds, i/10.0), map(str, testing_labels_proba), label_order)
+                testing_threshold_confusion_matrices1[i] += self.getConfusionMatrix(self.cv_model.thresholdPredict1(testing_prediction, current_thresholds, i/10.0), testing_labels_proba, label_order)
                 # split_testing_threshold_confusion_matrices[i] += self.getThresholdConfusionMatrix(self.cv_model.splitThresholdPredict(testing_prediction, split_current_thresholds, i/10.0), map(str, modified_testing_labels), label_order)
 
-            # self.plotAllChanges(self.cv_model.predictProba(training_data), modified_training_labels, current_thresholds)
-        #     self.plotAllChanges(self.cv_model.predictProba(testing_data), modified_testing_labels, current_thresholds)
+            # self.plotAllChanges(self.cv_model.predictProba(training_data, self.t_proba_maf, self.t_normalise_probas), training_labels, current_thresholds)
+            # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file5" + str(round(time.time())) + ".tex", draw_rectangles=True)
+            # self.plotAllChanges(self.cv_model.predictProba(testing_data, self.t_proba_maf, self.t_normalise_probas), testing_labels, current_thresholds)
+            # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file6" + str(round(time.time())) + ".tex", draw_rectangles=True)
         #     plt.draw()
-        # plt.show()
+        #     plt.show()
         #
         # self.cv_model.fit(np.concatenate(split_data, 0), np.concatenate(split_labels, 0))
         threshold = np.mean(thresholds, 0)
@@ -457,8 +482,11 @@ class ModelTrainer(object):
         print training_confusion_matrices
         print self.calculateAccuracy(testing_confusion_matrices)
         print testing_confusion_matrices
+        print "Random forest"
+        print self.printConfusionMatrixData(self.addLastRowColumn(random_forest_matrices))
         for i in range(n_thresholds):
             print i
+            self.printConfusionMatrixData(self.addLastRowColumn(testing_threshold_confusion_matrices1[i]))
             print training_threshold_confusion_matrices[i]
             self.printConfusionMatrixData(testing_threshold_confusion_matrices[i])
             # print self.calculateAccuracyIgnoringLastColumn(split_testing_threshold_confusion_matrices[i])
@@ -467,14 +495,19 @@ class ModelTrainer(object):
         all_data = np.concatenate(testing_predictions, 0)
         all_labels = np.concatenate(split_labels_proba, 0)
         plotter = DistributionPlotter.Plotter(all_data, all_labels, thresholds, label_order)
-        import time
+
         plotter.plotPdf()
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file0" + str(round(time.time())) + ".tex", draw_rectangles=True)
+        # self.cv_model.fit(np.concatenate(split_data[:-1],0), np.concatenate(split_labels[:-1],0))
+        # plotter.plotLda(self.cv_model, np.concatenate(split_data[:-1],0), np.concatenate(split_labels[:-1],0))
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file1" + str(round(time.time())) + ".tex", draw_rectangles=True)
-        # plotter.plotCdf()
+        # plotter.plotLda(self.cv_model, split_data[-1], split_labels[-1])
         # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file2" + str(round(time.time())) + ".tex", draw_rectangles=True)
+        # plotter.plotCdf()
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file3" + str(round(time.time())) + ".tex", draw_rectangles=True)
         # plotter.plotJointPdfs()
         # plotter.pair()
-        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file3" + str(round(time.time())) + ".tex", draw_rectangles=True)
+        # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file4" + str(round(time.time())) + ".tex", draw_rectangles=True)
         plt.show()
 
         # dummy_model = CvCalibrationModel.TrainingModel()

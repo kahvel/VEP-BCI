@@ -2,16 +2,17 @@ import numpy as np
 from training.itr_calculators import ItrCalculatorProb
 
 
-table = """[[ 51.    0.    18.  496.]
- [   10.  27.    20.  508.]
- [   1.    9.   40.  .]
+table = """[[ 333.    0.   18.  174.]
+ [  10.  313.   26.  176.]
+ [   0.    0.  240.  285.]
  [   0.    0.    0.    0.]]
+
 """.strip()
 
 
-# parsed_table = np.array(map(lambda x: map(lambda y: int(y.strip()), x.strip().split(".")), table.replace("[", "").replace("]","").strip(".").split(".\n")), dtype=np.float)
+parsed_table = np.array(map(lambda x: map(lambda y: int(y.strip()), x.strip().split(".")), table.replace("[", "").replace("]","").strip(".").split(".\n")), dtype=np.float)
 
-parsed_table = np.array([[51,0,0,49],[0,48,0,52],[0,0,1,99],[0,0,0,0]], dtype=np.float)
+# parsed_table = np.array([[51,0,0,49],[0,48,0,52],[0,0,1,99],[0,0,0,0]], dtype=np.float)
 # parsed_table = np.array([[21,0,1,78],[0,22,2,76],[0,0,10,90],[0,0,0,0]], dtype=np.float)
 
 def getItrBitPerMin(P, recall):
@@ -60,7 +61,7 @@ def calculateAccuracyIgnoringLastColumn(confusion_matrix):
 
 
 calculator = ItrCalculatorProb.ItrCalculatorProb(
-    window_length = 1,
+    window_length = 2,
     step = 0.125,
     look_back_length = 1,
     feature_maf_length = 1,
@@ -73,11 +74,26 @@ calculator.n_classes = 3
 def printConfusionMatrixData(confusion_matrix):
     calculator.class_probas = (confusion_matrix.sum(1)/confusion_matrix.sum())[:-1]
     accuracy = calculateAccuracyIgnoringLastColumn(confusion_matrix)
-    R = calculatePredictionProbability(confusion_matrix)
-    print getItrBitPerTrial(accuracy, 2), calculator.itrMiFromMatrix(confusion_matrix)/60*calculator.mdt(R)
-    print getItrBitPerMin(accuracy, R)
+    prediction_probability = calculatePredictionProbability(confusion_matrix)
+    # print "Mutual information ITR:"
+    print calculator.itrMiFromMatrix(confusion_matrix)
+    # print "Standard ITR:"
+    print calculator.itrBitPerMin(accuracy, prediction_probability)
+    # print "Accuracy:"
     print accuracy
+    # print "MDT:"
+    print calculator.mdt(prediction_probability)
+    # print "Predictions:"
+    print ((confusion_matrix.sum()-confusion_matrix.sum(axis=0)[-1])), (confusion_matrix.sum())
     print confusion_matrix
-    print getItrOffline(accuracy, 225.0/confusion_matrix.sum(axis=0)[-1], 3)
 
 printConfusionMatrixData(parsed_table)
+
+
+row = """649.0/1695.0	616.0/1695.0	445.0/1695.0	1.0/1695.0
+
+"""
+row = row.strip()
+split = row.split()
+new_row = map(lambda x: "$\\frac{" + x.split("/")[0][:-2] + "}{" + x.split("/")[1][:-2] + "}$", split)
+print "\t".join(new_row)

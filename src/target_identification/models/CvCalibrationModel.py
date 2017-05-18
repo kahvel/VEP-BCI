@@ -79,6 +79,21 @@ class Model(ColumnsIterator.ColumnsIterator):
             predictions.append(str(predicted))
         return predictions
 
+    def thresholdPredict1(self, scores, thresholds, margin):
+        predictions = []
+        for sample_scores in scores:
+            predicted = None
+            for i in range(len(sample_scores)):
+                # if sample_scores[i] >= thresholds[i] and any(map(lambda (j, (s, t)): False if i == j else s >= t*(1-margin), enumerate(zip(sample_scores, thresholds)))):
+                #     print i, sample_scores, thresholds
+                if all(map(lambda (j, (s, t)): s >= t*(1+margin) if i == j else s < t*(1-margin), enumerate(zip(sample_scores, thresholds)))):
+                    predicted = i+1
+                    break
+            else:
+                predicted = np.argmax(sample_scores-thresholds)+1
+            predictions.append(predicted)
+        return predictions
+
     def buildRatioMatrix(self, data):
         matrices = [builder.buildRatioMatrix(self.iterateColumns(data, self.extraction_method_names)) for builder in self.matrix_builders]
         return np.concatenate(matrices, axis=1)
@@ -102,6 +117,7 @@ class TrainingModel(Model):
         self.feature_selector = SelectFpr(alpha=5e-2)
         # self.model = LogisticRegression()
         # self.model = DummyClassifier()
+        # self.model = OneVsRestClassifier(estimator=LinearDiscriminantAnalysis())
         self.model = LinearDiscriminantAnalysis()
         # self.model = RandomForestClassifier(n_estimators=50)
         # self.model = OneVsRestClassifier(estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=50, class_weight={1: 0.8, 0: 0.2}), cv=5))

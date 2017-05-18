@@ -47,31 +47,114 @@ class PdfCurve(CurveFitting.Curve):
 
     def makeDerivative(self, x):
         return scipy.stats.skewnorm.pdf(x, *self.parameters)
-    #
+
     # def makeFunction(self, x):
     #     return scipy.stats.laplace.cdf(x, *self.parameters)
     #
     # def makeDerivative(self, x):
     #     return scipy.stats.laplace.pdf(x, *self.parameters)
 
+    # def makeFunction(self, x):
+    #     a, b, loc, scale = self.parameters
+    #     return scipy.stats.beta.cdf(x, a, b, loc, scale)
+    #
+    # def makeDerivative(self, x):
+    #     a, b, loc, scale = self.parameters
+    #     return scipy.stats.beta.pdf(x, a, b, loc, scale)
+
+    # def makeFunction(self, x):
+    #     df, loc, scale = self.parameters
+    #     return scipy.stats.chi2.cdf(x, loc, scale)
+    #
+    # def makeDerivative(self, x):
+    #     df, loc, scale = self.parameters
+    #     return scipy.stats.chi2.pdf(x, loc, scale)
+
+    # def makeFunction(self, x):
+    #     loc, scale = self.parameters
+    #     return scipy.stats.expon.cdf(x, loc, scale)
+    #
+    # def makeDerivative(self, x):
+    #     loc, scale = self.parameters
+    #     return scipy.stats.expon.pdf(x, loc, scale)
+
+    # def makeFunction(self, x):
+    #     a, loc, scale = self.parameters
+    #     return scipy.stats.gamma.cdf(x, a, loc, scale)
+    #
+    # def makeDerivative(self, x):
+    #     a, loc, scale = self.parameters
+    #     return scipy.stats.gamma.pdf(x, loc, scale)
+
+    # def makeFunction(self, x):
+    #     degree = len(self.parameters)+1
+    #     return sum(p*x**(degree-i) for i, p in enumerate(self.parameters))
+    #
+    # def makeDerivative(self, x):
+    #     degree = len(self.parameters)+1
+    #     return sum(p*x**(degree-1-i)*(degree-i) for i, p in enumerate(self.parameters[:-1]))
+
+    # def makeFunction(self, x):
+    #     s, loc, scale = self.parameters
+    #     return scipy.stats.lognorm.cdf(x, s, loc, scale)
+    #
+    # def makeDerivative(self, x):
+    #     s, loc, scale = self.parameters
+    #     return scipy.stats.lognorm.pdf(x, s, loc, scale)
+
     def fitSkew(self, initial_guess):
         return scipy.optimize.curve_fit(self.skew, self.x, self.y, p0=initial_guess, maxfev=500000)
 
-    def laplace(self, x, loc, scale):
+    def expon(self, x, loc, scale):
         return scipy.stats.expon.pdf(x, loc=loc, scale=scale)
+
+    def laplace(self, x, loc, scale):
+        return scipy.stats.laplace.pdf(x, loc=loc, scale=scale)
 
     def chi2(self, x, df, loc, scale):
         return scipy.stats.chi2.pdf(x, df, loc=loc, scale=scale)
 
-    def fitLaplace(self, initial_guess):
+    def lognormal(self, x, s, loc, scale):
+        return scipy.stats.lognorm.pdf(x, s, loc=loc, scale=scale)
+
+    def beta(self, x, a, b, loc, scale):
+        return scipy.stats.beta.pdf(x, a, b, loc, scale)
+
+    def gamma(self, x, a, loc, scale):
+        return scipy.stats.gamma.pdf(x, a, loc, scale)
+
+    def fitLognorm(self, initial_guess):  # also jumps up falls down
+        return scipy.optimize.curve_fit(self.lognormal, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def fitLaplace(self, initial_guess):  # goes too fast to zero
         return scipy.optimize.curve_fit(self.laplace, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def fitExpon(self, initial_guess):  # goes too fast to zero + wiggles
+        return scipy.optimize.curve_fit(self.expon, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def fitBeta(self, initial_guess):  # cannot fit straight lines, randomly falls down/jumps up
+        return scipy.optimize.curve_fit(self.beta, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def fitChi2(self, initial_guess):  # cannot get fit at all, maybe wron estimate for df
+        return scipy.optimize.curve_fit(self.chi2, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def fitGamma(self, initial_guess):
+        return scipy.optimize.curve_fit(self.gamma, self.x, self.y, p0=initial_guess, maxfev=500000)
+
+    def fitPoly(self):
+        return np.polyfit(self.x, self.y, 4)
 
     def fitCurve(self):
         self.parameters = self.fitSkew([0, np.mean(self.all_features), np.std(self.all_features)])[0]  # , 0, 1])
+        # self.parameters = self.fitBeta([1, 1, np.mean(self.all_features), np.std(self.all_features)])[0]
         # self.parameters = self.fitLaplace([np.mean(self.all_features), np.std(self.all_features)])[0]
-        # self.parameters = self.fitLaplace([1, np.mean(self.all_features), np.std(self.all_features)])[0]
+        # self.parameters = self.fitExpon([np.mean(self.all_features), np.std(self.all_features)])[0]
+        # self.parameters = self.fitChi2([1, np.mean(self.all_features), np.std(self.all_features)])[0]
+        # self.parameters = self.fitLognorm([1, np.mean(self.all_features), np.std(self.all_features)])[0]
+        # self.parameters = self.fitGamma([1, np.mean(self.all_features), np.std(self.all_features)])[0]
         # median = np.median(self.all_features)
         # self.parameters = [median, np.abs(self.all_features-median).sum()/len(self.all_features)]
+        # self.parameters = self.fitPoly()
         self.fit_function = self.makeFunction
         self.fit_function_derivative = self.makeDerivative
         return self.fit_function, self.fit_function_derivative

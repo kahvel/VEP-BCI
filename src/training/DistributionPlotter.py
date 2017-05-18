@@ -5,7 +5,8 @@ import pandas as pd
 import pandas.tools.plotting
 import itertools
 import matplotlib.pyplot as plt
-
+from sklearn.neighbors import KNeighborsClassifier
+from matplotlib.colors import ListedColormap
 from scipy import pi,sqrt,exp
 from scipy.special import erf
 
@@ -36,7 +37,7 @@ class Plotter(object):
         plt.tight_layout()
 
     def pair(self):
-        only_class = 1
+        only_class = None
         if only_class is not None:
             data = self.data[np.where(self.labels == only_class)]
         else:
@@ -141,7 +142,7 @@ class Plotter(object):
 
     def plotPdf(self):
         y_min = 0
-        y_max = 8
+        y_max = 0.6
         plt.figure()
         for i, true_class in enumerate(self.ordered_labels):
             features_given_class = np.transpose(self.data[np.where(self.labels == true_class)])
@@ -205,3 +206,52 @@ class Plotter(object):
             plt.title("")
             plt.plot(cdf1, cdf2, "o")
         plt.tight_layout()
+
+    def plotLda(self, model, data, labels):
+        lda_model = model.model
+        if model is None:
+            print "LDA model is not trained!"
+        elif len(lda_model.classes_) != 3:
+            print "Model has", len(lda_model.classes_), "classes. Cannot plot in 2D."
+        else:
+            x = lda_model.transform(model.selectFeatures(data))
+
+            plt.figure()
+            transformed_means = np.dot(lda_model.means_-lda_model.xbar_, lda_model.scalings_)
+            y = [0,1,2]
+            n_neighbors = 1
+            h = .02  # step size in the mesh
+            # Create color maps
+            cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
+            cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+            # we create an instance of Neighbours Classifier and fit the data.
+            clf = KNeighborsClassifier(n_neighbors, weights="uniform")
+            clf.fit(transformed_means, y)
+
+            # Plot the decision boundary. For that, we will assign a color to each
+            # point in the mesh [x_min, x_max]x[y_min, y_max].
+            x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+            y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+            xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                                 np.arange(y_min, y_max, h))
+            Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+            # Z = self.myPredict(np.c_[xx.ravel(), yy.ravel()])
+
+            # Put the result into a color plot
+            Z = Z.reshape(xx.shape)
+            plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+
+            # Plot also the training points
+            plt.scatter(transformed_means[:, 0], transformed_means[:, 1], marker="s", c=y, cmap=cmap_bold)
+
+            labels = np.array(labels)
+            for c, i, target_name in zip("rgb", [1, 2, 3], [1, 2, 3]):
+                plt.scatter(x[labels == i, 0], x[labels == i, 1], c=c, label=target_name, marker="o")
+            plt.legend()
+            plt.title('LDA')
+
+            plt.xlim(xx.min(), xx.max())
+            plt.ylim(yy.min(), yy.max())
+            # import time
+            # matplotlib2tikz.save("C:\\Users\Anti\\Desktop\\PycharmProjects\\VEP-BCI\\file" + str(round(time.time())) + ".tex")
+            # plt.show()
