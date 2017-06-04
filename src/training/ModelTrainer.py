@@ -69,7 +69,7 @@ class ModelTrainer(object):
         #     predictions_bounded=self.t_predictions_bounded,
         # )
         self.itr_calculator_prob = ItrCalculatorProb.ItrCalculatorProb(
-            window_length=4,
+            window_length=1,
             step=0.125,
             feature_maf_length=self.t_feature_maf,
             proba_maf_length=self.t_proba_maf,

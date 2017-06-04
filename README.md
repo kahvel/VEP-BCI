@@ -8,9 +8,11 @@ In addition to controlling a robot, the application is a good tool for testing h
 
 The novelty of the application is that it is able to use multiple feature extraction methods at the same time. Multiple methods complement each other and this approach improves the performance of the BCI.
 
-The application was written by Anti Ingel (antiingel@gmail.com) as a practical part of his thesis in University of Tartu. The thesis Control a Robot via VEP using Emotiv EPOC can be found [here](http://comserv.cs.ut.ee/forms/ati_report/downloader.php?file=FF16189169B7081D7F8121C4E2736D6C8384C450).
+The application was written by Anti Ingel (antiingel@gmail.com) as a practical part of his thesis in University of Tartu. The thesis Control a Robot via VEP using Emotiv EPOC can be found [here](https://comserv.cs.ut.ee/home/files/thesis.pdf?study=ATILoputoo&reference=FF16189169B7081D7F8121C4E2736D6C8384C450).
 
 For a very brief overview of the thesis see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster.pdf).
+
+For further improvements, see the following three sections.
 
 ## Parameter learning
 
@@ -23,6 +25,12 @@ For an overview of the project see this [poster](https://github.com/kahvel/VEP-B
 The original classification method of the BCI was replaced as a part of Research Seminar in Data Mining course in University of Tartu. Many parameters that previously required optimisation were removed and the classification method was replaced with machine learning. The report of the project can be found [here](https://github.com/kahvel/VEP-BCI/blob/improved_master/docs/images/report_dm_seminar.pdf).
 
 For an overview of the project see this [poster](https://github.com/kahvel/VEP-BCI/blob/improved_master/docs/images/poster_dm_seminar.pdf).
+
+## New classification method
+
+New classification method was proposed by the author in his Master's thesis in University of Tartu. The method is based on performance measure (information transfer rate) maximisation. The thesis Machine Learning in VEP-based BCI can be found [here](https://comserv.cs.ut.ee/home/files/Ingel_informaatika_2017.pdf?study=ATILoputoo&reference=DDDBA0CE73EFC1D591C10B374963E54ADFEC8CA2)
+
+For a very brief overview of the thesis see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster_master.pdf).
 
 ## Getting started
 
