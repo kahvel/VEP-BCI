@@ -30,7 +30,7 @@ For an overview of the project see this [poster](https://github.com/kahvel/VEP-B
 
 New classification method was proposed by the author in his Master's thesis in University of Tartu. The method is based on performance measure (information transfer rate) maximisation. The thesis Machine Learning in VEP-based BCI can be found [here](https://comserv.cs.ut.ee/home/files/Ingel_informaatika_2017.pdf?study=ATILoputoo&reference=DDDBA0CE73EFC1D591C10B374963E54ADFEC8CA2)
 
-For a very brief overview of the thesis see this [poster](https://github.com/kahvel/VEP-BCI/blob/master/docs/images/poster_master.pdf).
+For a very brief overview of the thesis see this [poster](https://github.com/kahvel/VEP-BCI/blob/improved_master/docs/images/poster_master.pdf).
 
 ## Getting started
 
