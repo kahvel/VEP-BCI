@@ -12,22 +12,20 @@ class OptionsFrameFrame(Frame.Frame):
 class SensorsFrame(OptionsFrameFrame):
     def __init__(self, parent, row, column, **kwargs):
         OptionsFrameFrame.__init__(self, parent, c.SENSORS_FRAME, row, column, **kwargs)
-        self.addChildWidgets((
-            Checkbutton.Checkbutton(self, c.SENSORS[0], 0, 0, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[1], 0, 1, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[2], 0, 2, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[3], 0, 3, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[4], 0, 4, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[5], 0, 5, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[6], 0, 6, pady=0, padx=0, default_value=1),
-            Checkbutton.Checkbutton(self, c.SENSORS[7], 1, 0, pady=0, padx=0, default_value=1),
-            Checkbutton.Checkbutton(self, c.SENSORS[8], 1, 1, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[9], 1, 2, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[10], 1, 3, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[11], 1, 4, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[12], 1, 5, pady=0, padx=0),
-            Checkbutton.Checkbutton(self, c.SENSORS[13], 1, 6, pady=0, padx=0)
-        ))
+        sensor_count = len(c.SENSORS)
+        sensors_in_row = sensor_count/2
+        default_on = ("O1", "O2")
+        self.addChildWidgets([
+            Checkbutton.Checkbutton(
+                self,
+                c.SENSORS[i],
+                i / sensors_in_row,
+                i % sensors_in_row,
+                pady=0,
+                padx=0,
+                default_value=int(c.SENSORS[i] in default_on)
+            ) for i in range(sensor_count)
+        ])
 
 
 class OptionsFrame(Frame.Frame):

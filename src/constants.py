@@ -324,9 +324,11 @@ OPTIONS_FRAME = "Options"
 
 # Sensor names in Plot and Extraction tab
 # NB order is important, it is used in writing csv files
-SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")
+# SENSORS = ("AF3", "F7", "F3", "FC5","T7", "P7", "O1", "O2", "P8", "T8", "FC6","F4", "F8", "AF4")  # Emotiv EPOC
+SENSORS = ("Fp1", "Fp2", "C3", "C4", "P7", "P8", "O1", "O2", "F7", "F8", "F3", "F4", "T7", "T8", "P3", "P4")  # OpenBCI
 
-HEADSET_FREQ = 256
+HEADSET_FREQ = 256  # Emotiv EPOC
+HEADSET_FREQ = 125  # OpenBCI
 
 # Messages to PostOffice
 START_MESSAGE = "Start"
@@ -392,7 +394,7 @@ POST_OFFICE_MESSAGES = BCI_MESSAGES + TRAINING_MESSAGES + (EXIT_MESSAGE,) + ROBO
 CLEAR_BUFFER_MESSAGE = "ClearBuffer"
 
 # By default load values from this file
-DEFAULT_SETTINGS_FILE_NAME = "default.txt"
+DEFAULT_SETTINGS_FILE_NAME = "default1.txt"
 DEFAULT_TRAINING_SETTINGS_FILE_NAME = "traindefault.txt"
 
 DATA_BACKGROUND = "Background"

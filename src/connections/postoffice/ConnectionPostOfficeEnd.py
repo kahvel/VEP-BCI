@@ -5,7 +5,7 @@ from gui.main_window import MainWindow
 from gui.training_window import TrainingWindow
 from robot import MessageHandler
 
-import MyEmotiv
+import OpenBCI
 
 
 class PsychopyConnection(Connections.Connection):
@@ -40,7 +40,7 @@ class TrainingConnection(Connections.Connection):
 
 class EmotivConnection(Connections.Connection):
     def __init__(self):
-        Connections.Connection.__init__(self, MyEmotiv.MyEmotiv, ConnectionProcessEnd.EmotivConnection)
+        Connections.Connection.__init__(self, OpenBCI.OpenBCI, ConnectionProcessEnd.EmotivConnection)
 
 
 class RobotConnection(Connections.Connection):
